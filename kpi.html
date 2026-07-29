@@ -1,0 +1,82 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Hospital Quality KPI Library — Formulas, Benchmarks & Excel | AccrediQ</title>
+<meta name="description" content="Every hospital quality KPI with its formula, numerator and denominator, benchmark, target and a downloadable Excel tracker.">
+<link rel="icon" href="data:image/svg+xml,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 26 30'><path d='M13 1 24 5v10c0 7-5 12-11 14C7 27 2 22 2 15V5L13 1Z' fill='%234F46E5'/></svg>">
+<link rel="stylesheet" href="styles.css">
+</head>
+<body data-page="kpi">
+<div id="site-header"></div>
+
+<section class="page-head">
+  <div class="wrap">
+    <nav class="breadcrumb"><a href="index.html">Home</a><span class="sep">/</span><span class="cur">KPI Library</span></nav>
+    <span class="eyebrow">Measure what matters</span>
+    <h1>The hospital quality KPI library.</h1>
+    <p class="lead">Every KPI with its formula, numerator and denominator, benchmark, target and a downloadable Excel tracker — the reference quality managers keep open in another tab.</p>
+    <div style="margin-top:20px;display:flex;gap:8px;flex-wrap:wrap;">
+      <span class="pill">All</span><span class="pill">Infection control</span><span class="pill">Medication safety</span><span class="pill">Patient safety</span><span class="pill">Operational</span><span class="pill">Has Excel</span>
+    </div>
+  </div>
+</section>
+
+<section class="section wrap">
+  <div class="grid-2">
+
+    <div class="kpi-card">
+      <div class="kpi-top"><div><span class="eyebrow">HIC · KPI</span><h3>Hand Hygiene Compliance Rate</h3>
+        <span class="kpi-formula"><span class="kpi-frac"><span class="num">compliant moments</span><span>observed moments</span></span><span>× 100</span></span></div>
+        <div class="kpi-metric"><div class="big">86<span style="font-size:20px;">%</span></div><div class="delta">▲ 7 pts</div><div class="kpi-bench">≥ 80%</div></div></div>
+      <div class="kpi-spark"><svg viewBox="0 0 320 60" width="100%" height="60" preserveAspectRatio="none" aria-hidden="true"><path d="M0,44 L53,40 L106,42 L160,30 L213,26 L266,18 L320,12" fill="none" stroke="var(--accent-bright)" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"/><circle cx="320" cy="12" r="4" fill="var(--accent-bright)"/></svg></div>
+      <div class="kpi-foot"><span class="badge badge-ok">Above benchmark</span><span class="badge badge-info">HIC 6b</span></div>
+    </div>
+
+    <div class="kpi-card">
+      <div class="kpi-top"><div><span class="eyebrow">HIC · KPI</span><h3>Catheter-Associated UTI Rate</h3>
+        <span class="kpi-formula"><span class="kpi-frac"><span class="num">CAUTI cases</span><span>urinary-catheter days</span></span><span>× 1000</span></span></div>
+        <div class="kpi-metric"><div class="big">2.1</div><div class="delta" style="color:var(--warn);">▲ 0.4</div><div class="kpi-bench">per 1000</div></div></div>
+      <div class="kpi-spark"><svg viewBox="0 0 320 60" width="100%" height="60" preserveAspectRatio="none" aria-hidden="true"><path d="M0,30 L53,34 L106,28 L160,32 L213,36 L266,40 L320,44" fill="none" stroke="var(--warn)" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"/><circle cx="320" cy="44" r="4" fill="var(--warn)"/></svg></div>
+      <div class="kpi-foot"><span class="badge badge-soon">Watch trend</span><span class="badge badge-info">HIC 7</span></div>
+    </div>
+
+    <div class="kpi-card">
+      <div class="kpi-top"><div><span class="eyebrow">MOM · KPI</span><h3>Medication Error Rate</h3>
+        <span class="kpi-formula"><span class="kpi-frac"><span class="num">medication errors</span><span>medication orders</span></span><span>× 1000</span></span></div>
+        <div class="kpi-metric"><div class="big">3.4</div><div class="delta">▼ 1.2</div><div class="kpi-bench">per 1000</div></div></div>
+      <div class="kpi-spark"><svg viewBox="0 0 320 60" width="100%" height="60" preserveAspectRatio="none" aria-hidden="true"><path d="M0,20 L53,24 L106,22 L160,30 L213,34 L266,40 L320,46" fill="none" stroke="var(--accent-bright)" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"/><circle cx="320" cy="46" r="4" fill="var(--accent-bright)"/></svg></div>
+      <div class="kpi-foot"><span class="badge badge-ok">Improving</span><span class="badge badge-info">MOM 4</span></div>
+    </div>
+
+    <div class="kpi-card">
+      <div class="kpi-top"><div><span class="eyebrow">COP · KPI</span><h3>Return to ICU within 48 hrs</h3>
+        <span class="kpi-formula"><span class="kpi-frac"><span class="num">unplanned ICU returns</span><span>ICU discharges</span></span><span>× 100</span></span></div>
+        <div class="kpi-metric"><div class="big">1.8<span style="font-size:20px;">%</span></div><div class="delta">▼ 0.3</div><div class="kpi-bench">&lt; 2%</div></div></div>
+      <div class="kpi-spark"><svg viewBox="0 0 320 60" width="100%" height="60" preserveAspectRatio="none" aria-hidden="true"><path d="M0,26 L53,30 L106,24 L160,28 L213,32 L266,30 L320,34" fill="none" stroke="var(--accent-bright)" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"/><circle cx="320" cy="34" r="4" fill="var(--accent-bright)"/></svg></div>
+      <div class="kpi-foot"><span class="badge badge-ok">Within target</span><span class="badge badge-info">COP 6</span></div>
+    </div>
+
+  </div>
+
+  <div class="two-col" style="margin-top:48px;align-items:center;">
+    <div>
+      <span class="eyebrow">Inside every KPI</span>
+      <h2 style="font-size:28px;letter-spacing:-.03em;margin:12px 0 14px;">Not just a number — the whole story.</h2>
+      <p class="muted" style="max-width:52ch;">Open any KPI and you get the definition, the exact formula, the industry benchmark and target, a worked example, how to interpret a rising or falling trend, an improvement suggestion, and a ready-to-use Excel tracker.</p>
+      <ul style="list-style:none;padding:0;margin:18px 0 0;display:grid;gap:9px;font-size:14.5px;">
+        <li>✓ Formula with numerator &amp; denominator</li>
+        <li>✓ Benchmark, target and how to read the trend</li>
+        <li>✓ Root-cause hints when it moves the wrong way</li>
+        <li>✓ Downloadable Excel tracker with auto-charts</li>
+      </ul>
+    </div>
+    <div class="dl" style="padding:20px;"><span class="ficon xls" style="width:44px;height:44px;">XLS</span><span><span class="dn" style="font-size:16px;">Master KPI Tracker</span><span class="dm">All departments · auto-scoring · trend charts</span></span></div>
+  </div>
+</section>
+
+<div id="site-footer"></div>
+<script src="app.js"></script>
+</body>
+</html>

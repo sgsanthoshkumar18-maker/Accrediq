@@ -1,0 +1,88 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Learn & Test — Quizzes and Flashcards | AccrediQ</title>
+<meta name="description" content="Turn reading into recall — quizzes and flashcards that get you ready for the mock audit and your quality certification.">
+<link rel="icon" href="data:image/svg+xml,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 26 30'><path d='M13 1 24 5v10c0 7-5 12-11 14C7 27 2 22 2 15V5L13 1Z' fill='%234F46E5'/></svg>">
+<link rel="stylesheet" href="styles.css">
+<style>
+  .fc{perspective:1200px;cursor:pointer;height:190px;}
+  .fc-inner{position:relative;width:100%;height:100%;transition:transform .5s;transform-style:preserve-3d;}
+  .fc.flip .fc-inner{transform:rotateY(180deg);}
+  .fc-face{position:absolute;inset:0;backface-visibility:hidden;border:1px solid var(--border);border-radius:var(--r-lg);padding:22px;background:var(--bg-elevated);box-shadow:var(--shadow-1);display:flex;flex-direction:column;justify-content:center;}
+  .fc-back{transform:rotateY(180deg);background:var(--brand-tint);}
+  .fc .lbl{font-size:11px;letter-spacing:.1em;text-transform:uppercase;color:var(--fg-faint);font-weight:600;margin-bottom:8px;}
+  .fc .q{font-family:var(--font-display);font-weight:700;font-size:18px;letter-spacing:-.02em;}
+  .fc .a{font-size:14.5px;color:var(--fg);}
+  .fc .hint{margin-top:auto;font-size:12px;color:var(--fg-faint);}
+  @media (prefers-reduced-motion:reduce){.fc-inner{transition:none;}}
+</style>
+</head>
+<body data-page="learn">
+<div id="site-header"></div>
+
+<section class="page-head">
+  <div class="wrap">
+    <nav class="breadcrumb"><a href="index.html">Home</a><span class="sep">/</span><span class="cur">Learn</span></nav>
+    <span class="eyebrow">From reading to recall</span>
+    <h1>Reading is easy. Remembering is the point.</h1>
+    <p class="lead">Quizzes and flashcards that lock in the standards before the mock audit — or before your quality certification exam. Tap a card to flip it.</p>
+  </div>
+</section>
+
+<section class="section wrap">
+  <div class="section-head"><span class="eyebrow">Flashcards · HIC</span><h2>Flip to reveal.</h2><p>Quick recall on the concepts assessors ask about most.</p></div>
+  <div class="grid-3">
+    <div class="fc"><div class="fc-inner">
+      <div class="fc-face"><div class="lbl">Question</div><div class="q">Name the WHO five moments for hand hygiene.</div><div class="hint">Tap to flip →</div></div>
+      <div class="fc-face fc-back"><div class="lbl">Answer</div><div class="a">Before touching a patient · before a clean/aseptic task · after body-fluid exposure risk · after touching a patient · after touching a patient's surroundings.</div></div>
+    </div></div>
+    <div class="fc"><div class="fc-inner">
+      <div class="fc-face"><div class="lbl">Question</div><div class="q">What turns a low compliance score into an NC?</div><div class="hint">Tap to flip →</div></div>
+      <div class="fc-face fc-back"><div class="lbl">Answer</div><div class="a">Not the number — the absence of a documented action. Assessors fail the open loop, not the dip.</div></div>
+    </div></div>
+    <div class="fc"><div class="fc-inner">
+      <div class="fc-face"><div class="lbl">Question</div><div class="q">CAPA stands for…?</div><div class="hint">Tap to flip →</div></div>
+      <div class="fc-face fc-back"><div class="lbl">Answer</div><div class="a">Corrective And Preventive Action — correct the immediate problem, then prevent recurrence, with evidence of both.</div></div>
+    </div></div>
+  </div>
+
+  <div class="section-head" style="margin-top:54px;"><span class="eyebrow">Quiz · Infection control</span><h2>Test yourself.</h2></div>
+  <div class="two-col">
+    <div class="quiz">
+      <p class="q">A ward stores two insulin strengths side by side in identical vials. Which control best prevents an error?</p>
+      <button class="opt" data-correct="false" data-no="Training helps, but look-alike storage is a system trap — separate them physically.">More staff training on the vials.</button>
+      <button class="opt" data-correct="true" data-ok="Correct. High-alert, look-alike drugs need physical separation and distinct labelling — fix the system.">Physically separate and distinctly label high-alert look-alikes.</button>
+      <button class="opt" data-correct="false" data-no="A memo won't survive a busy night shift. Design the error out.">Send a reminder memo to the ward.</button>
+      <p class="feedback" role="status"></p>
+    </div>
+    <div class="quiz">
+      <p class="q">An SOP was last reviewed 3 years ago with no review date. At audit this is…</p>
+      <button class="opt" data-correct="true" data-ok="Correct. Uncontrolled, un-reviewed documents are a classic finding — every SOP needs a review cycle.">A document-control non-conformity.</button>
+      <button class="opt" data-correct="false" data-no="Age alone isn't fine — without a review cycle it's uncontrolled.">Fine, as long as it still reads well.</button>
+      <button class="opt" data-correct="false" data-no="It's more than cosmetic — it signals the quality system isn't maintained.">Only a minor formatting issue.</button>
+      <p class="feedback" role="status"></p>
+    </div>
+  </div>
+
+  <div class="cta-band" style="margin-top:44px;">
+    <h2>Learning paths &amp; certificates are coming.</h2>
+    <p>Track progress, earn badges, and complete a full mock-audit simulation — the flagship AccrediQ learning experience, on the roadmap.</p>
+    <a class="btn btn-accent" href="about.html#roadmap">See what's next →</a>
+  </div>
+</section>
+
+<div id="site-footer"></div>
+<script src="app.js"></script>
+<script>
+  document.querySelectorAll('.fc').forEach(function(c){
+    c.setAttribute('tabindex','0'); c.setAttribute('role','button');
+    function flip(){ c.classList.toggle('flip'); }
+    c.addEventListener('click', flip);
+    c.addEventListener('keydown', function(e){ if(e.key==='Enter'||e.key===' '){ e.preventDefault(); flip(); }});
+  });
+</script>
+</body>
+</html>
