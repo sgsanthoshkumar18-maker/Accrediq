@@ -47,7 +47,6 @@
         </a>
         <nav class="main-nav" id="mainNav">${links}</nav>
         <div class="nav-actions">
-          <a class="btn btn-primary btn-sm" href="dashboard.html">Quality Dashboard</a>
           <button class="nav-toggle" id="navToggle" aria-label="Toggle menu" aria-expanded="false">
             <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round"><path d="M4 7h16M4 12h16M4 17h16"/></svg>
           </button>
@@ -143,88 +142,9 @@
     });
   }
 
-  function initShieldCanvas() {
-    const canvas = document.getElementById("shield");
-    if (!canvas || !canvas.getContext) return;
-    const ctx = canvas.getContext("2d");
-    const W = canvas.width, H = canvas.height;
-    let t = 0;
-    const reduce = window.matchMedia && window.matchMedia("(prefers-reduced-motion: reduce)").matches;
-
-    function draw() {
-      ctx.clearRect(0, 0, W, H);
-      ctx.save();
-      ctx.translate(W / 2, H / 2);
-      const wobble = reduce ? 0 : Math.sin(t) * 0.05;
-      ctx.rotate(wobble);
-
-      const R = W * 0.34;
-      // outer ring
-      const grad = ctx.createLinearGradient(-R, -R, R, R);
-      grad.addColorStop(0, "#4F46E5");
-      grad.addColorStop(1, "#0EA5A0");
-
-      ctx.beginPath();
-      const pts = 18;
-      for (let i = 0; i <= pts; i++) {
-        const a = (i / pts) * Math.PI * 2;
-        const rr = R + Math.sin(a * 3 + t * 1.2) * (reduce ? 0 : 6);
-        const x = Math.cos(a) * rr, y = Math.sin(a) * rr;
-        i === 0 ? ctx.moveTo(x, y) : ctx.lineTo(x, y);
-      }
-      ctx.closePath();
-      ctx.fillStyle = "rgba(79,70,229,0.08)";
-      ctx.fill();
-      ctx.lineWidth = 2;
-      ctx.strokeStyle = grad;
-      ctx.stroke();
-
-      // shield
-      ctx.beginPath();
-      const s = R * 0.62;
-      ctx.moveTo(0, -s);
-      ctx.bezierCurveTo(s * 0.9, -s * 0.8, s, -s * 0.2, s, s * 0.05);
-      ctx.bezierCurveTo(s, s * 0.9, s * 0.4, s * 1.25, 0, s * 1.45);
-      ctx.bezierCurveTo(-s * 0.4, s * 1.25, -s, s * 0.9, -s, s * 0.05);
-      ctx.bezierCurveTo(-s, -s * 0.2, -s * 0.9, -s * 0.8, 0, -s);
-      ctx.closePath();
-      ctx.fillStyle = grad;
-      ctx.fill();
-
-      // check
-      ctx.beginPath();
-      ctx.moveTo(-s * 0.32, s * 0.06);
-      ctx.lineTo(-s * 0.05, s * 0.34);
-      ctx.lineTo(s * 0.4, -s * 0.28);
-      ctx.lineWidth = s * 0.13;
-      ctx.lineCap = "round";
-      ctx.lineJoin = "round";
-      ctx.strokeStyle = "#fff";
-      ctx.stroke();
-
-      // tick marks around ring (gauge feel)
-      for (let i = 0; i < 40; i++) {
-        const a = (i / 40) * Math.PI * 2;
-        const inner = R + 14, outer = R + (i % 5 === 0 ? 26 : 20);
-        ctx.beginPath();
-        ctx.moveTo(Math.cos(a) * inner, Math.sin(a) * inner);
-        ctx.lineTo(Math.cos(a) * outer, Math.sin(a) * outer);
-        ctx.strokeStyle = i % 5 === 0 ? "rgba(14,165,160,.7)" : "rgba(255,255,255,.18)";
-        ctx.lineWidth = i % 5 === 0 ? 2 : 1;
-        ctx.stroke();
-      }
-
-      ctx.restore();
-      t += 0.01;
-      if (!reduce) requestAnimationFrame(draw);
-    }
-    draw();
-  }
-
   document.addEventListener("DOMContentLoaded", () => {
     initHeaderFooter();
     initQuiz();
     initVideoPlay();
-    initShieldCanvas();
   });
 })();
