@@ -142,9 +142,28 @@
     });
   }
 
+  function initOwnerThemeToggle() {
+    // Hidden, owner-only dark-mode switch — no visible UI.
+    // Shortcut: Ctrl + Alt + Shift + D
+    document.addEventListener("keydown", (e) => {
+      if (e.ctrlKey && e.altKey && e.shiftKey && (e.key === "D" || e.key === "d")) {
+        const html = document.documentElement;
+        const isDark = html.getAttribute("data-theme") === "dark";
+        if (isDark) {
+          html.removeAttribute("data-theme");
+          try { localStorage.setItem("aq-theme", "light"); } catch (err) {}
+        } else {
+          html.setAttribute("data-theme", "dark");
+          try { localStorage.setItem("aq-theme", "dark"); } catch (err) {}
+        }
+      }
+    });
+  }
+
   document.addEventListener("DOMContentLoaded", () => {
     initHeaderFooter();
     initQuiz();
     initVideoPlay();
+    initOwnerThemeToggle();
   });
 })();

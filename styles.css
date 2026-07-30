@@ -47,6 +47,34 @@
   --wrap:1180px;
 }
 
+/* ---------- Dark theme (owner-only, toggled via secret shortcut) ---------- */
+:root[data-theme="dark"]{
+  --bg:#0A0D1E;
+  --bg-elevated:#12162F;
+  --fg:#F1F2FA;
+  --fg-muted:#B7BBD8;
+  --fg-faint:#7C81A6;
+  --border:#272C50;
+  --border-soft:#1C2040;
+
+  --brand-tint:rgba(79,70,229,.20);
+  --accent-bright-tint:rgba(14,165,160,.18);
+  --ok-tint:rgba(18,128,92,.22);
+  --warn-tint:rgba(176,89,10,.22);
+  --nc-tint:rgba(196,46,66,.20);
+  --info-tint:rgba(53,84,209,.22);
+
+  --shadow-1:0 1px 2px rgba(0,0,0,.4), 0 10px 28px -12px rgba(0,0,0,.55);
+  --shadow-2:0 4px 10px rgba(0,0,0,.45), 0 24px 48px -16px rgba(0,0,0,.6);
+}
+:root[data-theme="dark"] .page-head{background:linear-gradient(180deg,rgba(79,70,229,.14),var(--bg) 88%);}
+:root[data-theme="dark"] .site-header{background:rgba(10,13,30,.82);}
+:root[data-theme="dark"] .acc-band{background:var(--bg-elevated);}
+:root[data-theme="dark"] .acc{background:var(--bg);}
+:root[data-theme="dark"] .acc.live{background:linear-gradient(160deg,rgba(79,70,229,.16),var(--bg-elevated));}
+:root[data-theme="dark"] .dl{background:var(--bg-elevated);}
+:root[data-theme="dark"] ::selection{background:var(--accent-bright);color:#04241F;}
+
 *,*::before,*::after{box-sizing:border-box;}
 html{scroll-behavior:smooth;}
 body{
