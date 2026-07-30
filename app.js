@@ -142,20 +142,30 @@
     });
   }
 
+  function toggleTheme() {
+    const html = document.documentElement;
+    const isDark = html.getAttribute("data-theme") === "dark";
+    if (isDark) {
+      html.removeAttribute("data-theme");
+      try { localStorage.setItem("aq-theme", "light"); } catch (err) {}
+    } else {
+      html.setAttribute("data-theme", "dark");
+      try { localStorage.setItem("aq-theme", "dark"); } catch (err) {}
+    }
+  }
+
   function initOwnerThemeToggle() {
     // Hidden, owner-only dark-mode switch — no visible UI.
-    // Shortcut: Ctrl + Alt + Shift + D
+    // Trigger: type the word "dark" anywhere on the page (not while focused in a field).
+    let typed = "";
     document.addEventListener("keydown", (e) => {
-      if (e.ctrlKey && e.altKey && e.shiftKey && (e.key === "D" || e.key === "d")) {
-        const html = document.documentElement;
-        const isDark = html.getAttribute("data-theme") === "dark";
-        if (isDark) {
-          html.removeAttribute("data-theme");
-          try { localStorage.setItem("aq-theme", "light"); } catch (err) {}
-        } else {
-          html.setAttribute("data-theme", "dark");
-          try { localStorage.setItem("aq-theme", "dark"); } catch (err) {}
-        }
+      const tag = (e.target && e.target.tagName) || "";
+      if (tag === "INPUT" || tag === "TEXTAREA" || e.target.isContentEditable) return;
+      if (e.key.length !== 1) return;
+      typed = (typed + e.key.toLowerCase()).slice(-4);
+      if (typed === "dark") {
+        toggleTheme();
+        typed = "";
       }
     });
   }
