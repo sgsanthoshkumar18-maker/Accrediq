@@ -154,7 +154,7 @@ p{margin:0 0 0;}
   .main-nav.open{transform:translateY(0);opacity:1;pointer-events:auto;}
   .main-nav a{padding:13px 16px;border-radius:10px;}
   .nav-toggle{display:flex;}
-  .nav-actions .btn{display:none;}
+  .nav-actions .btn{padding:9px 14px;font-size:13px;}
 }
 
 /* ---------- Hero ---------- */
