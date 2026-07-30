@@ -1,163 +1,230 @@
-/* ===========================================================
-   AccrediQ — shared behaviour + injected header/footer
-   =========================================================== */
-(function () {
-  var page = document.body.getAttribute('data-page') || '';
+/* AQcredix — shared site behaviour: header/footer injection, nav, quiz, hero badge */
 
-  var NAV = [
-    ['standards', 'Standards', 'standards.html'],
-    ['departments', 'Departments', 'departments.html'],
-    ['tools', 'Quality Tools', 'tools.html'],
-    ['kpi', 'KPI Library', 'kpi.html'],
-    ['videos', 'Videos', 'videos.html'],
-    ['learn', 'Learn', 'learn.html'],
-    ['about', 'About', 'about.html']
+(function () {
+  const NAV = [
+    { href: "standards.html", label: "Standards" },
+    { href: "departments.html", label: "Departments" },
+    { href: "dashboard.html", label: "Quality Dashboard", hot: true },
+    { href: "kpi.html", label: "KPI Library" },
+    { href: "tools.html", label: "Tools" },
+    { href: "videos.html", label: "Videos" },
+    { href: "learn.html", label: "Learn" },
+    { href: "about.html", label: "About" }
   ];
 
-  var MARK = '<svg class="mark" viewBox="0 0 26 30" fill="none" aria-hidden="true">' +
-    '<path d="M13 1 24 5v10c0 7-5 12-11 14C7 27 2 22 2 15V5L13 1Z" fill="var(--brand)"/>' +
-    '<path d="M8 15.5l3.4 3.4L18 11.5" stroke="#fff" stroke-width="2.4" stroke-linecap="round" stroke-linejoin="round"/></svg>';
+  const PAGE_KEY = {
+    standards: "standards.html",
+    departments: "departments.html",
+    dashboard: "dashboard.html",
+    kpi: "kpi.html",
+    tools: "tools.html",
+    videos: "videos.html",
+    learn: "learn.html",
+    about: "about.html"
+  };
 
-  var SUN = '<svg width="17" height="17" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"><circle cx="12" cy="12" r="4"/><path d="M12 2v2M12 20v2M4.9 4.9l1.4 1.4M17.7 17.7l1.4 1.4M2 12h2M20 12h2M4.9 19.1l1.4-1.4M17.7 6.3l1.4-1.4"/></svg>';
+  const shieldMark = `<svg width="30" height="34" viewBox="0 0 26 30" fill="none" xmlns="http://www.w3.org/2000/svg">
+      <path d="M13 1 24 5v10c0 7-5 12-11 14C7 27 2 22 2 15V5L13 1Z" fill="url(#qgrad)"/>
+      <path d="M8.2 14.6l3.1 3.2 6.5-7" stroke="#fff" stroke-width="2.1" stroke-linecap="round" stroke-linejoin="round"/>
+      <defs><linearGradient id="qgrad" x1="2" y1="1" x2="24" y2="29" gradientUnits="userSpaceOnUse">
+        <stop stop-color="#4F46E5"/><stop offset="1" stop-color="#0EA5A0"/>
+      </linearGradient></defs>
+    </svg>`;
 
-  function navLinks(cls) {
-    return NAV.map(function (n) {
-      return '<a href="' + n[2] + '"' + (page === n[0] ? ' class="active" aria-current="page"' : '') + '>' + n[1] + '</a>';
-    }).join('');
+  function buildHeader(current) {
+    const links = NAV.map(n => {
+      const active = current === n.href ? " active" : "";
+      const hot = n.hot ? " hot" : "";
+      return `<a href="${n.href}" class="${active || hot}">${n.label}</a>`;
+    }).join("");
+
+    return `
+    <header class="site-header">
+      <div class="bar wrap">
+        <a href="index.html" class="brand">
+          ${shieldMark}
+          <span class="brand-stack">AQcredix<span class="full-name">Accreditation & Quality Excellence</span></span>
+        </a>
+        <nav class="main-nav" id="mainNav">${links}</nav>
+        <div class="nav-actions">
+          <a class="btn btn-primary btn-sm" href="dashboard.html">Quality Dashboard</a>
+          <button class="nav-toggle" id="navToggle" aria-label="Toggle menu" aria-expanded="false">
+            <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round"><path d="M4 7h16M4 12h16M4 17h16"/></svg>
+          </button>
+        </div>
+      </div>
+    </header>`;
   }
 
-  // ---------- HEADER ----------
-  var header = document.getElementById('site-header');
-  if (header) {
-    header.outerHTML =
-      '<header class="nav"><div class="wrap nav-inner">' +
-        '<a class="brand" href="index.html" aria-label="AccrediQ home">' + MARK + 'Accredi<b>Q</b></a>' +
-        '<nav class="links" aria-label="Primary">' + navLinks() + '</nav>' +
-        '<div class="nav-right">' +
-          '<span class="kbd">Search <kbd>⌘</kbd><kbd>K</kbd></span>' +
-          '<button class="icon-btn" id="themeBtn" aria-label="Toggle light or dark theme" title="Toggle theme">' + SUN + '</button>' +
-          '<a class="btn btn-ghost btn-sm" href="#">Sign in</a>' +
-          '<button class="icon-btn menu-btn" id="menuBtn" aria-label="Open menu"><svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"><path d="M3 6h18M3 12h18M3 18h18"/></svg></button>' +
-        '</div>' +
-      '</div></header>' +
-      '<div class="drawer" id="drawer"><div class="scrim" data-close></div><div class="panel">' +
-        '<button class="icon-btn" id="drawerClose" aria-label="Close menu" style="align-self:flex-end;margin-bottom:8px;"><svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"><path d="M6 6l12 12M18 6L6 18"/></svg></button>' +
-        navLinks() +
-      '</div></div>';
+  function buildFooter() {
+    return `
+    <footer class="site-footer">
+      <div class="wrap">
+        <div class="footer-grid">
+          <div class="footer-brand">
+            <a href="index.html" class="brand">${shieldMark}<span class="brand-stack">AQcredix<span class="full-name">Accreditation & Quality Excellence</span></span></a>
+            <p>NABH accreditation, actually understood — every standard explained the way an assessor reads it.</p>
+          </div>
+          <div class="footer-col"><h4>Learn</h4>
+            <a href="standards.html">Standards</a>
+            <a href="departments.html">Departments</a>
+            <a href="dashboard.html">Quality Dashboard</a>
+            <a href="kpi.html">KPI Library</a>
+          </div>
+          <div class="footer-col"><h4>Practice</h4>
+            <a href="tools.html">Quality Tools</a>
+            <a href="videos.html">Assessor Videos</a>
+            <a href="learn.html">Learn &amp; Test</a>
+          </div>
+          <div class="footer-col"><h4>AQcredix</h4>
+            <a href="about.html">About &amp; vision</a>
+            <a href="about.html#roadmap">Roadmap</a>
+          </div>
+        </div>
+        <div class="footer-bottom">
+          <span>© 2026 AQcredix — Accreditation & Quality Excellence. An independent healthcare education forum.</span>
+          <span>Built the way an assessor reads a standard.</span>
+        </div>
+      </div>
+    </footer>`;
   }
 
-  // ---------- FOOTER ----------
-  var footer = document.getElementById('site-footer');
-  if (footer) {
-    footer.outerHTML =
-      '<footer><div class="wrap">' +
-        '<div class="foot-grid">' +
-          '<div><a class="brand" href="index.html" style="font-size:17px;">' + MARK + 'Accredi<b>Q</b></a>' +
-            '<p class="foot-note">Know it before the assessor does. The learning platform that teaches healthcare teams to understand accreditation the way an assessor does — so the NC never happens.</p>' +
-            '<div style="margin-top:14px;display:flex;gap:8px;"><span class="pill">▶ YouTube</span><span class="pill">✦ Newsletter</span></div>' +
-          '</div>' +
-          '<div class="foot-col"><h4>Learn</h4><a href="standards.html">NABH Standards</a><a href="departments.html">By Department</a><a href="kpi.html">KPI Library</a><a href="tools.html">Quality Tools</a></div>' +
-          '<div class="foot-col"><h4>Explore</h4><a href="videos.html">Assessor Videos</a><a href="learn.html">Quizzes & Flashcards</a><a href="standard.html">Sample Standard</a><a href="about.html">Accreditations</a></div>' +
-          '<div class="foot-col"><h4>AccrediQ</h4><a href="about.html">About & Mission</a><a href="about.html#roadmap">Roadmap</a><a href="#">Programs</a><a href="#">Contact</a></div>' +
-        '</div>' +
-        '<div class="foot-bottom"><span>© 2026 AccrediQ · An independent quality &amp; accreditation education forum.</span>' +
-        '<span>Prototype build · content representative pending review.</span></div>' +
-      '</div></footer>';
-  }
+  function initHeaderFooter() {
+    const page = document.body.getAttribute("data-page");
+    const current = PAGE_KEY[page] || "";
+    const headerMount = document.getElementById("site-header");
+    const footerMount = document.getElementById("site-footer");
+    if (headerMount) headerMount.innerHTML = buildHeader(current);
+    if (footerMount) footerMount.innerHTML = buildFooter();
 
-  // ---------- THEME TOGGLE ----------
-  var root = document.documentElement;
-  document.addEventListener('click', function (e) {
-    if (e.target.closest && e.target.closest('#themeBtn')) {
-      var bg = getComputedStyle(root).getPropertyValue('--bg').trim().toLowerCase();
-      var isDark = root.getAttribute('data-theme') === 'dark' || (!root.getAttribute('data-theme') && bg.indexOf('#08') === 0);
-      root.setAttribute('data-theme', isDark ? 'light' : 'dark');
+    const toggle = document.getElementById("navToggle");
+    const nav = document.getElementById("mainNav");
+    if (toggle && nav) {
+      toggle.addEventListener("click", () => {
+        const open = nav.classList.toggle("open");
+        toggle.setAttribute("aria-expanded", open ? "true" : "false");
+      });
+      nav.querySelectorAll("a").forEach(a => a.addEventListener("click", () => {
+        nav.classList.remove("open");
+        toggle.setAttribute("aria-expanded", "false");
+      }));
     }
-    // mobile drawer
-    if (e.target.closest && e.target.closest('#menuBtn')) { document.getElementById('drawer').classList.add('open'); }
-    if (e.target.closest && (e.target.closest('#drawerClose') || e.target.closest('[data-close]'))) { document.getElementById('drawer').classList.remove('open'); }
-  });
+  }
 
-  // ---------- ROLE TABS ----------
-  document.querySelectorAll('.roletabs').forEach(function (grp) {
-    grp.querySelectorAll('button').forEach(function (btn) {
-      btn.addEventListener('click', function () {
-        grp.querySelectorAll('button').forEach(function (b) { b.setAttribute('aria-selected', 'false'); });
-        btn.setAttribute('aria-selected', 'true');
-        var r = btn.dataset.role;
-        var scope = grp.closest('section') || document;
-        scope.querySelectorAll('.role-panel').forEach(function (p) { p.classList.toggle('show', p.dataset.role === r); });
+  function initQuiz() {
+    document.querySelectorAll(".quiz").forEach(quiz => {
+      const opts = quiz.querySelectorAll(".opt");
+      const feedback = quiz.querySelector(".feedback");
+      opts.forEach(btn => {
+        btn.addEventListener("click", () => {
+          if (quiz.dataset.answered === "true") return;
+          quiz.dataset.answered = "true";
+          const correct = btn.dataset.correct === "true";
+          btn.classList.add(correct ? "correct" : "wrong");
+          if (feedback) {
+            feedback.textContent = correct ? (btn.dataset.ok || "Correct.") : (btn.dataset.no || "Not quite.");
+            feedback.style.color = correct ? "var(--ok)" : "var(--nc)";
+          }
+          if (!correct) {
+            opts.forEach(o => { if (o.dataset.correct === "true") o.classList.add("correct"); });
+          }
+          opts.forEach(o => o.style.cursor = "default");
+        });
       });
     });
-  });
-
-  // ---------- QUIZ ----------
-  document.querySelectorAll('.quiz').forEach(function (q) {
-    q.querySelectorAll('.opt').forEach(function (opt) {
-      opt.addEventListener('click', function () {
-        var fb = q.querySelector('.feedback');
-        var correct = opt.dataset.correct === 'true';
-        q.querySelectorAll('.opt').forEach(function (o) { o.disabled = true; });
-        opt.classList.add(correct ? 'correct' : 'wrong');
-        if (!correct) { var c = q.querySelector('.opt[data-correct="true"]'); if (c) c.classList.add('correct'); }
-        if (fb) fb.textContent = correct ? (opt.dataset.ok || 'Correct.') : (opt.dataset.no || 'Not quite.');
-      });
-    });
-  });
-
-  // ---------- DOC NAV SCROLL SPY ----------
-  var spy = document.querySelectorAll('.doc-nav a');
-  if (spy.length) {
-    var secs = [].map.call(spy, function (a) { return document.querySelector(a.getAttribute('href')); });
-    var io = new IntersectionObserver(function (entries) {
-      entries.forEach(function (e) {
-        if (e.isIntersecting) {
-          var id = '#' + e.target.id;
-          spy.forEach(function (a) { a.classList.toggle('active', a.getAttribute('href') === id); });
-        }
-      });
-    }, { rootMargin: '-40% 0px -55% 0px' });
-    secs.forEach(function (s) { if (s) io.observe(s); });
   }
 
-  // ---------- ROTATING BADGE (home) ----------
-  var cv = document.getElementById('shield');
-  if (cv) {
-    var ctx = cv.getContext('2d');
-    var DPR = Math.min(window.devicePixelRatio || 1, 2), CSS = 440;
-    cv.width = CSS * DPR; cv.height = CSS * DPR; ctx.scale(DPR, DPR);
-    var cx = CSS / 2, cy = CSS / 2;
-    var reduce = window.matchMedia('(prefers-reduced-motion: reduce)').matches;
-    function shieldPath(s) {
-      ctx.beginPath(); ctx.moveTo(0, -78 * s); ctx.lineTo(62 * s, -52 * s); ctx.lineTo(62 * s, 22 * s);
-      ctx.quadraticCurveTo(62 * s, 74 * s, 0, 96 * s); ctx.quadraticCurveTo(-62 * s, 74 * s, -62 * s, 22 * s);
-      ctx.lineTo(-62 * s, -52 * s); ctx.closePath();
-    }
-    function node(x, y, d) { ctx.beginPath(); ctx.arc(x, y, 2 + d * 2.4, 0, Math.PI * 2); ctx.fillStyle = 'rgba(34,211,238,' + (0.25 + d * 0.6) + ')'; ctx.fill(); }
-    function draw(t) {
-      ctx.clearRect(0, 0, CSS, CSS);
-      var angle = reduce ? 0.15 : t * 0.00075, sx = Math.cos(angle), front = sx >= 0, scaleX = Math.max(Math.abs(sx), 0.06);
-      var flo = reduce ? 0 : Math.sin(t * 0.0011) * 6;
-      var g = ctx.createRadialGradient(cx, cy, 20, cx, cy, 210);
-      g.addColorStop(0, 'rgba(79,70,229,0.30)'); g.addColorStop(0.5, 'rgba(34,211,238,0.10)'); g.addColorStop(1, 'rgba(10,14,28,0)');
-      ctx.fillStyle = g; ctx.fillRect(0, 0, CSS, CSS);
-      if (!reduce) for (var i = 0; i < 9; i++) { var a = t * 0.0006 + i * (Math.PI * 2 / 9); if (Math.sin(a) < 0) node(cx + Math.cos(a) * 170, cy + Math.sin(a) * 60 + flo * .4, (Math.sin(a) + 1) / 2); }
-      ctx.save(); ctx.translate(cx, cy + flo); ctx.transform(scaleX, 0, 0, 1, 0, 0);
-      var grad = ctx.createLinearGradient(0, -90, 0, 100);
-      if (front) { grad.addColorStop(0, '#6366F1'); grad.addColorStop(1, '#4338CA'); } else { grad.addColorStop(0, '#22D3EE'); grad.addColorStop(1, '#0E7490'); }
-      shieldPath(1); ctx.fillStyle = grad; ctx.shadowColor = 'rgba(34,211,238,0.35)'; ctx.shadowBlur = 40; ctx.fill(); ctx.shadowBlur = 0;
-      shieldPath(1); ctx.lineWidth = 2; ctx.strokeStyle = 'rgba(255,255,255,0.35)'; ctx.stroke();
-      shieldPath(0.8); ctx.lineWidth = 1; ctx.strokeStyle = 'rgba(255,255,255,0.18)'; ctx.stroke();
-      var sweep = ctx.createLinearGradient(-70 + Math.sin(angle * 2) * 40, -90, 70, 100);
-      sweep.addColorStop(0, 'rgba(255,255,255,0)'); sweep.addColorStop(0.5, 'rgba(255,255,255,0.16)'); sweep.addColorStop(1, 'rgba(255,255,255,0)');
-      shieldPath(1); ctx.fillStyle = sweep; ctx.fill();
-      if (front) { ctx.strokeStyle = '#fff'; ctx.lineWidth = 9; ctx.lineCap = 'round'; ctx.lineJoin = 'round'; ctx.beginPath(); ctx.moveTo(-26, 6); ctx.lineTo(-6, 28); ctx.lineTo(34, -22); ctx.stroke(); }
-      else { ctx.fillStyle = '#fff'; ctx.font = '700 62px ' + getComputedStyle(document.body).getPropertyValue('--font-display'); ctx.textAlign = 'center'; ctx.textBaseline = 'middle'; ctx.fillText('AQ', 0, 6); }
+  function initVideoPlay() {
+    document.querySelectorAll(".video-embed .play").forEach(btn => {
+      btn.addEventListener("click", () => {
+        btn.closest(".video-embed").style.outline = "2px solid var(--accent-bright)";
+        btn.innerHTML = '<svg width="20" height="20" viewBox="0 0 24 24" fill="currentColor"><rect x="6" y="5" width="4" height="14"/><rect x="14" y="5" width="4" height="14"/></svg>';
+      });
+    });
+  }
+
+  function initShieldCanvas() {
+    const canvas = document.getElementById("shield");
+    if (!canvas || !canvas.getContext) return;
+    const ctx = canvas.getContext("2d");
+    const W = canvas.width, H = canvas.height;
+    let t = 0;
+    const reduce = window.matchMedia && window.matchMedia("(prefers-reduced-motion: reduce)").matches;
+
+    function draw() {
+      ctx.clearRect(0, 0, W, H);
+      ctx.save();
+      ctx.translate(W / 2, H / 2);
+      const wobble = reduce ? 0 : Math.sin(t) * 0.05;
+      ctx.rotate(wobble);
+
+      const R = W * 0.34;
+      // outer ring
+      const grad = ctx.createLinearGradient(-R, -R, R, R);
+      grad.addColorStop(0, "#4F46E5");
+      grad.addColorStop(1, "#0EA5A0");
+
+      ctx.beginPath();
+      const pts = 18;
+      for (let i = 0; i <= pts; i++) {
+        const a = (i / pts) * Math.PI * 2;
+        const rr = R + Math.sin(a * 3 + t * 1.2) * (reduce ? 0 : 6);
+        const x = Math.cos(a) * rr, y = Math.sin(a) * rr;
+        i === 0 ? ctx.moveTo(x, y) : ctx.lineTo(x, y);
+      }
+      ctx.closePath();
+      ctx.fillStyle = "rgba(79,70,229,0.08)";
+      ctx.fill();
+      ctx.lineWidth = 2;
+      ctx.strokeStyle = grad;
+      ctx.stroke();
+
+      // shield
+      ctx.beginPath();
+      const s = R * 0.62;
+      ctx.moveTo(0, -s);
+      ctx.bezierCurveTo(s * 0.9, -s * 0.8, s, -s * 0.2, s, s * 0.05);
+      ctx.bezierCurveTo(s, s * 0.9, s * 0.4, s * 1.25, 0, s * 1.45);
+      ctx.bezierCurveTo(-s * 0.4, s * 1.25, -s, s * 0.9, -s, s * 0.05);
+      ctx.bezierCurveTo(-s, -s * 0.2, -s * 0.9, -s * 0.8, 0, -s);
+      ctx.closePath();
+      ctx.fillStyle = grad;
+      ctx.fill();
+
+      // check
+      ctx.beginPath();
+      ctx.moveTo(-s * 0.32, s * 0.06);
+      ctx.lineTo(-s * 0.05, s * 0.34);
+      ctx.lineTo(s * 0.4, -s * 0.28);
+      ctx.lineWidth = s * 0.13;
+      ctx.lineCap = "round";
+      ctx.lineJoin = "round";
+      ctx.strokeStyle = "#fff";
+      ctx.stroke();
+
+      // tick marks around ring (gauge feel)
+      for (let i = 0; i < 40; i++) {
+        const a = (i / 40) * Math.PI * 2;
+        const inner = R + 14, outer = R + (i % 5 === 0 ? 26 : 20);
+        ctx.beginPath();
+        ctx.moveTo(Math.cos(a) * inner, Math.sin(a) * inner);
+        ctx.lineTo(Math.cos(a) * outer, Math.sin(a) * outer);
+        ctx.strokeStyle = i % 5 === 0 ? "rgba(14,165,160,.7)" : "rgba(255,255,255,.18)";
+        ctx.lineWidth = i % 5 === 0 ? 2 : 1;
+        ctx.stroke();
+      }
+
       ctx.restore();
-      if (!reduce) for (var j = 0; j < 9; j++) { var b = t * 0.0006 + j * (Math.PI * 2 / 9); if (Math.sin(b) >= 0) node(cx + Math.cos(b) * 170, cy + Math.sin(b) * 60 + flo * .4, (Math.sin(b) + 1) / 2); }
+      t += 0.01;
+      if (!reduce) requestAnimationFrame(draw);
     }
-    var start;
-    function loop(ts) { if (!start) start = ts; draw(ts - start); if (!reduce) requestAnimationFrame(loop); }
-    requestAnimationFrame(loop); if (reduce) draw(0);
+    draw();
   }
+
+  document.addEventListener("DOMContentLoaded", () => {
+    initHeaderFooter();
+    initQuiz();
+    initVideoPlay();
+    initShieldCanvas();
+  });
 })();

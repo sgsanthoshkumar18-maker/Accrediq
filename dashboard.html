@@ -1,0 +1,325 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Quality Dashboard — Department KRA &amp; KPI | AQcredix</title>
+<meta name="description" content="One dashboard for every department's Key Result Areas and KPIs — the same standard, scored by role, the way an assessor would ask for it.">
+<link rel="icon" href="data:image/svg+xml,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 26 30'><path d='M13 1 24 5v10c0 7-5 12-11 14C7 27 2 22 2 15V5L13 1Z' fill='%234F46E5'/></svg>">
+<link rel="stylesheet" href="styles.css">
+</head>
+<body data-page="dashboard">
+<div id="site-header"></div>
+
+<section class="page-head">
+  <div class="wrap">
+    <nav class="breadcrumb"><a href="index.html">Home</a><span class="sep">/</span><span class="cur">Quality Dashboard</span></nav>
+    <span class="eyebrow">Every department, one view</span>
+    <h1>The Quality Dashboard.</h1>
+    <p class="lead">Pick a department to see its Key Result Areas and the KPIs that prove them — the same scorecard a quality manager would walk an assessor through.</p>
+  </div>
+</section>
+
+<section class="section wrap">
+  <div class="dash-toolbar">
+    <div class="dash-search">
+      <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="11" cy="11" r="7"/><path d="M21 21l-4.3-4.3" stroke-linecap="round"/></svg>
+      <input type="text" id="deptSearch" placeholder="Search a department — e.g. Pharmacy, ICU, Housekeeping…" autocomplete="off">
+    </div>
+    <span class="pill" id="deptCount">22 departments</span>
+  </div>
+
+  <div class="dept-grid" id="deptGrid"></div>
+
+  <div class="dept-detail" id="deptDetail">
+    <div class="dd-head">
+      <div>
+        <span class="eyebrow" id="ddEyebrow">Department</span>
+        <h2 id="ddName">—</h2>
+        <div class="persona muted" id="ddPersona" style="margin-top:6px;font-size:13.5px;"></div>
+      </div>
+      <div class="dd-score" id="ddScore"></div>
+      <button class="dd-close" id="ddClose" aria-label="Close department detail">
+        <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.4" stroke-linecap="round"><path d="M6 6l12 12M18 6L6 18"/></svg>
+      </button>
+    </div>
+    <div class="dd-cols">
+      <div class="dd-block">
+        <h3>Key Result Areas (KRA)</h3>
+        <ul class="kra-list" id="ddKra"></ul>
+      </div>
+      <div class="dd-block">
+        <h3>KPIs tracked</h3>
+        <table class="kpi-table">
+          <thead><tr><th>KPI</th><th>Current</th><th>Target</th><th>Status</th></tr></thead>
+          <tbody id="ddKpi"></tbody>
+        </table>
+      </div>
+    </div>
+  </div>
+
+  <div class="cta-band" style="margin-top:48px;">
+    <h2>Every KRA links back to a standard.</h2>
+    <p>Each Key Result Area on this dashboard opens into its Objective Element and Standard Card — the plain-English requirement, the assessor's lens, and the fix.</p>
+    <a class="btn btn-accent" href="standard.html">See a linked standard →</a>
+  </div>
+</section>
+
+<div id="site-footer"></div>
+<script src="app.js"></script>
+<script>
+(function(){
+  const DEPTS = [
+    { id:"hic", name:"Infection Control", short:"HIC", persona:"Clinical home turf", score:91, status:"ok",
+      kra:["Reduce healthcare-associated infection rate","Sustain hand-hygiene compliance ≥ 80%","Maintain BMW segregation at source","Run active surveillance on 4 core infection sites"],
+      kpi:[
+        ["Hand Hygiene Compliance Rate","86%","≥ 80%","ok"],
+        ["Catheter-Associated UTI Rate","2.1 /1000 cath-days","< 2.0","watch"],
+        ["Surgical Site Infection Rate","1.4%","< 1.5%","ok"],
+        ["BMW Segregation Accuracy","97%","≥ 95%","ok"]
+      ]},
+    { id:"mom", name:"Pharmacy", short:"MOM", persona:"Guardians of the drug cycle", score:82, status:"watch",
+      kra:["Zero tolerance on high-alert medication errors","100% look-alike/sound-alike separation","Timely, accurate dispensing turnaround","Cold-chain integrity for vaccines & biologics"],
+      kpi:[
+        ["Medication Error Rate","3.4 /1000 orders","< 3.0","watch"],
+        ["High-Alert Drug Storage Audit","94%","100%","watch"],
+        ["Prescription Turnaround Time","11 min","< 10 min","watch"],
+        ["Cold-Chain Excursions","0 this month","0","ok"]
+      ]},
+    { id:"nursing", name:"Nursing", short:"COP", persona:"Bedside continuity", score:88, status:"ok",
+      kra:["Accurate nursing assessment within 1 hour of admission","Fall-risk screening on every patient","Pain reassessment per protocol","Nurse-to-patient ratio compliance"],
+      kpi:[
+        ["Patient Fall Rate","0.9 /1000 pt-days","< 1.0","ok"],
+        ["Nursing Assessment Timeliness","93%","≥ 90%","ok"],
+        ["Pressure Ulcer Incidence","0.6%","< 1%","ok"],
+        ["Nurse-Patient Ratio Adherence","89%","≥ 90%","watch"]
+      ]},
+    { id:"emergency", name:"Emergency", short:"COP", persona:"First 15 minutes", score:79, status:"watch",
+      kra:["Triage every patient within 5 minutes","Door-to-doctor time within target","Critical drug availability at all times","Zero missed red-flag deterioration"],
+      kpi:[
+        ["Triage Time Compliance","91%","≥ 95%","watch"],
+        ["Door-to-Doctor Time","14 min","< 15 min","ok"],
+        ["Left-Without-Being-Seen Rate","2.1%","< 2%","watch"],
+        ["Crash Cart Readiness Audit","100%","100%","ok"]
+      ]},
+    { id:"icu", name:"ICU", short:"COP", persona:"The critical margin", score:85, status:"ok",
+      kra:["Ventilator-associated event prevention bundle","Central-line insertion bundle compliance","Daily sedation & delirium screening","Family communication within 24 hours"],
+      kpi:[
+        ["Ventilator-Associated Event Rate","1.2 /1000 vent-days","< 1.5","ok"],
+        ["CLABSI Rate","0.8 /1000 line-days","< 1.0","ok"],
+        ["ICU Readmission within 48h","1.8%","< 2%","ok"],
+        ["Bundle Compliance Audit","90%","≥ 95%","watch"]
+      ]},
+    { id:"ot", name:"Operation Theatre", short:"COP", persona:"Zero-tolerance zone", score:93, status:"ok",
+      kra:["100% surgical safety checklist use","Zero wrong-site/wrong-patient events","Surgical Site Infection prevention bundle","OT turnaround time within target"],
+      kpi:[
+        ["Surgical Safety Checklist Compliance","99%","100%","ok"],
+        ["Wrong-Site Surgery Events","0","0","ok"],
+        ["Surgical Site Infection Rate","1.4%","< 1.5%","ok"],
+        ["OT Turnaround Time","28 min","< 30 min","ok"]
+      ]},
+    { id:"lab", name:"Laboratory", short:"AAC", persona:"The evidence behind the diagnosis", score:87, status:"ok",
+      kra:["Critical value reporting within 30 minutes","Sample rejection rate below threshold","Internal & external quality control participation","Turnaround time per test category"],
+      kpi:[
+        ["Critical Value Reporting Time","22 min","< 30 min","ok"],
+        ["Sample Rejection Rate","1.1%","< 2%","ok"],
+        ["EQAS Participation","100%","100%","ok"],
+        ["Report Turnaround Time (routine)","4.2 hrs","< 6 hrs","ok"]
+      ]},
+    { id:"bloodbank", name:"Blood Bank", short:"AAC", persona:"Traceability, always", score:90, status:"ok",
+      kra:["Zero transfusion reaction from avoidable error","Component wastage below threshold","100% donor screening compliance","Cold-chain and traceability of every unit"],
+      kpi:[
+        ["Transfusion Reaction Rate","0.02%","< 0.05%","ok"],
+        ["Blood Component Wastage","1.8%","< 2%","ok"],
+        ["Donor Deferral Documentation","100%","100%","ok"],
+        ["Cross-Match to Transfusion Ratio","1.9:1","< 2:1","ok"]
+      ]},
+    { id:"radiology", name:"Radiology", short:"AAC", persona:"Image, interpret, inform", score:84, status:"watch",
+      kra:["Radiation safety and dose monitoring","Report turnaround within target","Contrast reaction preparedness","Equipment calibration on schedule"],
+      kpi:[
+        ["Report Turnaround Time","3.1 hrs","< 3 hrs","watch"],
+        ["Repeat Imaging Rate","4.2%","< 5%","ok"],
+        ["Radiation Dose Compliance","96%","≥ 95%","ok"],
+        ["Equipment Calibration Adherence","92%","100%","watch"]
+      ]},
+    { id:"housekeeping", name:"Housekeeping", short:"HIC", persona:"Meet Nathan", score:88, status:"ok",
+      kra:["BMW segregation at every point of generation","Hand-rub dispenser availability, always full","Cleaning schedule adherence per zone risk","Spill-management response within 5 minutes"],
+      kpi:[
+        ["BMW Segregation Accuracy","97%","≥ 95%","ok"],
+        ["Dispenser Availability Audit","91%","≥ 95%","watch"],
+        ["Terminal Cleaning Compliance","94%","≥ 90%","ok"],
+        ["Spill Response Time","4 min","< 5 min","ok"]
+      ]},
+    { id:"hr", name:"Human Resources", short:"HRM", persona:"Meet Ryan", score:86, status:"ok",
+      kra:["100% staff credentialing before privileging","Mandatory training completion on schedule","Annual staff health checks completed","Induction completed within first week"],
+      kpi:[
+        ["Credential Verification Compliance","100%","100%","ok"],
+        ["Mandatory Training Completion","89%","≥ 90%","watch"],
+        ["Staff Health Check Coverage","95%","100%","watch"],
+        ["Induction Completion within 7 days","93%","≥ 90%","ok"]
+      ]},
+    { id:"biomedical", name:"Biomedical", short:"FMS", persona:"Every device, accounted for", score:81, status:"watch",
+      kra:["Preventive maintenance schedule adherence","Zero use of expired/uncalibrated equipment","Breakdown response within target time","Complete equipment inventory & tagging"],
+      kpi:[
+        ["PPM Schedule Adherence","88%","≥ 95%","watch"],
+        ["Calibration Compliance","93%","100%","watch"],
+        ["Breakdown Response Time","46 min","< 60 min","ok"],
+        ["Equipment Tagging Completeness","97%","100%","ok"]
+      ]},
+    { id:"cssd", name:"CSSD", short:"HIC", persona:"Sterility, verified", score:92, status:"ok",
+      kra:["Biological indicator pass rate at 100%","Traceability of every sterilised instrument set","Load-to-load documentation completeness","Turnaround time to OT within target"],
+      kpi:[
+        ["Biological Indicator Pass Rate","100%","100%","ok"],
+        ["Instrument Traceability Audit","98%","≥ 95%","ok"],
+        ["Load Documentation Completeness","100%","100%","ok"],
+        ["Turnaround Time to OT","52 min","< 60 min","ok"]
+      ]},
+    { id:"medrecords", name:"Medical Records", short:"IMS", persona:"One source of truth", score:80, status:"watch",
+      kra:["Record completion within 24 hours of discharge","Confidentiality & access-control compliance","Retention schedule adherence","Legibility & authentication of every entry"],
+      kpi:[
+        ["Discharge Record Completion (24h)","86%","≥ 90%","watch"],
+        ["Record Access Audit Findings","2 this quarter","0","risk"],
+        ["Retention Schedule Compliance","96%","100%","ok"],
+        ["Entry Authentication Rate","91%","≥ 95%","watch"]
+      ]},
+    { id:"dietary", name:"Dietary", short:"COP", persona:"Nutrition as treatment", score:83, status:"watch",
+      kra:["Nutritional screening within 24 hours of admission","Food safety & hygiene audit compliance","Special-diet order accuracy","Meal delivery within scheduled window"],
+      kpi:[
+        ["Nutritional Screening Timeliness","89%","≥ 90%","watch"],
+        ["Food Safety Audit Score","92%","≥ 90%","ok"],
+        ["Diet Order Accuracy","95%","≥ 95%","ok"],
+        ["On-Time Meal Delivery","87%","≥ 90%","watch"]
+      ]},
+    { id:"physio", name:"Physiotherapy", short:"COP", persona:"Function, restored", score:85, status:"ok",
+      kra:["Assessment within 24 hours of referral","Documented goal-based treatment plans","Fall-prevention protocol on mobility patients","Discharge functional-status documentation"],
+      kpi:[
+        ["Referral-to-Assessment Time","20 hrs","< 24 hrs","ok"],
+        ["Goal-Based Plan Documentation","91%","≥ 90%","ok"],
+        ["Mobility-Related Fall Rate","0.3%","< 0.5%","ok"],
+        ["Discharge Documentation Completeness","88%","≥ 90%","watch"]
+      ]},
+    { id:"maintenance", name:"Maintenance", short:"FMS", persona:"The building that never stops", score:78, status:"watch",
+      kra:["Zero critical utility downtime","Fire safety system testing on schedule","Preventive maintenance of infrastructure assets","Work-order response within target"],
+      kpi:[
+        ["Critical Utility Downtime","0.4 hrs/month","0","watch"],
+        ["Fire Drill & System Test Adherence","85%","100%","watch"],
+        ["PPM Compliance (Infrastructure)","90%","≥ 95%","watch"],
+        ["Work Order Response Time","3.1 hrs","< 4 hrs","ok"]
+      ]},
+    { id:"admin", name:"Administration", short:"ROM", persona:"Governance in motion", score:89, status:"ok",
+      kra:["Policy review cycle adherence","Grievance closure within target timeline","Statutory license & registration currency","Leadership rounds completed on schedule"],
+      kpi:[
+        ["Policy Review Cycle Adherence","93%","≥ 90%","ok"],
+        ["Grievance Closure Time","6 days","< 7 days","ok"],
+        ["Statutory Compliance Currency","100%","100%","ok"],
+        ["Leadership Round Completion","88%","≥ 90%","watch"]
+      ]},
+    { id:"laundry", name:"Laundry & Mortuary", short:"FMS", persona:"Dignity in the details", score:82, status:"watch",
+      kra:["Linen segregation — soiled vs clean — at source","Microbial load within acceptable limits","Mortuary chain-of-custody documentation","Turnaround time on linen supply"],
+      kpi:[
+        ["Linen Segregation Compliance","95%","≥ 95%","ok"],
+        ["Microbial Load Audit","89%","≥ 90%","watch"],
+        ["Chain-of-Custody Documentation","97%","100%","watch"],
+        ["Linen Supply Turnaround","5.4 hrs","< 6 hrs","ok"]
+      ]},
+    { id:"quality", name:"Quality Department", short:"PSQ", persona:"The nerve centre", score:94, status:"ok",
+      kra:["Quality indicator dashboard reviewed monthly","Incident reporting culture — no blame, full disclosure","CAPA closure within committed timeline","Mock audit programme executed per calendar"],
+      kpi:[
+        ["Quality Indicator Review Completion","100%","100%","ok"],
+        ["Incident Reporting Rate (per 1000 pt-days)","6.2","Trend ↑","ok"],
+        ["CAPA On-Time Closure","91%","≥ 90%","ok"],
+        ["Mock Audit Programme Adherence","96%","≥ 90%","ok"]
+      ]},
+    { id:"obg", name:"Obstetrics & Paediatrics", short:"COP", persona:"Two patients, one standard", score:87, status:"ok",
+      kra:["Partograph use on every labour patient","Newborn resuscitation readiness","Maternal early-warning score compliance","Immunisation & discharge counselling completeness"],
+      kpi:[
+        ["Partograph Compliance","94%","≥ 90%","ok"],
+        ["Newborn Resuscitation Readiness Audit","98%","100%","ok"],
+        ["Maternal Early-Warning Score Use","86%","≥ 90%","watch"],
+        ["Discharge Counselling Completeness","92%","≥ 90%","ok"]
+      ]},
+    { id:"ims", name:"Information Management (IT)", short:"IMS", persona:"Data integrity, always", score:84, status:"watch",
+      kra:["System uptime for clinical applications","Data backup verified daily","Access control & audit-trail integrity","Downtime procedure readiness"],
+      kpi:[
+        ["Clinical System Uptime","99.4%","≥ 99.5%","watch"],
+        ["Backup Verification Success","100%","100%","ok"],
+        ["Access Audit Findings","1 this quarter","0","watch"],
+        ["Downtime Drill Completion","2 / year","2 / year","ok"]
+      ]}
+  ];
+
+  const grid = document.getElementById("deptGrid");
+  const detail = document.getElementById("deptDetail");
+  const search = document.getElementById("deptSearch");
+  const count = document.getElementById("deptCount");
+
+  function gaugeSvg(score){
+    const r = 17, c = 2*Math.PI*r;
+    const color = score>=90?"#12805C":score>=80?"#0EA5A0":"#B0590A";
+    const off = c - (score/100)*c;
+    return `<div class="gauge"><svg width="44" height="44" viewBox="0 0 44 44">
+      <circle cx="22" cy="22" r="${r}" fill="none" stroke="#ECEDF6" stroke-width="4"/>
+      <circle cx="22" cy="22" r="${r}" fill="none" stroke="${color}" stroke-width="4" stroke-linecap="round"
+        stroke-dasharray="${c}" stroke-dashoffset="${off}"/>
+    </svg><span class="gv">${score}</span></div>`;
+  }
+
+  function renderGrid(list){
+    grid.innerHTML = "";
+    if (!list.length){
+      grid.innerHTML = `<div class="dash-empty">No department matches that search.</div>`;
+      return;
+    }
+    list.forEach(d => {
+      const btn = document.createElement("button");
+      btn.className = "dept-tile";
+      btn.type = "button";
+      btn.dataset.id = d.id;
+      btn.innerHTML = `
+        <div class="dt-top">
+          <div class="dt-ico"><svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M3 21h18M6 21V8l6-4 6 4v13" stroke-linejoin="round"/></svg></div>
+          ${gaugeSvg(d.score)}
+        </div>
+        <h4>${d.name}</h4>
+        <div class="dt-meta"><span>${d.short}</span><span>·</span><span>${d.kpi.length} KPIs</span></div>`;
+      btn.addEventListener("click", () => openDetail(d));
+      grid.appendChild(btn);
+    });
+  }
+
+  function statusLabel(s){ return s==="ok" ? "On track" : s==="watch" ? "Needs attention" : "At risk"; }
+
+  function openDetail(d){
+    document.querySelectorAll(".dept-tile").forEach(t => t.classList.toggle("is-active", t.dataset.id === d.id));
+    document.getElementById("ddEyebrow").textContent = d.short + " · Department";
+    document.getElementById("ddName").textContent = d.name;
+    document.getElementById("ddPersona").textContent = d.persona;
+    document.getElementById("ddScore").innerHTML = `
+      <div class="sc"><div class="v">${d.score}</div><div class="l">Score</div></div>
+      <div class="sc"><div class="v">${d.kra.length}</div><div class="l">KRAs</div></div>
+      <div class="sc"><div class="v">${d.kpi.length}</div><div class="l">KPIs</div></div>`;
+    document.getElementById("ddKra").innerHTML = d.kra.map((k,i)=>`<li><span class="kn">KRA-${i+1}</span><span>${k}</span></li>`).join("");
+    document.getElementById("ddKpi").innerHTML = d.kpi.map(([name,val,target,status])=>`
+      <tr><td>${name}</td><td class="kt-val">${val}</td><td class="mono">${target}</td>
+      <td><span class="kt-status ${status}">${statusLabel(status)}</span></td></tr>`).join("");
+    detail.classList.add("is-open");
+    detail.scrollIntoView({ behavior: "smooth", block: "start" });
+  }
+
+  document.getElementById("ddClose").addEventListener("click", () => {
+    detail.classList.remove("is-open");
+    document.querySelectorAll(".dept-tile").forEach(t => t.classList.remove("is-active"));
+  });
+
+  search.addEventListener("input", () => {
+    const q = search.value.trim().toLowerCase();
+    const filtered = DEPTS.filter(d => d.name.toLowerCase().includes(q) || d.short.toLowerCase().includes(q));
+    renderGrid(filtered);
+    count.textContent = filtered.length + (filtered.length===1 ? " department" : " departments");
+  });
+
+  renderGrid(DEPTS);
+})();
+</script>
+</body>
+</html>
