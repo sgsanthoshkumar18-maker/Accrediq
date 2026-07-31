@@ -4,10 +4,63 @@
 <script>(function(){try{var p=new URLSearchParams(location.search);if(p.has("dark")){var v=p.get("dark");if(v==="0"){localStorage.setItem("aq-theme","light");}else{localStorage.setItem("aq-theme","dark");}}if(localStorage.getItem("aq-theme")==="dark"){document.documentElement.setAttribute("data-theme","dark");}}catch(e){}})();</script>
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width, initial-scale=1">
-<title>NABH by Department — Every Role in Accreditation | AQcredix</title>
-<meta name="description" content="From housekeeping to the director's office — the standards that touch every department, with roles, SOPs and KPIs for each.">
+<title>NABH by Department — Every Role, Every Element | AQcredix</title>
+<meta name="description" content="Click any department to see its operational essentials, licensing requirements, preventive-maintenance checklists, and every real NABH Objective Element that applies to it.">
 <link rel="icon" href="data:image/svg+xml,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 26 30'><path d='M13 1 24 5v10c0 7-5 12-11 14C7 27 2 22 2 15V5L13 1Z' fill='%234F46E5'/></svg>">
 <link rel="stylesheet" href="styles.css">
+<style>
+  .dept-tiles{display:grid;grid-template-columns:repeat(4,1fr);gap:14px;}
+  @media (max-width:1000px){.dept-tiles{grid-template-columns:repeat(3,1fr);}}
+  @media (max-width:700px){.dept-tiles{grid-template-columns:repeat(2,1fr);}}
+  @media (max-width:460px){.dept-tiles{grid-template-columns:1fr;}}
+  .dt-card{background:var(--bg-elevated);border:1px solid var(--border);border-radius:var(--r-lg);padding:18px;cursor:pointer;text-align:left;box-shadow:var(--shadow-1);transition:transform .15s ease,box-shadow .15s ease,border-color .15s ease;}
+  .dt-card:hover{transform:translateY(-3px);box-shadow:var(--shadow-2);border-color:#CBD0F0;}
+  .dt-card.is-active{border-color:var(--brand-2);box-shadow:0 0 0 3px var(--brand-tint),var(--shadow-2);}
+  .dt-card .dt-ico{width:38px;height:38px;border-radius:10px;background:var(--brand-tint);color:var(--brand-2);display:flex;align-items:center;justify-content:center;margin-bottom:10px;}
+  .dt-card h4{font-family:var(--font-display);font-size:15px;line-height:1.25;}
+  .dt-card .dt-count{font-size:11.5px;color:var(--fg-faint);margin-top:6px;font-family:var(--font-mono);}
+
+  .ddx{display:none;margin-top:36px;}
+  .ddx.is-open{display:block;animation:riseIn .25s ease both;}
+  .ddx-head{border-bottom:1px solid var(--border-soft);padding-bottom:20px;margin-bottom:24px;}
+  .ddx-head h2{font-size:26px;margin-top:8px;}
+  .ddx-head p{margin-top:10px;color:var(--fg-muted);font-size:15px;max-width:74ch;}
+
+  .ddx-section{margin-bottom:26px;}
+  .ddx-section h3{font-size:14px;text-transform:uppercase;letter-spacing:.06em;color:var(--fg-faint);font-weight:700;margin-bottom:12px;}
+  .ddx-list{list-style:none;padding:0;margin:0;display:grid;gap:9px;}
+  .ddx-list li{font-size:14px;color:var(--fg);padding:11px 14px;background:var(--bg);border:1px solid var(--border-soft);border-radius:10px;line-height:1.5;}
+  .chk-grid{display:flex;flex-wrap:wrap;gap:8px;}
+  .chk-grid span{font-size:12.5px;font-weight:600;background:var(--warn-tint);color:var(--warn);padding:7px 13px;border-radius:999px;}
+
+  .el-match-note{font-size:13px;color:var(--fg-faint);margin-bottom:14px;max-width:74ch;}
+  .std-block{margin-bottom:18px;border:1px solid var(--border);border-radius:var(--r-lg);background:var(--bg-elevated);box-shadow:var(--shadow-1);overflow:hidden;}
+  .std-block-head{padding:14px 18px;background:var(--brand-tint);font-size:13.5px;font-weight:600;display:flex;gap:10px;}
+  .std-block-head .sc{font-family:var(--font-mono);font-weight:700;color:var(--brand-2);flex-shrink:0;}
+  .el-row{display:grid;grid-template-columns:60px 100px 1fr auto;gap:12px;align-items:center;padding:12px 18px;border-top:1px solid var(--border-soft);font-size:13.5px;}
+  @media (max-width:760px){.el-row{grid-template-columns:1fr;gap:6px;}}
+  .el-letter{font-family:var(--font-mono);font-weight:700;color:var(--fg-faint);}
+  .cat-badge{display:inline-flex;align-items:center;font-size:11px;font-weight:700;padding:4px 9px;border-radius:999px;width:fit-content;}
+  .cat-CORE{background:var(--nc-tint);color:var(--nc);}
+  .cat-Commitment{background:var(--warn-tint);color:var(--warn);}
+  .cat-Achievement{background:var(--accent-bright-tint);color:var(--accent-bright);}
+  .cat-Excellence{background:var(--info-tint);color:var(--info);}
+  .sop-flag{color:var(--warn);font-weight:700;margin-left:4px;}
+  .explain-btn{font-size:12px;font-weight:700;padding:7px 13px;border-radius:999px;border:1px solid var(--border);background:var(--bg);cursor:pointer;color:var(--brand-2);white-space:nowrap;}
+  .explain-btn:hover{background:var(--brand-2);color:#fff;border-color:var(--brand-2);}
+
+  .modal-back{position:fixed;inset:0;background:rgba(10,13,30,.6);backdrop-filter:blur(3px);z-index:200;display:none;align-items:center;justify-content:center;padding:20px;}
+  .modal-back.is-open{display:flex;}
+  .modal{background:var(--bg-elevated);border-radius:var(--r-xl);max-width:640px;width:100%;max-height:86vh;overflow:auto;padding:30px;box-shadow:var(--shadow-2);position:relative;}
+  .modal-close{position:absolute;top:18px;right:18px;background:var(--bg);border:1px solid var(--border);border-radius:999px;width:32px;height:32px;display:flex;align-items:center;justify-content:center;cursor:pointer;color:var(--fg-muted);}
+  .modal h3{font-size:19px;margin-top:6px;padding-right:30px;}
+  .modal-section{margin-top:20px;}
+  .modal-section h4{font-size:11.5px;text-transform:uppercase;letter-spacing:.06em;color:var(--fg-faint);font-weight:700;margin-bottom:8px;}
+  .modal-section p{font-size:14.5px;line-height:1.6;}
+  .modal .verbatim-box{background:var(--brand-tint);border-left:3px solid var(--brand-2);padding:14px 16px;border-radius:0 var(--r-md) var(--r-md) 0;font-family:var(--font-display);font-size:15px;}
+  .modal .analogy-box{background:var(--accent-bright-tint);border-left:3px solid var(--accent-bright);padding:14px 16px;border-radius:0 var(--r-md) var(--r-md) 0;}
+  .modal .sop-box{background:var(--warn-tint);border-left:3px solid var(--warn);padding:12px 16px;border-radius:0 var(--r-md) var(--r-md) 0;font-size:13.5px;}
+</style>
 </head>
 <body data-page="departments">
 <div id="site-header"></div>
@@ -16,54 +69,182 @@
   <div class="wrap">
     <nav class="breadcrumb"><a href="index.html">Home</a><span class="sep">/</span><span class="cur">Departments</span></nav>
     <span class="eyebrow">Find your role</span>
-    <h1>Accreditation isn't the quality team's job.<br>It's everyone's.</h1>
-    <p class="lead">NABH touches every department — including the ones most guides ignore. Housekeeping, HR and maintenance all carry Objective Elements. Here's the same standard, explained for your role.</p>
+    <h1>Every department. Its own standards.</h1>
+    <p class="lead">Click a department for its operational essentials — storage, licensing, preventive maintenance, and the checklists it should keep — plus every real NABH Objective Element that applies to it. Click any element for the same book text, plain-English rewrite, and real-life example as the Standards Explorer.</p>
   </div>
 </section>
 
 <section class="section wrap">
-  <div class="section-head"><span class="eyebrow">Built in depth first</span><h2>Start with your people.</h2><p>Four departments are live in full detail — the three we designed the platform around, plus infection control.</p></div>
-  <div class="grid-2">
-    <a class="tile dept-card" href="standard.html#s6">
-      <div class="ico"><svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M3 21h18M6 21V9l6-4 6 4v12" stroke-linejoin="round"/></svg></div>
-      <div><h3>Housekeeping</h3><div class="persona">Meet Nathan</div><p>BMW segregation, colour coding, spill management, dispenser refills, cleaning logs — the frontline of infection control.</p><span class="more">See the role →</span></div>
-    </a>
-    <a class="tile dept-card" href="standard.html#s6">
-      <div class="ico"><svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="9" cy="8" r="3"/><path d="M3 20c0-3.3 2.7-6 6-6s6 2.7 6 6M17 11l2 2 4-4" stroke-linecap="round" stroke-linejoin="round"/></svg></div>
-      <div><h3>Human Resources</h3><div class="persona">Meet Ryan</div><p>Credentialing, competency assessment, training records, staff health and induction — the evidence assessors ask for first.</p><span class="more">See the role →</span></div>
-    </a>
-    <a class="tile dept-card" href="kpi.html">
-      <div class="ico"><svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M9 11l3 3L22 4"/><path d="M21 12v7a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h11" stroke-linecap="round"/></svg></div>
-      <div><h3>Quality Department</h3><div class="persona">The nerve centre</div><p>The quality programme, indicators, incident reporting, audits and the closed-loop CAPA that ties every department together.</p><span class="more">See KPIs →</span></div>
-    </a>
-    <a class="tile dept-card" href="standards.html?ch=IPC">
-      <div class="ico"><svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M19 14c-1.5 2-4 3.5-7 3.5S6.5 16 5 14a8 8 0 1 1 14 0Z"/><circle cx="12" cy="10" r="2.5"/></svg></div>
-      <div><h3>Infection Control (IPC)</h3><div class="persona">Clinical home turf</div><p>Surveillance, hand hygiene, isolation, CSSD, antibiotic stewardship — the most audited department in the hospital.</p><span class="more">Open IPC →</span></div>
-    </a>
-  </div>
+  <div class="dept-tiles" id="deptTiles"></div>
 
-  <div class="section-head" style="margin-top:54px;"><h2>Every other department</h2><p>Building next — each will get the same role → standards → SOP → KPI treatment.</p></div>
-  <div class="grid-4">
-    <div class="tile chapter-card soon"><h3>Emergency</h3></div>
-    <div class="tile chapter-card soon"><h3>ICU</h3></div>
-    <div class="tile chapter-card soon"><h3>Operation Theatre</h3></div>
-    <div class="tile chapter-card soon"><h3>Laboratory</h3></div>
-    <div class="tile chapter-card soon"><h3>Blood Bank</h3></div>
-    <div class="tile chapter-card soon"><h3>Radiology</h3></div>
-    <div class="tile chapter-card soon"><h3>Nursing</h3></div>
-    <div class="tile chapter-card soon"><h3>Pharmacy</h3></div>
-    <div class="tile chapter-card soon"><h3>Biomedical</h3></div>
-    <div class="tile chapter-card soon"><h3>CSSD</h3></div>
-    <div class="tile chapter-card soon"><h3>Medical Records</h3></div>
-    <div class="tile chapter-card soon"><h3>Dietary</h3></div>
-    <div class="tile chapter-card soon"><h3>Physiotherapy</h3></div>
-    <div class="tile chapter-card soon"><h3>Maintenance</h3></div>
-    <div class="tile chapter-card soon"><h3>Administration</h3></div>
-    <div class="tile chapter-card soon"><h3>Laundry &amp; Mortuary</h3></div>
+  <div class="ddx" id="ddx">
+    <div class="ddx-head">
+      <span class="eyebrow" id="ddxEyebrow">Department</span>
+      <h2 id="ddxName">—</h2>
+      <p id="ddxIntro"></p>
+    </div>
+
+    <div id="ddxSections"></div>
+
+    <div class="ddx-section">
+      <h3>Matched NABH Objective Elements</h3>
+      <p class="el-match-note">Matched by keyword against the real text of all 639 elements — a starting point for your own gap analysis, not a substitute for reading each chapter in full. The same element can genuinely apply to more than one department.</p>
+      <div id="ddxElements"></div>
+    </div>
   </div>
 </section>
 
+<section class="section wrap" style="padding-top:0;">
+  <div class="section-head" style="margin-top:54px;"><h2>Building next</h2><p>Every remaining role gets the same operational + standards treatment as it's added.</p></div>
+  <div class="grid-4">
+    <div class="tile chapter-card soon"><h3>Obstetrics &amp; Paediatrics</h3></div>
+    <div class="tile chapter-card soon"><h3>Psychiatry</h3></div>
+    <div class="tile chapter-card soon"><h3>Dialysis</h3></div>
+    <div class="tile chapter-card soon"><h3>Ambulance / Transport</h3></div>
+  </div>
+</section>
+
+<div class="modal-back" id="modalBack"><div class="modal" id="modalBox"></div></div>
+
 <div id="site-footer"></div>
+<script src="nabh-data.js"></script>
+<script src="nabh-explain.js"></script>
+<script src="department-data.js"></script>
 <script src="app.js"></script>
+<script>
+(function(){
+  const ICONS = {
+    pill:'<path d="M4.5 15.5 15.5 4.5a5 5 0 1 1 7 7L11.5 22.5a5 5 0 1 1-7-7Z"/><path d="M9 9l6 6" stroke-linecap="round"/>',
+    heart:'<path d="M12 21s-7-4.5-9.5-9C.7 8.3 2.5 4.5 6.3 4.5c2 0 3.4 1 5.7 3.5C14.3 5.5 15.7 4.5 17.7 4.5c3.8 0 5.6 3.8 3.8 7.5C19 16.5 12 21 12 21Z"/>',
+    zap:'<path d="M13 2 3 14h7l-1 8 10-12h-7l1-8Z" stroke-linejoin="round"/>',
+    activity:'<path d="M22 12h-4l-3 8-6-16-3 8H2" stroke-linecap="round" stroke-linejoin="round"/>',
+    scissors:'<circle cx="6" cy="6" r="3"/><circle cx="6" cy="18" r="3"/><path d="M20 4 8.5 15.5M8.5 8.5 20 20"/>',
+    flask:'<path d="M9 2h6M10 2v6l-6 12a1 1 0 0 0 1 1.5h14a1 1 0 0 0 1-1.5l-6-12V2" stroke-linejoin="round"/>',
+    droplet:'<path d="M12 2s7 8 7 13a7 7 0 1 1-14 0c0-5 7-13 7-13Z" stroke-linejoin="round"/>',
+    scan:'<path d="M3 7V5a2 2 0 0 1 2-2h2M17 3h2a2 2 0 0 1 2 2v2M21 17v2a2 2 0 0 1-2 2h-2M7 21H5a2 2 0 0 1-2-2v-2" stroke-linecap="round"/><path d="M7 12h10"/>',
+    spray:'<path d="M9 2v3M6 5h6l1 3H5l1-3Z" stroke-linejoin="round"/><path d="M8 8v13M4 13h1M4 17h1M20 8h1M20 12h1"/>',
+    users:'<circle cx="9" cy="8" r="3"/><path d="M2 20c0-3.3 2.7-6 6-6s6 2.7 6 6M17 11l2 2 4-4" stroke-linecap="round" stroke-linejoin="round"/>',
+    cpu:'<rect x="6" y="6" width="12" height="12" rx="1.5"/><path d="M9 2v3M15 2v3M9 19v3M15 19v3M2 9h3M2 15h3M19 9h3M19 15h3"/>',
+    package:'<path d="M21 8 12 3 3 8v8l9 5 9-5V8Z" stroke-linejoin="round"/><path d="M3 8l9 5 9-5M12 13v8"/>',
+    file:'<path d="M6 2h9l5 5v13a2 2 0 0 1-2 2H6a2 2 0 0 1-2-2V4a2 2 0 0 1 2-2Z" stroke-linejoin="round"/><path d="M14 2v5h5"/>',
+    utensils:'<path d="M6 2v7a2 2 0 0 0 4 0V2M8 9v13M18 2c-2 0-3 3-3 6s1 3 3 3 0 8 0 11" stroke-linecap="round" stroke-linejoin="round"/>',
+    tool:'<path d="M14.7 6.3a4 4 0 0 0-5.4 5.4L2 19l3 3 7.3-7.3a4 4 0 0 0 5.4-5.4l-2.8 2.8-2-2 2.8-2.8Z" stroke-linejoin="round"/>',
+    briefcase:'<rect x="2" y="7" width="20" height="14" rx="2"/><path d="M8 7V5a2 2 0 0 1 2-2h4a2 2 0 0 1 2 2v2M2 13h20"/>',
+    shirt:'<path d="M8 2 4 6l3 3 2-1v12h6V8l2 1 3-3-4-4-2 2h-4L8 2Z" stroke-linejoin="round"/>',
+    target:'<circle cx="12" cy="12" r="9"/><circle cx="12" cy="12" r="5"/><circle cx="12" cy="12" r="1.3" fill="currentColor"/>',
+    server:'<rect x="3" y="3" width="18" height="7" rx="1.5"/><rect x="3" y="14" width="18" height="7" rx="1.5"/><path d="M7 6.5h.01M7 17.5h.01"/>',
+    shield:'<path d="M12 2 4 5v6c0 5 3.5 9 8 11 4.5-2 8-6 8-11V5l-8-3Z" stroke-linejoin="round"/><path d="M9 12l2 2 4-4" stroke-linecap="round" stroke-linejoin="round"/>'
+  };
+
+  const NABH = window.NABH_DATA.chapters;
+  const DEPTS = window.DEPT_DATA;
+
+  function matchElements(dept){
+    const results = [];
+    const chapters = dept.chapters && dept.chapters.length ? dept.chapters : Object.keys(NABH);
+    chapters.forEach(code => {
+      const ch = NABH[code];
+      if (!ch) return;
+      ch.standards.forEach(std => {
+        std.elements.forEach(el => {
+          if (dept.keywords.some(re => re.test(el.text)) || dept.keywords.some(re => re.test(std.text))) {
+            results.push({chapter:code, std, el});
+          }
+        });
+      });
+    });
+    // dedupe by std+letter
+    const seen = new Set(); const out = [];
+    results.forEach(r => { const k = r.std.code+r.el.letter; if(!seen.has(k)){seen.add(k); out.push(r);} });
+    return out;
+  }
+
+  function renderTiles(){
+    const grid = document.getElementById('deptTiles');
+    grid.innerHTML = DEPTS.map(d => {
+      const count = matchElements(d).length;
+      return `<button class="dt-card" type="button" data-id="${d.id}">
+        <div class="dt-ico"><svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">${ICONS[d.icon]||ICONS.target}</svg></div>
+        <h4>${d.name}</h4>
+        <div class="dt-count">${count} matched elements</div>
+      </button>`;
+    }).join('');
+    grid.querySelectorAll('.dt-card').forEach(btn => btn.addEventListener('click', () => openDept(btn.dataset.id)));
+  }
+
+  let currentDept = null;
+
+  function openDept(id){
+    const dept = DEPTS.find(d => d.id === id);
+    currentDept = dept;
+    document.querySelectorAll('.dt-card').forEach(c => c.classList.toggle('is-active', c.dataset.id === id));
+    document.getElementById('ddxEyebrow').textContent = dept.chapters.join(', ') + ' · Department';
+    document.getElementById('ddxName').textContent = dept.name;
+    document.getElementById('ddxIntro').textContent = dept.intro;
+
+    document.getElementById('ddxSections').innerHTML = dept.sections.map(sec => {
+      if (sec.h.toLowerCase().startsWith('checklists')) {
+        return `<div class="ddx-section"><h3>${sec.h}</h3><div class="chk-grid">${sec.items.map(i=>`<span>${i}</span>`).join('')}</div></div>`;
+      }
+      return `<div class="ddx-section"><h3>${sec.h}</h3><ul class="ddx-list">${sec.items.map(i=>`<li>${i}</li>`).join('')}</ul></div>`;
+    }).join('');
+
+    const matches = matchElements(dept);
+    const byStd = {};
+    matches.forEach(m => { (byStd[m.std.code] = byStd[m.std.code] || []).push(m); });
+    const elWrap = document.getElementById('ddxElements');
+    if (!matches.length) {
+      elWrap.innerHTML = '<div class="dash-empty">No direct element matches yet — check the Standards Explorer for the full chapter.</div>';
+    } else {
+      elWrap.innerHTML = Object.keys(byStd).map(stdCode => {
+        const group = byStd[stdCode];
+        const std = group[0].std;
+        return `<div class="std-block">
+          <div class="std-block-head"><span class="sc">${stdCode}</span><span>${std.text}</span></div>
+          ${group.map(g => `
+            <div class="el-row">
+              <span class="el-letter">${stdCode}.${g.el.letter}</span>
+              <span class="cat-badge cat-${g.el.category}">${g.el.category}</span>
+              <span>${g.el.text}${g.el.sop ? '<span class="sop-flag">✱ SOP required</span>' : ''}</span>
+              <button class="explain-btn" data-std="${stdCode}" data-letter="${g.el.letter}">Explain this element</button>
+            </div>`).join('')}
+        </div>`;
+      }).join('');
+      elWrap.querySelectorAll('.explain-btn').forEach(btn => btn.addEventListener('click', () => openModal(btn.dataset.std, btn.dataset.letter)));
+    }
+
+    document.getElementById('ddx').classList.add('is-open');
+    document.getElementById('ddx').scrollIntoView({behavior:'smooth', block:'start'});
+  }
+
+  const modalBack = document.getElementById('modalBack');
+  const modalBox = document.getElementById('modalBox');
+  function openModal(stdCode, letter){
+    const chCode = stdCode.split('.')[0];
+    const std = NABH[chCode].standards.find(s => s.code === stdCode);
+    const el = std.elements.find(e => e.letter === letter);
+    const simple = window.NABH_EXPLAIN.simplify(el.text);
+    const analogy = window.NABH_EXPLAIN.analogyFor(el.text);
+    modalBox.innerHTML = `
+      <button class="modal-close" id="modalCloseBtn" aria-label="Close"><svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.4" stroke-linecap="round"><path d="M6 6l12 12M18 6L6 18"/></svg></button>
+      <span class="eyebrow">${stdCode}.${letter} · <span class="cat-badge cat-${el.category}" style="margin-left:4px;">${el.category}</span></span>
+      <h3>${std.text}</h3>
+      <div class="modal-section"><h4>As written in the NABH 6th Edition</h4><div class="verbatim-box">"${el.text}"</div></div>
+      <div class="modal-section"><h4>In simple terms</h4><p>${simple}</p></div>
+      <div class="modal-section"><h4>A real-life example (outside healthcare)</h4><div class="analogy-box"><p style="margin:0;">${analogy}</p></div></div>
+      ${el.sop ? `<div class="modal-section"><div class="sop-box"><b>✱ SOP required.</b> This element is asterisked in the book — a written Standard Operating Procedure must exist, documented and on file.</div></div>` : ''}
+    `;
+    document.getElementById('modalCloseBtn').addEventListener('click', closeModal);
+    modalBack.classList.add('is-open');
+  }
+  function closeModal(){ modalBack.classList.remove('is-open'); }
+  modalBack.addEventListener('click', e => { if (e.target === modalBack) closeModal(); });
+  document.addEventListener('keydown', e => { if (e.key === 'Escape') closeModal(); });
+
+  renderTiles();
+  const params = new URLSearchParams(location.search);
+  if (params.has('d') && DEPTS.some(d => d.id === params.get('d'))) openDept(params.get('d'));
+})();
+</script>
 </body>
 </html>
