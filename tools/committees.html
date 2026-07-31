@@ -1,0 +1,307 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<script>(function(){try{var p=new URLSearchParams(location.search);if(p.has("dark")){var v=p.get("dark");if(v==="0"){localStorage.setItem("aq-theme","light");}else{localStorage.setItem("aq-theme","dark");}}if(localStorage.getItem("aq-theme")==="dark"){document.documentElement.setAttribute("data-theme","dark");}}catch(e){}})();</script>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Hospital Committees — Purpose, Members &amp; Terms of Reference | AQcredix</title>
+<meta name="description" content="Every mandatory NABH/JCI-aligned hospital committee — Drug & Therapeutics, Infection Control, CPR, Blood Transfusion and more — with purpose, chairperson, meeting frequency, and mandatory member departments.">
+<link rel="icon" href="data:image/svg+xml,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 26 30'><path d='M13 1 24 5v10c0 7-5 12-11 14C7 27 2 22 2 15V5L13 1Z' fill='%234F46E5'/></svg>">
+<link rel="stylesheet" href="../styles.css">
+<style>
+  .cm-toolbar{display:flex;gap:10px;flex-wrap:wrap;align-items:center;justify-content:space-between;margin-bottom:26px;}
+  .cm-search{flex:1;min-width:220px;position:relative;}
+  .cm-search input{width:100%;padding:13px 16px 13px 42px;border-radius:999px;border:1px solid var(--border);background:var(--bg-elevated);font-size:14.5px;font-family:var(--font-body);box-shadow:var(--shadow-1);}
+  .cm-search input:focus{outline:none;border-color:var(--brand-2);}
+  .cm-search svg{position:absolute;left:15px;top:50%;transform:translateY(-50%);color:var(--fg-faint);}
+  .cm-sort{display:flex;align-items:center;gap:8px;}
+  .cm-sort select{border:1px solid var(--border);background:var(--bg-elevated);border-radius:999px;padding:11px 16px;font-size:13.5px;font-family:var(--font-body);color:var(--fg);cursor:pointer;}
+
+  .cm-grid{display:grid;grid-template-columns:repeat(3,1fr);gap:16px;}
+  @media (max-width:980px){.cm-grid{grid-template-columns:repeat(2,1fr);}}
+  @media (max-width:640px){.cm-grid{grid-template-columns:1fr;}}
+  .cm-card{background:var(--bg-elevated);border:1px solid var(--border);border-radius:var(--r-lg);padding:20px;cursor:pointer;text-align:left;box-shadow:var(--shadow-1);transition:transform .15s ease,box-shadow .15s ease,border-color .15s ease;display:flex;flex-direction:column;gap:10px;}
+  .cm-card:hover{transform:translateY(-3px);box-shadow:var(--shadow-2);border-color:#CBD0F0;}
+  .cm-card.is-active{border-color:var(--brand-2);box-shadow:0 0 0 3px var(--brand-tint),var(--shadow-2);}
+  .cm-card .cm-ico{width:38px;height:38px;border-radius:10px;background:var(--brand-tint);color:var(--brand-2);display:flex;align-items:center;justify-content:center;}
+  .cm-card h4{font-family:var(--font-display);font-size:16px;line-height:1.3;}
+  .cm-card p{font-size:13px;color:var(--fg-faint);line-height:1.5;}
+  .cm-card .cm-meta{display:flex;gap:8px;font-size:11px;color:var(--fg-faint);font-family:var(--font-mono);margin-top:auto;padding-top:6px;border-top:1px solid var(--border-soft);}
+
+  .cdx{display:none;margin-top:38px;}
+  .cdx.is-open{display:block;animation:riseIn .25s ease both;}
+  .cdx-head{border-bottom:1px solid var(--border-soft);padding-bottom:20px;margin-bottom:26px;display:flex;justify-content:space-between;gap:20px;flex-wrap:wrap;align-items:flex-start;}
+  .cdx-head h2{font-size:25px;margin-top:8px;}
+  .cdx-close{background:var(--bg);border:1px solid var(--border);border-radius:999px;width:34px;height:34px;display:flex;align-items:center;justify-content:center;cursor:pointer;color:var(--fg-muted);flex-shrink:0;}
+  .cdx-close:hover{color:var(--nc);border-color:var(--nc);}
+  .cdx-purpose{font-size:15px;color:var(--fg-muted);max-width:76ch;margin-top:10px;}
+
+  .cdx-facts{display:grid;grid-template-columns:repeat(3,1fr);gap:12px;margin:24px 0 30px;}
+  @media (max-width:700px){.cdx-facts{grid-template-columns:1fr;}}
+  .cdx-fact{background:var(--bg);border:1px solid var(--border-soft);border-radius:var(--r-md);padding:14px 16px;}
+  .cdx-fact .l{font-size:10.5px;text-transform:uppercase;letter-spacing:.06em;color:var(--fg-faint);font-weight:700;}
+  .cdx-fact .v{font-size:14px;font-weight:600;margin-top:4px;}
+
+  .cdx-cols{display:grid;grid-template-columns:1fr 1fr;gap:32px;}
+  @media (max-width:860px){.cdx-cols{grid-template-columns:1fr;}}
+  .cdx-block{margin-bottom:26px;}
+  .cdx-block h3{font-size:13px;text-transform:uppercase;letter-spacing:.06em;color:var(--fg-faint);font-weight:700;margin-bottom:12px;}
+  .cdx-list{list-style:none;padding:0;margin:0;display:grid;gap:9px;}
+  .cdx-list li{font-size:13.5px;color:var(--fg);padding:11px 14px;background:var(--bg);border:1px solid var(--border-soft);border-radius:10px;line-height:1.5;}
+
+  .member-chips{display:flex;flex-wrap:wrap;gap:8px;}
+  .member-chips span{font-size:12.5px;font-weight:600;background:var(--brand-tint);color:var(--brand-2);padding:7px 13px;border-radius:999px;}
+
+  .ref-block{margin-top:8px;}
+  .ref-note{font-size:12.5px;color:var(--fg-faint);margin-bottom:10px;}
+  .std-block{margin-bottom:14px;border:1px solid var(--border);border-radius:var(--r-lg);background:var(--bg-elevated);box-shadow:var(--shadow-1);overflow:hidden;}
+  .std-block-head{padding:12px 16px;background:var(--brand-tint);font-size:13px;font-weight:600;display:flex;gap:10px;}
+  .std-block-head .sc{font-family:var(--font-mono);font-weight:700;color:var(--brand-2);flex-shrink:0;}
+  .el-row{display:grid;grid-template-columns:56px 1fr auto;gap:10px;align-items:center;padding:10px 16px;border-top:1px solid var(--border-soft);font-size:12.5px;}
+  @media (max-width:700px){.el-row{grid-template-columns:1fr;gap:5px;}}
+  .el-letter{font-family:var(--font-mono);font-weight:700;color:var(--fg-faint);}
+  .cat-badge{display:inline-flex;align-items:center;font-size:10.5px;font-weight:700;padding:3px 8px;border-radius:999px;width:fit-content;}
+  .cat-CORE{background:var(--nc-tint);color:var(--nc);}
+  .cat-Commitment{background:var(--warn-tint);color:var(--warn);}
+  .cat-Achievement{background:var(--accent-bright-tint);color:var(--accent-bright);}
+  .cat-Excellence{background:var(--info-tint);color:var(--info);}
+  .explain-btn{font-size:11px;font-weight:700;padding:6px 11px;border-radius:999px;border:1px solid var(--border);background:var(--bg);cursor:pointer;color:var(--brand-2);white-space:nowrap;}
+  .explain-btn:hover{background:var(--brand-2);color:#fff;border-color:var(--brand-2);}
+
+  .modal-back{position:fixed;inset:0;background:rgba(10,13,30,.6);backdrop-filter:blur(3px);z-index:200;display:none;align-items:center;justify-content:center;padding:20px;}
+  .modal-back.is-open{display:flex;}
+  .modal{background:var(--bg-elevated);border-radius:var(--r-xl);max-width:640px;width:100%;max-height:86vh;overflow:auto;padding:30px;box-shadow:var(--shadow-2);position:relative;}
+  .modal-close{position:absolute;top:18px;right:18px;background:var(--bg);border:1px solid var(--border);border-radius:999px;width:32px;height:32px;display:flex;align-items:center;justify-content:center;cursor:pointer;color:var(--fg-muted);}
+  .modal h3{font-size:19px;margin-top:6px;padding-right:30px;}
+  .modal-section{margin-top:20px;}
+  .modal-section h4{font-size:11.5px;text-transform:uppercase;letter-spacing:.06em;color:var(--fg-faint);font-weight:700;margin-bottom:8px;}
+  .modal-section p{font-size:14.5px;line-height:1.6;}
+  .modal .verbatim-box{background:var(--brand-tint);border-left:3px solid var(--brand-2);padding:14px 16px;border-radius:0 var(--r-md) var(--r-md) 0;font-family:var(--font-display);font-size:15px;}
+  .modal .analogy-box{background:var(--accent-bright-tint);border-left:3px solid var(--accent-bright);padding:14px 16px;border-radius:0 var(--r-md) var(--r-md) 0;}
+  .cm-empty{grid-column:1/-1;text-align:center;padding:50px 20px;color:var(--fg-faint);font-size:14.5px;}
+</style>
+</head>
+<body data-page="committees" data-base="../">
+<div id="site-header"></div>
+
+<section class="page-head">
+  <div class="wrap">
+    <nav class="breadcrumb"><a href="../index.html">Home</a><span class="sep">/</span><a href="quality-tools.html">Tools</a><span class="sep">/</span><span class="cur">Committees</span></nav>
+    <span class="eyebrow">Governance in motion</span>
+    <h1>Hospital Committees.</h1>
+    <p class="lead">The 12 mandatory NABH/JCI-aligned committees every accredited hospital runs — purpose, terms of reference, chairperson, meeting frequency, and the departments required to be represented. Click any committee for the full detail, including which real NABH elements it directly governs.</p>
+  </div>
+</section>
+
+<section class="section wrap">
+  <div class="cm-toolbar">
+    <div class="cm-search">
+      <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="11" cy="11" r="7"/><path d="M21 21l-4.3-4.3" stroke-linecap="round"/></svg>
+      <input type="text" id="cmSearch" placeholder="Search committees — e.g. Infection, CPR, Blood…" autocomplete="off">
+    </div>
+    <div class="cm-sort">
+      <label for="cmSort" class="muted" style="font-size:12.5px;">Sort</label>
+      <select id="cmSort">
+        <option value="az">A → Z</option>
+        <option value="za">Z → A</option>
+        <option value="freq">Meeting frequency</option>
+      </select>
+    </div>
+  </div>
+
+  <div class="cm-grid" id="cmGrid"></div>
+
+  <div class="cdx" id="cdx">
+    <div class="cdx-head">
+      <div>
+        <span class="eyebrow" id="cdxShort">Committee</span>
+        <h2 id="cdxName">—</h2>
+        <p class="cdx-purpose" id="cdxPurpose"></p>
+      </div>
+      <button class="cdx-close" id="cdxClose" aria-label="Close committee detail">
+        <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.4" stroke-linecap="round"><path d="M6 6l12 12M18 6L6 18"/></svg>
+      </button>
+    </div>
+
+    <div class="cdx-facts">
+      <div class="cdx-fact"><div class="l">Chairperson</div><div class="v" id="cdxChair"></div></div>
+      <div class="cdx-fact"><div class="l">Member Secretary</div><div class="v" id="cdxSec"></div></div>
+      <div class="cdx-fact"><div class="l">Meeting Frequency</div><div class="v" id="cdxFreq"></div></div>
+    </div>
+
+    <div class="cdx-cols">
+      <div>
+        <div class="cdx-block"><h3>Objectives</h3><ul class="cdx-list" id="cdxObjectives"></ul></div>
+        <div class="cdx-block"><h3>Roles &amp; Responsibilities</h3><ul class="cdx-list" id="cdxRoles"></ul></div>
+      </div>
+      <div>
+        <div class="cdx-block"><h3>Terms of Reference</h3><ul class="cdx-list" id="cdxTor"></ul></div>
+        <div class="cdx-block"><h3>Mandatory Members / Departments</h3><div class="member-chips" id="cdxMembers"></div></div>
+      </div>
+    </div>
+
+    <div class="cdx-block">
+      <h3>Reference Standards (NABH elements this committee governs)</h3>
+      <p class="ref-note">Matched by keyword against the real text of all 639 elements — future-ready as more chapters and frameworks are added.</p>
+      <div id="cdxRef"></div>
+    </div>
+  </div>
+</section>
+
+<section class="wrap" style="padding-bottom:60px;">
+  <div class="cta-band">
+    <h2>Committees exist to close the loop on a standard.</h2>
+    <p>Every committee above ties back to real NABH Objective Elements — open the Standards Explorer for the full chapter each one governs.</p>
+    <a class="btn btn-accent" href="../standards.html">Open the Standards Explorer →</a>
+  </div>
+</section>
+
+<div class="modal-back" id="modalBack"><div class="modal" id="modalBox"></div></div>
+
+<div id="site-footer"></div>
+<script src="../nabh-data.js"></script>
+<script src="../nabh-explain.js"></script>
+<script src="../committee-data.js"></script>
+<script src="../app.js"></script>
+<script>
+(function(){
+  const COMMITTEES = window.COMMITTEE_DATA;
+  const NABH = window.NABH_DATA.chapters;
+  const grid = document.getElementById('cmGrid');
+  const search = document.getElementById('cmSearch');
+  const sortSel = document.getElementById('cmSort');
+  let currentSlug = null;
+
+  const ICON = '<path d="M17 20h5v-2a4 4 0 0 0-3-3.87M9 20H4v-2a4 4 0 0 1 3-3.87M9 7a4 4 0 1 1 8 0 4 4 0 0 1-8 0Z"/><path d="M13 13a4 4 0 0 1 4 4v3M11 13a4 4 0 0 0-4 4v3"/>';
+
+  function freqRank(f){
+    if (/month/i.test(f) && !/quarter/i.test(f)) return 0;
+    if (/quarter/i.test(f)) return 1;
+    return 2;
+  }
+
+  function getList(){
+    let list = COMMITTEES.slice();
+    const q = search.value.trim().toLowerCase();
+    if (q) list = list.filter(c => c.name.toLowerCase().includes(q) || c.short.toLowerCase().includes(q) || c.purpose.toLowerCase().includes(q));
+    const sort = sortSel.value;
+    if (sort === 'az') list.sort((a,b) => a.name.localeCompare(b.name));
+    else if (sort === 'za') list.sort((a,b) => b.name.localeCompare(a.name));
+    else if (sort === 'freq') list.sort((a,b) => freqRank(a.frequency) - freqRank(b.frequency));
+    return list;
+  }
+
+  function renderGrid(){
+    const list = getList();
+    if (!list.length){ grid.innerHTML = '<div class="cm-empty">No committee matches that search.</div>'; return; }
+    grid.innerHTML = list.map(c => `
+      <button class="cm-card ${currentSlug===c.slug?'is-active':''}" type="button" data-slug="${c.slug}">
+        <div class="cm-ico"><svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">${ICON}</svg></div>
+        <h4>${c.name}</h4>
+        <p>${c.purpose}</p>
+        <div class="cm-meta"><span>${c.short}</span><span>·</span><span>${c.frequency.split(',')[0]}</span></div>
+      </button>`).join('');
+    grid.querySelectorAll('.cm-card').forEach(btn => btn.addEventListener('click', () => openCommittee(btn.dataset.slug)));
+  }
+
+  function matchElements(committee){
+    const results = [];
+    (committee.refChapters||[]).forEach(code => {
+      const ch = NABH[code]; if (!ch) return;
+      ch.standards.forEach(std => std.elements.forEach(el => {
+        if ((committee.refKeywords||[]).some(re => re.test(el.text)) || (committee.refKeywords||[]).some(re => re.test(std.text))) {
+          results.push({std, el});
+        }
+      }));
+    });
+    const seen = new Set(); const out = [];
+    results.forEach(r => { const k = r.std.code+r.el.letter; if(!seen.has(k)){seen.add(k); out.push(r);} });
+    return out;
+  }
+
+  function openCommittee(slug){
+    const c = COMMITTEES.find(x => x.slug === slug);
+    if (!c) return;
+    currentSlug = slug;
+    renderGrid();
+
+    document.getElementById('cdxShort').textContent = c.short + ' · Committee';
+    document.getElementById('cdxName').textContent = c.name;
+    document.getElementById('cdxPurpose').textContent = c.purpose;
+    document.getElementById('cdxChair').textContent = c.chairperson;
+    document.getElementById('cdxSec').textContent = c.memberSecretary;
+    document.getElementById('cdxFreq').textContent = c.frequency;
+    document.getElementById('cdxObjectives').innerHTML = c.objectives.map(o=>`<li>${o}</li>`).join('');
+    document.getElementById('cdxRoles').innerHTML = c.responsibilities.map(o=>`<li>${o}</li>`).join('');
+    document.getElementById('cdxTor').innerHTML = c.termsOfReference.map(o=>`<li>${o}</li>`).join('');
+    document.getElementById('cdxMembers').innerHTML = c.mandatoryMembers.map(m=>`<span>${m}</span>`).join('');
+
+    const matches = matchElements(c);
+    const byStd = {};
+    matches.forEach(m => { (byStd[m.std.code] = byStd[m.std.code] || []).push(m); });
+    const refWrap = document.getElementById('cdxRef');
+    if (!matches.length) {
+      refWrap.innerHTML = '<div class="cm-empty" style="padding:20px;">No direct element matches yet.</div>';
+    } else {
+      refWrap.innerHTML = Object.keys(byStd).map(stdCode => {
+        const group = byStd[stdCode];
+        const std = group[0].std;
+        return `<div class="std-block">
+          <div class="std-block-head"><span class="sc">${stdCode}</span><span>${std.text}</span></div>
+          ${group.map(g => `
+            <div class="el-row">
+              <span class="el-letter">${stdCode}.${g.el.letter}</span>
+              <span><span class="cat-badge cat-${g.el.category}">${g.el.category}</span> ${g.el.text}</span>
+              <button class="explain-btn" data-std="${stdCode}" data-letter="${g.el.letter}">Explain</button>
+            </div>`).join('')}
+        </div>`;
+      }).join('');
+      refWrap.querySelectorAll('.explain-btn').forEach(btn => btn.addEventListener('click', () => openModal(btn.dataset.std, btn.dataset.letter)));
+    }
+
+    const cdx = document.getElementById('cdx');
+    cdx.classList.add('is-open');
+    cdx.scrollIntoView({behavior:'smooth', block:'start'});
+    history.replaceState(null, '', '?c=' + slug);
+  }
+
+  document.getElementById('cdxClose').addEventListener('click', () => {
+    document.getElementById('cdx').classList.remove('is-open');
+    currentSlug = null;
+    renderGrid();
+    history.replaceState(null, '', location.pathname);
+  });
+
+  const modalBack = document.getElementById('modalBack');
+  const modalBox = document.getElementById('modalBox');
+  function openModal(stdCode, letter){
+    const chCode = stdCode.split('.')[0];
+    const std = NABH[chCode].standards.find(s => s.code === stdCode);
+    const el = std.elements.find(e => e.letter === letter);
+    const simple = window.NABH_EXPLAIN.simplify(el.text);
+    const analogy = window.NABH_EXPLAIN.analogyFor(el.text);
+    modalBox.innerHTML = `
+      <button class="modal-close" id="modalCloseBtn" aria-label="Close"><svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.4" stroke-linecap="round"><path d="M6 6l12 12M18 6L6 18"/></svg></button>
+      <span class="eyebrow">${stdCode}.${letter} · <span class="cat-badge cat-${el.category}" style="margin-left:4px;">${el.category}</span></span>
+      <h3>${std.text}</h3>
+      <div class="modal-section"><h4>As written in the NABH 6th Edition</h4><div class="verbatim-box">"${el.text}"</div></div>
+      <div class="modal-section"><h4>In simple terms</h4><p>${simple}</p></div>
+      <div class="modal-section"><h4>A real-life example (outside healthcare)</h4><div class="analogy-box"><p style="margin:0;">${analogy}</p></div></div>
+    `;
+    document.getElementById('modalCloseBtn').addEventListener('click', closeModal);
+    modalBack.classList.add('is-open');
+  }
+  function closeModal(){ modalBack.classList.remove('is-open'); }
+  modalBack.addEventListener('click', e => { if (e.target === modalBack) closeModal(); });
+  document.addEventListener('keydown', e => { if (e.key === 'Escape') closeModal(); });
+
+  search.addEventListener('input', renderGrid);
+  sortSel.addEventListener('change', renderGrid);
+
+  renderGrid();
+  const params = new URLSearchParams(location.search);
+  if (params.has('c') && COMMITTEES.some(c => c.slug === params.get('c'))) openCommittee(params.get('c'));
+})();
+</script>
+</body>
+</html>

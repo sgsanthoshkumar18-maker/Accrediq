@@ -1,28 +1,27 @@
 /* AQcredix — shared site behaviour: header/footer injection, nav, quiz, hero badge */
 
 (function () {
+  // Flat items + one dropdown group ("Tools"). hrefs are ROOT-RELATIVE (no leading base) —
+  // resolved against each page's data-base attribute at render time, so this file works
+  // unmodified whether the page lives at the site root or inside /tools/ or /tools/committees/.
   const NAV = [
-    { href: "standards.html", label: "Standards" },
-    { href: "departments.html", label: "Departments" },
-    { href: "kpi.html", label: "KPI Library" },
-    { href: "code-alerts.html", label: "Code Alerts" },
-    { href: "tools.html", label: "Tools" },
-    { href: "videos.html", label: "Videos" },
-    { href: "learn.html", label: "Learn" },
-    { href: "about.html", label: "About" }
+    { key: "standards", href: "standards.html", label: "Standards" },
+    { key: "departments", href: "departments.html", label: "Departments" },
+    {
+      key: "toolsgroup", label: "Tools", dropdown: [
+        { key: "qualitytools", href: "tools/quality-tools.html", label: "Quality Tools" },
+        { key: "kpilibrary", href: "tools/kpi-library.html", label: "KPI Library" },
+        { key: "codealerts", href: "tools/code-alerts.html", label: "Code Alerts" },
+        { key: "committees", href: "tools/committees.html", label: "Committees" },
+      ]
+    },
+    { key: "videos", href: "videos.html", label: "Videos" },
+    { key: "learn", href: "learn.html", label: "Learn" },
+    { key: "about", href: "about.html", label: "About" }
   ];
 
-  const PAGE_KEY = {
-    standards: "standards.html",
-    departments: "departments.html",
-    dashboard: "dashboard.html",
-    kpi: "kpi.html",
-    codealerts: "code-alerts.html",
-    tools: "tools.html",
-    videos: "videos.html",
-    learn: "learn.html",
-    about: "about.html"
-  };
+  // Keys that count as "inside Tools" for top-level highlighting purposes.
+  const TOOLS_GROUP_KEYS = ["qualitytools", "kpilibrary", "codealerts", "committees", "committeedetail"];
 
   const shieldMark = `<svg width="30" height="34" viewBox="0 0 26 30" fill="none" xmlns="http://www.w3.org/2000/svg">
       <path d="M13 1 24 5v10c0 7-5 12-11 14C7 27 2 22 2 15V5L13 1Z" fill="url(#qgrad)"/>
@@ -32,23 +31,40 @@
       </linearGradient></defs>
     </svg>`;
 
-  function buildHeader(current) {
+  function getBase() {
+    return document.body.getAttribute("data-base") || "";
+  }
+
+  function buildHeader(currentKey, base) {
     const links = NAV.map(n => {
-      const active = current === n.href ? " active" : "";
-      const hot = n.hot ? " hot" : "";
-      return `<a href="${n.href}" class="${active || hot}">${n.label}</a>`;
+      if (n.dropdown) {
+        const groupActive = TOOLS_GROUP_KEYS.includes(currentKey);
+        const items = n.dropdown.map(d => {
+          const active = currentKey === d.key ? " active" : "";
+          return `<a href="${base}${d.href}" class="nav-dd-item${active}" role="menuitem">${d.label}</a>`;
+        }).join("");
+        return `<div class="nav-dropdown" id="toolsDropdown">
+          <button type="button" class="nav-dd-trigger${groupActive ? " active" : ""}" aria-haspopup="true" aria-expanded="false" id="toolsDropdownTrigger">
+            ${n.label}
+            <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.4" stroke-linecap="round" stroke-linejoin="round"><path d="M6 9l6 6 6-6"/></svg>
+          </button>
+          <div class="nav-dd-panel" role="menu" aria-label="Tools">${items}</div>
+        </div>`;
+      }
+      const active = currentKey === n.key ? " active" : "";
+      return `<a href="${base}${n.href}" class="${active}">${n.label}</a>`;
     }).join("");
 
     return `
     <header class="site-header">
       <div class="bar wrap">
-        <a href="index.html" class="brand">
+        <a href="${base}index.html" class="brand">
           ${shieldMark}
           <span class="brand-stack">AQcredix<span class="full-name">Accreditation & Quality Excellence</span></span>
         </a>
         <nav class="main-nav" id="mainNav">${links}</nav>
         <div class="nav-actions">
-          <a class="btn btn-primary btn-sm" href="dashboard.html">Quality Dashboard</a>
+          <a class="btn btn-primary btn-sm" href="${base}dashboard.html">Quality Dashboard</a>
           <button class="nav-toggle" id="navToggle" aria-label="Toggle menu" aria-expanded="false">
             <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round"><path d="M4 7h16M4 12h16M4 17h16"/></svg>
           </button>
@@ -57,29 +73,31 @@
     </header>`;
   }
 
-  function buildFooter() {
+  function buildFooter(base) {
     return `
     <footer class="site-footer">
       <div class="wrap">
         <div class="footer-grid">
           <div class="footer-brand">
-            <a href="index.html" class="brand">${shieldMark}<span class="brand-stack">AQcredix<span class="full-name">Accreditation & Quality Excellence</span></span></a>
+            <a href="${base}index.html" class="brand">${shieldMark}<span class="brand-stack">AQcredix<span class="full-name">Accreditation & Quality Excellence</span></span></a>
             <p>NABH accreditation, actually understood — every standard explained the way an assessor reads it.</p>
           </div>
           <div class="footer-col"><h4>Learn</h4>
-            <a href="standards.html">Standards</a>
-            <a href="departments.html">Departments</a>
-            <a href="dashboard.html">Quality Dashboard</a>
-            <a href="kpi.html">KPI Library</a>
+            <a href="${base}standards.html">Standards</a>
+            <a href="${base}departments.html">Departments</a>
+            <a href="${base}dashboard.html">Quality Dashboard</a>
+            <a href="${base}tools/kpi-library.html">KPI Library</a>
           </div>
           <div class="footer-col"><h4>Practice</h4>
-            <a href="tools.html">Quality Tools</a>
-            <a href="videos.html">Assessor Videos</a>
-            <a href="learn.html">Learn &amp; Test</a>
+            <a href="${base}tools/quality-tools.html">Quality Tools</a>
+            <a href="${base}tools/committees.html">Committees</a>
+            <a href="${base}tools/code-alerts.html">Code Alerts</a>
+            <a href="${base}videos.html">Assessor Videos</a>
+            <a href="${base}learn.html">Learn &amp; Test</a>
           </div>
           <div class="footer-col"><h4>AQcredix</h4>
-            <a href="about.html">About &amp; vision</a>
-            <a href="about.html#roadmap">Roadmap</a>
+            <a href="${base}about.html">About &amp; vision</a>
+            <a href="${base}about.html#roadmap">Roadmap</a>
           </div>
         </div>
         <div class="footer-bottom">
@@ -91,12 +109,13 @@
   }
 
   function initHeaderFooter() {
-    const page = document.body.getAttribute("data-page");
-    const current = PAGE_KEY[page] || "";
+    const currentKey = document.body.getAttribute("data-page") || "";
+    const base = getBase();
     const headerMount = document.getElementById("site-header");
     const footerMount = document.getElementById("site-footer");
-    if (headerMount) headerMount.innerHTML = buildHeader(current);
-    if (footerMount) footerMount.innerHTML = buildFooter();
+    if (headerMount) headerMount.innerHTML = buildHeader(currentKey, base);
+    if (footerMount) footerMount.innerHTML = buildFooter(base);
+
 
     const toggle = document.getElementById("navToggle");
     const nav = document.getElementById("mainNav");
@@ -109,6 +128,31 @@
         nav.classList.remove("open");
         toggle.setAttribute("aria-expanded", "false");
       }));
+    }
+
+    // Tools dropdown — click/keyboard toggle, works identically on desktop and the mobile slide-out.
+    const ddWrap = document.getElementById("toolsDropdown");
+    const ddTrigger = document.getElementById("toolsDropdownTrigger");
+    if (ddWrap && ddTrigger) {
+      const closeDropdown = () => {
+        ddWrap.classList.remove("open");
+        ddTrigger.setAttribute("aria-expanded", "false");
+      };
+      ddTrigger.addEventListener("click", (e) => {
+        e.stopPropagation();
+        const willOpen = !ddWrap.classList.contains("open");
+        ddWrap.classList.toggle("open", willOpen);
+        ddTrigger.setAttribute("aria-expanded", willOpen ? "true" : "false");
+      });
+      document.addEventListener("click", (e) => {
+        if (!ddWrap.contains(e.target)) closeDropdown();
+      });
+      document.addEventListener("keydown", (e) => {
+        if (e.key === "Escape") closeDropdown();
+      });
+      ddWrap.querySelectorAll(".nav-dd-item").forEach(item => {
+        item.addEventListener("click", closeDropdown);
+      });
     }
   }
 

@@ -375,7 +375,7 @@ window.DEPT_DATA = [
 },
 
 {
-  id:"medrecords", name:"Medical Records", icon:"file",
+  id:"medrecords", name:"Medical Records Department (MRD)", icon:"file",
   keywords:[/medical record/i,/document control/i,/record retention/i,/confidential/i,/health information/i],
   chapters:["IMS"],
   intro:"One source of truth — the department that decides whether a chart tells a clear story or a confusing one to the next clinician who opens it.",
@@ -581,6 +581,60 @@ window.DEPT_DATA = [
         "Informed Consent Documentation Checklist",
         "Patient Rights Display & Explanation Log",
         "Grievance Register & Resolution Tracker",
+      ]}
+  ]
+},
+
+{
+  id:"frontoffice", name:"Front Office", icon:"users",
+  keywords:[/registration/i,/admission/i,/unique identification number/i,/non-availability of beds/i,/prioritised according to/i,/effective communication/i],
+  chapters:["AAC","PRE"],
+  intro:"The hospital's first impression and its first safety checkpoint — a bad registration process doesn't just annoy patients, it breaks the identifier trail that every downstream department depends on.",
+  sections:[
+    { h:"Operational essentials",
+      items:[
+        "Registration and admission follows written, standard guidance — not staff-dependent improvisation (AAC.2.a).",
+        "A unique identification number generated for every patient at the end of registration, before any clinical step happens (AAC.2.b, Core).",
+        "A defined process for managing patients when beds aren't available, so 'we're full' has a documented next step, not an ad-hoc one (AAC.2.d).",
+        "Where demand exceeds capacity, access is prioritised by clinical urgency, not order of arrival or influence (AAC.2.e).",
+        "First point of contact for effective communication with patients and families — tone and clarity set here carry through the whole visit (PRE.8.a).",
+      ]},
+    { h:"Licensing & regulatory",
+      items:[
+        "Staff trained on patient-identification protocol and two-identifier verification before independent duty.",
+        "Data privacy and confidentiality training current for anyone handling patient registration information.",
+      ]},
+    { h:"Checklists to maintain",
+      items:[
+        "Daily Registration Accuracy Spot-Check",
+        "Bed Non-Availability Escalation Log",
+        "Unique ID Generation Verification Checklist",
+        "Front Desk Communication Standards Checklist",
+      ]}
+  ]
+},
+
+{
+  id:"pro", name:"Public Relations Office (PRO)", icon:"megaphone",
+  keywords:[/patient's feedback/i,/redress complaints/i,/patient experience/i,/patient and \/ or family members are made aware/i,/enhanced communication/i,/unacceptable communication/i],
+  chapters:["PRE"],
+  intro:"The department that turns a complaint into a fixed process instead of a forgotten form — and the one that has to know, ahead of time, which patients need a different kind of conversation.",
+  sections:[
+    { h:"Operational essentials",
+      items:[
+        "A defined mechanism captures patient feedback, including complaints, not just praise (PRE.7.a).",
+        "Patients and families are actively made aware of how to give feedback — the option exists whether or not anyone asks about it (PRE.7.d).",
+        "Every complaint is redressed through the defined mechanism, and reviewed within a fixed time frame — not left open indefinitely (PRE.7.c, Core; PRE.7.e).",
+        "Corrective or preventive action taken where the analysis shows a real pattern, not just a one-off apology (PRE.7.f).",
+        "Special situations needing enhanced communication (language barriers, breaking bad news, vulnerable patients) are identified in advance, not discovered mid-conversation (PRE.8.b, PRE.8.c).",
+        "Communication is monitored for effectiveness and reviewed periodically, and the organisation actively guards against unacceptable communication (PRE.8.d, PRE.8.e).",
+      ]},
+    { h:"Checklists to maintain",
+      items:[
+        "Patient Feedback & Complaint Register",
+        "Complaint Closure Timeliness Log",
+        "Enhanced-Communication Situation Identification Checklist",
+        "Patient Experience Survey Schedule & Review Log",
       ]}
   ]
 },

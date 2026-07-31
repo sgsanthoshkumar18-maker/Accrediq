@@ -173,6 +173,26 @@ p{margin:0 0 0;}
 .main-nav a.active{color:var(--brand-2);background:var(--brand-tint);font-weight:600;}
 .main-nav a.hot{color:var(--accent-bright);}
 
+.nav-dropdown{position:relative;display:flex;}
+.nav-dd-trigger{
+  display:flex;align-items:center;gap:5px;background:none;border:none;cursor:pointer;
+  font-family:var(--font-body);padding:9px 13px;border-radius:999px;font-size:14px;font-weight:500;color:var(--fg-muted);
+  transition:background .15s ease,color .15s ease;
+}
+.nav-dd-trigger svg{transition:transform .15s ease;flex-shrink:0;}
+.nav-dd-trigger:hover{color:var(--fg);background:var(--brand-tint);}
+.nav-dd-trigger.active{color:var(--brand-2);background:var(--brand-tint);font-weight:600;}
+.nav-dropdown.open .nav-dd-trigger svg{transform:rotate(180deg);}
+.nav-dd-panel{
+  display:none;position:absolute;top:calc(100% + 6px);left:0;min-width:200px;
+  background:var(--bg-elevated);border:1px solid var(--border);border-radius:var(--r-md);
+  box-shadow:var(--shadow-2);padding:6px;flex-direction:column;gap:1px;z-index:70;
+}
+.nav-dropdown.open .nav-dd-panel{display:flex;}
+.nav-dd-item{padding:10px 13px;border-radius:8px;font-size:13.5px;font-weight:500;color:var(--fg-muted);white-space:nowrap;}
+.nav-dd-item:hover{color:var(--fg);background:var(--brand-tint);}
+.nav-dd-item.active{color:var(--brand-2);background:var(--brand-tint);font-weight:600;}
+
 .nav-actions{display:flex;align-items:center;gap:10px;}
 .nav-toggle{display:none;background:none;border:1px solid var(--border);border-radius:10px;width:38px;height:38px;align-items:center;justify-content:center;color:var(--fg);}
 
@@ -183,6 +203,10 @@ p{margin:0 0 0;}
   .main-nav a{padding:13px 16px;border-radius:10px;}
   .nav-toggle{display:flex;}
   .nav-actions .btn{padding:9px 14px;font-size:13px;}
+  .nav-dropdown{flex-direction:column;}
+  .nav-dd-trigger{padding:13px 16px;width:100%;justify-content:space-between;}
+  .nav-dd-panel{position:static;box-shadow:none;border:none;background:var(--bg);margin:2px 0 4px 12px;padding:2px;}
+  .nav-dd-item{padding:11px 16px;}
 }
 
 /* ---------- Hero ---------- */
