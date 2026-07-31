@@ -179,8 +179,36 @@
 
 <div id="site-footer"></div>
 <script src="app.js"></script>
-<script src="https://cdnjs.cloudflare.com/ajax/libs/three.js/128/three.min.js" defer></script>
-<script src="globe/globe-data.js" defer></script>
-<script src="globe/globe.js" defer></script>
+<script>
+(function loadThreeThenGlobe() {
+  var sources = [
+    "https://cdn.jsdelivr.net/npm/three@0.128.0/build/three.min.js",
+    "https://unpkg.com/three@0.128.0/build/three.min.js",
+    "https://cdnjs.cloudflare.com/ajax/libs/three.js/r128/three.min.js"
+  ];
+  function tryLoad(i) {
+    if (i >= sources.length) {
+      // all CDNs failed — load globe.js anyway; it detects missing THREE and shows the fallback graphic.
+      var g1 = document.createElement("script"); g1.src = "globe/globe-data.js";
+      var g2 = document.createElement("script"); g2.src = "globe/globe.js";
+      document.body.appendChild(g1); document.body.appendChild(g2);
+      return;
+    }
+    var s = document.createElement("script");
+    s.src = sources[i];
+    s.onload = function () {
+      var d = document.createElement("script"); d.src = "globe/globe-data.js";
+      d.onload = function () {
+        var g = document.createElement("script"); g.src = "globe/globe.js";
+        document.body.appendChild(g);
+      };
+      document.body.appendChild(d);
+    };
+    s.onerror = function () { tryLoad(i + 1); };
+    document.body.appendChild(s);
+  }
+  tryLoad(0);
+})();
+</script>
 </body>
 </html>
