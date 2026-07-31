@@ -1,0 +1,201 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<script>(function(){try{var p=new URLSearchParams(location.search);if(p.has("dark")){var v=p.get("dark");if(v==="0"){localStorage.setItem("aq-theme","light");}else{localStorage.setItem("aq-theme","dark");}}if(localStorage.getItem("aq-theme")==="dark"){document.documentElement.setAttribute("data-theme","dark");}}catch(e){}})();</script>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Code Alerts — Code Blue, Red, Orange, Pink, Violet &amp; More | AQcredix</title>
+<meta name="description" content="Every hospital emergency colour code explained — meaning, responding departments, RACE and PASS for fire, and HAZMAT/MSDS for chemical spills.">
+<link rel="icon" href="data:image/svg+xml,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 26 30'><path d='M13 1 24 5v10c0 7-5 12-11 14C7 27 2 22 2 15V5L13 1Z' fill='%234F46E5'/></svg>">
+<link rel="stylesheet" href="styles.css">
+<style>
+  .code-list{display:grid;gap:12px;margin-top:10px;}
+  .code-item{border:1px solid var(--border);border-radius:var(--r-lg);background:var(--bg-elevated);box-shadow:var(--shadow-1);overflow:hidden;}
+  .code-head{display:flex;align-items:center;gap:16px;padding:18px 20px;cursor:pointer;}
+  .code-dot{width:20px;height:20px;border-radius:50%;flex-shrink:0;border:2px solid rgba(0,0,0,.08);}
+  .code-head h3{font-size:16.5px;flex:1;}
+  .code-head .sub{font-size:12.5px;color:var(--fg-faint);font-family:var(--font-mono);}
+  .code-chevron{transition:transform .2s ease;color:var(--fg-faint);flex-shrink:0;}
+  .code-item.open .code-chevron{transform:rotate(180deg);}
+  .code-body{max-height:0;overflow:hidden;transition:max-height .3s ease;}
+  .code-item.open .code-body{max-height:1400px;}
+  .code-body-inner{padding:0 20px 22px;border-top:1px solid var(--border-soft);}
+  .code-body-inner p{font-size:14px;color:var(--fg-muted);margin-top:14px;}
+  .dept-chips{display:flex;gap:7px;flex-wrap:wrap;margin-top:10px;}
+  .dept-chips span{font-size:12px;font-weight:600;background:var(--brand-tint);color:var(--brand-2);padding:5px 11px;border-radius:999px;}
+  .mech-grid{display:grid;grid-template-columns:repeat(4,1fr);gap:10px;margin-top:14px;}
+  @media (max-width:700px){.mech-grid{grid-template-columns:repeat(2,1fr);}}
+  .mech-step{background:var(--bg);border:1px solid var(--border-soft);border-radius:var(--r-md);padding:14px;text-align:center;}
+  .mech-step .letter{font-family:var(--font-display);font-size:24px;font-weight:700;color:var(--brand-2);}
+  .mech-step .lbl{font-size:12.5px;font-weight:700;margin-top:4px;}
+  .mech-step .desc{font-size:11.5px;color:var(--fg-faint);margin-top:4px;}
+  .msds-grid{display:grid;grid-template-columns:1fr 1fr;gap:6px 20px;margin-top:14px;font-size:13px;}
+  @media (max-width:600px){.msds-grid{grid-template-columns:1fr;}}
+  .msds-grid div{padding:6px 0;border-bottom:1px dashed var(--border-soft);}
+  .msds-grid b{color:var(--brand-2);font-family:var(--font-mono);font-size:11.5px;margin-right:6px;}
+  .chem-tags{display:flex;gap:7px;flex-wrap:wrap;margin-top:10px;}
+  .chem-tags span{font-size:12px;background:var(--nc-tint);color:var(--nc);padding:5px 11px;border-radius:999px;font-weight:600;}
+  .jump-nav{display:flex;gap:8px;flex-wrap:wrap;margin-top:22px;}
+  .jump-nav a{font-size:12.5px;font-weight:600;color:var(--fg-muted);background:var(--bg-elevated);border:1px solid var(--border);padding:7px 12px;border-radius:999px;}
+  .jump-nav a:hover{color:var(--brand-2);border-color:var(--brand-2);}
+</style>
+</head>
+<body data-page="codealerts">
+<div id="site-header"></div>
+
+<section class="page-head">
+  <div class="wrap">
+    <nav class="breadcrumb"><a href="index.html">Home</a><span class="sep">/</span><span class="cur">Code Alerts</span></nav>
+    <span class="eyebrow">Emergency response, decoded</span>
+    <h1>Code Alerts.</h1>
+    <p class="lead">Every hospital emergency colour code, what it means, and exactly who's expected to show up — plus RACE and PASS for fire, and HAZMAT/MSDS for chemical spills. NABH doesn't fix these exact colours in the book — FMS.3 and PSQ.3 require every organisation to define, train on, and drill its own emergency codes — but this is the convention most Indian hospitals have converged on.</p>
+    <nav class="jump-nav">
+      <a href="#blue">Code Blue</a><a href="#red">Code Red</a><a href="#orange">Code Orange</a><a href="#pink">Code Pink</a>
+      <a href="#violet">Code Violet</a><a href="#black">Code Black</a><a href="#yellow">Code Yellow</a>
+      <a href="#brown">Code Brown</a><a href="#grey">Code Grey</a><a href="#silver">Code Silver</a>
+    </nav>
+  </div>
+</section>
+
+<section class="section wrap">
+  <div class="code-list" id="codeList">
+
+    <div class="code-item" id="blue">
+      <div class="code-head"><span class="code-dot" style="background:#2563EB;"></span><div><h3>Code Blue</h3><div class="sub">Cardiac or respiratory arrest — any patient, visitor or staff member</div></div><svg class="code-chevron" width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2"><path d="M6 9l6 6 6-6"/></svg></div>
+      <div class="code-body"><div class="code-body-inner">
+        <p>Called the instant someone stops breathing or their heart stops — anywhere on the premises, not only in a clinical ward. The nearest staff member starts CPR immediately and calls the code; a dedicated resuscitation team responds with a crash cart within minutes.</p>
+        <p><b>Responding departments:</b></p>
+        <div class="dept-chips"><span>Duty physician / intensivist</span><span>Anaesthesiology</span><span>Nursing (unit + code team)</span><span>Crash-cart / ICU nurse</span><span>Biomedical (defibrillator backup)</span><span>Security (crowd control)</span></div>
+        <p>NABH tracks this as a live indicator — "Code Blue Drill" is cited in the book's own Key Performance Indicators section (PSQ 3d) as an example of the mock-drill variations every organisation should measure and record.</p>
+      </div></div>
+    </div>
+
+    <div class="code-item" id="red">
+      <div class="code-head"><span class="code-dot" style="background:#DC2626;"></span><div><h3>Code Red</h3><div class="sub">Fire — RACE for response, PASS for the extinguisher</div></div><svg class="code-chevron" width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2"><path d="M6 9l6 6 6-6"/></svg></div>
+      <div class="code-body"><div class="code-body-inner">
+        <p><b>R.A.C.E. — what every staff member does the moment fire or smoke is seen:</b></p>
+        <div class="mech-grid">
+          <div class="mech-step"><div class="letter">R</div><div class="lbl">Rescue</div><div class="desc">Move anyone in immediate danger away from the fire first.</div></div>
+          <div class="mech-step"><div class="letter">A</div><div class="lbl">Alarm</div><div class="desc">Activate the fire alarm and notify the fire/security team.</div></div>
+          <div class="mech-step"><div class="letter">C</div><div class="lbl">Confine</div><div class="desc">Close doors and windows to contain smoke and flame.</div></div>
+          <div class="mech-step"><div class="letter">E</div><div class="lbl">Extinguish / Evacuate</div><div class="desc">Fight a small, contained fire — or evacuate if it's beyond that.</div></div>
+        </div>
+        <p><b>P.A.S.S. — how to use a fire extinguisher, if the fire is small enough to fight:</b></p>
+        <div class="mech-grid">
+          <div class="mech-step"><div class="letter">P</div><div class="lbl">Pull</div><div class="desc">Pull the safety pin from the handle.</div></div>
+          <div class="mech-step"><div class="letter">A</div><div class="lbl">Aim</div><div class="desc">Aim the nozzle at the base of the fire, not the flames.</div></div>
+          <div class="mech-step"><div class="letter">S</div><div class="lbl">Squeeze</div><div class="desc">Squeeze the handle to release the agent.</div></div>
+          <div class="mech-step"><div class="letter">S</div><div class="lbl">Sweep</div><div class="desc">Sweep side to side across the base until it's out.</div></div>
+        </div>
+        <p><b>Responding departments:</b></p>
+        <div class="dept-chips"><span>Fire safety officer / Facility Management</span><span>Security (evacuation routes)</span><span>Nursing (patient evacuation by triage)</span><span>Biomedical (gas &amp; electrical shutdown)</span><span>Administration (external fire service liaison)</span></div>
+      </div></div>
+    </div>
+
+    <div class="code-item" id="orange">
+      <div class="code-head"><span class="code-dot" style="background:#EA580C;"></span><div><h3>Code Orange</h3><div class="sub">Hazardous material spill — minor and major, plus HAZMAT &amp; MSDS</div></div><svg class="code-chevron" width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2"><path d="M6 9l6 6 6-6"/></svg></div>
+      <div class="code-body"><div class="code-body-inner">
+        <p>NABH's FMS chapter requires the organisation to safely manage hazardous materials — including a documented spill-management plan that's actually implemented, not just written (FMS.5 area, asterisked elements). Code Orange is how most hospitals name that response.</p>
+        <p><b>Minor spill</b> — small volume, low-hazard, staff-manageable with a spill kit and PPE, no evacuation needed (e.g. a broken mercury thermometer, a small reagent splash). The department's own trained staff contains and cleans it up using the on-site spill kit.</p>
+        <p><b>Major spill</b> — large volume, or a toxic / flammable / corrosive substance, that threatens people beyond the immediate spot. The area is evacuated and cordoned off, and a trained HAZMAT response team (sometimes with the external fire department) manages containment and clean-up.</p>
+        <p><b>Chemicals that most often trigger Code Orange in a hospital:</b></p>
+        <div class="chem-tags">
+          <span>Formalin / formaldehyde (histopathology, mortuary)</span><span>Glutaraldehyde (endoscope disinfection)</span>
+          <span>Xylene (histology lab)</span><span>Mercury (broken thermometers, sphygmomanometers)</span>
+          <span>Cytotoxic / chemotherapy drugs</span><span>Concentrated acids &amp; alkalis (lab reagents)</span>
+          <span>Radioactive contrast material (nuclear medicine)</span>
+        </div>
+        <p><b>Responding departments:</b></p>
+        <div class="dept-chips"><span>Laboratory / Histopathology</span><span>CSSD</span><span>Housekeeping</span><span>Facility Management &amp; Engineering</span><span>Nursing (affected unit)</span><span>Security (cordon the area)</span><span>Quality Department (post-incident review)</span></div>
+
+        <p><b>HAZMAT management, in practice, means:</b> chemicals labelled with hazard pictograms, incompatible chemicals stored apart from each other, PPE and spill kits stationed right where the chemical is used (not locked away elsewhere), a trained response team, and disposal that follows biomedical/hazardous-waste rules — not the regular bin.</p>
+
+        <p><b>MSDS (Material Safety Data Sheet)</b> — NABH's own glossary defines it as a formal document describing a substance's hazards, including first-aid, spill, and safe-storage instructions. The internationally standard MSDS/SDS format has 16 sections:</p>
+        <div class="msds-grid">
+          <div><b>01</b>Identification</div><div><b>02</b>Hazard(s) identification</div>
+          <div><b>03</b>Composition / ingredients</div><div><b>04</b>First-aid measures</div>
+          <div><b>05</b>Fire-fighting measures</div><div><b>06</b>Accidental release measures</div>
+          <div><b>07</b>Handling &amp; storage</div><div><b>08</b>Exposure controls / PPE</div>
+          <div><b>09</b>Physical &amp; chemical properties</div><div><b>10</b>Stability &amp; reactivity</div>
+          <div><b>11</b>Toxicological information</div><div><b>12</b>Ecological information</div>
+          <div><b>13</b>Disposal considerations</div><div><b>14</b>Transport information</div>
+          <div><b>15</b>Regulatory information</div><div><b>16</b>Other information</div>
+        </div>
+      </div></div>
+    </div>
+
+    <div class="code-item" id="pink">
+      <div class="code-head"><span class="code-dot" style="background:#EC4899;"></span><div><h3>Code Pink</h3><div class="sub">Infant or child abduction / missing patient</div></div><svg class="code-chevron" width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2"><path d="M6 9l6 6 6-6"/></svg></div>
+      <div class="code-body"><div class="code-body-inner">
+        <p>Called the moment an infant, child, or at-risk patient goes missing. All exits are monitored or locked down, and everyone on shift is briefed on a description within minutes — the first few minutes matter most.</p>
+        <div class="dept-chips"><span>Security (lockdown &amp; exit monitoring)</span><span>Nursing (maternity / paediatrics)</span><span>Administration on-call</span><span>Front-desk / registration</span></div>
+      </div></div>
+    </div>
+
+    <div class="code-item" id="violet">
+      <div class="code-head"><span class="code-dot" style="background:#7C3AED;"></span><div><h3>Code Violet</h3><div class="sub">Combative or aggressive person, workplace violence</div></div><svg class="code-chevron" width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2"><path d="M6 9l6 6 6-6"/></svg></div>
+      <div class="code-body"><div class="code-body-inner">
+        <p>Called when a patient, visitor, or staff member becomes verbally or physically aggressive and de-escalation isn't working. A trained response team moves in to protect staff and other patients while calming the situation — matching NABH's requirement (HRM.9) that the organisation has real measures in place for preventing and handling workplace violence.</p>
+        <div class="dept-chips"><span>Security</span><span>Nursing supervisor / shift in-charge</span><span>Administration on-call</span><span>Psychiatry / crisis liaison (if available)</span></div>
+      </div></div>
+    </div>
+
+    <div class="code-item" id="black">
+      <div class="code-head"><span class="code-dot" style="background:#111827;"></span><div><h3>Code Black</h3><div class="sub">Bomb threat or suspicious object</div></div><svg class="code-chevron" width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2"><path d="M6 9l6 6 6-6"/></svg></div>
+      <div class="code-body"><div class="code-body-inner">
+        <p>Triggered by a bomb threat call or an unattended, suspicious item. Staff avoid touching the object, evacuate the immediate area, and hand off to security and, where warranted, the police bomb squad.</p>
+        <div class="dept-chips"><span>Security</span><span>Administration</span><span>Facility Management</span><span>Local police liaison</span></div>
+      </div></div>
+    </div>
+
+    <div class="code-item" id="yellow">
+      <div class="code-head"><span class="code-dot" style="background:#CA8A04;"></span><div><h3>Code Yellow</h3><div class="sub">Internal emergency / disaster (mass casualty influx)</div></div><svg class="code-chevron" width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2"><path d="M6 9l6 6 6-6"/></svg></div>
+      <div class="code-body"><div class="code-body-inner">
+        <p>Called when the hospital needs to activate its internal disaster plan — a sudden surge of patients that exceeds normal capacity. Elective work pauses, extra staff are called in, and triage areas expand.</p>
+        <div class="dept-chips"><span>Emergency Department</span><span>Administration / Incident Commander</span><span>Nursing (all units)</span><span>Bed management</span></div>
+      </div></div>
+    </div>
+
+    <div class="code-item" id="brown">
+      <div class="code-head"><span class="code-dot" style="background:#92400E;"></span><div><h3>Code Brown</h3><div class="sub">External disaster (mass casualty from outside the hospital)</div></div><svg class="code-chevron" width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2"><path d="M6 9l6 6 6-6"/></svg></div>
+      <div class="code-body"><div class="code-body-inner">
+        <p>Called for a large-scale external event — an accident, natural disaster, or mass-casualty incident — that's about to send a wave of patients to the hospital from outside. The disaster plan activates ahead of patient arrival, not after.</p>
+        <div class="dept-chips"><span>Emergency Department</span><span>Administration / Incident Commander</span><span>Facility Management</span><span>External ambulance &amp; government liaison</span></div>
+      </div></div>
+    </div>
+
+    <div class="code-item" id="grey">
+      <div class="code-head"><span class="code-dot" style="background:#6B7280;"></span><div><h3>Code Grey</h3><div class="sub">Utility or system failure (power, water, medical gas)</div></div><svg class="code-chevron" width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2"><path d="M6 9l6 6 6-6"/></svg></div>
+      <div class="code-body"><div class="code-body-inner">
+        <p>Called for a critical utility failure — power, water, medical gas, or IT systems — the kind of event NABH's FMS chapter requires a documented back-up and downtime plan for, tested and not just written.</p>
+        <div class="dept-chips"><span>Facility &amp; Engineering</span><span>Biomedical</span><span>IT / Information Management</span><span>Nursing (affected units)</span></div>
+      </div></div>
+    </div>
+
+    <div class="code-item" id="silver">
+      <div class="code-head"><span class="code-dot" style="background:#94A3B8;"></span><div><h3>Code Silver</h3><div class="sub">Person with a weapon / hostage situation</div></div><svg class="code-chevron" width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2"><path d="M6 9l6 6 6-6"/></svg></div>
+      <div class="code-body"><div class="code-body-inner">
+        <p>The most serious security code — someone on the premises is armed or holding hostages. Areas are locked down, uninvolved staff and patients are moved away, and police are engaged immediately.</p>
+        <div class="dept-chips"><span>Security</span><span>Administration / Incident Commander</span><span>Local police</span></div>
+      </div></div>
+    </div>
+
+  </div>
+</section>
+
+<div id="site-footer"></div>
+<script src="app.js"></script>
+<script>
+document.querySelectorAll('.code-head').forEach(head => {
+  head.addEventListener('click', () => {
+    head.closest('.code-item').classList.toggle('open');
+  });
+});
+// open the item matching the URL hash, if any
+if (location.hash) {
+  const el = document.querySelector(location.hash);
+  if (el) { el.classList.add('open'); setTimeout(()=>el.scrollIntoView({behavior:'smooth',block:'start'}), 100); }
+}
+</script>
+</body>
+</html>

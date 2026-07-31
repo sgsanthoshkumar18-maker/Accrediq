@@ -4,10 +4,71 @@
 <script>(function(){try{var p=new URLSearchParams(location.search);if(p.has("dark")){var v=p.get("dark");if(v==="0"){localStorage.setItem("aq-theme","light");}else{localStorage.setItem("aq-theme","dark");}}if(localStorage.getItem("aq-theme")==="dark"){document.documentElement.setAttribute("data-theme","dark");}}catch(e){}})();</script>
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width, initial-scale=1">
-<title>NABH Standards — Every Chapter Explained | AQcredix</title>
-<meta name="description" content="Browse every NABH chapter and Objective Element, tagged Core, Commitment and Excellence — explained the way an assessor reads them.">
+<title>NABH Standards Explorer — All 639 Objective Elements | AQcredix</title>
+<meta name="description" content="Every NABH 6th Edition chapter, standard and Objective Element — Core, Commitment, Achievement and Excellence — with plain-English explanations, real-life analogies, and SOP requirements.">
 <link rel="icon" href="data:image/svg+xml,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 26 30'><path d='M13 1 24 5v10c0 7-5 12-11 14C7 27 2 22 2 15V5L13 1Z' fill='%234F46E5'/></svg>">
 <link rel="stylesheet" href="styles.css">
+<style>
+  .legend-row{display:flex;gap:10px;flex-wrap:wrap;margin-top:20px;}
+  .sop-note{margin-top:14px;font-size:13.5px;color:var(--fg-muted);background:var(--warn-tint);border:1px solid rgba(176,89,10,.25);padding:12px 16px;border-radius:var(--r-md);max-width:74ch;}
+  .sop-note b{color:var(--warn);}
+
+  .ch-grid{display:grid;grid-template-columns:repeat(5,1fr);gap:14px;}
+  @media (max-width:1100px){.ch-grid{grid-template-columns:repeat(3,1fr);}}
+  @media (max-width:700px){.ch-grid{grid-template-columns:repeat(2,1fr);}}
+  @media (max-width:460px){.ch-grid{grid-template-columns:1fr;}}
+  .ch-card{background:var(--bg-elevated);border:1px solid var(--border);border-radius:var(--r-lg);padding:18px;cursor:pointer;text-align:left;box-shadow:var(--shadow-1);transition:transform .15s ease,box-shadow .15s ease,border-color .15s ease;}
+  .ch-card:hover{transform:translateY(-3px);box-shadow:var(--shadow-2);border-color:#CBD0F0;}
+  .ch-card.is-active{border-color:var(--brand-2);box-shadow:0 0 0 3px var(--brand-tint),var(--shadow-2);}
+  .ch-card .cc-code{font-family:var(--font-mono);font-weight:700;font-size:13px;color:var(--brand-2);}
+  .ch-card h4{font-family:var(--font-display);font-size:15.5px;margin-top:6px;line-height:1.25;min-height:38px;}
+  .ch-card .cc-count{font-family:var(--font-mono);font-size:22px;font-weight:700;margin-top:10px;}
+  .ch-card .cc-sub{font-size:11px;color:var(--fg-faint);margin-top:2px;}
+  .cc-bars{display:flex;gap:3px;margin-top:10px;height:6px;border-radius:4px;overflow:hidden;}
+  .cc-bars span{display:block;height:100%;}
+
+  .explorer{margin-top:36px;display:none;}
+  .explorer.is-open{display:block;animation:riseIn .25s ease both;}
+  .exp-head{display:flex;justify-content:space-between;align-items:flex-start;gap:20px;flex-wrap:wrap;border-bottom:1px solid var(--border-soft);padding-bottom:20px;margin-bottom:22px;}
+  .exp-head h2{font-size:24px;}
+  .exp-stats{display:flex;gap:22px;flex-wrap:wrap;}
+  .exp-stats .st{text-align:center;}
+  .exp-stats .st .v{font-family:var(--font-display);font-size:22px;font-weight:700;}
+  .exp-stats .st .l{font-size:10.5px;color:var(--fg-faint);text-transform:uppercase;letter-spacing:.05em;}
+
+  .filter-row{display:flex;gap:8px;flex-wrap:wrap;margin-bottom:18px;}
+  .fchip{font-size:12.5px;font-weight:600;padding:8px 14px;border-radius:999px;border:1px solid var(--border);background:var(--bg-elevated);cursor:pointer;color:var(--fg-muted);}
+  .fchip.active{background:var(--brand-2);color:#fff;border-color:var(--brand-2);}
+
+  .std-block{margin-bottom:26px;border:1px solid var(--border);border-radius:var(--r-lg);background:var(--bg-elevated);box-shadow:var(--shadow-1);overflow:hidden;}
+  .std-block-head{padding:16px 20px;background:var(--brand-tint);display:flex;gap:12px;align-items:baseline;}
+  .std-block-head .sc{font-family:var(--font-mono);font-weight:700;color:var(--brand-2);font-size:13px;flex-shrink:0;}
+  .std-block-head .st{font-weight:600;font-size:14.5px;}
+  .el-row{display:grid;grid-template-columns:70px 110px 1fr auto;gap:14px;align-items:center;padding:13px 20px;border-top:1px solid var(--border-soft);font-size:13.5px;}
+  @media (max-width:760px){.el-row{grid-template-columns:1fr;gap:6px;}}
+  .el-letter{font-family:var(--font-mono);font-weight:700;color:var(--fg-faint);}
+  .cat-badge{display:inline-flex;align-items:center;font-size:11px;font-weight:700;padding:4px 9px;border-radius:999px;width:fit-content;}
+  .cat-CORE{background:var(--nc-tint);color:var(--nc);}
+  .cat-Commitment{background:var(--warn-tint);color:var(--warn);}
+  .cat-Achievement{background:var(--accent-bright-tint);color:var(--accent-bright);}
+  .cat-Excellence{background:var(--info-tint);color:var(--info);}
+  .el-text{color:var(--fg);}
+  .el-text .sop-flag{color:var(--warn);font-weight:700;margin-left:4px;}
+  .explain-btn{font-size:12px;font-weight:700;padding:7px 13px;border-radius:999px;border:1px solid var(--border);background:var(--bg);cursor:pointer;color:var(--brand-2);white-space:nowrap;}
+  .explain-btn:hover{background:var(--brand-2);color:#fff;border-color:var(--brand-2);}
+
+  .modal-back{position:fixed;inset:0;background:rgba(10,13,30,.6);backdrop-filter:blur(3px);z-index:200;display:none;align-items:center;justify-content:center;padding:20px;}
+  .modal-back.is-open{display:flex;}
+  .modal{background:var(--bg-elevated);border-radius:var(--r-xl);max-width:640px;width:100%;max-height:86vh;overflow:auto;padding:30px;box-shadow:var(--shadow-2);position:relative;}
+  .modal-close{position:absolute;top:18px;right:18px;background:var(--bg);border:1px solid var(--border);border-radius:999px;width:32px;height:32px;display:flex;align-items:center;justify-content:center;cursor:pointer;color:var(--fg-muted);}
+  .modal h3{font-size:19px;margin-top:6px;padding-right:30px;}
+  .modal-section{margin-top:20px;}
+  .modal-section h4{font-size:11.5px;text-transform:uppercase;letter-spacing:.06em;color:var(--fg-faint);font-weight:700;margin-bottom:8px;}
+  .modal-section p{font-size:14.5px;line-height:1.6;}
+  .modal .verbatim-box{background:var(--brand-tint);border-left:3px solid var(--brand-2);padding:14px 16px;border-radius:0 var(--r-md) var(--r-md) 0;font-family:var(--font-display);font-size:15px;}
+  .modal .analogy-box{background:var(--accent-bright-tint);border-left:3px solid var(--accent-bright);padding:14px 16px;border-radius:0 var(--r-md) var(--r-md) 0;}
+  .modal .sop-box{background:var(--warn-tint);border-left:3px solid var(--warn);padding:12px 16px;border-radius:0 var(--r-md) var(--r-md) 0;font-size:13.5px;}
+</style>
 </head>
 <body data-page="standards">
 <div id="site-header"></div>
@@ -15,44 +76,198 @@
 <section class="page-head">
   <div class="wrap">
     <nav class="breadcrumb"><a href="index.html">Home</a><span class="sep">/</span><span class="cur">Standards</span></nav>
-    <span class="eyebrow">Framework · NABH</span>
-    <h1>The NABH standard, chapter by chapter.</h1>
-    <p class="lead">Ten chapters. Hundreds of Objective Elements. Each one opens into the AQcredix Standard Card — verbatim text, plain English, what the assessor looks for, the common NC, and the fix.</p>
-    <div style="margin-top:20px;display:flex;gap:8px;flex-wrap:wrap;">
-      <span class="type-tag type-comm">Commitment — the baseline</span>
-      <span class="type-tag type-core">Core — the must-haves</span>
-      <span class="type-tag type-exc">Excellence — the aspirational</span>
+    <span class="eyebrow">NABH 6th Edition · Effective 1 Jan 2025</span>
+    <h1>Every chapter. Every element. All 639.</h1>
+    <p class="lead">The complete NABH Hospital Accreditation Standard, parsed straight from the official 6th Edition book — 10 chapters, 100 standards, 639 Objective Elements. Click a chapter, then click "Explain" on any element for the book's own wording, a plain-English rewrite, and a real-life example.</p>
+    <div class="legend-row">
+      <span class="type-tag type-core">Core — 105, assessed every time</span>
+      <span class="type-tag type-comm">Commitment — 457, assessed at final</span>
+      <span class="pill" style="background:var(--accent-bright-tint);color:var(--accent-bright);">Achievement — 60, at surveillance</span>
+      <span class="pill" style="background:var(--info-tint);color:var(--info);">Excellence — 17, at re-accreditation</span>
     </div>
+    <p class="sop-note"><b>Marked with an asterisk (*) in the book:</b> that Objective Element requires a written Standard Operating Procedure — documented, implemented, and kept on file for the assessor to review. On this page these are flagged with a <span class="sop-flag" style="color:var(--warn);font-weight:700;">✱ SOP required</span> tag.</p>
   </div>
 </section>
 
 <section class="section wrap">
-  <div class="section-head"><h2>Patient-centred standards</h2><p>What happens to the patient — from the front door to discharge.</p></div>
-  <div class="grid-3">
-    <a class="tile chapter-card" href="standard.html"><span class="code" style="background:var(--accent-bright);color:#04222b;">HIC · In depth</span><h3 style="margin-top:14px;">Hospital Infection Control</h3><p>Preventing and controlling healthcare-associated infection — hand hygiene, surveillance, BMW, isolation, CSSD.</p><div class="meta"><span>28 Objective Elements</span><span>5 assessor videos</span></div></a>
-    <div class="tile chapter-card soon"><span class="code">AAC</span><h3 style="margin-top:14px;">Access, Assessment &amp; Continuity of Care</h3><p>Registration, triage, assessment, hand-offs and continuity across the patient journey.</p><div class="meta"><span>Building</span></div></div>
-    <div class="tile chapter-card soon"><span class="code">COP</span><h3 style="margin-top:14px;">Care of Patients</h3><p>Uniform, safe care — emergency, critical, surgical, obstetric, paediatric and vulnerable patients.</p><div class="meta"><span>Building</span></div></div>
-    <div class="tile chapter-card soon"><span class="code">MOM</span><h3 style="margin-top:14px;">Management of Medication</h3><p>Procurement, storage, prescription, dispensing, administration and high-alert drugs.</p><div class="meta"><span>Building</span></div></div>
-    <div class="tile chapter-card soon"><span class="code">PRE</span><h3 style="margin-top:14px;">Patient Rights &amp; Education</h3><p>Informed consent, privacy, dignity, grievance handling and patient education.</p><div class="meta"><span>Building</span></div></div>
-    <div class="tile chapter-card soon"><span class="code">PSQ</span><h3 style="margin-top:14px;">Patient Safety &amp; Quality Improvement</h3><p>Quality programme, indicators, incident reporting, sentinel events and improvement projects.</p><div class="meta"><span>Building</span></div></div>
-  </div>
+  <div class="ch-grid" id="chGrid"></div>
 
-  <div class="section-head" style="margin-top:54px;"><h2>Organisation-centred standards</h2><p>The systems that make safe care possible.</p></div>
-  <div class="grid-4">
-    <div class="tile chapter-card soon"><span class="code">ROM</span><h3 style="margin-top:14px;">Responsibilities of Management</h3><p>Governance, leadership, ethics and service planning.</p></div>
-    <div class="tile chapter-card soon"><span class="code">FMS</span><h3 style="margin-top:14px;">Facility Management &amp; Safety</h3><p>Safe environment, utilities, fire, biomedical equipment and hazardous materials.</p></div>
-    <div class="tile chapter-card soon"><span class="code">HRM</span><h3 style="margin-top:14px;">Human Resource Management</h3><p>Credentialing, competency, training and staff health.</p></div>
-    <div class="tile chapter-card soon"><span class="code">IMS</span><h3 style="margin-top:14px;">Information Management System</h3><p>Medical records, data integrity, confidentiality and retention.</p></div>
-  </div>
+  <div class="explorer" id="explorer">
+    <div class="exp-head">
+      <div>
+        <span class="eyebrow" id="expEyebrow">Chapter</span>
+        <h2 id="expName">—</h2>
+      </div>
+      <div class="exp-stats" id="expStats"></div>
+    </div>
 
-  <div style="margin-top:44px;" class="cta-band">
-    <h2>Start where it hurts most.</h2>
-    <p>HIC is the most audited and most failed chapter — so it's the one we built first, in full depth. Open it and see the difference.</p>
-    <a class="btn btn-accent" href="standard.html">Open a sample element →</a>
+    <div class="filter-row" id="filterRow"></div>
+    <div id="stdList"></div>
   </div>
 </section>
 
+<section class="wrap" style="padding-bottom:60px;">
+  <div class="cta-band">
+    <h2>Every element also lives on the Quality Dashboard.</h2>
+    <p>Department KRAs and KPIs are drawn from these same chapters — open the dashboard to see them scored by role.</p>
+    <a class="btn btn-accent" href="dashboard.html">Open the Quality Dashboard →</a>
+  </div>
+</section>
+
+<div class="modal-back" id="modalBack">
+  <div class="modal" id="modalBox"></div>
+</div>
+
 <div id="site-footer"></div>
+<script src="nabh-data.js"></script>
+<script src="nabh-explain.js"></script>
 <script src="app.js"></script>
+<script>
+(function(){
+  const DATA = window.NABH_DATA;
+  const OFFICIAL = DATA.official;
+  const CHAPTERS = DATA.chapters;
+  const CODES = Object.keys(OFFICIAL);
+
+  const chGrid = document.getElementById('chGrid');
+  const explorer = document.getElementById('explorer');
+  const stdList = document.getElementById('stdList');
+  const filterRow = document.getElementById('filterRow');
+  let currentFilter = 'all';
+  let currentCode = null;
+
+  function catColor(c){
+    return c==='CORE' ? 'var(--nc)' : c==='Commitment' ? 'var(--warn)' : c==='Achievement' ? 'var(--accent-bright)' : 'var(--info)';
+  }
+
+  function renderChapterGrid(){
+    chGrid.innerHTML = CODES.map(code => {
+      const o = OFFICIAL[code];
+      const name = CHAPTERS[code].name;
+      const total = o.elements;
+      const pct = k => (o[k]/total*100).toFixed(1);
+      return `<button class="ch-card" type="button" data-code="${code}">
+        <span class="cc-code">${code}</span>
+        <h4>${name}</h4>
+        <div class="cc-count">${total}</div>
+        <div class="cc-sub">elements · ${o.standards} standards</div>
+        <div class="cc-bars">
+          <span style="width:${pct('core')}%;background:var(--nc);"></span>
+          <span style="width:${pct('commitment')}%;background:var(--warn);"></span>
+          <span style="width:${pct('achievement')}%;background:var(--accent-bright);"></span>
+          <span style="width:${pct('excellence')}%;background:var(--info);"></span>
+        </div>
+      </button>`;
+    }).join('');
+    chGrid.querySelectorAll('.ch-card').forEach(btn => {
+      btn.addEventListener('click', () => openChapter(btn.dataset.code));
+    });
+  }
+
+  function openChapter(code){
+    currentCode = code;
+    currentFilter = 'all';
+    document.querySelectorAll('.ch-card').forEach(c => c.classList.toggle('is-active', c.dataset.code === code));
+    const o = OFFICIAL[code];
+    document.getElementById('expEyebrow').textContent = code + ' · NABH Chapter';
+    document.getElementById('expName').textContent = CHAPTERS[code].name;
+    document.getElementById('expStats').innerHTML = `
+      <div class="st"><div class="v">${o.standards}</div><div class="l">Standards</div></div>
+      <div class="st"><div class="v">${o.elements}</div><div class="l">Elements</div></div>
+      <div class="st" style="color:var(--nc);"><div class="v">${o.core}</div><div class="l">Core</div></div>
+      <div class="st" style="color:var(--warn);"><div class="v">${o.commitment}</div><div class="l">Commitment</div></div>
+      <div class="st" style="color:var(--accent-bright);"><div class="v">${o.achievement}</div><div class="l">Achievement</div></div>
+      <div class="st" style="color:var(--info);"><div class="v">${o.excellence}</div><div class="l">Excellence</div></div>`;
+
+    filterRow.innerHTML = ['all','CORE','Commitment','Achievement','Excellence','sop'].map(f => {
+      const label = f==='all' ? 'All elements' : f==='sop' ? '✱ SOP required only' : f;
+      return `<button class="fchip ${f==='all'?'active':''}" data-f="${f}">${label}</button>`;
+    }).join('');
+    filterRow.querySelectorAll('.fchip').forEach(chip => {
+      chip.addEventListener('click', () => {
+        currentFilter = chip.dataset.f;
+        filterRow.querySelectorAll('.fchip').forEach(c => c.classList.toggle('active', c === chip));
+        renderStandards();
+      });
+    });
+
+    renderStandards();
+    explorer.classList.add('is-open');
+    explorer.scrollIntoView({behavior:'smooth', block:'start'});
+  }
+
+  function renderStandards(){
+    const chapter = CHAPTERS[currentCode];
+    let html = '';
+    chapter.standards.forEach(std => {
+      let els = std.elements;
+      if (currentFilter === 'sop') els = els.filter(e => e.sop);
+      else if (currentFilter !== 'all') els = els.filter(e => e.category === currentFilter);
+      if (!els.length) return;
+      html += `<div class="std-block">
+        <div class="std-block-head"><span class="sc">${std.code}</span><span class="st">${std.text}</span></div>
+        ${els.map(e => `
+          <div class="el-row">
+            <span class="el-letter">${std.code}.${e.letter}</span>
+            <span class="cat-badge cat-${e.category}">${e.category}</span>
+            <span class="el-text">${e.text}${e.sop ? '<span class="sop-flag">✱ SOP required</span>' : ''}</span>
+            <button class="explain-btn" data-std="${std.code}" data-letter="${e.letter}">Explain this element</button>
+          </div>`).join('')}
+      </div>`;
+    });
+    stdList.innerHTML = html || `<div class="dash-empty">No elements match this filter in this chapter.</div>`;
+    stdList.querySelectorAll('.explain-btn').forEach(btn => {
+      btn.addEventListener('click', () => openModal(btn.dataset.std, btn.dataset.letter));
+    });
+  }
+
+  function findElement(stdCode, letter){
+    const chapter = CHAPTERS[currentCode];
+    const std = chapter.standards.find(s => s.code === stdCode);
+    const el = std.elements.find(e => e.letter === letter);
+    return {std, el};
+  }
+
+  const modalBack = document.getElementById('modalBack');
+  const modalBox = document.getElementById('modalBox');
+
+  function openModal(stdCode, letter){
+    const {std, el} = findElement(stdCode, letter);
+    const simple = window.NABH_EXPLAIN.simplify(el.text);
+    const analogy = window.NABH_EXPLAIN.analogyFor(el.text);
+    modalBox.innerHTML = `
+      <button class="modal-close" id="modalCloseBtn" aria-label="Close">
+        <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.4" stroke-linecap="round"><path d="M6 6l12 12M18 6L6 18"/></svg>
+      </button>
+      <span class="eyebrow">${stdCode}.${letter} · <span class="cat-badge cat-${el.category}" style="margin-left:4px;">${el.category}</span></span>
+      <h3>${std.text}</h3>
+      <div class="modal-section">
+        <h4>As written in the NABH 6th Edition</h4>
+        <div class="verbatim-box">"${el.text}"</div>
+      </div>
+      <div class="modal-section">
+        <h4>In simple terms</h4>
+        <p>${simple}</p>
+      </div>
+      <div class="modal-section">
+        <h4>A real-life example (outside healthcare)</h4>
+        <div class="analogy-box"><p style="margin:0;">${analogy}</p></div>
+      </div>
+      ${el.sop ? `<div class="modal-section"><div class="sop-box"><b>✱ SOP required.</b> This element is asterisked in the book — the hospital must have a written Standard Operating Procedure for this, documented and kept on file for assessment.</div></div>` : ''}
+    `;
+    document.getElementById('modalCloseBtn').addEventListener('click', closeModal);
+    modalBack.classList.add('is-open');
+  }
+  function closeModal(){ modalBack.classList.remove('is-open'); }
+  modalBack.addEventListener('click', (e) => { if (e.target === modalBack) closeModal(); });
+  document.addEventListener('keydown', (e) => { if (e.key === 'Escape') closeModal(); });
+
+  renderChapterGrid();
+
+  // deep-link support: standards.html?ch=IPC
+  const params = new URLSearchParams(location.search);
+  if (params.has('ch') && OFFICIAL[params.get('ch')]) openChapter(params.get('ch'));
+})();
+</script>
 </body>
 </html>
