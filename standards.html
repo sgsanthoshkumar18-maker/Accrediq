@@ -13,6 +13,24 @@
   .sop-note{margin-top:14px;font-size:13.5px;color:var(--fg-muted);background:var(--warn-tint);border:1px solid rgba(176,89,10,.25);padding:12px 16px;border-radius:var(--r-md);max-width:74ch;}
   .sop-note b{color:var(--warn);}
 
+  .galaxy-wrap{background:linear-gradient(160deg,var(--bg-deep),#1a2050);border-radius:var(--r-xl);padding:20px;box-shadow:var(--shadow-2);}
+  .galaxy-toolbar{display:flex;justify-content:space-between;align-items:center;flex-wrap:wrap;gap:10px;margin-bottom:14px;}
+  .galaxy-legend{display:flex;gap:14px;flex-wrap:wrap;}
+  .galaxy-legend span{display:flex;align-items:center;gap:6px;font-size:12px;color:rgba(255,255,255,.7);}
+  .galaxy-legend i{width:9px;height:9px;border-radius:50%;display:inline-block;}
+  .galaxy-hint{font-size:11.5px;color:rgba(255,255,255,.4);}
+  .galaxy-canvas-wrap{position:relative;width:100%;aspect-ratio:16/9;border-radius:var(--r-lg);overflow:hidden;background:radial-gradient(circle at 50% 45%, rgba(79,70,229,.12), transparent 70%);}
+  #galaxyCanvas{width:100%;height:100%;display:block;cursor:grab;touch-action:none;}
+  #galaxyCanvas:active{cursor:grabbing;}
+  .galaxy-loading{position:absolute;inset:0;display:flex;align-items:center;justify-content:center;flex-direction:column;gap:10px;color:rgba(255,255,255,.55);font-family:var(--font-mono);font-size:11.5px;letter-spacing:.05em;text-transform:uppercase;transition:opacity .4s ease;pointer-events:none;}
+  .galaxy-loading .spin{width:26px;height:26px;border-radius:50%;border:2px solid rgba(14,165,160,.25);border-top-color:var(--accent-bright);animation:galaxyspin .8s linear infinite;}
+  @keyframes galaxyspin{to{transform:rotate(360deg);}}
+  .galaxy-loading.hidden{opacity:0;}
+  .galaxy-chip-label{position:absolute;transform:translate(-50%,-50%);font-family:var(--font-mono);font-size:11px;font-weight:700;color:rgba(255,255,255,.65);background:rgba(13,17,48,.6);padding:3px 9px;border-radius:999px;pointer-events:none;white-space:nowrap;}
+  .galaxy-tooltip{position:absolute;z-index:20;max-width:240px;background:rgba(11,14,38,.95);backdrop-filter:blur(8px);border:1px solid rgba(14,165,160,.35);border-radius:10px;padding:10px 12px;font-size:11.5px;color:#fff;display:none;pointer-events:none;}
+  .galaxy-tooltip.show{display:block;}
+  .galaxy-tooltip b{display:block;font-size:11px;color:#5eead4;margin-bottom:3px;}
+
   .ch-grid{display:grid;grid-template-columns:repeat(5,1fr);gap:14px;}
   @media (max-width:1100px){.ch-grid{grid-template-columns:repeat(3,1fr);}}
   @media (max-width:700px){.ch-grid{grid-template-columns:repeat(2,1fr);}}
@@ -86,10 +104,35 @@
       <span class="pill" style="background:var(--info-tint);color:var(--info);">Excellence — 17, at re-accreditation</span>
     </div>
     <p class="sop-note"><b>Marked with an asterisk (*) in the book:</b> that Objective Element requires a written Standard Operating Procedure — documented, implemented, and kept on file for the assessor to review. On this page these are flagged with a <span class="sop-flag" style="color:var(--warn);font-weight:700;">✱ SOP required</span> tag.</p>
+    <button type="button" class="btn btn-ghost-dark" id="galaxyToggleBtn" style="margin-top:18px;">
+      <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="12" cy="12" r="2"/><ellipse cx="12" cy="12" rx="10" ry="4.2"/><ellipse cx="12" cy="12" rx="10" ry="4.2" transform="rotate(60 12 12)"/><ellipse cx="12" cy="12" rx="10" ry="4.2" transform="rotate(120 12 12)"/></svg>
+      Explore in 3D — Standards Galaxy
+    </button>
+  </div>
+</section>
+
+<section class="wrap" id="galaxySection" style="display:none;padding:0 28px 20px;">
+  <div class="galaxy-wrap">
+    <div class="galaxy-toolbar">
+      <div class="galaxy-legend">
+        <span><i style="background:var(--nc);"></i> Core</span>
+        <span><i style="background:var(--warn);"></i> Commitment</span>
+        <span><i style="background:var(--accent-bright);"></i> Achievement</span>
+        <span><i style="background:var(--info);"></i> Excellence</span>
+      </div>
+      <span class="galaxy-hint">Drag to orbit · scroll to zoom · click a star to open it</span>
+    </div>
+    <div class="galaxy-canvas-wrap">
+      <canvas id="galaxyCanvas" aria-label="3D point-cloud of all 639 NABH Objective Elements, clustered by chapter" role="img"></canvas>
+      <div class="galaxy-loading" id="galaxyLoading"><div class="spin"></div>Building galaxy…</div>
+      <div id="galaxyOverlay" style="position:absolute;inset:0;pointer-events:none;"></div>
+      <div class="galaxy-tooltip" id="galaxyTooltip"></div>
+    </div>
   </div>
 </section>
 
 <section class="section wrap">
+
   <div class="ch-grid" id="chGrid"></div>
 
   <div class="explorer" id="explorer">
@@ -222,7 +265,8 @@
   }
 
   function findElement(stdCode, letter){
-    const chapter = CHAPTERS[currentCode];
+    const chapterCode = stdCode.split('.')[0];
+    const chapter = CHAPTERS[chapterCode];
     const std = chapter.standards.find(s => s.code === stdCode);
     const el = std.elements.find(e => e.letter === letter);
     return {std, el};
@@ -261,12 +305,35 @@
   function closeModal(){ modalBack.classList.remove('is-open'); }
   modalBack.addEventListener('click', (e) => { if (e.target === modalBack) closeModal(); });
   document.addEventListener('keydown', (e) => { if (e.key === 'Escape') closeModal(); });
+  window.openStandardModal = openModal; // exposed so the 3D Galaxy view reuses this exact modal
 
   renderChapterGrid();
 
   // deep-link support: standards.html?ch=IPC
   const params = new URLSearchParams(location.search);
   if (params.has('ch') && OFFICIAL[params.get('ch')]) openChapter(params.get('ch'));
+})();
+</script>
+<script>
+(function loadThreeThenGalaxy() {
+  var sources = [
+    "https://cdn.jsdelivr.net/npm/three@0.128.0/build/three.min.js",
+    "https://unpkg.com/three@0.128.0/build/three.min.js",
+    "https://cdnjs.cloudflare.com/ajax/libs/three.js/r128/three.min.js"
+  ];
+  function loadGalaxy() {
+    var g = document.createElement("script"); g.src = "galaxy/galaxy.js";
+    document.body.appendChild(g);
+  }
+  function tryLoad(i) {
+    if (i >= sources.length) { loadGalaxy(); return; } // galaxy.js detects missing THREE and shows a graceful message
+    var s = document.createElement("script");
+    s.src = sources[i];
+    s.onload = loadGalaxy;
+    s.onerror = function () { tryLoad(i + 1); };
+    document.body.appendChild(s);
+  }
+  tryLoad(0);
 })();
 </script>
 </body>

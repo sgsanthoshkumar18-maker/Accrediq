@@ -8,7 +8,7 @@
 <meta name="description" content="AQcredix teaches healthcare teams to understand NABH accreditation the way an assessor does — so the Non-Conformity never happens. Standards, department roles, KPIs, quality tools and assessor videos.">
 <link rel="icon" href="data:image/svg+xml,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 26 30'><path d='M13 1 24 5v10c0 7-5 12-11 14C7 27 2 22 2 15V5L13 1Z' fill='%234F46E5'/></svg>">
 <link rel="stylesheet" href="styles.css">
-<link rel="stylesheet" href="globe/globe.css">
+<link rel="stylesheet" href="radar/radar.css">
 </head>
 <body data-page="home">
 <div id="site-header"></div>
@@ -33,29 +33,20 @@
           <div><span class="n">Live</span><span class="l">Quality Dashboard, scored</span></div>
         </div>
       </div>
-      <div class="badge-stage" id="globeStage">
-        <div class="globe-canvas-wrap">
-          <canvas id="globeCanvas" aria-label="Interactive 3D globe showing AQcredix-network hospitals worldwide" role="img"></canvas>
-          <div class="globe-loading" id="globeLoading"><div class="spin"></div>Loading globe…</div>
-          <div class="globe-search">
-            <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="11" cy="11" r="7"/><path d="M21 21l-4.3-4.3" stroke-linecap="round"/></svg>
-            <input type="text" id="globeSearchInput" placeholder="Search hospital, city, state…" aria-label="Search hospitals by name, city, state or country" autocomplete="off">
-            <div class="globe-search-results" id="globeSearchResults"></div>
+      <div class="badge-stage" id="radarStage">
+        <div class="radar-toolbar">
+          <div class="radar-overall" id="radarOverall">
+            <span class="radar-overall-num">—</span>
+            <span class="radar-overall-label">Loading…</span>
           </div>
-          <div class="globe-zoom">
-            <button type="button" id="globeZoomIn" aria-label="Zoom in">+</button>
-            <button type="button" id="globeZoomOut" aria-label="Zoom out">–</button>
-          </div>
-          <div class="globe-nav">
-            <button type="button" class="globe-back-btn" id="globeBackBtn">
-              <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.4" stroke-linecap="round"><path d="M15 18l-6-6 6-6"/></svg>
-              Back
-            </button>
-            <span class="globe-breadcrumb" id="globeBreadcrumb">World</span>
-          </div>
-          <div id="globeOverlay" style="position:absolute;inset:0;pointer-events:none;"></div>
-          <div class="globe-card" id="globeCard"></div>
+          <button type="button" class="radar-reset-btn" id="radarResetBtn">Reset scores</button>
         </div>
+        <div class="radar-canvas-wrap">
+          <canvas id="radarCanvas" aria-label="Interactive 3D NABH Readiness Radar — drag any chapter tower to set your self-assessed readiness score" role="img"></canvas>
+          <div class="radar-loading" id="radarLoading"><div class="spin"></div>Building radar…</div>
+          <div id="radarOverlay" style="position:absolute;inset:0;pointer-events:none;"></div>
+        </div>
+        <p class="radar-hint"><b>Drag any tower</b> up or down to set your readiness for that chapter. Drag empty space to rotate. Saved to this browser.</p>
       </div>
     </div>
   </div>
@@ -180,30 +171,29 @@
 <div id="site-footer"></div>
 <script src="app.js"></script>
 <script>
-(function loadThreeThenGlobe() {
+(function loadThreeThenRadar() {
   var sources = [
     "https://cdn.jsdelivr.net/npm/three@0.128.0/build/three.min.js",
     "https://unpkg.com/three@0.128.0/build/three.min.js",
     "https://cdnjs.cloudflare.com/ajax/libs/three.js/r128/three.min.js"
   ];
+  function loadRadar() {
+    var d = document.createElement("script"); d.src = "nabh-data.js";
+    d.onload = function () {
+      var r = document.createElement("script"); r.src = "radar/radar.js";
+      document.body.appendChild(r);
+    };
+    document.body.appendChild(d);
+  }
   function tryLoad(i) {
     if (i >= sources.length) {
-      // all CDNs failed — load globe.js anyway; it detects missing THREE and shows the fallback graphic.
-      var g1 = document.createElement("script"); g1.src = "globe/globe-data.js";
-      var g2 = document.createElement("script"); g2.src = "globe/globe.js";
-      document.body.appendChild(g1); document.body.appendChild(g2);
+      // all CDNs failed — load radar.js anyway; it detects missing THREE and shows the fallback graphic.
+      loadRadar();
       return;
     }
     var s = document.createElement("script");
     s.src = sources[i];
-    s.onload = function () {
-      var d = document.createElement("script"); d.src = "globe/globe-data.js";
-      d.onload = function () {
-        var g = document.createElement("script"); g.src = "globe/globe.js";
-        document.body.appendChild(g);
-      };
-      document.body.appendChild(d);
-    };
+    s.onload = loadRadar;
     s.onerror = function () { tryLoad(i + 1); };
     document.body.appendChild(s);
   }
