@@ -7,6 +7,22 @@ window.DEPT_DATA = [
   chapters:["MOM"],
   intro:"Pharmacy is the tightest-controlled real estate in the hospital — every square foot, every degree of temperature, and every gram of stock has a rule behind it.",
   sections:[
+    { h:"Hospital formulary",
+      items:[
+        "The formulary is the hospital's own defined, approved list of medications — not every drug on the market, only what's clinically appropriate for the patient population and scope of services the organisation actually offers (MOM.2.a).",
+        "Built and maintained by a multi-disciplinary Pharmacy & Therapeutics-style committee, not by pharmacy alone — physicians, pharmacists, and nursing all weigh in on what belongs on it.",
+        "Reviewed and updated collaboratively at least once a year, with additions and deletions justified by clinical need, cost, and safety — not just habit.",
+        "Kept genuinely available for clinicians to reference at the point of prescribing, so 'not on formulary' is discovered before the order is written, not after.",
+        "A restricted or non-formulary drug request goes through a defined justification and approval pathway rather than an informal workaround.",
+      ]},
+    { h:"Why a clinical pharmacologist / clinical pharmacist matters",
+      items:[
+        "A clinical pharmacologist brings deep, specialist knowledge of how drugs actually behave in the body — interactions, dosing in organ impairment, and the clinical evidence behind a regimen — that most prescribers don't have time to track drug-by-drug.",
+        "A clinical pharmacist reviews orders before they reach the patient: catching a wrong dose, a dangerous interaction, a duplicate therapy, or a contraindication a busy prescriber missed — a second, expert set of eyes on every prescription.",
+        "Both roles anchor the multi-disciplinary medication management committee (MOM.1.b) that NABH requires — someone has to actually own the pharmacology expertise driving formulary decisions, not just the logistics of stocking shelves.",
+        "In antimicrobial stewardship specifically, a clinical pharmacologist's input is often what keeps a hospital's antibiotic policy evidence-based rather than habit-based — directly protecting against resistance building up in the patient population.",
+        "Their involvement is also what turns a medication error report into an actual practice change — the clinical reasoning behind 'why this happened' usually needs their expertise to interpret correctly.",
+      ]},
     { h:"Physical requirements & storage dimensions",
       items:[
         "Minimum clear storage area sized to formulary volume — typically 1 sq.ft. of shelf per 150–200 SKUs as a working rule of thumb, scaled to bed strength.",
@@ -45,9 +61,9 @@ window.DEPT_DATA = [
 
 {
   id:"nursing", name:"Nursing", icon:"heart",
-  keywords:[/nursing/i,/nurse/i,/bedside/i,/vital sign/i,/patient assessment/i,/care plan/i,/fall/i,/pressure (ulcer|injury)/i,/pain (assessment|management)/i,/handover/i],
-  chapters:["COP","AAC"],
-  intro:"Nursing carries the highest-frequency touchpoints with the patient — most Core elements assessors check ride on what nursing actually does at the bedside, not what's written in a policy folder.",
+  keywords:[/nursing/i,/nurse/i,/bedside/i,/vital sign/i,/patient assessment/i,/care plan/i,/fall/i,/pressure (ulcer|injury)/i,/pain (assessment|management)/i,/handover/i,/monitored after medication/i,/near miss/i,/adverse drug/i,/medication error/i,/medications? (are|is) administered/i,/administration of medication/i,/before administration/i,/self-administration/i,/catheter and tubing/i,/medications? brought from outside/i],
+  chapters:["COP","AAC","MOM"],
+  intro:"Nursing carries the highest-frequency touchpoints with the patient — most Core elements assessors check ride on what nursing actually does at the bedside, not what's written in a policy folder. Post-administration monitoring (MOM.8) sits here too: nursing is who's actually at the bedside when a medication takes effect, or when it doesn't.",
   sections:[
     { h:"Ward & unit essentials",
       items:[
@@ -55,6 +71,22 @@ window.DEPT_DATA = [
         "Bedside chart/e-record updated in real time — vitals, pain score, and intake-output, not retrospectively at end of shift.",
         "Fall-risk screening at admission and after any status change, with visible risk-flagging (wristband/bed sign) for high-risk patients.",
         "Handover follows a structured format (e.g. SBAR) at every shift change, with two-identifier patient verification.",
+      ]},
+    { h:"Safe medication administration (MOM.7)",
+      items:[
+        "Administered only by staff permitted by law to do so — checked before independent duty, not assumed.",
+        "The 'five rights' verified from the order every time before the dose is given: right patient (two identifiers), right medication (physically inspected against the order), right strength, right route, right timing.",
+        "A prepared medication is labelled before the next drug is prepared — so two syringes on a tray are never a guessing game.",
+        "Measures in place to prevent catheter and tubing mis-connections during administration — a Core, asterisked (SOP-required) element, because a tubing mix-up can be fatal.",
+        "Every administration documented at the time it happens, not reconstructed later from memory.",
+        "Patient self-administration and medications a patient brings in from outside are both governed by a defined process — not left informal.",
+      ]},
+    { h:"Medication monitoring (MOM.8)",
+      items:[
+        "Every patient monitored for response after medication administration — not just given the dose and moved on to the next bed.",
+        "If monitoring shows an adverse response, the medication plan is adjusted and escalated to the prescriber — the observation has to actually change practice.",
+        "Near misses, medication errors, and adverse drug reactions captured and reported within a defined time frame, in a no-blame reporting culture.",
+        "Reported events are collected and genuinely analysed — not just filed — with corrective and preventive action taken based on what the analysis shows.",
       ]},
     { h:"Licensing & competency",
       items:[
