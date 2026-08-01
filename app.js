@@ -102,10 +102,13 @@
           <div class="footer-col"><h4>AQcredix</h4>
             <a href="${base}about.html">About &amp; vision</a>
             <a href="${base}about.html#roadmap">Roadmap</a>
+            <a href="${base}contact.html">Contact</a>
+            <a href="${base}privacy.html">Privacy Policy</a>
+            <a href="${base}terms.html">Terms of Service</a>
           </div>
         </div>
         <div class="footer-bottom">
-          <span>© 2026 AQcredix — Accreditation & Quality Excellence. An independent healthcare education forum.</span>
+          <span>© 2026 AQcredix — Accreditation &amp; Quality Excellence. An independent healthcare education forum. Not affiliated with NABH, QCI, JCI or any accreditation body.</span>
           <span>Built the way an assessor reads a standard.</span>
         </div>
       </div>
