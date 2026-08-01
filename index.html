@@ -8,7 +8,7 @@
 <meta name="description" content="AQcredix teaches healthcare teams to understand NABH accreditation the way an assessor does — so the Non-Conformity never happens. Standards, department roles, KPIs, quality tools and assessor videos.">
 <link rel="icon" href="data:image/svg+xml,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 26 30'><path d='M13 1 24 5v10c0 7-5 12-11 14C7 27 2 22 2 15V5L13 1Z' fill='%234F46E5'/></svg>">
 <link rel="stylesheet" href="styles.css">
-<link rel="stylesheet" href="radar/radar.css">
+<link rel="stylesheet" href="helix/helix.css">
 </head>
 <body data-page="home">
 <div id="site-header"></div>
@@ -33,20 +33,23 @@
           <div><span class="n">Live</span><span class="l">Quality Dashboard, scored</span></div>
         </div>
       </div>
-      <div class="badge-stage" id="radarStage">
-        <div class="radar-toolbar">
-          <div class="radar-overall" id="radarOverall">
-            <span class="radar-overall-num">—</span>
-            <span class="radar-overall-label">Loading…</span>
+      <div class="badge-stage" id="helixStage">
+        <div class="helix-canvas-wrap">
+          <canvas id="helixCanvas" aria-label="Interactive 3D double helix of all 639 NABH Objective Elements with neural-web connections" role="img"></canvas>
+          <div class="helix-loading" id="helixLoading"><div class="spin"></div>Coiling the standard…</div>
+          <div id="helixOverlay" style="position:absolute;inset:0;pointer-events:none;"></div>
+          <div class="helix-tooltip" id="helixTooltip"></div>
+        </div>
+        <div class="helix-footer">
+          <span class="helix-stat" id="helixStat">Loading…</span>
+          <div class="helix-legend">
+            <span><i style="background:#c42e42;"></i> Core</span>
+            <span><i style="background:#b0590a;"></i> Commitment</span>
+            <span><i style="background:#0EA5A0;"></i> Achievement</span>
+            <span><i style="background:#3554d1;"></i> Excellence</span>
           </div>
-          <button type="button" class="radar-reset-btn" id="radarResetBtn">Reset scores</button>
         </div>
-        <div class="radar-canvas-wrap">
-          <canvas id="radarCanvas" aria-label="Interactive 3D NABH Readiness Radar — drag any chapter tower to set your self-assessed readiness score" role="img"></canvas>
-          <div class="radar-loading" id="radarLoading"><div class="spin"></div>Building radar…</div>
-          <div id="radarOverlay" style="position:absolute;inset:0;pointer-events:none;"></div>
-        </div>
-        <p class="radar-hint"><b>Drag any tower</b> up or down to set your readiness for that chapter. Drag empty space to rotate. Saved to this browser.</p>
+        <p class="helix-hint"><b>Drag</b> to rotate and travel along the strand · <b>scroll</b> to zoom · <b>click a node</b> to open its chapter.</p>
       </div>
     </div>
   </div>
@@ -171,29 +174,29 @@
 <div id="site-footer"></div>
 <script src="app.js"></script>
 <script>
-(function loadThreeThenRadar() {
+(function loadThreeThenHelix() {
   var sources = [
     "https://cdn.jsdelivr.net/npm/three@0.128.0/build/three.min.js",
     "https://unpkg.com/three@0.128.0/build/three.min.js",
     "https://cdnjs.cloudflare.com/ajax/libs/three.js/r128/three.min.js"
   ];
-  function loadRadar() {
+  function loadHelix() {
     var d = document.createElement("script"); d.src = "nabh-data.js";
     d.onload = function () {
-      var r = document.createElement("script"); r.src = "radar/radar.js";
+      var r = document.createElement("script"); r.src = "helix/helix.js";
       document.body.appendChild(r);
     };
     document.body.appendChild(d);
   }
   function tryLoad(i) {
     if (i >= sources.length) {
-      // all CDNs failed — load radar.js anyway; it detects missing THREE and shows the fallback graphic.
-      loadRadar();
+      // all CDNs failed — load helix.js anyway; it detects missing THREE and shows the fallback graphic.
+      loadHelix();
       return;
     }
     var s = document.createElement("script");
     s.src = sources[i];
-    s.onload = loadRadar;
+    s.onload = loadHelix;
     s.onerror = function () { tryLoad(i + 1); };
     document.body.appendChild(s);
   }
