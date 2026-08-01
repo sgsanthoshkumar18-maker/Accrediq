@@ -8,6 +8,7 @@
 <meta name="description" content="One dashboard for every department's Key Result Areas and KPIs — the same standard, scored by role, the way an assessor would ask for it.">
 <link rel="icon" href="data:image/svg+xml,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 26 30'><path d='M13 1 24 5v10c0 7-5 12-11 14C7 27 2 22 2 15V5L13 1Z' fill='%234F46E5'/></svg>">
 <link rel="stylesheet" href="styles.css">
+<link rel="stylesheet" href="qglobe/qglobe.css">
 </head>
 <body data-page="dashboard">
 <div id="site-header"></div>
@@ -18,6 +19,33 @@
     <span class="eyebrow">Every department, one view</span>
     <h1>The Quality Dashboard.</h1>
     <p class="lead">Pick a department to see its Key Result Areas and the KPIs that prove them — the same scorecard a quality manager would walk an assessor through.</p>
+  </div>
+</section>
+
+<section class="wrap" style="padding:24px 28px 0;">
+  <div class="qg-shell" id="qgStage">
+    <div class="qg-left">
+      <div class="qg-left-head">
+        <div>
+          <div class="qg-showing">Showing · Department Score</div>
+          <div class="qg-live"><span class="dot"></span>live · NABH 6th Edition · Real element data</div>
+        </div>
+      </div>
+      <div class="qg-globe-wrap">
+        <canvas id="qgCanvas" aria-label="Interactive 3D globe — every glowing hub is a department" role="img"></canvas>
+        <div class="qg-loading" id="qgLoading"><div class="spin"></div>Initializing</div>
+        <div id="qgOverlay" style="position:absolute;inset:0;"></div>
+      </div>
+      <div class="qg-hint">drag to rotate · scroll to zoom · click a hub</div>
+    </div>
+    <div class="qg-right">
+      <div class="qg-panel-empty" id="qgPanelEmpty">
+        <svg width="40" height="40" viewBox="0 0 24 24" fill="none" stroke="#5eead4" stroke-width="1.6"><circle cx="12" cy="12" r="9"/><path d="M12 3a9 9 0 0 1 0 18M3 12h18" stroke-opacity=".5"/></svg>
+        <h3>Select a department</h3>
+        <p>Click any glowing hub on the globe for its full department intelligence — score, KRAs, KPIs, SOP-required elements, and committee membership.</p>
+      </div>
+      <div class="qg-panel" id="qgPanel"></div>
+    </div>
   </div>
 </section>
 
@@ -67,6 +95,8 @@
 </section>
 
 <div id="site-footer"></div>
+<script src="nabh-data.js"></script>
+<script src="committee-data.js"></script>
 <script src="app.js"></script>
 <script>
 (function(){
@@ -320,6 +350,33 @@
   });
 
   renderGrid(DEPTS);
+  window.DASH_DEPTS = DEPTS;
+  window.openDeptDetailFromQGlobe = function (id) {
+    const d = DEPTS.find(x => x.id === id);
+    if (d) openDetail(d);
+  };
+})();
+</script>
+<script>
+(function loadThreeThenQGlobe() {
+  var sources = [
+    "https://cdn.jsdelivr.net/npm/three@0.128.0/build/three.min.js",
+    "https://unpkg.com/three@0.128.0/build/three.min.js",
+    "https://cdnjs.cloudflare.com/ajax/libs/three.js/r128/three.min.js"
+  ];
+  function loadQGlobe() {
+    var g = document.createElement("script"); g.src = "qglobe/qglobe.js";
+    document.body.appendChild(g);
+  }
+  function tryLoad(i) {
+    if (i >= sources.length) { loadQGlobe(); return; }
+    var s = document.createElement("script");
+    s.src = sources[i];
+    s.onload = loadQGlobe;
+    s.onerror = function () { tryLoad(i + 1); };
+    document.body.appendChild(s);
+  }
+  tryLoad(0);
 })();
 </script>
 </body>
