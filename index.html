@@ -9,6 +9,7 @@
 <link rel="icon" href="data:image/svg+xml,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 26 30'><path d='M13 1 24 5v10c0 7-5 12-11 14C7 27 2 22 2 15V5L13 1Z' fill='%234F46E5'/></svg>">
 <link rel="stylesheet" href="styles.css">
 <link rel="stylesheet" href="face/face.css">
+<link rel="stylesheet" href="hglobe/hglobe.css">
 </head>
 <body data-page="home">
 <div id="site-header"></div>
@@ -52,6 +53,39 @@
     <div class="lens-col mid"><div class="step">02 — SEE</div><h3>What the assessor looks for</h3><p>The evidence, records and observations an assessor checks against that exact element.</p></div>
     <div class="lens-col"><div class="step">03 — CLOSE</div><h3>The gap, before it's an NC</h3><p>The common mistake, the NC it becomes, and the practical fix — for every department.</p></div>
   </div></div>
+</section>
+
+<!-- WORLD GLOBE -->
+<section class="section wrap">
+  <div class="hg-shell" id="hgStage">
+    <div class="hg-left">
+      <div class="hg-left-head">
+        <div>
+          <div class="hg-showing">Showing · World Capitals</div>
+          <div class="hg-live"><span class="dot"></span>geographic data · hover a node</div>
+        </div>
+      </div>
+      <div class="hg-globe-wrap">
+        <canvas id="hgCanvas" aria-label="Interactive 3D globe — every glowing node is a world capital" role="img"></canvas>
+        <div class="hg-loading" id="hgLoading"><div class="spin"></div>Initializing</div>
+        <div id="hgOverlay" style="position:absolute;inset:0;pointer-events:none;"></div>
+        <div class="hg-zoom-controls">
+          <button type="button" id="hgZoomIn" aria-label="Zoom in">+</button>
+          <button type="button" id="hgZoomOut" aria-label="Zoom out">−</button>
+          <button type="button" id="hgZoomReset" aria-label="Reset view">⟳</button>
+        </div>
+      </div>
+      <div class="hg-hint">drag to rotate · scroll or use +/− to zoom · click a capital</div>
+    </div>
+    <div class="hg-right">
+      <div class="hg-panel-empty" id="hgPanelEmpty">
+        <svg width="40" height="40" viewBox="0 0 24 24" fill="none" stroke="#5eead4" stroke-width="1.6"><circle cx="12" cy="12" r="9"/><path d="M12 3a9 9 0 0 1 0 18M3 12h18" stroke-opacity=".5"/></svg>
+        <h3>Select a capital</h3>
+        <p>Click any glowing node on the globe for that capital's profile.</p>
+      </div>
+      <div class="hg-panel" id="hgPanel"></div>
+    </div>
+  </div>
 </section>
 
 <!-- PILLARS -->
@@ -170,10 +204,45 @@
     "https://unpkg.com/three@0.128.0/build/three.min.js",
     "https://cdnjs.cloudflare.com/ajax/libs/three.js/r128/three.min.js"
   ];
+  function loadWorldGlobe() {
+    // OrbitControls + GSAP are optional polish; the globe degrades gracefully without them.
+    function chain(srcs, done) {
+      (function next(i) {
+        if (i >= srcs.length) { done(); return; }
+        var s = document.createElement("script");
+        s.src = srcs[i];
+        s.onload = function () { done(); };
+        s.onerror = function () { next(i + 1); };
+        document.body.appendChild(s);
+      })(0);
+    }
+    chain([
+      "https://cdn.jsdelivr.net/npm/three@0.128.0/examples/js/controls/OrbitControls.js",
+      "https://unpkg.com/three@0.128.0/examples/js/controls/OrbitControls.js"
+    ], function () {
+      chain([
+        "https://cdn.jsdelivr.net/npm/gsap@3.12.5/dist/gsap.min.js",
+        "https://cdnjs.cloudflare.com/ajax/libs/gsap/3.12.5/gsap.min.js"
+      ], function () {
+        var b = document.createElement("script"); b.src = "hglobe/world-borders.js";
+        b.onload = b.onerror = function () {
+          var cap = document.createElement("script"); cap.src = "hglobe/capitals-data.js";
+          cap.onload = function () {
+            var g = document.createElement("script"); g.src = "hglobe/hglobe.js";
+            document.body.appendChild(g);
+          };
+          document.body.appendChild(cap);
+        };
+        document.body.appendChild(b);
+      });
+    });
+  }
+
   function loadFaceScript() {
     var d = document.createElement("script"); d.src = "nabh-data.js";
     d.onload = function () {
       var r = document.createElement("script"); r.src = "face/face.js";
+      r.onload = r.onerror = loadWorldGlobe;
       document.body.appendChild(r);
     };
     document.body.appendChild(d);
