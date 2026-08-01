@@ -1,0 +1,111 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<script>(function(){try{var p=new URLSearchParams(location.search);if(p.has("dark")){var v=p.get("dark");if(v==="0"){localStorage.setItem("aq-theme","light");}else{localStorage.setItem("aq-theme","dark");}}if(localStorage.getItem("aq-theme")==="dark"){document.documentElement.setAttribute("data-theme","dark");}}catch(e){}})();</script>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Smart SOP Generator — NABH-aligned SOPs in Word | AQcredix</title>
+<meta name="description" content="Describe what you need in plain English and get a NABH-aligned Standard Operating Procedure, grounded in the real 6th Edition Objective Elements, downloadable as a Word .docx.">
+<link rel="icon" href="data:image/svg+xml,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 26 30'><path d='M13 1 24 5v10c0 7-5 12-11 14C7 27 2 22 2 15V5L13 1Z' fill='%234F46E5'/></svg>">
+<link rel="stylesheet" href="styles.css">
+<link rel="stylesheet" href="sop/sop.css">
+</head>
+<body data-page="sop">
+<div id="site-header"></div>
+
+<section class="page-head">
+  <div class="wrap">
+    <nav class="breadcrumb"><a href="index.html">Home</a><span class="sep">/</span><span class="cur">SOP Generator</span></nav>
+    <span class="eyebrow">Write it once, correctly</span>
+    <h1>Smart SOP Generator.</h1>
+    <p class="lead">Describe what the SOP is for in your own words. AQcredix matches it against the real NABH 6th Edition Objective Elements, builds a complete SOP around the standard document structure, and gives you a Word file to edit and approve.</p>
+  </div>
+</section>
+
+<section class="section wrap">
+  <div class="sop-shell">
+
+    <!-- LEFT: the wizard -->
+    <div class="sop-form">
+      <div class="sop-step">
+        <label class="sop-label" for="sopTopic">1 · What is the SOP for?</label>
+        <p class="sop-hint">Plain English is fine — "fridge temperature monitoring", "how we handle hand hygiene", "waste segregation in the wards".</p>
+        <textarea id="sopTopic" class="sop-textarea" rows="3" placeholder="e.g. fridge temperature monitoring SOP"></textarea>
+        <div class="sop-chips" id="sopChips">
+          <button type="button" class="sop-chip">fridge temperature monitoring</button>
+          <button type="button" class="sop-chip">hand hygiene</button>
+          <button type="button" class="sop-chip">biomedical waste segregation</button>
+          <button type="button" class="sop-chip">informed consent</button>
+          <button type="button" class="sop-chip">medication administration</button>
+        </div>
+      </div>
+
+      <div class="sop-step">
+        <label class="sop-label" for="sopDept">2 · Department</label>
+        <select id="sopDept" class="sop-select"></select>
+      </div>
+
+      <div class="sop-step">
+        <label class="sop-label" for="sopOrg">3 · Organisation name <span class="sop-opt">(optional)</span></label>
+        <input id="sopOrg" class="sop-input" type="text" placeholder="Leave blank to fill in later">
+      </div>
+
+      <div class="sop-step">
+        <label class="sop-label" for="sopSize">4 · Hospital size</label>
+        <select id="sopSize" class="sop-select">
+          <option value="small">Small — clinic / SHCO, under ~50 beds</option>
+          <option value="medium" selected>Medium — up to ~200 beds</option>
+          <option value="large">Large — tertiary care, 200+ beds</option>
+        </select>
+      </div>
+
+      <div class="sop-step">
+        <label class="sop-label" for="sopLang">5 · Language</label>
+        <select id="sopLang" class="sop-select">
+          <option value="en" selected>English</option>
+          <option value="other">Other — draft in English with a translation note</option>
+        </select>
+        <p class="sop-hint">Drafts are generated in English. Choosing "Other" adds a document-control note reminding you to have the translation verified by a competent bilingual reviewer before issue.</p>
+      </div>
+
+      <button type="button" class="btn btn-primary sop-generate" id="sopGenerate">Generate SOP</button>
+      <p class="sop-disclaimer">This produces a <b>starting draft</b>, grounded in real NABH element text. It must be reviewed, adapted to what your staff actually do, and formally approved before use.</p>
+    </div>
+
+    <!-- RIGHT: preview + download -->
+    <div class="sop-preview" id="sopPreview">
+      <div class="sop-empty" id="sopEmpty">
+        <svg width="42" height="42" viewBox="0 0 24 24" fill="none" stroke="#5eead4" stroke-width="1.5"><path d="M6 2h9l5 5v13a2 2 0 0 1-2 2H6a2 2 0 0 1-2-2V4a2 2 0 0 1 2-2Z" stroke-linejoin="round"/><path d="M14 2v5h5M8 13h8M8 17h5" stroke-linecap="round"/></svg>
+        <h3>Your SOP will appear here</h3>
+        <p>Describe the topic on the left and press Generate.</p>
+      </div>
+      <div class="sop-doc" id="sopDoc"></div>
+    </div>
+
+  </div>
+</section>
+
+<div id="site-footer"></div>
+<script src="nabh-data.js"></script>
+<script src="department-data.js"></script>
+<script src="app.js"></script>
+<script src="sop/sop-engine.js"></script>
+<script src="sop/sop-docx.js"></script>
+<script src="sop/sop-ui.js"></script>
+<script>
+(function loadJSZip(){
+  var sources=[
+    "https://cdn.jsdelivr.net/npm/jszip@3.10.1/dist/jszip.min.js",
+    "https://cdnjs.cloudflare.com/ajax/libs/jszip/3.10.1/jszip.min.js"
+  ];
+  (function next(i){
+    if(i>=sources.length) return;           // sop-ui.js shows a clear message if JSZip is missing
+    var s=document.createElement("script");
+    s.src=sources[i];
+    s.onerror=function(){ next(i+1); };
+    document.body.appendChild(s);
+  })(0);
+})();
+</script>
+</body>
+</html>
