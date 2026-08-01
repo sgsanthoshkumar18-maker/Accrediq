@@ -102,6 +102,38 @@
   });
   scene.add(new THREE.Mesh(new THREE.SphereGeometry(RADIUS * 1.12, 64, 64), atmoMat));
 
+  // ---------- Starfield — thousands of randomly distributed points, BufferGeometry ----------
+  (function buildStarfield() {
+    const STAR_COUNT = 2600;
+    const positions = new Float32Array(STAR_COUNT * 3);
+    const sizes = new Float32Array(STAR_COUNT);
+    for (let i = 0; i < STAR_COUNT; i++) {
+      // random point on a large shell around the scene (not inside the globe)
+      const r = 6 + Math.random() * 14;
+      const theta = Math.random() * Math.PI * 2;
+      const phi = Math.acos(2 * Math.random() - 1);
+      positions[i * 3] = r * Math.sin(phi) * Math.cos(theta);
+      positions[i * 3 + 1] = r * Math.sin(phi) * Math.sin(theta);
+      positions[i * 3 + 2] = r * Math.cos(phi);
+      sizes[i] = Math.random() * 0.018 + 0.004;
+    }
+    const geo = new THREE.BufferGeometry();
+    geo.setAttribute("position", new THREE.Float32BufferAttribute(positions, 3));
+    geo.setAttribute("size", new THREE.Float32BufferAttribute(sizes, 1));
+    const starTexCanvas = document.createElement("canvas");
+    starTexCanvas.width = starTexCanvas.height = 16;
+    const sctx = starTexCanvas.getContext("2d");
+    const sg = sctx.createRadialGradient(8, 8, 0, 8, 8, 8);
+    sg.addColorStop(0, "rgba(255,255,255,1)"); sg.addColorStop(1, "rgba(255,255,255,0)");
+    sctx.fillStyle = sg; sctx.beginPath(); sctx.arc(8, 8, 8, 0, Math.PI * 2); sctx.fill();
+    const starTex = new THREE.CanvasTexture(starTexCanvas);
+    const starMat = new THREE.PointsMaterial({
+      size: 0.05, map: starTex, transparent: true, opacity: 0.85, depthWrite: false,
+      blending: THREE.AdditiveBlending, sizeAttenuation: true, vertexColors: false
+    });
+    scene.add(new THREE.Points(geo, starMat));
+  })();
+
   function latLon(lat, lon, r) {
     const phi = (90 - lat) * (Math.PI / 180);
     const theta = (lon + 180) * (Math.PI / 180);
@@ -201,31 +233,59 @@
     return { dept: d, mesh: sprite, basePos: pos, phase: Math.random() * Math.PI * 2 };
   });
 
-  // ---------- Interaction: drag orbit + momentum + zoom + click ----------
-  let rotX = 0.15, rotY = -0.3, velX = 0, velY = 0, dragging = false, lastX = 0, lastY = 0;
+  // ---------- Camera interaction: real OrbitControls when available, manual drag as fallback ----------
   const MIN_D = 1.6, MAX_D = 4.2;
+  let controls = null;
+  let rotX = 0.15, rotY = -0.3, velX = 0, velY = 0, manualDragging = false;
 
-  function onDown(x, y) { dragging = true; lastX = x; lastY = y; velX = 0; velY = 0; }
-  function onMove(x, y) {
-    if (!dragging) return;
-    const dx = x - lastX, dy = y - lastY;
-    rotY += dx * 0.005; rotX += dy * 0.005;
-    rotX = Math.max(-1.3, Math.min(1.3, rotX));
-    velX = dx * 0.005; velY = dy * 0.005;
-    lastX = x; lastY = y;
+  if (typeof THREE.OrbitControls !== "undefined") {
+    controls = new THREE.OrbitControls(camera, canvas);
+    controls.enableDamping = true;
+    controls.dampingFactor = 0.08;
+    controls.minDistance = MIN_D;
+    controls.maxDistance = MAX_D;
+    controls.enablePan = false;
+    controls.autoRotate = true;
+    controls.autoRotateSpeed = 0.35;
+    controls.rotateSpeed = 0.5;
+  } else {
+    // Manual fallback (no OrbitControls loaded) — same drag/zoom feel as before.
+    let lastX = 0, lastY = 0;
+    function onDown(x, y) { manualDragging = true; lastX = x; lastY = y; velX = 0; velY = 0; }
+    function onMove(x, y) {
+      if (!manualDragging) return;
+      const dx = x - lastX, dy = y - lastY;
+      rotY += dx * 0.005; rotX += dy * 0.005;
+      rotX = Math.max(-1.3, Math.min(1.3, rotX));
+      velX = dx * 0.005; velY = dy * 0.005;
+      lastX = x; lastY = y;
+    }
+    function onUp() { manualDragging = false; }
+    canvas.addEventListener("mousedown", e => onDown(e.clientX, e.clientY));
+    window.addEventListener("mousemove", e => onMove(e.clientX, e.clientY));
+    window.addEventListener("mouseup", onUp);
+    canvas.addEventListener("touchstart", e => { const t = e.touches[0]; onDown(t.clientX, t.clientY); }, { passive: true });
+    canvas.addEventListener("touchmove", e => { const t = e.touches[0]; onMove(t.clientX, t.clientY); }, { passive: true });
+    canvas.addEventListener("touchend", onUp);
+    canvas.addEventListener("wheel", e => {
+      e.preventDefault();
+      camDistance = Math.max(MIN_D, Math.min(MAX_D, camDistance + e.deltaY * 0.0025));
+    }, { passive: false });
   }
-  function onUp() { dragging = false; }
 
-  canvas.addEventListener("mousedown", e => onDown(e.clientX, e.clientY));
-  window.addEventListener("mousemove", e => onMove(e.clientX, e.clientY));
-  window.addEventListener("mouseup", onUp);
-  canvas.addEventListener("touchstart", e => { const t = e.touches[0]; onDown(t.clientX, t.clientY); }, { passive: true });
-  canvas.addEventListener("touchmove", e => { const t = e.touches[0]; onMove(t.clientX, t.clientY); }, { passive: true });
-  canvas.addEventListener("touchend", onUp);
-  canvas.addEventListener("wheel", e => {
-    e.preventDefault();
-    camDistance = Math.max(MIN_D, Math.min(MAX_D, camDistance + e.deltaY * 0.0025));
-  }, { passive: false });
+  // Double-click / double-tap resets the view — matches the "reset" pattern from the reference.
+  canvas.addEventListener("dblclick", () => {
+    if (controls) {
+      if (window.gsap) {
+        gsap.to(camera.position, { x: 0, y: 0, z: 2.6, duration: 0.9, ease: "power2.inOut" });
+      } else {
+        camera.position.set(0, 0, 2.6);
+      }
+      controls.target.set(0, 0, 0);
+    } else {
+      rotX = 0.15; rotY = -0.3; camDistance = 2.6;
+    }
+  });
 
   const raycaster = new THREE.Raycaster();
   const ndc = new THREE.Vector2();
@@ -238,7 +298,7 @@
     return hits.length ? hubs.find(h => h.mesh === hits[0].object) : null;
   }
   canvas.addEventListener("click", e => {
-    if (Math.abs(velX) > 0.01 || Math.abs(velY) > 0.01) return;
+    if (!controls && (Math.abs(velX) > 0.01 || Math.abs(velY) > 0.01)) return;
     const hit = pickHub(e.clientX, e.clientY);
     if (hit) selectDept(hit.dept);
   });
@@ -277,6 +337,34 @@
     const committees = deptCommittees(d);
     const sops = deptSopElements(d);
     const o = OFFICIAL[d.short];
+    const chapter = NABH[d.short];
+    const coreEls = [], commitEls = [];
+    if (chapter) chapter.standards.forEach(std => std.elements.forEach(el => {
+      const entry = { code: `${std.code}.${el.letter}`, text: el.text };
+      if (el.category === "CORE") coreEls.push(entry);
+      else if (el.category === "Commitment") commitEls.push(entry);
+    }));
+
+    function esc(s) { return String(s).replace(/"/g, "&quot;"); }
+
+    // Each metric is clickable — data-metric identifies which detail panel to reveal below.
+    const metrics = [
+      { key: "kra", color: "#5eead4", val: d.kra.length, lbl: "KEY RESULT AREAS" },
+      { key: "kpi", color: "#818cf8", val: d.kpi.length, lbl: "KPIs TRACKED" },
+      { key: "sop", color: "#fbbf24", val: sops.length, lbl: `SOPs REQUIRED (${d.short})` },
+      { key: "committee", color: "#f472b6", val: committees.length, lbl: "COMMITTEES" },
+      { key: "core", color: "#c42e42", val: o ? o.core : "—", lbl: `CORE ELEMENTS (${d.short})` },
+      { key: "commit", color: "#b0590a", val: o ? o.commitment : "—", lbl: "COMMITMENT ELEMENTS" }
+    ];
+
+    const detailHtml = {
+      kra: `<h3>Key Result Areas</h3><ul class="qg-detail-list">${d.kra.map((k, i) => `<li><b>KRA-${i + 1}</b> ${esc(k)}</li>`).join("")}</ul>`,
+      kpi: `<h3>KPIs tracked</h3><table class="qg-detail-table"><thead><tr><th>KPI</th><th>Current</th><th>Target</th></tr></thead><tbody>${d.kpi.map(([name, val, target]) => `<tr><td>${esc(name)}</td><td class="mono">${esc(val)}</td><td class="mono">${esc(target)}</td></tr>`).join("")}</tbody></table>`,
+      sop: `<h3>SOP-required elements — Chapter ${d.short}</h3><p class="qg-block-note">Every asterisked element in ${d.short} requires a written, documented SOP.</p><ul class="qg-detail-list">${sops.length ? sops.map(s => `<li><b>✱ ${s.code}</b> ${esc(s.text)}</li>`).join("") : `<li class="qg-sop-empty">No asterisked elements in this chapter.</li>`}</ul>`,
+      committee: `<h3>Mandatory committee membership</h3><ul class="qg-detail-list">${committees.length ? committees.map(c => `<li><b>${esc(c.short)}</b> ${esc(c.name)} — chaired by ${esc(c.chairperson)}, meets ${esc(c.frequency.split(",")[0])}</li>`).join("") : `<li class="qg-sop-empty">Not a mandatory member of the 12 modeled committees.</li>`}</ul>`,
+      core: `<h3>Core elements — Chapter ${d.short}</h3><p class="qg-block-note">Core elements are assessed at every survey, no exceptions.</p><ul class="qg-detail-list">${coreEls.length ? coreEls.map(e => `<li><b>${e.code}</b> ${esc(e.text)}</li>`).join("") : `<li class="qg-sop-empty">None in this chapter.</li>`}</ul>`,
+      commit: `<h3>Commitment elements — Chapter ${d.short}</h3><p class="qg-block-note">Commitment elements are the baseline, assessed at final assessment.</p><ul class="qg-detail-list">${commitEls.length ? commitEls.map(e => `<li><b>${e.code}</b> ${esc(e.text)}</li>`).join("") : `<li class="qg-sop-empty">None in this chapter.</li>`}</ul>`
+    };
 
     panel.innerHTML = `
       <div class="qg-panel-head">
@@ -293,39 +381,43 @@
       <div class="qg-score-bar"><div class="qg-score-bar-fill" style="width:${d.score}%;background:${STATUS_COLOR[d.status] || '#5eead4'};"></div></div>
       <div class="qg-score-status">${statusWord(d.status)}</div>
 
+      <p class="qg-block-note" style="margin-top:16px;">Tap any card below for the full, real detail behind that number.</p>
       <div class="qg-metric-grid">
-        <div class="qg-metric-card"><div class="qg-metric-val" style="color:#5eead4;">${d.kra.length}<span class="dot" style="background:#5eead4;"></span></div><div class="qg-metric-lbl">KEY RESULT AREAS</div></div>
-        <div class="qg-metric-card"><div class="qg-metric-val" style="color:#818cf8;">${d.kpi.length}<span class="dot" style="background:#818cf8;"></span></div><div class="qg-metric-lbl">KPIs TRACKED</div></div>
-        <div class="qg-metric-card"><div class="qg-metric-val" style="color:#fbbf24;">${sops.length}<span class="dot" style="background:#fbbf24;"></span></div><div class="qg-metric-lbl">SOPs REQUIRED (${d.short})</div></div>
-        <div class="qg-metric-card"><div class="qg-metric-val" style="color:#f472b6;">${committees.length}<span class="dot" style="background:#f472b6;"></span></div><div class="qg-metric-lbl">COMMITTEES</div></div>
-        <div class="qg-metric-card"><div class="qg-metric-val" style="color:#c42e42;">${o ? o.core : "—"}<span class="dot" style="background:#c42e42;"></span></div><div class="qg-metric-lbl">CORE ELEMENTS (${d.short})</div></div>
-        <div class="qg-metric-card"><div class="qg-metric-val" style="color:#b0590a;">${o ? o.commitment : "—"}<span class="dot" style="background:#b0590a;"></span></div><div class="qg-metric-lbl">COMMITMENT ELEMENTS</div></div>
+        ${metrics.map(m => `
+          <button type="button" class="qg-metric-card" data-metric="${m.key}">
+            <div class="qg-metric-val" style="color:${m.color};">${m.val}<span class="dot" style="background:${m.color};"></span></div>
+            <div class="qg-metric-lbl">${m.lbl}</div>
+          </button>`).join("")}
       </div>
 
-      <div class="qg-block">
-        <h3>SOP-required elements — Chapter ${d.short}</h3>
-        <p class="qg-block-note">Every asterisked element in ${d.short} requires a written, documented SOP. Not every one is specific to ${d.name}, but these are the ones the chapter mandates.</p>
-        <div class="qg-sop-list">
-          ${sops.length ? sops.slice(0, 12).map(s => `<span class="qg-sop-chip" title="${s.text.replace(/"/g,'&quot;')}">✱ ${s.code}</span>`).join("") + (sops.length > 12 ? `<span class="qg-sop-chip qg-sop-more">+${sops.length - 12} more</span>` : "") : `<span class="qg-sop-empty">No asterisked elements in this chapter.</span>`}
-        </div>
-      </div>
-
-      <div class="qg-block">
-        <h3>Mandatory committee membership</h3>
-        <div class="qg-committee-list">
-          ${committees.length ? committees.map((c, i) => `<span class="qg-committee-chip" style="border-color:${COMMITTEE_COLORS[i % COMMITTEE_COLORS.length]};color:${COMMITTEE_COLORS[i % COMMITTEE_COLORS.length]};">${c.short}</span>`).join("") : `<span class="qg-sop-empty">Not a mandatory member of the 12 modeled committees.</span>`}
-        </div>
-      </div>
+      <div class="qg-detail-panel" id="qgDetailPanel"></div>
 
       <a class="qg-panel-cta" href="departments.html${DEPT_ID_ALIAS[d.id] ? '?d=' + encodeURIComponent(DEPT_ID_ALIAS[d.id]) : ''}">Open full department profile →</a>
     `;
+
+    const detailPanel = document.getElementById("qgDetailPanel");
+    panel.querySelectorAll(".qg-metric-card").forEach(btn => {
+      btn.addEventListener("click", () => {
+        const key = btn.dataset.metric;
+        const isOpen = btn.classList.contains("is-active");
+        panel.querySelectorAll(".qg-metric-card").forEach(b => b.classList.remove("is-active"));
+        if (isOpen) {
+          detailPanel.classList.remove("show");
+          detailPanel.innerHTML = "";
+        } else {
+          btn.classList.add("is-active");
+          detailPanel.innerHTML = detailHtml[key];
+          detailPanel.classList.add("show");
+        }
+      });
+    });
+
     document.getElementById("qgPanelClose").addEventListener("click", () => {
       panel.style.display = "none";
       panelEmpty.style.display = "block";
       hubs.forEach(h => h.mesh.scale.setScalar(0.1));
     });
   }
-  const COMMITTEE_COLORS = ["#5eead4", "#818cf8", "#f472b6", "#60a5fa", "#fbbf24", "#a78bfa", "#34d399", "#fb923c", "#38bdf8", "#c084fc", "#f87171", "#4ade80"];
 
   // ---------- Animate ----------
   let t0 = performance.now();
@@ -334,16 +426,20 @@
     const now = performance.now();
     const tt = now / 1000;
 
-    if (!dragging && !reduceMotion) {
-      rotY += velX; rotX += velY;
-      velX *= 0.94; velY *= 0.94;
-      rotY += 0.0006;
+    if (controls) {
+      controls.autoRotate = !reduceMotion && !controls.__userInteracted;
+      controls.update();
+    } else {
+      if (!manualDragging && !reduceMotion) {
+        rotY += velX; rotX += velY;
+        velX *= 0.94; velY *= 0.94;
+        rotY += 0.0006;
+      }
+      rig.rotation.set(rotX, rotY, 0);
+      camera.position.set(0, 0, camDistance);
+      camera.lookAt(0, 0, 0);
+      rig.updateMatrixWorld();
     }
-
-    rig.rotation.set(rotX, rotY, 0);
-    camera.position.set(0, 0, camDistance);
-    camera.lookAt(0, 0, 0);
-    rig.updateMatrixWorld();
 
     if (!reduceMotion) {
       const t = (tt * 0.05) % 1;
@@ -359,8 +455,20 @@
     updateHitPositions();
   }
 
+  // Once a user manually drags, stop auto-rotating (standard, expected OrbitControls UX).
+  if (controls) {
+    canvas.addEventListener("pointerdown", () => { controls.__userInteracted = true; });
+  }
+
   requestAnimationFrame(() => {
     sizeRenderer();
+
+    // GSAP intro camera fly-in when available; otherwise the camera simply starts at its resting position.
+    if (window.gsap) {
+      camera.position.set(0, 0, 6.5);
+      gsap.to(camera.position, { z: camDistance, duration: 1.6, ease: "power3.out" });
+    }
+
     animate();
     setTimeout(() => loadingEl && loadingEl.classList.add("hidden"), 400);
   });

@@ -67,7 +67,21 @@
 .qg-score-status{font-size:11px;color:rgba(255,255,255,.4);margin-top:6px;margin-bottom:22px;}
 
 .qg-metric-grid{display:grid;grid-template-columns:1fr 1fr;gap:10px;margin-bottom:24px;}
-.qg-metric-card{background:rgba(255,255,255,.03);border:1px solid rgba(255,255,255,.09);border-radius:12px;padding:14px;}
+.qg-metric-card{background:rgba(255,255,255,.03);border:1px solid rgba(255,255,255,.09);border-radius:12px;padding:14px;width:100%;text-align:left;cursor:pointer;transition:background .18s ease,border-color .18s ease,transform .18s ease;font-family:inherit;}
+.qg-metric-card:hover{background:rgba(255,255,255,.06);border-color:rgba(94,234,212,.3);transform:translateY(-2px);}
+.qg-metric-card.is-active{background:rgba(94,234,212,.08);border-color:#5eead4;}
+
+.qg-detail-panel{display:none;margin:4px 0 22px;background:rgba(255,255,255,.03);border:1px solid rgba(94,234,212,.2);border-radius:12px;padding:16px 18px;max-height:320px;overflow-y:auto;animation:qgDetailIn .2s ease both;}
+.qg-detail-panel.show{display:block;}
+@keyframes qgDetailIn{from{opacity:0;transform:translateY(-6px);}to{opacity:1;transform:translateY(0);}}
+.qg-detail-panel h3{font-size:12px;text-transform:uppercase;letter-spacing:.05em;color:#5eead4;margin-bottom:8px;font-family:var(--font-mono);}
+.qg-detail-list{list-style:none;padding:0;margin:0;display:grid;gap:8px;}
+.qg-detail-list li{font-size:12px;color:rgba(255,255,255,.75);line-height:1.5;padding-bottom:8px;border-bottom:1px solid rgba(255,255,255,.06);}
+.qg-detail-list li:last-child{border-bottom:none;padding-bottom:0;}
+.qg-detail-list li b{display:inline-block;color:#fff;font-family:var(--font-mono);font-size:11px;margin-right:6px;}
+.qg-detail-table{width:100%;border-collapse:collapse;font-size:12px;}
+.qg-detail-table th{text-align:left;font-size:10px;text-transform:uppercase;color:rgba(255,255,255,.4);padding:0 8px 8px 0;font-family:var(--font-mono);}
+.qg-detail-table td{padding:8px 8px 8px 0;border-top:1px solid rgba(255,255,255,.06);color:rgba(255,255,255,.8);}
 .qg-metric-val{font-family:var(--font-display);font-size:22px;font-weight:700;display:flex;align-items:center;gap:6px;}
 .qg-metric-val .dot{width:6px;height:6px;border-radius:50%;display:inline-block;}
 .qg-metric-lbl{font-size:10px;letter-spacing:.04em;color:rgba(255,255,255,.4);margin-top:4px;font-family:var(--font-mono);}
