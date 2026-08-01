@@ -118,19 +118,6 @@
     "Australia": [[-11,131],[-16,145],[-24,153],[-33,151],[-38,141],[-32,127],[-26,113],[-16,122],[-11,131]],
   };
   (function buildContinents() {
-    const positions = [];
-    Object.values(CONTINENTS).forEach(ring => {
-      for (let i = 0; i < ring.length - 1; i++) {
-        const [lat1, lon1] = ring[i], [lat2, lon2] = ring[i + 1];
-        for (let s = 0; s <= 5; s++) {
-          const t = s / 5;
-          const v = latLon(lat1 + (lat2 - lat1) * t, lon1 + (lon2 - lon1) * t, RADIUS * 1.003);
-          positions.push(v.x, v.y, v.z);
-        }
-      }
-    });
-    const geo = new THREE.BufferGeometry();
-    geo.setAttribute("position", new THREE.Float32BufferAttribute(positions, 3));
     function glowTex(hex) {
       const c = document.createElement("canvas"); c.width = c.height = 16;
       const ctx = c.getContext("2d");
@@ -139,8 +126,35 @@
       ctx.fillStyle = g; ctx.beginPath(); ctx.arc(8, 8, 8, 0, Math.PI * 2); ctx.fill();
       return new THREE.CanvasTexture(c);
     }
-    const mat = new THREE.PointsMaterial({ size: 0.014, map: glowTex("rgba(94,234,212,1)"), transparent: true, opacity: 0.75, depthWrite: false, blending: THREE.AdditiveBlending, sizeAttenuation: true });
-    rig.add(new THREE.Points(geo, mat));
+
+    const linePositions = [];
+    const dotPositions = [];
+    Object.values(CONTINENTS).forEach(ring => {
+      for (let i = 0; i < ring.length - 1; i++) {
+        const [lat1, lon1] = ring[i], [lat2, lon2] = ring[i + 1];
+        const STEPS = 14; // denser interpolation so the outline reads as a continuous coastline, not scattered dots
+        let prev = null;
+        for (let s = 0; s <= STEPS; s++) {
+          const t = s / STEPS;
+          const v = latLon(lat1 + (lat2 - lat1) * t, lon1 + (lon2 - lon1) * t, RADIUS * 1.006);
+          if (prev) linePositions.push(prev.x, prev.y, prev.z, v.x, v.y, v.z);
+          if (s % 3 === 0) dotPositions.push(v.x, v.y, v.z);
+          prev = v;
+        }
+      }
+    });
+
+    // Continuous glowing outline — this is what actually reads as "a world map"
+    const lineGeo = new THREE.BufferGeometry();
+    lineGeo.setAttribute("position", new THREE.Float32BufferAttribute(linePositions, 3));
+    const lineMat = new THREE.LineBasicMaterial({ color: 0x5eead4, transparent: true, opacity: 0.85 });
+    rig.add(new THREE.LineSegments(lineGeo, lineMat));
+
+    // Soft glow dots along the same coastline for a luminous, premium feel
+    const dotGeo = new THREE.BufferGeometry();
+    dotGeo.setAttribute("position", new THREE.Float32BufferAttribute(dotPositions, 3));
+    const dotMat = new THREE.PointsMaterial({ size: 0.028, map: glowTex("rgba(224,255,250,1)"), transparent: true, opacity: 0.9, depthWrite: false, blending: THREE.AdditiveBlending, sizeAttenuation: true });
+    rig.add(new THREE.Points(dotGeo, dotMat));
   })();
 
   // ---------- Orbital arc with a traveling dot (decorative, matches the reference's data-flow feel) ----------
