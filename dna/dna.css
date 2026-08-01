@@ -10,6 +10,19 @@
 }
 #dnaCanvas{width:100%;height:100%;display:block;background:transparent;}
 
+.dna-tooltip{
+  position:absolute;z-index:20;min-width:190px;
+  background:rgba(8,11,32,.94);backdrop-filter:blur(10px);
+  border:1px solid rgba(94,234,212,.3);border-radius:10px;padding:11px 14px;
+  color:#fff;opacity:0;pointer-events:none;transition:opacity .15s ease;
+}
+.dna-tooltip.show{opacity:1;}
+.dna-tooltip > b{display:block;font-family:var(--font-display);font-size:13.5px;font-weight:700;margin-bottom:2px;}
+.dna-tt-sub{display:block;font-size:10.5px;color:rgba(255,255,255,.5);font-family:var(--font-mono);margin-bottom:8px;}
+.dna-tt-row{display:flex;align-items:center;gap:7px;font-size:11px;color:rgba(255,255,255,.75);padding:2px 0;}
+.dna-tt-row i{width:8px;height:8px;border-radius:50%;display:inline-block;flex-shrink:0;}
+.dna-tt-row b{margin-left:auto;font-family:var(--font-mono);color:#fff;font-weight:700;}
+
 @media (max-width:900px){
   .dna-wrap{max-width:280px;}
 }

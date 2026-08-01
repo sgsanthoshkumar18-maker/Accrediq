@@ -35,17 +35,18 @@
   outline:2px solid #5eead4;outline-offset:3px;background:rgba(94,234,212,.12);border-radius:50%;
 }
 
-/* Premium tooltip — chapter name + possible NC count only, nothing else */
+/* Premium tooltip — chapter name + possible NC count + which elements are NC-eligible */
 .ent-globe-tooltip{
-  position:absolute;z-index:20;transform:translate(-50%,-100%);
-  background:rgba(8,11,32,.92);backdrop-filter:blur(10px);
-  border:1px solid rgba(94,234,212,.3);border-radius:10px;padding:9px 13px;
-  font-size:12px;color:#fff;white-space:nowrap;
+  position:absolute;z-index:20;transform:translate(-50%,-100%);max-width:280px;
+  background:rgba(8,11,32,.94);backdrop-filter:blur(10px);
+  border:1px solid rgba(94,234,212,.3);border-radius:10px;padding:10px 14px;
+  font-size:12px;color:#fff;
   opacity:0;pointer-events:none;transition:opacity .18s ease, transform .18s ease;
 }
 .ent-globe-tooltip.show{opacity:1;transform:translate(-50%,-108%);}
-.ent-globe-tooltip b{display:block;font-family:var(--font-display);font-size:13px;font-weight:700;margin-bottom:2px;}
-.ent-globe-tooltip span{display:block;font-size:11px;color:#5eead4;font-family:var(--font-mono);}
+.ent-globe-tooltip b{display:block;font-family:var(--font-display);font-size:13px;font-weight:700;margin-bottom:3px;white-space:nowrap;}
+.ent-globe-tooltip span{display:block;font-size:11px;color:#5eead4;font-family:var(--font-mono);margin-bottom:4px;}
+.ent-globe-tooltip em{display:block;font-style:normal;font-size:10px;color:rgba(255,255,255,.55);line-height:1.5;font-family:var(--font-mono);white-space:normal;}
 
 @media (prefers-reduced-motion: reduce){
   .ent-globe-loading .spin{animation:none;}

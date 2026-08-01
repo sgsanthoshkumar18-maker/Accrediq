@@ -70,12 +70,22 @@
     rig.add(new THREE.Mesh(geo, railMat));
   });
 
+  const CHAPTER_NAMES = {
+    AAC: "Access, Assessment & Continuity", COP: "Care of Patients", MOM: "Management of Medication",
+    PRE: "Patient Rights & Education", IPC: "Infection Prevention & Control", PSQ: "Patient Safety & Quality",
+    ROM: "Responsibility of Management", FMS: "Facility Management & Safety",
+    HRM: "Human Resource Management", IMS: "Information Management System"
+  };
+  const OFFICIAL = window.NABH_DATA.official;
+
   // ten base pairs — one per real chapter, evenly spaced along the strand
   const pairs = [];
   CODES.forEach((code, i) => {
     const t = (i + 0.5) / CODES.length;
     const p1 = railPoint(t, 0), p2 = railPoint(t, Math.PI);
     const color = CHAPTER_ACCENT[code] || 0x5eead4;
+    const o = OFFICIAL[code];
+    const stat = { code, name: CHAPTER_NAMES[code] || code, standards: o.standards, elements: o.elements, core: o.core, commitment: o.commitment, achievement: o.achievement, excellence: o.excellence };
 
     const rungGeo = new THREE.CylinderGeometry(0.02, 0.02, p1.distanceTo(p2), 6);
     const rungMat = new THREE.MeshBasicMaterial({ color, transparent: true, opacity: 0.55 });
@@ -93,7 +103,7 @@
       node.position.copy(p);
       node.userData = { code };
       rig.add(node);
-      pairs.push({ mesh: node, code });
+      pairs.push({ mesh: node, code, stat, baseScale: 1 });
     });
   });
 
@@ -112,20 +122,45 @@
   wrapEl.addEventListener("mouseleave", () => { targetTiltX = 0; targetTiltY = 0; });
 
   // click a base-pair node -> open that chapter in the explorer above
+  // hover a base-pair node -> show real chapter stats (standards, elements, category breakdown)
   const raycaster = new THREE.Raycaster();
   const ndc = new THREE.Vector2();
-  canvas.addEventListener("click", e => {
+  const tooltip = document.getElementById("dnaTooltip");
+
+  function pickPair(clientX, clientY) {
     const rect = canvas.getBoundingClientRect();
-    ndc.x = ((e.clientX - rect.left) / rect.width) * 2 - 1;
-    ndc.y = -((e.clientY - rect.top) / rect.height) * 2 + 1;
+    ndc.x = ((clientX - rect.left) / rect.width) * 2 - 1;
+    ndc.y = -((clientY - rect.top) / rect.height) * 2 + 1;
     raycaster.setFromCamera(ndc, camera);
     const hits = raycaster.intersectObjects(pairs.map(p => p.mesh));
-    if (hits.length) {
-      const hit = pairs.find(p => p.mesh === hits[0].object);
-      if (hit && typeof window.openChapterFromDNA === "function") window.openChapterFromDNA(hit.code);
-    }
+    return hits.length ? pairs.find(p => p.mesh === hits[0].object) : null;
+  }
+
+  canvas.addEventListener("click", e => {
+    const hit = pickPair(e.clientX, e.clientY);
+    if (hit && typeof window.openChapterFromDNA === "function") window.openChapterFromDNA(hit.code);
   });
-  canvas.style.cursor = "pointer";
+
+  canvas.addEventListener("mousemove", e => {
+    const hit = pickPair(e.clientX, e.clientY);
+    if (!hit || !tooltip) { if (tooltip) tooltip.classList.remove("show"); canvas.style.cursor = "grab"; return; }
+    canvas.style.cursor = "pointer";
+    const s = hit.stat;
+    const rect = wrapEl.getBoundingClientRect();
+    tooltip.innerHTML = `
+      <b>${s.name}</b>
+      <span class="dna-tt-sub">${s.standards} standards · ${s.elements} elements</span>
+      <span class="dna-tt-row"><i style="background:#c42e42;"></i>Core <b>${s.core}</b></span>
+      <span class="dna-tt-row"><i style="background:#b0590a;"></i>Commitment <b>${s.commitment}</b></span>
+      <span class="dna-tt-row"><i style="background:#0EA5A0;"></i>Achievement <b>${s.achievement}</b></span>
+      <span class="dna-tt-row"><i style="background:#3554d1;"></i>Excellence <b>${s.excellence}</b></span>
+    `;
+    tooltip.style.left = (e.clientX - rect.left + 16) + "px";
+    tooltip.style.top = (e.clientY - rect.top - 10) + "px";
+    tooltip.classList.add("show");
+  });
+  canvas.addEventListener("mouseleave", () => { if (tooltip) tooltip.classList.remove("show"); });
+  canvas.style.cursor = "grab";
 
   let t0 = performance.now();
   function animate() {

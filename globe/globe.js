@@ -35,7 +35,16 @@
     chapterStats = {};
     Object.keys(window.NABH_DATA.official).forEach(code => {
       const o = window.NABH_DATA.official[code];
-      chapterStats[code] = { name: CHAPTER_NAMES[code] || code, possibleNC: o.core + o.commitment };
+      const ncCodes = [];
+      const chapter = window.NABH_DATA.chapters[code];
+      if (chapter) {
+        chapter.standards.forEach(std => {
+          std.elements.forEach(el => {
+            if (el.category === "CORE" || el.category === "Commitment") ncCodes.push(`${std.code}.${el.letter}`);
+          });
+        });
+      }
+      chapterStats[code] = { name: CHAPTER_NAMES[code] || code, possibleNC: o.core + o.commitment, ncCodes };
     });
   }
   const CODES = chapterStats ? Object.keys(chapterStats) : Object.keys(CHAPTER_NAMES);
@@ -164,25 +173,31 @@
     nodes.push({ code, mesh: sprite, basePos: pos, stat, phase: Math.random() * Math.PI * 2 });
   }
 
-  // ---------- Orbital data-flow arcs connecting nodes in a ring (elegant, not cluttered) ----------
+  // ---------- Orbital data-flow arcs: HIGH parabolic, rendered as a dotted trail of glow-dots
+  // (static Line geometry reads as near-invisible on most GPUs at this opacity — dots read clearly) ----------
   const arcs = [];
+  const staticDotMat = new THREE.SpriteMaterial({ map: nodeGlowTex, transparent: true, depthWrite: false, blending: THREE.AdditiveBlending, opacity: 0.5 });
+
   for (let i = 0; i < nodes.length; i++) {
     const a = nodes[i], b = nodes[(i + 1) % nodes.length];
     const mid = a.basePos.clone().add(b.basePos).multiplyScalar(0.5);
-    const elevated = mid.clone().normalize().multiplyScalar(NR * 1.32);
+    const elevated = mid.clone().normalize().multiplyScalar(NR * 1.68); // higher arc, clearly parabolic
     const curve = new THREE.QuadraticBezierCurve3(a.basePos, elevated, b.basePos);
-    const pts = curve.getPoints(48);
-    const geo = new THREE.BufferGeometry().setFromPoints(pts);
-    const mat = new THREE.LineBasicMaterial({ color: 0x5eead4, transparent: true, opacity: 0.22 });
-    const line = new THREE.Line(geo, mat);
-    rig.add(line);
 
-    // 2 traveling particles per arc
-    const dotTex = nodeGlowTex;
+    // static dotted trail along the arc
+    const dotPositions = curve.getSpacedPoints(26);
+    dotPositions.slice(1, -1).forEach(p => {
+      const dot = new THREE.Sprite(staticDotMat);
+      dot.scale.setScalar(0.028);
+      dot.position.copy(p);
+      rig.add(dot);
+    });
+
+    // brighter traveling particles riding the same path
     const travelers = [0, 1].map(k => {
-      const dotMat = new THREE.SpriteMaterial({ map: dotTex, transparent: true, depthWrite: false, blending: THREE.AdditiveBlending, opacity: 0.9 });
+      const dotMat = new THREE.SpriteMaterial({ map: nodeGlowTex, transparent: true, depthWrite: false, blending: THREE.AdditiveBlending, opacity: 0.95 });
       const dot = new THREE.Sprite(dotMat);
-      dot.scale.setScalar(0.05);
+      dot.scale.setScalar(0.055);
       rig.add(dot);
       return { sprite: dot, phase: k * 0.5 + Math.random() * 0.3 };
     });
@@ -222,7 +237,14 @@
   function showTooltip(n, el) {
     const rect = wrapEl.getBoundingClientRect();
     const btnRect = el.getBoundingClientRect();
-    tooltip.innerHTML = `<b>${n.stat.name}</b>${n.stat.possibleNC != null ? `<span>Possible NCs: ${n.stat.possibleNC}</span>` : ""}`;
+    let ncLine = "";
+    if (n.stat.ncCodes && n.stat.ncCodes.length) {
+      const cap = 10;
+      const shown = n.stat.ncCodes.slice(0, cap).join(", ");
+      const extra = n.stat.ncCodes.length - cap;
+      ncLine = `<em>${shown}${extra > 0 ? ` +${extra} more` : ""}</em>`;
+    }
+    tooltip.innerHTML = `<b>${n.stat.name}</b>${n.stat.possibleNC != null ? `<span>Possible NCs: ${n.stat.possibleNC}</span>` : ""}${ncLine}`;
     tooltip.style.left = (btnRect.left - rect.left + btnRect.width / 2) + "px";
     tooltip.style.top = (btnRect.top - rect.top - 8) + "px";
     tooltip.classList.add("show");
