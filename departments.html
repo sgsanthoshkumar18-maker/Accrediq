@@ -8,6 +8,7 @@
 <meta name="description" content="Click any department to see its operational essentials, licensing requirements, preventive-maintenance checklists, and every real NABH Objective Element that applies to it.">
 <link rel="icon" href="data:image/svg+xml,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 26 30'><path d='M13 1 24 5v10c0 7-5 12-11 14C7 27 2 22 2 15V5L13 1Z' fill='%234F46E5'/></svg>">
 <link rel="stylesheet" href="styles.css">
+<link rel="stylesheet" href="galaxy2/galaxy2.css">
 <style>
   .dept-tiles{display:grid;grid-template-columns:repeat(4,1fr);gap:14px;}
   @media (max-width:1000px){.dept-tiles{grid-template-columns:repeat(3,1fr);}}
@@ -71,6 +72,18 @@
     <span class="eyebrow">Find your role</span>
     <h1>Every department. Its own standards.</h1>
     <p class="lead">Click a department for its operational essentials — storage, licensing, preventive maintenance, and the checklists it should keep — plus every real NABH Objective Element that applies to it. Click any element for the same book text, plain-English rewrite, and real-life example as the Standards Explorer.</p>
+  </div>
+</section>
+
+<section class="wrap" style="padding:8px 28px 0;">
+  <div class="gx-stage" id="galaxyStage">
+    <div class="gx-wrap">
+      <canvas id="galaxyCanvas" aria-label="Interactive 3D galaxy — each star is one of the hospital's departments" role="img"></canvas>
+      <div class="gx-loading" id="galaxyLoading"><div class="spin"></div>Forming galaxy</div>
+      <div id="galaxyNodeOverlay" style="position:absolute;inset:0;"></div>
+      <div class="gx-auto-label" id="galaxyAutoLabel"></div>
+      <div class="gx-tooltip" id="galaxyTooltip"></div>
+    </div>
   </div>
 </section>
 
@@ -242,9 +255,36 @@
   modalBack.addEventListener('click', e => { if (e.target === modalBack) closeModal(); });
   document.addEventListener('keydown', e => { if (e.key === 'Escape') closeModal(); });
 
+  window.openDeptFromGalaxy = function (id) {
+    openDept(id);
+    document.getElementById('deptTiles').scrollIntoView({ behavior: 'smooth', block: 'start' });
+  };
+
   renderTiles();
   const params = new URLSearchParams(location.search);
   if (params.has('d') && DEPTS.some(d => d.id === params.get('d'))) openDept(params.get('d'));
+})();
+</script>
+<script>
+(function loadThreeThenGalaxy() {
+  var sources = [
+    "https://cdn.jsdelivr.net/npm/three@0.128.0/build/three.min.js",
+    "https://unpkg.com/three@0.128.0/build/three.min.js",
+    "https://cdnjs.cloudflare.com/ajax/libs/three.js/r128/three.min.js"
+  ];
+  function loadGalaxy2() {
+    var g = document.createElement("script"); g.src = "galaxy2/galaxy2.js";
+    document.body.appendChild(g);
+  }
+  function tryLoad(i) {
+    if (i >= sources.length) { loadGalaxy2(); return; }
+    var s = document.createElement("script");
+    s.src = sources[i];
+    s.onload = loadGalaxy2;
+    s.onerror = function () { tryLoad(i + 1); };
+    document.body.appendChild(s);
+  }
+  tryLoad(0);
 })();
 </script>
 </body>

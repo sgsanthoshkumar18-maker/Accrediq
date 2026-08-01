@@ -1,0 +1,58 @@
+/* AQcredix — Neural Brain UI */
+
+.brain-stage{
+  position:relative;width:100%;max-width:640px;margin:0 auto;
+  display:flex;align-items:center;justify-content:center;
+}
+.brain-wrap{
+  position:relative;width:100%;aspect-ratio:4/3;
+  margin:0 auto;
+}
+#brainCanvas{width:100%;height:100%;display:block;}
+
+.brain-fallback{
+  width:80%;aspect-ratio:1/1;border-radius:50%;margin:auto;
+  background:radial-gradient(circle at 38% 32%, rgba(79,70,229,.5), rgba(14,165,160,.22) 55%, transparent 75%);
+  display:flex;align-items:center;justify-content:center;text-align:center;color:rgba(255,255,255,.6);font-size:13px;padding:20px;
+}
+
+.brain-loading{
+  position:absolute;inset:0;display:flex;align-items:center;justify-content:center;flex-direction:column;gap:10px;
+  color:rgba(255,255,255,.4);font-family:var(--font-mono);font-size:10.5px;letter-spacing:.06em;text-transform:uppercase;
+  transition:opacity .5s ease;pointer-events:none;
+}
+.brain-loading .spin{width:24px;height:24px;border-radius:50%;border:2px solid rgba(94,234,212,.2);border-top-color:#5eead4;animation:brainspin .8s linear infinite;}
+@keyframes brainspin{to{transform:rotate(360deg);}}
+.brain-loading.hidden{opacity:0;}
+
+.brain-node-hit{
+  position:absolute;width:26px;height:26px;transform:translate(-50%,-50%);
+  background:transparent;border:none;border-radius:50%;cursor:pointer;padding:0;
+  pointer-events:auto;transition:opacity .25s ease;
+}
+.brain-node-hit:focus-visible{
+  outline:2px solid #5eead4;outline-offset:3px;background:rgba(94,234,212,.12);border-radius:50%;
+}
+
+.brain-tooltip{
+  position:absolute;z-index:20;transform:translate(-50%,-100%);max-width:280px;
+  background:rgba(8,11,32,.94);backdrop-filter:blur(10px);
+  border:1px solid rgba(94,234,212,.3);border-radius:10px;padding:10px 14px;
+  font-size:12px;color:#fff;
+  opacity:0;pointer-events:none;transition:opacity .18s ease, transform .18s ease;
+}
+.brain-tooltip.show{opacity:1;transform:translate(-50%,-108%);}
+.brain-tooltip b{display:block;font-family:var(--font-display);font-size:13px;font-weight:700;margin-bottom:3px;white-space:nowrap;}
+.brain-tooltip span{display:block;font-size:11px;color:#5eead4;font-family:var(--font-mono);margin-bottom:4px;}
+.brain-tooltip em{display:block;font-style:normal;font-size:10px;color:rgba(255,255,255,.55);line-height:1.5;font-family:var(--font-mono);white-space:normal;}
+
+@media (prefers-reduced-motion: reduce){
+  .brain-loading .spin{animation:none;}
+}
+
+@media (max-width:1100px){
+  .brain-stage{max-width:480px;}
+}
+@media (max-width:900px){
+  .brain-stage{max-width:340px;}
+}

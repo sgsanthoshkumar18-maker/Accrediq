@@ -8,7 +8,7 @@
 <meta name="description" content="AQcredix teaches healthcare teams to understand NABH accreditation the way an assessor does — so the Non-Conformity never happens. Standards, department roles, KPIs, quality tools and assessor videos.">
 <link rel="icon" href="data:image/svg+xml,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 26 30'><path d='M13 1 24 5v10c0 7-5 12-11 14C7 27 2 22 2 15V5L13 1Z' fill='%234F46E5'/></svg>">
 <link rel="stylesheet" href="styles.css">
-<link rel="stylesheet" href="globe/globe.css">
+<link rel="stylesheet" href="brain/brain.css">
 </head>
 <body data-page="home">
 <div id="site-header"></div>
@@ -33,12 +33,12 @@
           <div><span class="n">Live</span><span class="l">Quality Dashboard, scored</span></div>
         </div>
       </div>
-      <div class="badge-stage ent-globe-stage" id="globeStage">
-        <div class="ent-globe-wrap">
-          <canvas id="globeCanvas" aria-label="Interactive 3D globe representing the ten AQcredix accreditation chapters worldwide" role="img"></canvas>
-          <div class="ent-globe-loading" id="globeLoading"><div class="spin"></div>Initializing</div>
-          <div id="globeNodeOverlay" style="position:absolute;inset:0;"></div>
-          <div class="ent-globe-tooltip" id="globeTooltip"></div>
+      <div class="badge-stage brain-stage" id="brainStage">
+        <div class="brain-wrap">
+          <canvas id="brainCanvas" aria-label="Interactive 3D neural network in the shape of a brain, representing the ten AQcredix accreditation chapters" role="img"></canvas>
+          <div class="brain-loading" id="brainLoading"><div class="spin"></div>Initializing</div>
+          <div id="brainNodeOverlay" style="position:absolute;inset:0;"></div>
+          <div class="brain-tooltip" id="brainTooltip"></div>
         </div>
       </div>
     </div>
@@ -164,29 +164,29 @@
 <div id="site-footer"></div>
 <script src="app.js"></script>
 <script>
-(function loadThreeThenGlobe() {
+(function loadThreeThenBrain() {
   var sources = [
     "https://cdn.jsdelivr.net/npm/three@0.128.0/build/three.min.js",
     "https://unpkg.com/three@0.128.0/build/three.min.js",
     "https://cdnjs.cloudflare.com/ajax/libs/three.js/r128/three.min.js"
   ];
-  function loadGlobeScript() {
+  function loadBrainScript() {
     var d = document.createElement("script"); d.src = "nabh-data.js";
     d.onload = function () {
-      var r = document.createElement("script"); r.src = "globe/globe.js";
+      var r = document.createElement("script"); r.src = "brain/brain.js";
       document.body.appendChild(r);
     };
     document.body.appendChild(d);
   }
   function tryLoad(i) {
     if (i >= sources.length) {
-      // all CDNs failed — load globe.js anyway; it detects missing THREE and shows the fallback graphic.
-      loadGlobeScript();
+      // all CDNs failed — load brain.js anyway; it detects missing THREE and shows the fallback graphic.
+      loadBrainScript();
       return;
     }
     var s = document.createElement("script");
     s.src = sources[i];
-    s.onload = loadGlobeScript;
+    s.onload = loadBrainScript;
     s.onerror = function () { tryLoad(i + 1); };
     document.body.appendChild(s);
   }
