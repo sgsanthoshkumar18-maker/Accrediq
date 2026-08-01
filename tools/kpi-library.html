@@ -8,18 +8,40 @@
 <meta name="description" content="Every hospital quality KPI with its formula, numerator and denominator, benchmark, target and a downloadable Excel tracker.">
 <link rel="icon" href="data:image/svg+xml,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 26 30'><path d='M13 1 24 5v10c0 7-5 12-11 14C7 27 2 22 2 15V5L13 1Z' fill='%234F46E5'/></svg>">
 <link rel="stylesheet" href="../styles.css">
+<link rel="stylesheet" href="../kpinet/kpi-network.css">
+<script type="application/ld+json">{"@context":"https://schema.org","@type":"EducationalOrganization","name":"AQcredix","alternateName":"AQcredix \u2014 Accreditation & Quality Excellence","url":"https://accrediq.vercel.app/","description":"An independent healthcare quality education and training forum covering NABH accreditation standards, department roles, KPIs, quality tools and mock assessment.","founder":{"@type":"Person","name":"Dr. Santhoshkumar SG","jobTitle":"Infectious Disease Clinical Pharmacologist","honorificSuffix":"ISQua Fellow, CPQIH (Basic) (CAHO)"},"knowsAbout":["NABH accreditation","Healthcare quality improvement","Hospital infection control","Patient safety","Standard operating procedures","Clinical audit"]}</script>
+<script type="application/ld+json">{"@context":"https://schema.org","@type":"WebSite","name":"AQcredix","url":"https://accrediq.vercel.app/","potentialAction":{"@type":"SearchAction","target":"https://accrediq.vercel.app/standards.html?q={search_term_string}","query-input":"required name=search_term_string"}}</script>
 </head>
 <body data-page="kpilibrary" data-base="../">
 <div id="site-header"></div>
 
-<section class="page-head">
+<main id="aq-main"><section class="page-head">
   <div class="wrap">
-    <nav class="breadcrumb"><a href="../index.html">Home</a><span class="sep">/</span><span class="cur">KPI Library</span></nav>
-    <span class="eyebrow">Measure what matters</span>
-    <h1>The hospital quality KPI library.</h1>
-    <p class="lead">Every KPI with its formula, numerator and denominator, benchmark, target and a downloadable Excel tracker — the reference quality managers keep open in another tab.</p>
-    <div style="margin-top:20px;display:flex;gap:8px;flex-wrap:wrap;">
-      <span class="pill">All</span><span class="pill">Infection control</span><span class="pill">Medication safety</span><span class="pill">Patient safety</span><span class="pill">Operational</span><span class="pill">Has Excel</span>
+    <div class="kn-shell">
+      <div>
+        <nav class="breadcrumb"><a href="../index.html">Home</a><span class="sep">/</span><span class="cur">KPI Library</span></nav>
+        <span class="eyebrow">Measure what matters</span>
+        <h1>The hospital quality KPI library.</h1>
+        <p class="lead">Every KPI with its formula, numerator and denominator, reference target and a downloadable Excel tracker — the reference quality managers keep open in another tab.</p>
+        <div style="margin-top:20px;display:flex;gap:8px;flex-wrap:wrap;">
+          <span class="pill">All</span><span class="pill">Infection control</span><span class="pill">Medication safety</span><span class="pill">Patient safety</span><span class="pill">Operational</span><span class="pill">Has Excel</span>
+        </div>
+      </div>
+      <div class="kn-stage" id="knStage">
+        <div class="kn-wrap">
+          <canvas id="knCanvas" aria-label="Interactive 3D network of hospital quality indicators, connected by department and domain" role="img"></canvas>
+          <div class="kn-loading" id="knLoading"><div class="spin"></div>Building network</div>
+          <div id="knOverlay" style="position:absolute;inset:0;pointer-events:none;"></div>
+          <div class="kn-tip" id="knTip"></div>
+        </div>
+        <div class="kn-legend">
+          <span><i style="background:#5eead4"></i>Infection control</span>
+          <span><i style="background:#f87171"></i>Medication safety</span>
+          <span><i style="background:#34d399"></i>Patient safety</span>
+          <span><i style="background:#60a5fa"></i>Operational</span>
+        </div>
+        <p class="kn-hint">Hover any node for its formula and reference target · move your cursor to expand the web</p>
+      </div>
     </div>
   </div>
 </section>
@@ -77,7 +99,21 @@
   </div>
 </section>
 
+</main>
 <div id="site-footer"></div>
+<script src="../kpinet/kpi-network-data.js"></script>
 <script src="../app.js"></script>
+<script src="../search/search.js"></script>
+<script>
+(function loadThreeThenKpiNet(){
+  var s=["https://cdn.jsdelivr.net/npm/three@0.128.0/build/three.min.js",
+         "https://unpkg.com/three@0.128.0/build/three.min.js",
+         "https://cdnjs.cloudflare.com/ajax/libs/three.js/r128/three.min.js"];
+  function go(){var g=document.createElement("script");g.src="../kpinet/kpi-network.js";document.body.appendChild(g);}
+  (function n(i){ if(i>=s.length){go();return;}
+    var e=document.createElement("script"); e.src=s[i];
+    e.onload=go; e.onerror=function(){n(i+1);}; document.body.appendChild(e); })(0);
+})();
+</script>
 </body>
 </html>

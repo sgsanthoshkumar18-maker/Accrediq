@@ -55,11 +55,13 @@
   .dg-listgrid{display:flex;flex-wrap:wrap;gap:8px;}
   .dg-listgrid span{background:var(--nc-tint);color:var(--nc);font-weight:700;font-size:12px;padding:8px 13px;border-radius:999px;}
 </style>
+<script type="application/ld+json">{"@context":"https://schema.org","@type":"EducationalOrganization","name":"AQcredix","alternateName":"AQcredix \u2014 Accreditation & Quality Excellence","url":"https://accrediq.vercel.app/","description":"An independent healthcare quality education and training forum covering NABH accreditation standards, department roles, KPIs, quality tools and mock assessment.","founder":{"@type":"Person","name":"Dr. Santhoshkumar SG","jobTitle":"Infectious Disease Clinical Pharmacologist","honorificSuffix":"ISQua Fellow, CPQIH (Basic) (CAHO)"},"knowsAbout":["NABH accreditation","Healthcare quality improvement","Hospital infection control","Patient safety","Standard operating procedures","Clinical audit"]}</script>
+<script type="application/ld+json">{"@context":"https://schema.org","@type":"WebSite","name":"AQcredix","url":"https://accrediq.vercel.app/","potentialAction":{"@type":"SearchAction","target":"https://accrediq.vercel.app/standards.html?q={search_term_string}","query-input":"required name=search_term_string"}}</script>
 </head>
 <body data-page="qualitytools" data-base="../">
 <div id="site-header"></div>
 
-<section class="page-head">
+<main id="aq-main"><section class="page-head">
   <div class="wrap">
     <nav class="breadcrumb"><a href="index.html">Home</a><span class="sep">/</span><span class="cur">Quality Tools</span></nav>
     <span class="eyebrow">The improvement toolkit</span>
@@ -100,9 +102,11 @@
   </div>
 </section>
 
+</main>
 <div id="site-footer"></div>
 <script src="../tools-data.js"></script>
 <script src="../app.js"></script>
+<script src="../search/search.js"></script>
 <script>
 (function(){
   const TOOLS = window.TOOLS_DATA;

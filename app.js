@@ -14,7 +14,7 @@
         { key: "codealerts", href: "tools/code-alerts.html", label: "Code Alerts" },
         { key: "committees", href: "tools/committees.html", label: "Committees" },
         { key: "sop", href: "sop.html", label: "SOP Generator" },
-        { key: "surveyor", href: "surveyor.html", label: "AI Mock Surveyor" },
+        { key: "surveyor", href: "surveyor.html", label: "Mock Surveyor" },
       ]
     },
     { key: "videos", href: "videos.html", label: "Videos" },
@@ -58,6 +58,8 @@
     }).join("");
 
     return `
+    <a class="aq-skip" href="#aq-main">Skip to main content</a>
+    <div class="aq-edition">Content based on the <b>NABH Hospital Accreditation Standards, 6th Edition</b> — effective 1 January 2025. Educational use only; verify against the official standard.</div>
     <header class="site-header">
       <div class="bar wrap">
         <a href="${base}index.html" class="brand">
@@ -66,6 +68,10 @@
         </a>
         <nav class="main-nav" id="mainNav">${links}</nav>
         <div class="nav-actions">
+          <button type="button" class="aq-search-btn" id="aqSearchBtn" aria-label="Search the site">
+            <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="11" cy="11" r="7"/><path d="M21 21l-4.3-4.3" stroke-linecap="round"/></svg>
+            <span>Search</span><kbd>Ctrl K</kbd>
+          </button>
           <a class="btn btn-primary btn-sm" href="${base}dashboard.html">Quality Dashboard</a>
           <button class="nav-toggle" id="navToggle" aria-label="Toggle menu" aria-expanded="false">
             <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round"><path d="M4 7h16M4 12h16M4 17h16"/></svg>
@@ -94,7 +100,7 @@
             <a href="${base}tools/quality-tools.html">Quality Tools</a>
             <a href="${base}tools/committees.html">Committees</a>
             <a href="${base}sop.html">SOP Generator</a>
-            <a href="${base}surveyor.html">AI Mock Surveyor</a>
+            <a href="${base}surveyor.html">Mock Surveyor</a>
             <a href="${base}tools/code-alerts.html">Code Alerts</a>
             <a href="${base}videos.html">Assessor Videos</a>
             <a href="${base}learn.html">Learn &amp; Test</a>
@@ -109,7 +115,7 @@
         </div>
         <div class="footer-bottom">
           <span>© 2026 AQcredix — Accreditation &amp; Quality Excellence. An independent healthcare education forum. Not affiliated with NABH, QCI, JCI or any accreditation body.</span>
-          <span>Built the way an assessor reads a standard.</span>
+          <span><a href="${base}contact.html" style="color:inherit;text-decoration:underline;">Found an error on this page? Tell us.</a></span>
         </div>
       </div>
     </footer>`;

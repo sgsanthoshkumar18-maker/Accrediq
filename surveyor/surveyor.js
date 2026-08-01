@@ -1,4 +1,4 @@
-/* AQcredix — AI Mock Surveyor engine + UI
+/* AQcredix — Mock Surveyor engine + UI
  *
  * HONEST SCOPE NOTE
  * -----------------

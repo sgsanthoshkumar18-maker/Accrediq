@@ -70,11 +70,13 @@
   .modal .analogy-box{background:var(--accent-bright-tint);border-left:3px solid var(--accent-bright);padding:14px 16px;border-radius:0 var(--r-md) var(--r-md) 0;}
   .modal .sop-box{background:var(--warn-tint);border-left:3px solid var(--warn);padding:12px 16px;border-radius:0 var(--r-md) var(--r-md) 0;font-size:13.5px;}
 </style>
+<script type="application/ld+json">{"@context":"https://schema.org","@type":"EducationalOrganization","name":"AQcredix","alternateName":"AQcredix \u2014 Accreditation & Quality Excellence","url":"https://accrediq.vercel.app/","description":"An independent healthcare quality education and training forum covering NABH accreditation standards, department roles, KPIs, quality tools and mock assessment.","founder":{"@type":"Person","name":"Dr. Santhoshkumar SG","jobTitle":"Infectious Disease Clinical Pharmacologist","honorificSuffix":"ISQua Fellow, CPQIH (Basic) (CAHO)"},"knowsAbout":["NABH accreditation","Healthcare quality improvement","Hospital infection control","Patient safety","Standard operating procedures","Clinical audit"]}</script>
+<script type="application/ld+json">{"@context":"https://schema.org","@type":"WebSite","name":"AQcredix","url":"https://accrediq.vercel.app/","potentialAction":{"@type":"SearchAction","target":"https://accrediq.vercel.app/standards.html?q={search_term_string}","query-input":"required name=search_term_string"}}</script>
 </head>
 <body data-page="departments">
 <div id="site-header"></div>
 
-<section class="page-head">
+<main id="aq-main"><section class="page-head">
   <div class="wrap departments-head-grid">
     <div class="departments-head-text">
       <nav class="breadcrumb"><a href="index.html">Home</a><span class="sep">/</span><span class="cur">Departments</span></nav>
@@ -126,11 +128,13 @@
 
 <div class="modal-back" id="modalBack"><div class="modal" id="modalBox"></div></div>
 
+</main>
 <div id="site-footer"></div>
 <script src="nabh-data.js"></script>
 <script src="nabh-explain.js"></script>
 <script src="department-data.js"></script>
 <script src="app.js"></script>
+<script src="search/search.js"></script>
 <script>
 (function(){
   const ICONS = {
