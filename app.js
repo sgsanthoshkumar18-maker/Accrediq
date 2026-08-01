@@ -192,6 +192,18 @@
     });
   }
 
+  function togglePalette() {
+    const html = document.documentElement;
+    const isNeon = html.getAttribute("data-palette") === "neon";
+    if (isNeon) {
+      html.removeAttribute("data-palette");
+      try { localStorage.setItem("aq-palette", "default"); } catch (err) {}
+    } else {
+      html.setAttribute("data-palette", "neon");
+      try { localStorage.setItem("aq-palette", "neon"); } catch (err) {}
+    }
+  }
+
   function toggleTheme() {
     const html = document.documentElement;
     const isDark = html.getAttribute("data-theme") === "dark";
@@ -215,6 +227,9 @@
       typed = (typed + e.key.toLowerCase()).slice(-4);
       if (typed === "dark") {
         toggleTheme();
+        typed = "";
+      } else if (typed === "neon") {
+        togglePalette();
         typed = "";
       }
     });
