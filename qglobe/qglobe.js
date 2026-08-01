@@ -319,17 +319,22 @@
     let delta = e.deltaY;
     if (e.deltaMode === 1) delta *= 16;        // DOM_DELTA_LINE  -> approx px
     else if (e.deltaMode === 2) delta *= 100;  // DOM_DELTA_PAGE  -> approx px
-    // Clamp so a violent flick can't jump the whole zoom range in one frame.
-    delta = Math.max(-60, Math.min(60, delta));
+    // Generous clamp — lets a fast swipe move a lot while still bounding one frame.
+    delta = Math.max(-140, Math.min(140, delta));
+
+    // Proportional (multiplicative) zoom: the step scales with how close you already
+    // are, which is what makes it feel like it tracks your finger at every distance
+    // instead of crawling when zoomed in and lurching when zoomed out.
+    const ZOOM_SENSITIVITY = 0.0022;
+    const factor = Math.exp(delta * ZOOM_SENSITIVITY);
 
     if (controls) {
-      // Move the camera along its view vector, respecting the same min/max as OrbitControls.
       const dir = camera.position.clone().sub(controls.target);
-      const dist = THREE.MathUtils.clamp(dir.length() + delta * 0.004, MIN_D, MAX_D);
+      const dist = THREE.MathUtils.clamp(dir.length() * factor, MIN_D, MAX_D);
       dir.setLength(dist);
       camera.position.copy(controls.target.clone().add(dir));
     } else {
-      camDistance = Math.max(MIN_D, Math.min(MAX_D, camDistance + delta * 0.004));
+      camDistance = Math.max(MIN_D, Math.min(MAX_D, camDistance * factor));
     }
   }, { passive: false });
 
@@ -400,8 +405,8 @@
     }
   }
 
-  // Double-click / double-tap resets the view.
-  canvas.addEventListener("dblclick", resetView);
+  // Note: no double-click reset — it conflicted with double-click-and-drag rotation.
+  // Use the ⟳ reset button instead.
 
   const zoomInBtn = document.getElementById("qgZoomIn");
   const zoomOutBtn = document.getElementById("qgZoomOut");
