@@ -222,22 +222,39 @@
     ctx.fillStyle = g; ctx.beginPath(); ctx.arc(16, 16, 16, 0, Math.PI * 2); ctx.fill();
     return new THREE.CanvasTexture(c);
   }
+  // Maps a 2D point on an EllipseCurve onto a tilted 3D orbital plane.
+  // Applying pitch (X axis) then tilt (Y axis) lets rings sit in genuinely
+  // different orientations instead of all sharing one plane.
+  const AXIS_X = new THREE.Vector3(1, 0, 0);
+  const AXIS_Y = new THREE.Vector3(0, 1, 0);
+  function arcPoint(p, tilt, pitch) {
+    return new THREE.Vector3(p.x, p.y * 0.3, p.y)
+      .applyAxisAngle(AXIS_X, pitch)
+      .applyAxisAngle(AXIS_Y, tilt);
+  }
+
+  // Six orbital rings. `tilt` spins the ring around Y, `pitch` tips it around X —
+  // using both axes is what spreads them across genuinely different planes rather
+  // than stacking them all in roughly the same orientation.
   const orbitalArcs = [
-    { rx: 1.7, ry: 1.35, tilt: 0.6, speed: 0.05, color: 0x5eead4 },
-    { rx: 1.55, ry: 1.5, tilt: -0.9, speed: 0.037, color: 0x818cf8 },
-    { rx: 1.85, ry: 1.15, tilt: 1.5, speed: 0.063, color: 0xe0f2fe }
+    { rx: 1.70, ry: 1.35, tilt: 0.60, pitch: 0.15, speed: 0.050, color: 0x5eead4 },
+    { rx: 1.55, ry: 1.50, tilt: -0.90, pitch: 0.85, speed: 0.037, color: 0x818cf8 },
+    { rx: 1.85, ry: 1.15, tilt: 1.50, pitch: -0.55, speed: 0.063, color: 0xe0f2fe },
+    { rx: 1.62, ry: 1.62, tilt: 2.40, pitch: 1.25, speed: 0.044, color: 0x38bdf8 },
+    { rx: 1.78, ry: 1.28, tilt: -2.10, pitch: -1.10, speed: 0.056, color: 0xa78bfa },
+    { rx: 1.48, ry: 1.72, tilt: 0.15, pitch: 1.55, speed: 0.031, color: 0x7dd3fc }
   ].map(cfg => {
     const curve = new THREE.EllipseCurve(0, 0, RADIUS * cfg.rx, RADIUS * cfg.ry, 0, Math.PI * 2, false, 0);
-    const pts3D = curve.getPoints(80).map(p => new THREE.Vector3(p.x, p.y * 0.3, p.y).applyAxisAngle(new THREE.Vector3(0, 1, 0), cfg.tilt));
+    const pts3D = curve.getPoints(96).map(p => arcPoint(p, cfg.tilt, cfg.pitch));
     const geo = new THREE.BufferGeometry().setFromPoints(pts3D);
     const hexStr = "#" + cfg.color.toString(16).padStart(6, "0");
-    const line = new THREE.Line(geo, new THREE.LineBasicMaterial({ color: cfg.color, transparent: true, opacity: 0.16 }));
+    const line = new THREE.Line(geo, new THREE.LineBasicMaterial({ color: cfg.color, transparent: true, opacity: 0.15 }));
     rig.add(line);
     const dotMat = new THREE.SpriteMaterial({ map: dotTexture(hexStr), transparent: true, depthWrite: false, blending: THREE.AdditiveBlending });
     const dot = new THREE.Sprite(dotMat);
     dot.scale.setScalar(0.05);
     rig.add(dot);
-    return { curve, tilt: cfg.tilt, speed: cfg.speed, dot };
+    return { curve, tilt: cfg.tilt, pitch: cfg.pitch, speed: cfg.speed, dot };
   });
 
   // ---------- Department hub dots ----------
@@ -616,7 +633,7 @@
       orbitalArcs.forEach(arc => {
         const t = (tt * arc.speed) % 1;
         const p = arc.curve.getPointAt(t);
-        arc.dot.position.set(p.x, p.y * 0.3, p.y).applyAxisAngle(new THREE.Vector3(0, 1, 0), arc.tilt);
+        arc.dot.position.copy(arcPoint(p, arc.tilt, arc.pitch));
       });
       hubs.forEach(h => {
         const pulse = 1 + Math.sin(tt * 1.4 + h.phase) * 0.12;
