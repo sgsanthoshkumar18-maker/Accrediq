@@ -275,8 +275,7 @@
     controls.enableDamping = true;
     controls.dampingFactor = 0.08;
     controls.enableRotate = true;   // drag to rotate
-    controls.enableZoom = true;     // scroll / pinch to zoom
-    controls.zoomSpeed = 0.9;
+    controls.enableZoom = false;    // we handle wheel zoom ourselves (normalized for trackpads, and prevents page scroll)
     controls.minDistance = MIN_D;
     controls.maxDistance = MAX_D;
     controls.enablePan = false;
@@ -307,6 +306,67 @@
       camDistance = Math.max(MIN_D, Math.min(MAX_D, camDistance + e.deltaY * 0.0025));
     }, { passive: false });
   }
+
+  // ---------- Trackpad / wheel zoom, scoped strictly to the globe ----------
+  // Whether OrbitControls is driving or the manual fallback is, we intercept the
+  // wheel on the globe wrapper so the page behind never scrolls while the cursor
+  // is over it. Deltas are normalized because trackpads report pixel-mode deltas
+  // while mice report line-mode, which otherwise makes trackpads feel dead.
+  wrapEl.addEventListener("wheel", (e) => {
+    e.preventDefault();   // keep the dashboard page still
+    e.stopPropagation();
+
+    let delta = e.deltaY;
+    if (e.deltaMode === 1) delta *= 16;        // DOM_DELTA_LINE  -> approx px
+    else if (e.deltaMode === 2) delta *= 100;  // DOM_DELTA_PAGE  -> approx px
+    // Clamp so a violent flick can't jump the whole zoom range in one frame.
+    delta = Math.max(-60, Math.min(60, delta));
+
+    if (controls) {
+      // Move the camera along its view vector, respecting the same min/max as OrbitControls.
+      const dir = camera.position.clone().sub(controls.target);
+      const dist = THREE.MathUtils.clamp(dir.length() + delta * 0.004, MIN_D, MAX_D);
+      dir.setLength(dist);
+      camera.position.copy(controls.target.clone().add(dir));
+    } else {
+      camDistance = Math.max(MIN_D, Math.min(MAX_D, camDistance + delta * 0.004));
+    }
+  }, { passive: false });
+
+  // ---------- Pinch-to-zoom (touch screens and trackpad two-finger pinch) ----------
+  let pinchStartDist = null, pinchStartCamDist = null;
+  function currentCamDistance() {
+    return controls ? camera.position.distanceTo(controls.target) : camDistance;
+  }
+  function applyCamDistance(dist) {
+    const clamped = THREE.MathUtils.clamp(dist, MIN_D, MAX_D);
+    if (controls) {
+      const dir = camera.position.clone().sub(controls.target).setLength(clamped);
+      camera.position.copy(controls.target.clone().add(dir));
+    } else {
+      camDistance = clamped;
+    }
+  }
+  wrapEl.addEventListener("touchstart", (e) => {
+    if (e.touches.length === 2) {
+      pinchStartDist = Math.hypot(
+        e.touches[0].clientX - e.touches[1].clientX,
+        e.touches[0].clientY - e.touches[1].clientY
+      );
+      pinchStartCamDist = currentCamDistance();
+    }
+  }, { passive: true });
+  wrapEl.addEventListener("touchmove", (e) => {
+    if (e.touches.length === 2 && pinchStartDist) {
+      e.preventDefault(); // don't let the page pan while pinching the globe
+      const d = Math.hypot(
+        e.touches[0].clientX - e.touches[1].clientX,
+        e.touches[0].clientY - e.touches[1].clientY
+      );
+      if (d > 0) applyCamDistance(pinchStartCamDist * (pinchStartDist / d));
+    }
+  }, { passive: false });
+  wrapEl.addEventListener("touchend", () => { pinchStartDist = null; });
 
   // Reset the camera to its default framing.
   function resetView() {

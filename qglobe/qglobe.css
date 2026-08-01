@@ -16,7 +16,7 @@
 .qg-live .dot{width:6px;height:6px;border-radius:50%;background:#5eead4;box-shadow:0 0 6px #5eead4;animation:qgpulse 1.6s ease-in-out infinite;}
 @keyframes qgpulse{0%,100%{opacity:1;}50%{opacity:.3;}}
 
-.qg-globe-wrap{position:relative;flex:1;min-height:420px;}
+.qg-globe-wrap{position:relative;flex:1;min-height:420px;touch-action:none;overscroll-behavior:contain;}
 #qgCanvas{width:100%;height:100%;display:block;cursor:grab;touch-action:none;}
 #qgCanvas:active{cursor:grabbing;}
 
