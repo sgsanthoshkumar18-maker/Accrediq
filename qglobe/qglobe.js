@@ -142,12 +142,50 @@
 
   // ---------- Dotted continent outlines ("outlines = real borders", stylized) ----------
   const CONTINENTS = {
-    "North America": [[70,-160],[60,-141],[50,-125],[32,-117],[18,-105],[19,-97],[29,-95],[25,-80],[35,-76],[44,-67],[50,-60],[58,-65],[63,-78],[68,-95],[71,-130],[70,-160]],
-    "South America": [[12,-72],[4,-77],[-8,-79],[-18,-70],[-30,-71],[-45,-73],[-54,-68],[-46,-65],[-34,-58],[-23,-43],[-8,-35],[0,-50],[8,-60],[12,-72]],
-    "Africa": [[37,10],[31,-9],[21,-17],[8,-13],[5,0],[-4,9],[-15,12],[-29,17],[-34,25],[-20,35],[-4,39],[10,44],[20,38],[31,32],[37,10]],
-    "Europe": [[71,25],[63,14],[57,8],[51,3],[44,-2],[41,3],[37,-8],[43,10],[41,16],[40,20],[41,29],[47,29],[54,20],[60,25],[71,25]],
-    "Asia": [[70,60],[73,105],[64,178],[53,158],[42,131],[35,129],[23,113],[10,106],[-8,115],[5,95],[22,90],[30,79],[34,71],[25,61],[19,57],[13,44],[27,34],[36,36],[45,48],[60,55],[70,60]],
-    "Australia": [[-11,131],[-16,145],[-24,153],[-33,151],[-38,141],[-32,127],[-26,113],[-16,122],[-11,131]],
+    "North America": [
+      [71,-156],[70,-143],[69,-133],[70,-117],[70,-108],[68,-88],[63,-90],[58,-93],[55,-83],[51,-79],
+      [58,-78],[62,-75],[64,-68],[58,-63],[52,-56],[47,-53],[44,-66],[41,-71],[40,-74],[35,-76],[32,-80],
+      [26,-80],[27,-83],[29,-90],[26,-97],[22,-97],[18,-94],[15,-92],[13,-88],[9,-83],[12,-84],[17,-91],
+      [22,-98],[26,-99],[29,-104],[31,-111],[26,-112],[23,-109],[27,-110],[32,-117],[36,-122],[40,-124],
+      [46,-124],[49,-123],[52,-131],[56,-133],[59,-138],[61,-146],[59,-157],[55,-162],[57,-159],[60,-165],
+      [64,-166],[68,-166],[71,-156]
+    ],
+    "South America": [
+      [12,-72],[9,-76],[4,-77],[-2,-80],[-6,-81],[-10,-78],[-16,-72],[-20,-70],[-26,-70],[-30,-71],
+      [-36,-73],[-42,-73],[-48,-75],[-52,-71],[-54,-68],[-50,-68],[-45,-65],[-41,-63],[-38,-58],[-34,-58],
+      [-32,-52],[-26,-48],[-20,-40],[-13,-38],[-5,-35],[-1,-45],[2,-51],[6,-53],[10,-61],[8,-68],[12,-72]
+    ],
+    "Africa": [
+      [37,10],[33,-6],[28,-13],[21,-17],[14,-17],[9,-13],[5,-9],[5,-3],[3,9],[-1,9],[-5,11],[-8,13],
+      [-13,13],[-18,12],[-26,15],[-32,18],[-34,19],[-34,21],[-29,31],[-24,35],[-16,40],[-10,40],[-5,39],
+      [-1,42],[5,48],[11,51],[12,49],[8,44],[9,42],[15,42],[20,37],[25,35],[31,32],[31,34],[29,25],
+      [22,17],[18,10],[13,3],[6,2],[5,-1],[10,-9],[16,-16],[25,-16],[33,-8],[37,10]
+    ],
+    "Europe": [
+      [71,25],[68,33],[65,25],[63,10],[65,12],[70,20],[71,25],[66,7],[60,5],[57,10],[54,10],[54,19],
+      [52,21],[49,12],[47,7],[44,7],[41,9],[38,9],[37,13],[38,15],[37,15],[35,25],[38,24],[40,19],
+      [37,22],[38,26],[41,27],[41,29],[43,28],[45,29],[47,29],[45,36],[49,37],[53,39],[57,40],[60,32],
+      [63,30],[66,34],[68,33]
+    ],
+    "Asia": [
+      [68,33],[66,55],[70,68],[73,80],[73,95],[76,115],[72,135],[71,150],[68,170],[64,178],[60,166],
+      [56,163],[53,158],[46,142],[42,131],[38,128],[34,127],[31,121],[26,120],[22,114],[18,109],[13,109],
+      [10,104],[15,98],[20,93],[22,89],[19,85],[13,80],[8,77],[10,76],[15,73],[21,70],[24,67],[25,61],
+      [27,56],[24,53],[26,50],[30,48],[33,49],[37,49],[40,47],[43,47],[45,48],[49,50],[53,54],[57,60],
+      [61,68],[65,60],[68,68],[68,33]
+    ],
+    "Australia": [
+      [-11,131],[-12,136],[-14,144],[-17,146],[-20,148],[-24,151],[-28,153],[-32,152],[-36,150],[-38,144],
+      [-35,137],[-33,134],[-32,131],[-31,124],[-34,119],[-31,115],[-26,113],[-20,117],[-16,123],[-13,129],
+      [-11,131]
+    ],
+    "Antarctica": [
+      [-65,-60],[-67,-10],[-70,50],[-67,110],[-65,170],[-66,-140],[-65,-80],[-65,-60]
+    ],
+    "Greenland": [
+      [83,-35],[76,-20],[68,-32],[60,-45],[66,-53],[75,-58],[81,-60],[83,-35]
+    ],
+    "Madagascar": [[-12,49],[-20,47],[-25,46],[-20,44],[-12,49]],
   };
   (function buildContinents() {
     function glowTex(hex) {
@@ -189,6 +227,24 @@
     rig.add(new THREE.Points(dotGeo, dotMat));
   })();
 
+  // ---------- Graticule (lat/lon grid) — subtle technical texture like the reference ----------
+  (function buildGraticule() {
+    const pts = [];
+    for (let lat = -60; lat <= 60; lat += 30) {
+      for (let lon = -180; lon < 180; lon += 4) {
+        pts.push(latLon(lat, lon, RADIUS * 1.001), latLon(lat, lon + 4, RADIUS * 1.001));
+      }
+    }
+    for (let lon = -180; lon < 180; lon += 30) {
+      for (let lat = -90; lat < 90; lat += 4) {
+        pts.push(latLon(lat, lon, RADIUS * 1.001), latLon(lat + 4, lon, RADIUS * 1.001));
+      }
+    }
+    const geo = new THREE.BufferGeometry().setFromPoints(pts);
+    const mat = new THREE.LineBasicMaterial({ color: 0x1f2a5c, transparent: true, opacity: 0.35 });
+    rig.add(new THREE.LineSegments(geo, mat));
+  })();
+
   // ---------- Orbital arc with a traveling dot (decorative, matches the reference's data-flow feel) ----------
   function dotTexture(hex) {
     const c = document.createElement("canvas"); c.width = c.height = 32;
@@ -198,15 +254,23 @@
     ctx.fillStyle = g; ctx.beginPath(); ctx.arc(16, 16, 16, 0, Math.PI * 2); ctx.fill();
     return new THREE.CanvasTexture(c);
   }
-  const arcCurve = new THREE.EllipseCurve(0, 0, RADIUS * 1.7, RADIUS * 1.35, 0, Math.PI * 2, false, 0);
-  const arcPts3D = arcCurve.getPoints(80).map(p => new THREE.Vector3(p.x, p.y * 0.3, p.y).applyAxisAngle(new THREE.Vector3(0, 1, 0), 0.6));
-  const arcGeo = new THREE.BufferGeometry().setFromPoints(arcPts3D);
-  const arcLine = new THREE.Line(arcGeo, new THREE.LineBasicMaterial({ color: 0x5eead4, transparent: true, opacity: 0.18 }));
-  rig.add(arcLine);
-  const travelDotMat = new THREE.SpriteMaterial({ map: dotTexture("#e0f2fe"), transparent: true, depthWrite: false, blending: THREE.AdditiveBlending });
-  const travelDot = new THREE.Sprite(travelDotMat);
-  travelDot.scale.setScalar(0.05);
-  rig.add(travelDot);
+  const orbitalArcs = [
+    { rx: 1.7, ry: 1.35, tilt: 0.6, speed: 0.05, color: 0x5eead4 },
+    { rx: 1.55, ry: 1.5, tilt: -0.9, speed: 0.037, color: 0x818cf8 },
+    { rx: 1.85, ry: 1.15, tilt: 1.5, speed: 0.063, color: 0xe0f2fe }
+  ].map(cfg => {
+    const curve = new THREE.EllipseCurve(0, 0, RADIUS * cfg.rx, RADIUS * cfg.ry, 0, Math.PI * 2, false, 0);
+    const pts3D = curve.getPoints(80).map(p => new THREE.Vector3(p.x, p.y * 0.3, p.y).applyAxisAngle(new THREE.Vector3(0, 1, 0), cfg.tilt));
+    const geo = new THREE.BufferGeometry().setFromPoints(pts3D);
+    const hexStr = "#" + cfg.color.toString(16).padStart(6, "0");
+    const line = new THREE.Line(geo, new THREE.LineBasicMaterial({ color: cfg.color, transparent: true, opacity: 0.16 }));
+    rig.add(line);
+    const dotMat = new THREE.SpriteMaterial({ map: dotTexture(hexStr), transparent: true, depthWrite: false, blending: THREE.AdditiveBlending });
+    const dot = new THREE.Sprite(dotMat);
+    dot.scale.setScalar(0.05);
+    rig.add(dot);
+    return { curve, tilt: cfg.tilt, speed: cfg.speed, dot };
+  });
 
   // ---------- Department hub dots ----------
   const STATUS_COLOR = { ok: "#5eead4", watch: "#fbbf24" };
@@ -232,6 +296,13 @@
 
     return { dept: d, mesh: sprite, basePos: pos, phase: Math.random() * Math.PI * 2 };
   });
+
+  // Target-lock ring — appears around whichever hub is currently selected.
+  const lockRingGeo = new THREE.RingGeometry(0.16, 0.19, 32);
+  const lockRingMat = new THREE.MeshBasicMaterial({ color: 0xfbbf24, transparent: true, opacity: 0.85, side: THREE.DoubleSide });
+  const lockRing = new THREE.Mesh(lockRingGeo, lockRingMat);
+  lockRing.visible = false;
+  rig.add(lockRing);
 
   // ---------- Camera interaction: real OrbitControls when available, manual drag as fallback ----------
   const MIN_D = 1.6, MAX_D = 4.2;
@@ -331,6 +402,12 @@
 
   function selectDept(d) {
     hubs.forEach(h => h.mesh.scale.setScalar(h.dept.id === d.id ? 0.15 : 0.1));
+    const activeHub = hubs.find(h => h.dept.id === d.id);
+    if (activeHub) {
+      lockRing.visible = true;
+      lockRing.position.copy(activeHub.basePos);
+      lockRing.lookAt(0, 0, 0);
+    }
     panelEmpty.style.display = "none";
     panel.style.display = "block";
 
@@ -416,6 +493,7 @@
       panel.style.display = "none";
       panelEmpty.style.display = "block";
       hubs.forEach(h => h.mesh.scale.setScalar(0.1));
+      lockRing.visible = false;
     });
   }
 
@@ -442,13 +520,16 @@
     }
 
     if (!reduceMotion) {
-      const t = (tt * 0.05) % 1;
-      const p = arcCurve.getPointAt(t);
-      travelDot.position.set(p.x, p.y * 0.3, p.y).applyAxisAngle(new THREE.Vector3(0, 1, 0), 0.6);
+      orbitalArcs.forEach(arc => {
+        const t = (tt * arc.speed) % 1;
+        const p = arc.curve.getPointAt(t);
+        arc.dot.position.set(p.x, p.y * 0.3, p.y).applyAxisAngle(new THREE.Vector3(0, 1, 0), arc.tilt);
+      });
       hubs.forEach(h => {
         const pulse = 1 + Math.sin(tt * 1.4 + h.phase) * 0.12;
         if (h.mesh.scale.x < 0.13) h.mesh.scale.setScalar(0.1 * pulse);
       });
+      if (lockRing) lockRing.rotation.z += 0.008;
     }
 
     renderer.render(scene, camera);
