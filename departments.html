@@ -10,6 +10,10 @@
 <link rel="stylesheet" href="styles.css">
 <link rel="stylesheet" href="galaxy2/galaxy2.css">
 <style>
+  .departments-head-wrap{text-align:center;display:flex;flex-direction:column;align-items:center;}
+  .departments-head-wrap .breadcrumb{justify-content:center;}
+  .departments-head-wrap h1{max-width:20ch;}
+  .departments-head-wrap .lead{max-width:62ch;margin-left:auto;margin-right:auto;}
   .dept-tiles{display:grid;grid-template-columns:repeat(4,1fr);gap:14px;}
   @media (max-width:1000px){.dept-tiles{grid-template-columns:repeat(3,1fr);}}
   @media (max-width:700px){.dept-tiles{grid-template-columns:repeat(2,1fr);}}
@@ -67,7 +71,7 @@
 <div id="site-header"></div>
 
 <section class="page-head">
-  <div class="wrap">
+  <div class="wrap departments-head-wrap">
     <nav class="breadcrumb"><a href="index.html">Home</a><span class="sep">/</span><span class="cur">Departments</span></nav>
     <span class="eyebrow">Find your role</span>
     <h1>Every department. Its own standards.</h1>

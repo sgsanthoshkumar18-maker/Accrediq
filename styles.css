@@ -303,7 +303,7 @@ a.tile:hover .more{text-decoration:underline;}
 .type-core{background:var(--nc-tint);color:var(--nc);}
 .type-comm{background:var(--warn-tint);color:var(--warn);}
 .type-exc{background:var(--accent-bright-tint);color:var(--accent-bright);}
-.code-chip{font-family:var(--font-mono);font-size:12px;font-weight:600;background:var(--fg);color:#fff;padding:5px 10px;border-radius:7px;letter-spacing:.02em;}
+.code-chip{font-family:var(--font-mono);font-size:12px;font-weight:600;background:var(--bg-deep);color:#fff;padding:5px 10px;border-radius:7px;letter-spacing:.02em;}
 .tag-row{display:flex;gap:8px;align-items:center;}
 
 .badge{display:inline-flex;align-items:center;gap:6px;font-size:12px;font-weight:600;padding:5px 11px;border-radius:999px;}
