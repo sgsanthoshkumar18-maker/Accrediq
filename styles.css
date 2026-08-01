@@ -212,7 +212,7 @@ p{margin:0 0 0;}
 /* ---------- Hero ---------- */
 .hero{background:radial-gradient(120% 140% at 78% -10%, #232a6b 0%, var(--bg-deep) 52%, #090b21 100%);color:#fff;padding:76px 0 96px;position:relative;overflow:hidden;}
 .hero::after{content:"";position:absolute;inset:0;background:radial-gradient(60% 50% at 90% 100%, rgba(14,165,160,.20), transparent 70%);pointer-events:none;}
-.hero-grid{display:grid;grid-template-columns:1.15fr 1fr;gap:48px;align-items:center;position:relative;}
+.hero-grid{display:grid;grid-template-columns:0.85fr 1.15fr;gap:48px;align-items:center;position:relative;}
 .hero .em{color:var(--accent-bright);font-style:italic;}
 .hero .eyebrow{color:var(--accent-bright);}
 .hero .eyebrow::before{background:#fff;opacity:.5;}
