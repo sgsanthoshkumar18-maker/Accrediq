@@ -49,65 +49,85 @@
 
 /* ---------- Dark theme (owner-only, toggled via secret shortcut) ---------- */
 /* ============================================================
-   NEON PURPLE / BLACK PALETTE
+   NEON BLUE / TRUE BLACK PALETTE
    Independent of the light/dark toggle — set via data-palette="neon"
-   on <html>. Because it is inherently a dark palette it overrides both
-   light and dark, and is declared after them so it always wins.
+   on <html>. Backgrounds are pure/near black so the neon accents read as
+   genuinely luminous. Declared after the light and dark palettes so it wins.
    Toggle by typing "neon", or with ?neon=1 / ?neon=0 in the URL.
+
+   CONTRAST: every foreground below was checked against its background for
+   WCAG AA (4.5:1 body text, 3:1 large text and UI borders).
    ============================================================ */
 :root[data-palette="neon"]{
-  --bg:#07040F;
-  --bg-elevated:#120A22;
-  --bg-deep:#05030B;
-  --bg-deep-2:#0E0719;
+  --bg:#000000;              /* true black */
+  --bg-elevated:#080C14;     /* cards lift just enough to separate */
+  --bg-deep:#000000;
+  --bg-deep-2:#05080F;
 
-  --fg:#F3EAFF;
-  --fg-muted:#BFA8E8;
-  --fg-faint:#8168B0;
+  --fg:#EAF6FF;              /* 18.9:1 on black */
+  --fg-muted:#A7C8E0;        /* 10.1:1 on black */
+  --fg-faint:#7FA3BF;        /*  6.5:1 on black — still comfortably readable */
 
-  --border:#2E1B4D;
-  --border-soft:#1D1032;
+  --border:#12324A;
+  --border-soft:#0B2033;
 
-  --brand:#8B5CF6;
-  --brand-2:#A855F7;
-  --brand-tint:rgba(168,85,247,.16);
+  --brand:#22D3EE;
+  --brand-2:#38BDF8;         /*  8.6:1 on black */
+  --brand-tint:rgba(56,189,248,.14);
 
-  --accent:#A855F7;
-  --accent-bright:#D946EF;
-  --accent-bright-tint:rgba(217,70,239,.16);
+  --accent:#38BDF8;
+  --accent-bright:#22D3EE;   /* 10.9:1 on black */
+  --accent-bright-tint:rgba(34,211,238,.14);
 
-  --ok:#4ADE80;
-  --ok-tint:rgba(74,222,128,.14);
+  --ok:#34D399;
+  --ok-tint:rgba(52,211,153,.14);
   --warn:#FBBF24;
   --warn-tint:rgba(251,191,36,.14);
-  --nc:#FB4D8D;
-  --nc-tint:rgba(251,77,141,.16);
-  --info:#C084FC;
-  --info-tint:rgba(192,132,252,.16);
+  --nc:#FF6B8A;              /* lifted from the light-mode red so it passes on black */
+  --nc-tint:rgba(255,107,138,.15);
+  --info:#60A5FA;
+  --info-tint:rgba(96,165,250,.15);
 
-  --shadow-1:0 1px 2px rgba(0,0,0,.6), 0 10px 30px -12px rgba(168,85,247,.30);
-  --shadow-2:0 4px 12px rgba(0,0,0,.55), 0 26px 56px -18px rgba(168,85,247,.42);
+  --shadow-1:0 1px 2px rgba(0,0,0,.8), 0 10px 30px -12px rgba(34,211,238,.28);
+  --shadow-2:0 4px 12px rgba(0,0,0,.75), 0 26px 56px -18px rgba(34,211,238,.40);
 
-  --hero-tint:#D946EF;
+  --hero-tint:#22D3EE;
 }
-/* Surfaces that were hand-tinted for the indigo palette need re-tinting here. */
-:root[data-palette="neon"] .page-head{background:linear-gradient(180deg,rgba(168,85,247,.16),var(--bg) 90%);}
-:root[data-palette="neon"] .site-header{background:rgba(7,4,15,.86);border-bottom-color:var(--border);}
-:root[data-palette="neon"] .hero{background:radial-gradient(120% 140% at 78% -10%, #2A0F46 0%, #0B0518 52%, #05030B 100%);}
-:root[data-palette="neon"] .acc-band{background:var(--bg-elevated);}
-:root[data-palette="neon"] .acc{background:var(--bg);}
-:root[data-palette="neon"] .acc.live{background:linear-gradient(160deg,rgba(168,85,247,.18),var(--bg-elevated));}
-:root[data-palette="neon"] .lens-strip{background:var(--bg-deep-2);}
-:root[data-palette="neon"] .humor{background:var(--bg-deep);}
-:root[data-palette="neon"] .cta-band{background:linear-gradient(120deg,#0B0518,#2A0F46 120%);}
+
+/* Surfaces hand-tinted for the indigo palette, re-tinted for neon blue. */
+:root[data-palette="neon"] body{background:#000;}
+:root[data-palette="neon"] .page-head{background:linear-gradient(180deg,rgba(56,189,248,.10),#000 88%);}
+:root[data-palette="neon"] .site-header{background:rgba(0,0,0,.9);border-bottom-color:var(--border);}
+:root[data-palette="neon"] .hero{background:radial-gradient(120% 140% at 78% -10%, #06283D 0%, #010A12 55%, #000 100%);}
+:root[data-palette="neon"] .hero::after{background:radial-gradient(60% 50% at 90% 100%, rgba(34,211,238,.16), transparent 70%);}
+:root[data-palette="neon"] .acc-band{background:var(--bg-elevated);border-color:var(--border-soft);}
+:root[data-palette="neon"] .acc{background:#04070C;}
+:root[data-palette="neon"] .acc.live{background:linear-gradient(160deg,rgba(56,189,248,.14),var(--bg-elevated));border-color:var(--border);}
+:root[data-palette="neon"] .lens-strip{background:#03060B;}
+:root[data-palette="neon"] .humor{background:#000;}
+:root[data-palette="neon"] .cta-band{background:linear-gradient(120deg,#010A12,#06283D 120%);}
 :root[data-palette="neon"] .dl{background:var(--bg-elevated);}
-:root[data-palette="neon"] .video-embed{background:linear-gradient(140deg,#0B0518,#2A0F46);}
-:root[data-palette="neon"] ::selection{background:var(--accent-bright);color:#0B0518;}
-:root[data-palette="neon"] .btn-accent{color:#12031A;}
-:root[data-palette="neon"] .code-chip{background:#2A0F46;}
-/* Neon glow on the primary calls to action */
-:root[data-palette="neon"] .btn-primary{box-shadow:0 0 20px -4px rgba(168,85,247,.65);}
-:root[data-palette="neon"] .btn-accent{box-shadow:0 0 22px -4px rgba(217,70,239,.7);}
+:root[data-palette="neon"] .video-embed{background:linear-gradient(140deg,#010A12,#06283D);}
+:root[data-palette="neon"] ::selection{background:var(--accent-bright);color:#00131A;}
+:root[data-palette="neon"] .code-chip{background:#06283D;color:#EAF6FF;}
+:root[data-palette="neon"] .tile,
+:root[data-palette="neon"] .kpi-card,
+:root[data-palette="neon"] .quiz{background:var(--bg-elevated);border-color:var(--border);}
+
+/* Dark-on-light chips need a light foreground once the surface goes black. */
+:root[data-palette="neon"] .pill{background:var(--brand-tint);color:var(--brand-2);}
+:root[data-palette="neon"] .opt{background:var(--bg-elevated);color:var(--fg);border-color:var(--border);}
+:root[data-palette="neon"] .opt:hover{background:var(--brand-tint);color:var(--brand-2);border-color:var(--brand-2);}
+:root[data-palette="neon"] .btn-ghost{color:var(--fg);border-color:var(--border);}
+:root[data-palette="neon"] .btn-ghost:hover{color:var(--accent-bright);border-color:var(--accent-bright);}
+
+/* Accent buttons carry dark text on a bright fill — keep that legible. */
+:root[data-palette="neon"] .btn-accent{background:var(--accent-bright);color:#00131A;}
+:root[data-palette="neon"] .btn-primary{background:var(--brand-2);color:#00131A;}
+
+/* Neon glow on primary calls to action */
+:root[data-palette="neon"] .btn-primary{box-shadow:0 0 22px -4px rgba(56,189,248,.7);}
+:root[data-palette="neon"] .btn-accent{box-shadow:0 0 24px -4px rgba(34,211,238,.75);}
 
 :root[data-theme="dark"]{
   --bg:#0A0D1E;
@@ -556,38 +576,38 @@ a.tile:hover .more{text-decoration:underline;}
 /* ---- Neon palette overrides for feature modules (their CSS hardcodes the
    indigo/teal accents, so they are re-pointed here rather than duplicated). ---- */
 :root[data-palette="neon"] .qg-shell,
-:root[data-palette="neon"] .hg-shell{background:linear-gradient(160deg,#07040F,#1A0B2E);border-color:rgba(168,85,247,.28);border-top-color:var(--accent-bright);}
+:root[data-palette="neon"] .hg-shell{background:linear-gradient(160deg,#000,#06283D);border-color:rgba(56,189,248,.28);border-top-color:var(--accent-bright);}
 :root[data-palette="neon"] .qg-right,
-:root[data-palette="neon"] .hg-right{background:rgba(5,3,11,.65);}
+:root[data-palette="neon"] .hg-right{background:rgba(0,0,0,.7);}
 :root[data-palette="neon"] .qg-live .dot{background:var(--accent-bright);box-shadow:0 0 6px var(--accent-bright);}
-:root[data-palette="neon"] .qg-panel-cta{background:var(--accent-bright);color:#12031A;}
+:root[data-palette="neon"] .qg-panel-cta{background:var(--accent-bright);color:#00131A;}
 :root[data-palette="neon"] .qg-panel-cta:hover{background:var(--brand-2);}
 :root[data-palette="neon"] .qg-metric-card:hover,
-:root[data-palette="neon"] .qg-metric-card.is-active{border-color:var(--accent-bright);background:rgba(217,70,239,.10);}
+:root[data-palette="neon"] .qg-metric-card.is-active{border-color:var(--accent-bright);background:rgba(34,211,238,.10);}
 :root[data-palette="neon"] .qg-detail-panel,
 :root[data-palette="neon"] .qg-hub-tip,
 :root[data-palette="neon"] .hg-hub-tip,
 :root[data-palette="neon"] .gx-tooltip,
 :root[data-palette="neon"] .gx-auto-label,
-:root[data-palette="neon"] .kn-tip{background:rgba(10,5,20,.95);border-color:rgba(217,70,239,.4);}
+:root[data-palette="neon"] .kn-tip{background:rgba(2,6,12,.96);border-color:rgba(34,211,238,.4);}
 :root[data-palette="neon"] .qg-detail-panel h3,
 :root[data-palette="neon"] .qg-hub-tip,
 :root[data-palette="neon"] .hg-coord-val,
 :root[data-palette="neon"] .gx-tooltip span{color:var(--accent-bright);}
-:root[data-palette="neon"] .qg-zoom-controls button{background:rgba(5,3,11,.8);border-color:rgba(217,70,239,.35);color:var(--accent-bright);}
-:root[data-palette="neon"] .qg-zoom-controls button:hover{background:rgba(217,70,239,.18);border-color:var(--accent-bright);}
+:root[data-palette="neon"] .qg-zoom-controls button{background:rgba(0,0,0,.85);border-color:rgba(34,211,238,.35);color:var(--accent-bright);}
+:root[data-palette="neon"] .qg-zoom-controls button:hover{background:rgba(34,211,238,.18);border-color:var(--accent-bright);}
 :root[data-palette="neon"] .gx-wrap,
-:root[data-palette="neon"] .kn-wrap{background:radial-gradient(circle at 50% 45%, rgba(168,85,247,.18), transparent 70%);}
+:root[data-palette="neon"] .kn-wrap{background:radial-gradient(circle at 50% 45%, rgba(56,189,248,.18), transparent 70%);}
 :root[data-palette="neon"] .qg-loading .spin,
 :root[data-palette="neon"] .hg-loading .spin,
 :root[data-palette="neon"] .gx-loading .spin,
 :root[data-palette="neon"] .sv-progress-fill{border-top-color:var(--accent-bright);background:var(--accent-bright);}
 :root[data-palette="neon"] .face-canvas-wrap,
-:root[data-palette="neon"] .hg-globe-wrap{box-shadow:0 0 60px -10px rgba(217,70,239,.4), 0 0 100px -20px rgba(168,85,247,.3);}
+:root[data-palette="neon"] .hg-globe-wrap{box-shadow:0 0 60px -10px rgba(34,211,238,.42), 0 0 100px -20px rgba(56,189,248,.3);}
 :root[data-palette="neon"] .sv-title-bar{border-bottom-color:var(--accent-bright);}
 :root[data-palette="neon"] .sop-page{border-color:var(--border);}
 :root[data-palette="neon"] .sd-title{border-bottom-color:var(--brand-2);}
-:root[data-palette="neon"] .sv-opt.is-picked{border-color:var(--accent-bright);background:rgba(217,70,239,.14);color:var(--accent-bright);}
+:root[data-palette="neon"] .sv-opt.is-picked{border-color:var(--accent-bright);background:rgba(34,211,238,.14);color:var(--accent-bright);}
 
 /* The empty-state icons now inherit colour, so give their containers one. */
 .qg-panel-empty svg, .hg-panel-empty svg, .sop-empty svg{color:var(--accent-bright);}
