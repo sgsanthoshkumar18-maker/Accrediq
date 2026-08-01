@@ -390,8 +390,8 @@ a.tile:hover .more{text-decoration:underline;}
 /* ---------- Quiz ---------- */
 .quiz{background:var(--bg-elevated);border:1px solid var(--border);border-radius:var(--r-lg);padding:22px;box-shadow:var(--shadow-1);}
 .quiz .q{font-weight:700;font-size:15.5px;margin-bottom:14px;}
-.opt{display:block;width:100%;text-align:left;background:var(--bg);border:1px solid var(--border);border-radius:10px;padding:12px 14px;margin-bottom:9px;font-size:14px;cursor:pointer;transition:border-color .15s ease, background .15s ease;}
-.opt:hover{border-color:var(--brand-2);}
+.opt{display:block;width:100%;text-align:left;background:var(--bg-elevated);color:var(--fg);border:1px solid var(--border);border-radius:10px;padding:12px 14px;margin-bottom:9px;font-size:14px;font-family:var(--font-body);cursor:pointer;transition:border-color .15s ease, background .15s ease, color .15s ease;}
+.opt:hover{border-color:var(--brand-2);background:var(--brand-tint);color:var(--brand-2);}
 .opt.correct{background:var(--ok-tint);border-color:var(--ok);color:var(--ok);font-weight:600;}
 .opt.wrong{background:var(--nc-tint);border-color:var(--nc);color:var(--nc);font-weight:600;}
 .feedback{font-size:13.5px;margin-top:6px;min-height:18px;color:var(--fg-muted);}
