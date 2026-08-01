@@ -216,10 +216,57 @@
     });
   }
 
+  function initScrollReveal() {
+    const reduce = window.matchMedia && window.matchMedia("(prefers-reduced-motion: reduce)").matches;
+    if (reduce) return; // respect reduced-motion — content just shows normally, no animation needed
+
+    // Structural content blocks across every page — headings, cards, tiles, sections.
+    // Deliberately excludes generic h3/p tags since those also appear inside dynamically
+    // injected modals/tooltips/detail-panels, which already manage their own show/hide.
+    const REVEAL_SELECTOR = [
+      "h1", "h2", ".lead", ".tile", ".kpi-card", ".cta-band", ".section-head",
+      ".dl", ".acc", ".joke", ".dept-card", ".chapter-card", ".cm-card", ".dt-card",
+      ".dept-tile", ".code-item", ".video-embed", ".quiz", ".fc", ".std-block",
+      ".gx-stage", ".qg-shell", ".tl-card", ".steps"
+    ].join(",");
+
+    // Skip anything inside a panel that already has its own open/close animation —
+    // avoids fighting with modals, detail drill-downs, and tooltips.
+    const EXCLUDE_ANCESTOR = ".modal, .modal-back, .globe-card, .dept-detail, .explorer, .tdx, .cdx, .ddx, .dna-tooltip, .qg-panel, .gx-tooltip, .brain-tooltip, .face-tooltip";
+
+    const io = new IntersectionObserver((entries) => {
+      entries.forEach(entry => {
+        entry.target.classList.toggle("revealed", entry.isIntersecting);
+      });
+    }, { threshold: 0.1, rootMargin: "0px 0px -6% 0px" });
+
+    function attach(el) {
+      if (el.dataset.revealBound) return;
+      if (el.closest(EXCLUDE_ANCESTOR)) return;
+      el.dataset.revealBound = "1";
+      el.classList.add("reveal-el");
+      io.observe(el);
+    }
+
+    document.querySelectorAll(REVEAL_SELECTOR).forEach(attach);
+
+    // Watch for content rendered later by page-specific scripts (chapter grids,
+    // department cards, committee lists, etc.) so the effect covers everywhere.
+    const mo = new MutationObserver(mutations => {
+      mutations.forEach(m => m.addedNodes.forEach(node => {
+        if (node.nodeType !== 1) return;
+        if (node.matches && node.matches(REVEAL_SELECTOR)) attach(node);
+        if (node.querySelectorAll) node.querySelectorAll(REVEAL_SELECTOR).forEach(attach);
+      }));
+    });
+    mo.observe(document.body, { childList: true, subtree: true });
+  }
+
   document.addEventListener("DOMContentLoaded", () => {
     initHeaderFooter();
     initQuiz();
     initVideoPlay();
     initOwnerThemeToggle();
+    initScrollReveal();
   });
 })();

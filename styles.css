@@ -476,3 +476,18 @@ a.tile:hover .more{text-decoration:underline;}
 .dash-empty{grid-column:1/-1;text-align:center;padding:50px 20px;color:var(--fg-faint);font-size:14.5px;}
 
 /* Utility spacing already inline in markup preserved */
+
+/* ---------- Site-wide scroll reveal (Gamma-style rise + fade, reversible) ---------- */
+.reveal-el{
+  opacity:0;
+  transform:translateY(26px);
+  transition:opacity .7s cubic-bezier(.16,.84,.44,1), transform .7s cubic-bezier(.16,.84,.44,1);
+  will-change:opacity, transform;
+}
+.reveal-el.revealed{
+  opacity:1;
+  transform:translateY(0);
+}
+@media (prefers-reduced-motion: reduce){
+  .reveal-el{opacity:1 !important;transform:none !important;transition:none !important;}
+}
