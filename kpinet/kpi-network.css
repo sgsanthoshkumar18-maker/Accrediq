@@ -21,10 +21,13 @@
 .kn-hit:focus-visible{outline:2px solid var(--accent-bright);outline-offset:3px;
   background:var(--accent-bright-tint);border-radius:50%;}
 
-.kn-tip{position:absolute;z-index:30;max-width:290px;pointer-events:none;
+/* Hidden via visibility (not display) so it still has measurable dimensions —
+   the positioning code needs its real width/height to keep it on-screen. */
+.kn-tip{position:absolute;z-index:30;width:min(290px, calc(100% - 20px));pointer-events:none;
   background:var(--bg-elevated);border:1px solid var(--border);border-radius:12px;padding:14px 16px;
-  box-shadow:var(--shadow-2);opacity:0;transition:opacity .15s ease;}
-.kn-tip.show{opacity:1;}
+  box-shadow:var(--shadow-2);opacity:0;visibility:hidden;transition:opacity .15s ease;
+  max-height:calc(100% - 20px);overflow-y:auto;}
+.kn-tip.show{opacity:1;visibility:visible;}
 .kn-tip-head{border-left:3px solid var(--accent-bright);padding-left:10px;margin-bottom:10px;}
 .kn-tip-head b{display:block;font-family:var(--font-display);font-size:14px;line-height:1.35;color:var(--fg);}
 .kn-tip-dept{display:block;font-size:11px;color:var(--fg-faint);font-family:var(--font-mono);margin-top:2px;}

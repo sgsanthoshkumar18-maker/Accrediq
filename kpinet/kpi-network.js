@@ -175,11 +175,29 @@
       el.style.opacity = behind ? "0" : "1";
       el.style.pointerEvents = behind ? "none" : "auto";
       if (i === hovered) {
-        // keep the tooltip on-screen near its node
-        const left = Math.min(Math.max(sx, 12), w - 12);
+        // Keep the whole tooltip inside the canvas. Measure it, then decide
+        // whether to sit above or below the node, and clamp horizontally —
+        // otherwise nodes near an edge push the text out of view.
+        const box = tip.getBoundingClientRect();
+        const tw = box.width || 290, th = box.height || 180;
+        const PAD = 10, GAP = 16;
+
+        // Vertical: prefer above; flip below if there isn't room up top.
+        let top = sy - GAP - th;
+        if (top < PAD) {
+          top = sy + GAP;                          // flip below the node
+          if (top + th > h - PAD) {                // no room either side: clamp
+            top = Math.max(PAD, h - th - PAD);
+          }
+        }
+
+        // Horizontal: centre on the node, then clamp to the canvas.
+        let left = sx - tw / 2;
+        left = Math.max(PAD, Math.min(left, w - tw - PAD));
+
+        tip.style.transform = "none";              // position directly, no offset transform
         tip.style.left = left + "px";
-        tip.style.top = Math.max(8, sy - 14) + "px";
-        tip.style.transform = `translate(${left > w * 0.55 ? "-100%" : "0"}, -100%)`;
+        tip.style.top = top + "px";
       }
     });
   }
