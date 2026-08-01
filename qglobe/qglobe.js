@@ -141,53 +141,13 @@
   }
 
   // ---------- Dotted continent outlines ("outlines = real borders", stylized) ----------
-  const CONTINENTS = {
-    "North America": [
-      [71,-156],[70,-143],[69,-133],[70,-117],[70,-108],[68,-88],[63,-90],[58,-93],[55,-83],[51,-79],
-      [58,-78],[62,-75],[64,-68],[58,-63],[52,-56],[47,-53],[44,-66],[41,-71],[40,-74],[35,-76],[32,-80],
-      [26,-80],[27,-83],[29,-90],[26,-97],[22,-97],[18,-94],[15,-92],[13,-88],[9,-83],[12,-84],[17,-91],
-      [22,-98],[26,-99],[29,-104],[31,-111],[26,-112],[23,-109],[27,-110],[32,-117],[36,-122],[40,-124],
-      [46,-124],[49,-123],[52,-131],[56,-133],[59,-138],[61,-146],[59,-157],[55,-162],[57,-159],[60,-165],
-      [64,-166],[68,-166],[71,-156]
-    ],
-    "South America": [
-      [12,-72],[9,-76],[4,-77],[-2,-80],[-6,-81],[-10,-78],[-16,-72],[-20,-70],[-26,-70],[-30,-71],
-      [-36,-73],[-42,-73],[-48,-75],[-52,-71],[-54,-68],[-50,-68],[-45,-65],[-41,-63],[-38,-58],[-34,-58],
-      [-32,-52],[-26,-48],[-20,-40],[-13,-38],[-5,-35],[-1,-45],[2,-51],[6,-53],[10,-61],[8,-68],[12,-72]
-    ],
-    "Africa": [
-      [37,10],[33,-6],[28,-13],[21,-17],[14,-17],[9,-13],[5,-9],[5,-3],[3,9],[-1,9],[-5,11],[-8,13],
-      [-13,13],[-18,12],[-26,15],[-32,18],[-34,19],[-34,21],[-29,31],[-24,35],[-16,40],[-10,40],[-5,39],
-      [-1,42],[5,48],[11,51],[12,49],[8,44],[9,42],[15,42],[20,37],[25,35],[31,32],[31,34],[29,25],
-      [22,17],[18,10],[13,3],[6,2],[5,-1],[10,-9],[16,-16],[25,-16],[33,-8],[37,10]
-    ],
-    "Europe": [
-      [71,25],[68,33],[65,25],[63,10],[65,12],[70,20],[71,25],[66,7],[60,5],[57,10],[54,10],[54,19],
-      [52,21],[49,12],[47,7],[44,7],[41,9],[38,9],[37,13],[38,15],[37,15],[35,25],[38,24],[40,19],
-      [37,22],[38,26],[41,27],[41,29],[43,28],[45,29],[47,29],[45,36],[49,37],[53,39],[57,40],[60,32],
-      [63,30],[66,34],[68,33]
-    ],
-    "Asia": [
-      [68,33],[66,55],[70,68],[73,80],[73,95],[76,115],[72,135],[71,150],[68,170],[64,178],[60,166],
-      [56,163],[53,158],[46,142],[42,131],[38,128],[34,127],[31,121],[26,120],[22,114],[18,109],[13,109],
-      [10,104],[15,98],[20,93],[22,89],[19,85],[13,80],[8,77],[10,76],[15,73],[21,70],[24,67],[25,61],
-      [27,56],[24,53],[26,50],[30,48],[33,49],[37,49],[40,47],[43,47],[45,48],[49,50],[53,54],[57,60],
-      [61,68],[65,60],[68,68],[68,33]
-    ],
-    "Australia": [
-      [-11,131],[-12,136],[-14,144],[-17,146],[-20,148],[-24,151],[-28,153],[-32,152],[-36,150],[-38,144],
-      [-35,137],[-33,134],[-32,131],[-31,124],[-34,119],[-31,115],[-26,113],[-20,117],[-16,123],[-13,129],
-      [-11,131]
-    ],
-    "Antarctica": [
-      [-65,-60],[-67,-10],[-70,50],[-67,110],[-65,170],[-66,-140],[-65,-80],[-65,-60]
-    ],
-    "Greenland": [
-      [83,-35],[76,-20],[68,-32],[60,-45],[66,-53],[75,-58],[81,-60],[83,-35]
-    ],
-    "Madagascar": [[-12,49],[-20,47],[-25,46],[-20,44],[-12,49]],
-  };
-  (function buildContinents() {
+  // ---------- Real country borders, rendered from Natural Earth GeoJSON ----------
+  // window.WORLD_BORDERS is an array of rings; each ring is a flat [lon,lat,lon,lat,...] array.
+  // Simplified offline (Douglas-Peucker) from Natural Earth Admin-0 data: 403 outlines, ~6.6k points.
+  (function buildBorders() {
+    const RINGS = window.WORLD_BORDERS;
+    if (!RINGS || !RINGS.length) return; // graceful no-op if the border data failed to load
+
     function glowTex(hex) {
       const c = document.createElement("canvas"); c.width = c.height = 16;
       const ctx = c.getContext("2d");
@@ -199,32 +159,40 @@
 
     const linePositions = [];
     const dotPositions = [];
-    Object.values(CONTINENTS).forEach(ring => {
-      for (let i = 0; i < ring.length - 1; i++) {
-        const [lat1, lon1] = ring[i], [lat2, lon2] = ring[i + 1];
-        const STEPS = 14; // denser interpolation so the outline reads as a continuous coastline, not scattered dots
-        let prev = null;
-        for (let s = 0; s <= STEPS; s++) {
-          const t = s / STEPS;
-          const v = latLon(lat1 + (lat2 - lat1) * t, lon1 + (lon2 - lon1) * t, RADIUS * 1.006);
-          if (prev) linePositions.push(prev.x, prev.y, prev.z, v.x, v.y, v.z);
-          if (s % 3 === 0) dotPositions.push(v.x, v.y, v.z);
-          prev = v;
+
+    RINGS.forEach(ring => {
+      const n = ring.length / 2;
+      let prev = null;
+      for (let i = 0; i < n; i++) {
+        const lon = ring[i * 2], lat = ring[i * 2 + 1];
+        const v = latLon(lat, lon, RADIUS * 1.006);
+        if (prev) {
+          // Skip the seam segment when a ring wraps the antimeridian, so no line
+          // shoots straight across the globe.
+          const prevLon = ring[(i - 1) * 2];
+          if (Math.abs(lon - prevLon) < 180) {
+            linePositions.push(prev.x, prev.y, prev.z, v.x, v.y, v.z);
+          }
         }
+        if (i % 4 === 0) dotPositions.push(v.x, v.y, v.z);
+        prev = v;
       }
     });
 
-    // Continuous glowing outline — this is what actually reads as "a world map"
+    // Continuous glowing border outline
     const lineGeo = new THREE.BufferGeometry();
     lineGeo.setAttribute("position", new THREE.Float32BufferAttribute(linePositions, 3));
-    const lineMat = new THREE.LineBasicMaterial({ color: 0x5eead4, transparent: true, opacity: 0.85 });
-    rig.add(new THREE.LineSegments(lineGeo, lineMat));
+    rig.add(new THREE.LineSegments(lineGeo, new THREE.LineBasicMaterial({
+      color: 0x5eead4, transparent: true, opacity: 0.55
+    })));
 
-    // Soft glow dots along the same coastline for a luminous, premium feel
+    // Soft glow dots along the borders for a luminous, premium feel
     const dotGeo = new THREE.BufferGeometry();
     dotGeo.setAttribute("position", new THREE.Float32BufferAttribute(dotPositions, 3));
-    const dotMat = new THREE.PointsMaterial({ size: 0.028, map: glowTex("rgba(224,255,250,1)"), transparent: true, opacity: 0.9, depthWrite: false, blending: THREE.AdditiveBlending, sizeAttenuation: true });
-    rig.add(new THREE.Points(dotGeo, dotMat));
+    rig.add(new THREE.Points(dotGeo, new THREE.PointsMaterial({
+      size: 0.014, map: glowTex("rgba(224,255,250,1)"), transparent: true, opacity: 0.6,
+      depthWrite: false, blending: THREE.AdditiveBlending, sizeAttenuation: true
+    })));
   })();
 
   // ---------- Graticule (lat/lon grid) — subtle technical texture like the reference ----------

@@ -385,8 +385,17 @@
     tryLoad(0);
   }
   function loadQGlobe() {
-    var g = document.createElement("script"); g.src = "qglobe/qglobe.js";
-    document.body.appendChild(g);
+    var b = document.createElement("script"); b.src = "qglobe/world-borders.js";
+    b.onload = function () {
+      var g = document.createElement("script"); g.src = "qglobe/qglobe.js";
+      document.body.appendChild(g);
+    };
+    b.onerror = function () {
+      // border data unavailable — globe still renders (graticule, hubs, arcs), just without country outlines
+      var g = document.createElement("script"); g.src = "qglobe/qglobe.js";
+      document.body.appendChild(g);
+    };
+    document.body.appendChild(b);
   }
 
   loadSeq(THREE_SOURCES, function (threeOk) {
