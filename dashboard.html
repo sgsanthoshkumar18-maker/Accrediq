@@ -35,8 +35,13 @@
         <canvas id="qgCanvas" aria-label="Interactive 3D globe — every glowing hub is a department" role="img"></canvas>
         <div class="qg-loading" id="qgLoading"><div class="spin"></div>Initializing</div>
         <div id="qgOverlay" style="position:absolute;inset:0;"></div>
+        <div class="qg-zoom-controls">
+          <button type="button" id="qgZoomIn" aria-label="Zoom in">+</button>
+          <button type="button" id="qgZoomOut" aria-label="Zoom out">−</button>
+          <button type="button" id="qgZoomReset" aria-label="Reset view">⟳</button>
+        </div>
       </div>
-      <div class="qg-hint">drag to rotate · scroll to zoom · click a hub</div>
+      <div class="qg-hint">drag to rotate · scroll or use +/− to zoom · click a hub</div>
     </div>
     <div class="qg-right">
       <div class="qg-panel-empty" id="qgPanelEmpty">

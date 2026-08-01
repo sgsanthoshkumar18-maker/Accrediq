@@ -265,13 +265,6 @@
     return { dept: d, mesh: sprite, basePos: pos, phase: Math.random() * Math.PI * 2 };
   });
 
-  // Target-lock ring — appears around whichever hub is currently selected.
-  const lockRingGeo = new THREE.RingGeometry(0.16, 0.19, 32);
-  const lockRingMat = new THREE.MeshBasicMaterial({ color: 0xfbbf24, transparent: true, opacity: 0.85, side: THREE.DoubleSide });
-  const lockRing = new THREE.Mesh(lockRingGeo, lockRingMat);
-  lockRing.visible = false;
-  rig.add(lockRing);
-
   // ---------- Camera interaction: real OrbitControls when available, manual drag as fallback ----------
   const MIN_D = 1.6, MAX_D = 4.2;
   let controls = null;
@@ -281,6 +274,9 @@
     controls = new THREE.OrbitControls(camera, canvas);
     controls.enableDamping = true;
     controls.dampingFactor = 0.08;
+    controls.enableRotate = true;   // drag to rotate
+    controls.enableZoom = true;     // scroll / pinch to zoom
+    controls.zoomSpeed = 0.9;
     controls.minDistance = MIN_D;
     controls.maxDistance = MAX_D;
     controls.enablePan = false;
@@ -312,8 +308,8 @@
     }, { passive: false });
   }
 
-  // Double-click / double-tap resets the view — matches the "reset" pattern from the reference.
-  canvas.addEventListener("dblclick", () => {
+  // Reset the camera to its default framing.
+  function resetView() {
     if (controls) {
       if (window.gsap) {
         gsap.to(camera.position, { x: 0, y: 0, z: 2.6, duration: 0.9, ease: "power2.inOut" });
@@ -324,7 +320,35 @@
     } else {
       rotX = 0.15; rotY = -0.3; camDistance = 2.6;
     }
-  });
+  }
+
+  // Step the camera in or out. Works with OrbitControls (moves along the view
+  // vector) and with the manual fallback (adjusts camDistance directly).
+  function stepZoom(delta) {
+    if (controls) {
+      const dir = camera.position.clone().sub(controls.target);
+      const dist = THREE.MathUtils.clamp(dir.length() + delta, MIN_D, MAX_D);
+      dir.setLength(dist);
+      const dest = controls.target.clone().add(dir);
+      if (window.gsap) {
+        gsap.to(camera.position, { x: dest.x, y: dest.y, z: dest.z, duration: 0.4, ease: "power2.out" });
+      } else {
+        camera.position.copy(dest);
+      }
+    } else {
+      camDistance = Math.max(MIN_D, Math.min(MAX_D, camDistance + delta));
+    }
+  }
+
+  // Double-click / double-tap resets the view.
+  canvas.addEventListener("dblclick", resetView);
+
+  const zoomInBtn = document.getElementById("qgZoomIn");
+  const zoomOutBtn = document.getElementById("qgZoomOut");
+  const zoomResetBtn = document.getElementById("qgZoomReset");
+  if (zoomInBtn) zoomInBtn.addEventListener("click", () => stepZoom(-0.45));
+  if (zoomOutBtn) zoomOutBtn.addEventListener("click", () => stepZoom(0.45));
+  if (zoomResetBtn) zoomResetBtn.addEventListener("click", resetView);
 
   const raycaster = new THREE.Raycaster();
   const ndc = new THREE.Vector2();
@@ -370,12 +394,6 @@
 
   function selectDept(d) {
     hubs.forEach(h => h.mesh.scale.setScalar(h.dept.id === d.id ? 0.15 : 0.1));
-    const activeHub = hubs.find(h => h.dept.id === d.id);
-    if (activeHub) {
-      lockRing.visible = true;
-      lockRing.position.copy(activeHub.basePos);
-      lockRing.lookAt(0, 0, 0);
-    }
     panelEmpty.style.display = "none";
     panel.style.display = "block";
 
@@ -461,7 +479,6 @@
       panel.style.display = "none";
       panelEmpty.style.display = "block";
       hubs.forEach(h => h.mesh.scale.setScalar(0.1));
-      lockRing.visible = false;
     });
   }
 
@@ -497,7 +514,6 @@
         const pulse = 1 + Math.sin(tt * 1.4 + h.phase) * 0.12;
         if (h.mesh.scale.x < 0.13) h.mesh.scale.setScalar(0.1 * pulse);
       });
-      if (lockRing) lockRing.rotation.z += 0.008;
     }
 
     renderer.render(scene, camera);
