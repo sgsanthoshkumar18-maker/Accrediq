@@ -31,6 +31,7 @@
   const scene = new THREE.Scene();
   const camera = new THREE.PerspectiveCamera(38, 1, 0.1, 100);
   camera.position.set(0, 0, 11);
+  camera.lookAt(0, 0, 0);
 
   function sizeRenderer() {
     const w = wrapEl.clientWidth, h = wrapEl.clientHeight;

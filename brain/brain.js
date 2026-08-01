@@ -57,7 +57,8 @@
 
   const scene = new THREE.Scene();
   const camera = new THREE.PerspectiveCamera(42, 1, 0.1, 100);
-  camera.position.set(0, 0.1, 6.2);
+  camera.position.set(0, 0.1, 4.3);
+  camera.lookAt(0, 0, 0);
 
   function sizeRenderer() {
     const w = wrapEl.clientWidth, h = wrapEl.clientHeight;
@@ -286,6 +287,7 @@
     }
 
     rig.updateMatrixWorld();
+    camera.lookAt(0, 0, 0);
     renderer.render(scene, camera);
     updateHitPositions();
   }
