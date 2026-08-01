@@ -267,6 +267,8 @@
 
   // ---------- Camera interaction: real OrbitControls when available, manual drag as fallback ----------
   const MIN_D = 1.6, MAX_D = 4.2;
+  const IDLE_RESUME_MS = 2200; // how long the globe sits still before drifting again
+  let lastInteractionAt = -Infinity;
   let controls = null;
   let rotX = 0.15, rotY = -0.3, velX = 0, velY = 0, manualDragging = false;
 
@@ -280,7 +282,7 @@
     controls.maxDistance = MAX_D;
     controls.enablePan = false;
     controls.autoRotate = true;
-    controls.autoRotateSpeed = 0.35;
+    controls.autoRotateSpeed = 0.22;   // gentle, unobtrusive drift
     controls.rotateSpeed = 0.5;
   } else {
     // Manual fallback (no OrbitControls loaded) — same drag/zoom feel as before.
@@ -555,7 +557,7 @@
     const tt = now / 1000;
 
     if (controls) {
-      controls.autoRotate = !reduceMotion && !controls.__userInteracted;
+      controls.autoRotate = !reduceMotion && (performance.now() - lastInteractionAt > IDLE_RESUME_MS);
       controls.update();
     } else {
       if (!manualDragging && !reduceMotion) {
@@ -585,9 +587,13 @@
     updateHitPositions();
   }
 
-  // Once a user manually drags, stop auto-rotating (standard, expected OrbitControls UX).
+  // Auto-rotate pauses while you're interacting, then resumes once the globe has
+  // been left alone. Tracked on the wrapper so drags, wheel zoom and pinch all count.
   if (controls) {
-    canvas.addEventListener("pointerdown", () => { controls.__userInteracted = true; });
+    const markInteraction = () => { lastInteractionAt = performance.now(); };
+    ["pointerdown", "pointermove", "wheel", "touchstart", "touchmove"].forEach(evt => {
+      wrapEl.addEventListener(evt, markInteraction, { passive: true });
+    });
   }
 
   requestAnimationFrame(() => {
