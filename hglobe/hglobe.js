@@ -489,23 +489,10 @@
     panelEmpty.style.display = "none";
     panel.style.display = "block";
 
-    function esc(s) { return String(s).replace(/"/g, "&quot;"); }
-    const s = d.stats; // present only when real, sourced data has been supplied
+    const esc = s => String(s).replace(/[&<>"]/g, ch =>
+      ({ "&": "&amp;", "<": "&lt;", ">": "&gt;", '"': "&quot;" }[ch]));
 
-    // Rows we WOULD render, given real data. Until a source is connected we show
-    // the field with an explicit "not connected" marker rather than inventing a
-    // number — fabricated healthcare statistics would be actively misleading.
-    const FIELDS = [
-      ["Global healthcare ranking", s && s.rank],
-      ["Healthcare quality index", s && s.qualityIndex],
-      ["Healthcare accessibility", s && s.accessibility],
-      ["Life expectancy", s && s.lifeExpectancy],
-      ["Doctors per 1,000 people", s && s.doctorsPer1000],
-      ["Hospital beds per 1,000", s && s.bedsPer1000],
-      ["Health spending (% GDP)", s && s.spendPctGdp],
-      ["Average healthcare cost", s && s.avgCost]
-    ];
-
+    // Shell renders immediately; each live section fills in as its API responds.
     panel.innerHTML = `
       <div class="hg-panel-head">
         <span class="eyebrow">CAPITAL PROFILE</span>
@@ -515,42 +502,26 @@
       <div class="hg-panel-sub">Capital of ${esc(d.country)}</div>
 
       <div class="hg-coord-row">
-        <div><span class="hg-coord-lbl">Latitude</span><span class="hg-coord-val">${d.lat.toFixed(4)}°</span></div>
-        <div><span class="hg-coord-lbl">Longitude</span><span class="hg-coord-val">${d.lon.toFixed(4)}°</span></div>
+        <div><span class="hg-coord-lbl">Latitude</span><span class="hg-coord-val">${d.lat.toFixed(3)}°</span></div>
+        <div><span class="hg-coord-lbl">Longitude</span><span class="hg-coord-val">${d.lon.toFixed(3)}°</span></div>
       </div>
 
       <div class="hg-block">
-        <h3>Healthcare indicators</h3>
-        <ul class="hg-field-list">
-          ${FIELDS.map(([label, val]) => `
-            <li>
-              <span class="hg-field-lbl">${label}</span>
-              <span class="hg-field-val ${val == null ? "is-empty" : ""}">${val == null ? "Not connected" : esc(val)}</span>
-            </li>`).join("")}
-        </ul>
+        <h3>Health indicators · ${esc(d.country)}</h3>
+        <div id="hgIndicators"><p class="hg-note">Loading World Bank data…</p></div>
       </div>
 
       <div class="hg-block">
-        <h3>Top hospitals</h3>
-        ${(d.hospitals && d.hospitals.length)
-          ? `<ul class="hg-hosp-list">${d.hospitals.map(h => `
-              <li>
-                <div class="hg-hosp-name">${esc(h.name)}</div>
-                <div class="hg-hosp-meta">${esc(h.type || "")}${h.city ? " · " + esc(h.city) : ""}</div>
-                <div class="hg-hosp-stats">
-                  ${h.rating ? `<span>★ ${esc(h.rating)}</span>` : ""}
-                  ${h.beds ? `<span>${esc(h.beds)} beds</span>` : ""}
-                </div>
-              </li>`).join("")}</ul>`
-          : `<p class="hg-note">No verified hospital directory is connected for ${esc(d.country)}.</p>`}
+        <h3>Health expenditure trend</h3>
+        <div id="hgTrend"><p class="hg-note">Loading…</p></div>
       </div>
 
-      <p class="hg-source-note">
-        Coordinates shown are verified geographic data. Healthcare rankings, costs,
-        hospital ratings and bed counts require a live authoritative source
-        (WHO Global Health Observatory / World Bank Health Indicators / a licensed
-        hospital directory) and are intentionally left blank rather than estimated.
-      </p>
+      <div class="hg-block">
+        <h3>Hospitals near ${esc(d.city)}</h3>
+        <div id="hgHospitals"><p class="hg-note">Searching OpenStreetMap…</p></div>
+      </div>
+
+      <p class="hg-source-note" id="hgSources"></p>
     `;
 
     document.getElementById("hgPanelClose").addEventListener("click", () => {
@@ -558,6 +529,96 @@
       panelEmpty.style.display = "block";
       selectedDeptId = null;
       hubs.forEach(h => h.mesh.scale.setScalar(0.1));
+    });
+
+    if (!window.HealthData || !d.iso3) return;
+    const HD = window.HealthData;
+    const token = d.id;                       // guards against a slower earlier request overwriting a newer selection
+    const still = () => selectedDeptId === token;
+
+    // ---- Tier 1: World Bank indicators ----
+    HD.fetchIndicators(d.iso3).then(ind => {
+      if (!still()) return;
+      const order = ["lifeExpectancy", "infantMortality", "physicians", "hospitalBeds",
+                     "healthSpendGdp", "healthSpendPc", "oopSpend", "population"];
+      const rows = order.map(k => {
+        const item = ind[k];
+        const val = HD.format(item);
+        const label = item ? item.label : (HD.WB_INDICATORS[k] || {}).label || k;
+        return `<li>
+            <span class="hg-field-lbl">${esc(label)}</span>
+            <span class="hg-field-val ${val ? "" : "is-empty"}">${val ? esc(val) : "No data"}${
+              item && val ? ` <em class="hg-yr">${esc(item.year)}</em>` : ""}</span>
+          </li>`;
+      }).join("");
+      document.getElementById("hgIndicators").innerHTML = `<ul class="hg-field-list">${rows}</ul>`;
+    }).catch(() => {
+      if (still()) document.getElementById("hgIndicators").innerHTML =
+        `<p class="hg-note">World Bank data unavailable right now.</p>`;
+    });
+
+    // ---- Tier 1: expenditure time series (sparkline) ----
+    HD.fetchSeries(d.iso3, "healthSpendGdp", 2000, 2024).then(series => {
+      if (!still()) return;
+      const el = document.getElementById("hgTrend");
+      if (!series.length) { el.innerHTML = `<p class="hg-note">No trend data available.</p>`; return; }
+      const vals = series.map(p => p.value);
+      const min = Math.min(...vals), max = Math.max(...vals);
+      const span = (max - min) || 1;
+      const W = 260, H = 60;
+      const pts = series.map((p, i) => {
+        const x = (i / (series.length - 1 || 1)) * W;
+        const y = H - ((p.value - min) / span) * H;
+        return `${x.toFixed(1)},${y.toFixed(1)}`;
+      }).join(" ");
+      const first = series[0], last = series[series.length - 1];
+      el.innerHTML = `
+        <svg class="hg-spark" viewBox="0 0 ${W} ${H}" preserveAspectRatio="none" role="img"
+             aria-label="Health expenditure as percent of GDP, ${first.year} to ${last.year}">
+          <polyline points="${pts}" fill="none" stroke="#5eead4" stroke-width="2"
+                    stroke-linejoin="round" stroke-linecap="round"/>
+        </svg>
+        <div class="hg-spark-meta">
+          <span>${first.year}: ${first.value.toFixed(2)}%</span>
+          <span>${last.year}: ${last.value.toFixed(2)}%</span>
+        </div>
+        <p class="hg-note">Health expenditure, % of GDP · World Bank</p>`;
+    }).catch(() => {
+      if (still()) document.getElementById("hgTrend").innerHTML =
+        `<p class="hg-note">Trend data unavailable.</p>`;
+    });
+
+    // ---- Tier 2: WHO vaccination coverage (via our proxy; silent if not deployed) ----
+    HD.fetchVaccination(d.iso3).then(v => {
+      if (!still() || !v) return;
+      const box = document.getElementById("hgIndicators");
+      if (box) box.insertAdjacentHTML("beforeend",
+        `<ul class="hg-field-list hg-who"><li>
+           <span class="hg-field-lbl">DTP3 immunization coverage</span>
+           <span class="hg-field-val">${v.value}% <em class="hg-yr">${esc(v.year)}</em></span>
+         </li></ul>`);
+    });
+
+    // ---- Tier 3: OpenStreetMap hospitals (names + locations only) ----
+    HD.fetchHospitals(d.lat, d.lon).then(list => {
+      if (!still()) return;
+      const el = document.getElementById("hgHospitals");
+      if (!list.length) { el.innerHTML = `<p class="hg-note">No hospitals tagged in OpenStreetMap near this point.</p>`; return; }
+      el.innerHTML = `<ul class="hg-hosp-list">${list.map(h => `
+        <li>
+          <div class="hg-hosp-name">${esc(h.name)}</div>
+          ${h.operator ? `<div class="hg-hosp-meta">${esc(h.operator)}</div>` : ""}
+          <div class="hg-hosp-stats">
+            ${h.type ? `<span>${esc(h.type)}</span>` : ""}
+            ${h.beds ? `<span>${esc(h.beds)} beds</span>` : ""}
+          </div>
+        </li>`).join("")}</ul>
+        <p class="hg-note">OpenStreetMap has no ratings, and bed counts appear only where contributors have tagged them.</p>`;
+      document.getElementById("hgSources").textContent =
+        "Sources: World Bank World Development Indicators · WHO Global Health Observatory · OpenStreetMap contributors (ODbL). Years shown per figure.";
+    }).catch(() => {
+      if (still()) document.getElementById("hgHospitals").innerHTML =
+        `<p class="hg-note">OpenStreetMap lookup unavailable right now.</p>`;
     });
   }
 

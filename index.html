@@ -228,8 +228,12 @@
         b.onload = b.onerror = function () {
           var cap = document.createElement("script"); cap.src = "hglobe/capitals-data.js";
           cap.onload = function () {
-            var g = document.createElement("script"); g.src = "hglobe/hglobe.js";
-            document.body.appendChild(g);
+            var hd = document.createElement("script"); hd.src = "hglobe/health-data.js";
+            hd.onload = hd.onerror = function () {
+              var g = document.createElement("script"); g.src = "hglobe/hglobe.js";
+              document.body.appendChild(g);
+            };
+            document.body.appendChild(hd);
           };
           document.body.appendChild(cap);
         };
