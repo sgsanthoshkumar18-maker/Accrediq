@@ -433,13 +433,41 @@
     if (hit) selectDept(hit.dept);
   });
 
+  // ---------- Hover tooltip: shows the department name for whichever node you point at ----------
+  const hubTip = document.createElement("div");
+  hubTip.className = "qg-hub-tip";
+  hubTip.setAttribute("role", "tooltip");
+  wrapEl.appendChild(hubTip);
+  let hoveredIndex = -1;
+  let selectedDeptId = null;
+
+  function showHubTip(i) {
+    hoveredIndex = i;
+    hubTip.textContent = hubs[i].dept.name;
+    hubTip.classList.add("show");
+    hubs[i].mesh.scale.setScalar(0.15);
+  }
+  function hideHubTip() {
+    if (hoveredIndex >= 0) {
+      const hub = hubs[hoveredIndex];
+      // don't shrink the currently-selected hub back down
+      if (!selectedDeptId || hub.dept.id !== selectedDeptId) hub.mesh.scale.setScalar(0.1);
+    }
+    hoveredIndex = -1;
+    hubTip.classList.remove("show");
+  }
+
   // ---------- Accessible hit-targets ----------
-  const hitEls = hubs.map(h => {
+  const hitEls = hubs.map((h, i) => {
     const btn = document.createElement("button");
     btn.type = "button";
     btn.className = "qg-hub-hit";
     btn.setAttribute("aria-label", `${h.dept.name} department`);
     btn.addEventListener("click", () => selectDept(h.dept));
+    btn.addEventListener("mouseenter", () => showHubTip(i));
+    btn.addEventListener("mouseleave", hideHubTip);
+    btn.addEventListener("focus", () => showHubTip(i));   // keyboard users get it too
+    btn.addEventListener("blur", hideHubTip);
     overlay.appendChild(btn);
     return btn;
   });
@@ -451,8 +479,19 @@
       const sx = (p.x * 0.5 + 0.5) * w, sy = (-p.y * 0.5 + 0.5) * h;
       const el = hitEls[i];
       el.style.left = sx + "px"; el.style.top = sy + "px";
-      el.style.opacity = p.z > 1 ? "0" : "1";
-      el.style.pointerEvents = p.z > 1 ? "none" : "auto";
+      const behind = p.z > 1;
+      el.style.opacity = behind ? "0" : "1";
+      el.style.pointerEvents = behind ? "none" : "auto";
+
+      // Keep the tooltip pinned to its node as the globe rotates.
+      if (i === hoveredIndex) {
+        if (behind) {
+          hideHubTip();
+        } else {
+          hubTip.style.left = sx + "px";
+          hubTip.style.top = (sy - 16) + "px";
+        }
+      }
     });
   }
 
@@ -460,6 +499,7 @@
   function statusWord(s) { return s === "ok" ? "On track" : s === "watch" ? "Needs attention" : s; }
 
   function selectDept(d) {
+    selectedDeptId = d.id;
     hubs.forEach(h => h.mesh.scale.setScalar(h.dept.id === d.id ? 0.15 : 0.1));
     panelEmpty.style.display = "none";
     panel.style.display = "block";
@@ -545,6 +585,7 @@
     document.getElementById("qgPanelClose").addEventListener("click", () => {
       panel.style.display = "none";
       panelEmpty.style.display = "block";
+      selectedDeptId = null;
       hubs.forEach(h => h.mesh.scale.setScalar(0.1));
     });
   }
