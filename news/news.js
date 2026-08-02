@@ -6,7 +6,6 @@
   const bar = document.getElementById("aqNews");
   if (!bar) return;
   const track = bar.querySelector(".aq-news-track");
-  const base = document.body.getAttribute("data-base") || "";
 
   const esc = s => String(s == null ? "" : s)
     .replace(/[&<>"]/g, c => ({ "&": "&amp;", "<": "&lt;", ">": "&gt;", '"': "&quot;" }[c]));
@@ -31,16 +30,23 @@
       </a>`;
   }
 
-  fetch(base + "api/news")
-    .then(r => (r.ok ? r.json() : Promise.reject()))
+  fetch("/api/news")
+    .then(r => (r.ok ? r.json() : Promise.reject(new Error("HTTP " + r.status))))
     .then(data => {
       const items = (data.items || []).concat(data.links || []);
-      if (!items.length) { bar.remove(); return; }   // nothing to show: remove rather than show an empty bar
+      if (!items.length) {
+        console.warn("[AQcredix news] API responded but returned no items.");
+        bar.remove(); return;
+      }
       // duplicate the run so the marquee can loop seamlessly
       const html = items.map(card).join("");
       track.innerHTML = html + html;
       track.style.setProperty("--aq-news-count", items.length);
       bar.classList.add("is-ready");
     })
-    .catch(() => { bar.remove(); });   // feed down / proxy missing: hide entirely
+    .catch(err => {
+      // Hide rather than show a broken bar, but say why in the console.
+      console.warn("[AQcredix news] Could not load /api/news —", err);
+      bar.remove();
+    });
 })();
