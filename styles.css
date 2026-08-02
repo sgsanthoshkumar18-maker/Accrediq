@@ -12,7 +12,7 @@
   --bg-deep-2:#161B45;
   --fg:#10122A;
   --fg-muted:#4B4F6E;
-  --fg-faint:#8A8DAA;
+  --fg-faint:#6B6E8F;   /* darkened from #8A8DAA: the old value was 3.25:1 on white, below WCAG AA */
   --border:#E3E5F1;
   --border-soft:#ECEDF6;
 
@@ -659,4 +659,22 @@ a:focus-visible,button:focus-visible,input:focus-visible,select:focus-visible,te
 @media (prefers-reduced-motion: reduce){
   *,*::before,*::after{animation-duration:.001ms !important;animation-iteration-count:1 !important;
     transition-duration:.001ms !important;scroll-behavior:auto !important;}
+}
+
+/* ---------- Button-based cards must set their own colour ----------
+   <button> does not inherit colour from body — browsers reset it to their
+   own default (near-black). On a dark background that renders the text
+   invisible. Every interactive card built as a button is fixed here. */
+.ch-card, .dept-tile, .dt-card, .cm-card, .tl-card, .qg-metric-card, .sv-opt, .opt,
+.hg-metric-card, .kn-hit, .gx-node-hit {
+  color: var(--fg);
+  font-family: var(--font-body);
+}
+/* Their inner text elements, so headings and figures stay legible too. */
+.ch-card h4, .dept-tile h4, .dt-card h4, .cm-card h4, .tl-card h4,
+.ch-card .cc-count, .dept-tile .dt-count, .cm-card p, .tl-card p {
+  color: var(--fg);
+}
+.ch-card .cc-sub, .dt-card .dt-count, .cm-card .cm-meta, .tl-card .cat {
+  color: var(--fg-faint);
 }

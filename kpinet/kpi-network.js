@@ -117,7 +117,7 @@
   }
 
   // ---- interaction: cursor drives expansion + parallax tilt ----
-  let expand = 1, targetExpand = 1, tiltX = 0, tiltY = 0, tX = 0, tY = 0, inside = false;
+  let expand = 1, targetExpand = 1, tiltX = 0, tiltY = 0, tX = 0, tY = 0, inside = false, spin = 1;
   wrap.addEventListener("pointerenter", () => { inside = true; targetExpand = 1.18; });
   wrap.addEventListener("pointerleave", () => { inside = false; targetExpand = 1; tX = 0; tY = 0; hideTip(); });
   wrap.addEventListener("pointermove", e => {
@@ -212,7 +212,11 @@
     tiltX += (tX - tiltX) * 0.06;
     tiltY += (tY - tiltY) * 0.06;
 
-    if (!reduce) rig.rotation.y += 0.0016;
+    // Rotation eases to a stop while the cursor is over the network, so nodes
+    // hold still long enough to read, then eases back up on leave.
+    const spinTarget = (reduce || inside) ? 0 : 1;
+    spin += (spinTarget - spin) * 0.08;
+    rig.rotation.y += 0.0016 * spin;
     rig.rotation.x = tiltX;
     rig.rotation.z = tiltY * 0.12;
 
