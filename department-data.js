@@ -638,4 +638,54 @@ window.DEPT_DATA = [
       ]}
   ]
 },
+
+{
+  id:"security", name:"Security", icon:"shieldlock",
+  keywords:[/security/i,/safe and secure/i,/workplace violence/i,/abduction/i,/\babuse\b/i,/vulnerable patient/i,
+            /extra security/i,/identification of patients/i,/restrict/i,/visitor/i,/facility inspection/i,
+            /differently-abled/i,/patient safety devices/i],
+  chapters:["FMS","HRM","COP","PRE"],
+  intro:"The department nobody notices until something goes wrong — and the one an assessor tests by asking a guard, not a manager, what they would actually do.",
+  sections:[
+    { h:"Operational essentials",
+      items:[
+        "Operational planning identifies which areas need extra security — newborn nursery, ICU, pharmacy narcotic store, records room, cash points — and states what that extra security actually consists of (FMS.3.a, SOP required).",
+        "Measures in place to prevent and handle workplace violence against staff, including a defined response and post-incident support (HRM.9.d, Core, SOP required).",
+        "Infant and child abduction prevention: controlled maternity/paediatric access, matching mother-baby identification, and a rehearsed Code Pink response (COP.11.f, SOP required).",
+        "Vulnerable patients — unaccompanied elderly, disoriented, sedated, paediatric, or those with disability — identified and actively protected (COP.16.a, Core, SOP required).",
+        "Visitor control: identification, defined visiting hours, restricted-area access, and a record of who is in the building after hours.",
+        "Access control to restricted areas — narcotics, blood bank, medical records, server room, mortuary — with entry logged and the authorised list reviewed, not set once.",
+        "CCTV coverage of entry points and high-risk areas, with a defined retention period and controlled access to footage.",
+        "Emergency code response: Security is a named responder for Code Pink, Code Violet, Code Black, Code Silver, Code Red and Code Brown.",
+        "Monthly facility safety inspection rounds, with findings documented and corrective action tracked (FMS.1.c, Core; FMS.1.d).",
+        "Patients' right to protection from neglect or abuse is upheld operationally, not just stated in policy (PRE.2.c).",
+      ]},
+    { h:"Training & competence",
+      items:[
+        "Every guard — including contract staff — trained on the emergency colour codes and able to state their own first action when questioned.",
+        "Trained in handling vulnerable patients, not only in access control (HRM.5.b).",
+        "De-escalation training for aggressive visitors and attendants, before physical intervention.",
+        "Basic fire response (RACE and PASS) and evacuation assistance role.",
+        "Trained on information security and confidentiality, since security staff routinely see patient information (HRM.3.j).",
+      ]},
+    { h:"Licensing & regulatory",
+      items:[
+        "PSARA licence (Private Security Agencies Regulation Act) current for the contracted security agency, with a copy on file.",
+        "Police verification completed and on record for every guard, including replacements — this is the most commonly missed item at audit.",
+        "Contract clearly assigning responsibility for training, uniform, statutory dues and conduct.",
+        "Fire NOC and statutory safety certifications available at the security desk for inspection.",
+      ]},
+    { h:"Checklists to maintain",
+      items:[
+        "Daily Security Shift Handover Register",
+        "Visitor Entry & Exit Log",
+        "Restricted Area Access Log",
+        "Monthly Facility Safety Round Checklist",
+        "CCTV Functionality Check Log",
+        "Workplace Violence Incident Register",
+        "Guard Police Verification & PSARA Tracker",
+        "Emergency Code Drill Participation Record",
+      ]}
+  ]
+},
 ];

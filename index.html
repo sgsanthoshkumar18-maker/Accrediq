@@ -9,12 +9,21 @@
 <link rel="icon" href="data:image/svg+xml,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 26 30'><path d='M13 1 24 5v10c0 7-5 12-11 14C7 27 2 22 2 15V5L13 1Z' fill='%234F46E5'/></svg>">
 <link rel="stylesheet" href="styles.css">
 <link rel="stylesheet" href="face/face.css">
+<link rel="stylesheet" href="news/news.css">
 <link rel="stylesheet" href="hglobe/hglobe.css">
 <script type="application/ld+json">{"@context":"https://schema.org","@type":"EducationalOrganization","name":"AQcredix","alternateName":"AQcredix \u2014 Accreditation & Quality Excellence","url":"https://accrediq.vercel.app/","description":"An independent healthcare quality education and training forum covering NABH accreditation standards, department roles, KPIs, quality tools and mock assessment.","founder":{"@type":"Person","name":"Dr. Santhoshkumar SG","jobTitle":"Infectious Disease Clinical Pharmacologist","honorificSuffix":"ISQua Fellow, CPQIH (Basic) (CAHO)"},"knowsAbout":["NABH accreditation","Healthcare quality improvement","Hospital infection control","Patient safety","Standard operating procedures","Clinical audit"]}</script>
 <script type="application/ld+json">{"@context":"https://schema.org","@type":"WebSite","name":"AQcredix","url":"https://accrediq.vercel.app/","potentialAction":{"@type":"SearchAction","target":"https://accrediq.vercel.app/standards.html?q={search_term_string}","query-input":"required name=search_term_string"}}</script>
 </head>
 <body data-page="home">
 <div id="site-header"></div>
+<div class="aq-news" id="aqNews" aria-label="Health headlines from official sources">
+  <div class="aq-news-inner">
+    <span class="aq-news-label"><span class="dot"></span>Health alerts</span>
+    <div class="aq-news-viewport"><div class="aq-news-track"></div></div>
+    <span class="aq-news-note">Headlines link to official sources · AQcredix does not verify or endorse them</span>
+  </div>
+</div>
+
 
 <!-- HERO -->
 <section class="hero" id="top">
@@ -200,6 +209,7 @@
 <div id="site-footer"></div>
 <script src="app.js"></script>
 <script src="search/search.js"></script>
+<script src="news/news.js"></script>
 <script>
 (function loadThreeThenFace() {
   var sources = [
