@@ -15,6 +15,7 @@
         { key: "committees", href: "tools/committees.html", label: "Committees" },
         { key: "sop", href: "sop.html", label: "SOP Generator" },
         { key: "surveyor", href: "surveyor.html", label: "Mock Surveyor" },
+        { key: "know", href: "know.html", label: "Know Your Hospital" },
       ]
     },
     { key: "videos", href: "videos.html", label: "Videos" },
@@ -23,7 +24,7 @@
   ];
 
   // Keys that count as "inside Tools" for top-level highlighting purposes.
-  const TOOLS_GROUP_KEYS = ["qualitytools", "kpilibrary", "codealerts", "committees", "committeedetail", "sop", "surveyor"];
+  const TOOLS_GROUP_KEYS = ["qualitytools", "kpilibrary", "codealerts", "committees", "committeedetail", "sop", "surveyor", "know"];
 
   const shieldMark = `<svg width="30" height="34" viewBox="0 0 26 30" fill="none" xmlns="http://www.w3.org/2000/svg">
       <path d="M13 1 24 5v10c0 7-5 12-11 14C7 27 2 22 2 15V5L13 1Z" fill="url(#qgrad)"/>
@@ -101,6 +102,7 @@
             <a href="${base}tools/committees.html">Committees</a>
             <a href="${base}sop.html">SOP Generator</a>
             <a href="${base}surveyor.html">Mock Surveyor</a>
+            <a href="${base}know.html">Know Your Hospital</a>
             <a href="${base}tools/code-alerts.html">Code Alerts</a>
             <a href="${base}videos.html">Assessor Videos</a>
             <a href="${base}learn.html">Learn &amp; Test</a>

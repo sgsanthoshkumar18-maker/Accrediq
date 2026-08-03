@@ -1,0 +1,62 @@
+/* AQcredix — Know Your Hospital */
+.kyh-shell{max-width:860px;margin:0 auto;}
+.kyh-form{background:var(--bg-elevated);border:1px solid var(--border);border-radius:var(--r-lg);
+  padding:24px;box-shadow:var(--shadow-1);}
+.kyh-lbl{display:block;font-size:13px;font-weight:700;margin:16px 0 6px;color:var(--fg);}
+.kyh-lbl:first-child{margin-top:0;}
+.kyh-hint{font-size:11.5px;color:var(--fg-faint);line-height:1.55;margin-bottom:8px;}
+.kyh-input,.kyh-select{width:100%;background:var(--bg);color:var(--fg);border:1px solid var(--border);
+  border-radius:10px;padding:12px 14px;font-size:14.5px;font-family:var(--font-body);line-height:1.6;}
+.kyh-input:focus,.kyh-select:focus{outline:none;border-color:var(--brand-2);}
+.kyh-input{resize:vertical;min-height:150px;}
+.kyh-chips{display:flex;flex-wrap:wrap;gap:6px;margin-top:9px;}
+.kyh-chip{font-size:11.5px;background:var(--brand-tint);color:var(--brand-2);border:1px solid transparent;
+  border-radius:999px;padding:6px 12px;cursor:pointer;font-family:var(--font-body);}
+.kyh-chip:hover{border-color:var(--brand-2);}
+.kyh-run{width:100%;justify-content:center;margin-top:18px;}
+.kyh-disclaimer{font-size:11px;color:var(--fg-faint);line-height:1.65;margin-top:12px;}
+
+.kyh-result{display:none;margin-top:26px;}
+.kyh-warn{color:var(--warn);font-size:14px;background:var(--warn-tint);padding:14px 16px;border-radius:10px;}
+
+.kyh-score-card{display:flex;gap:20px;align-items:center;flex-wrap:wrap;
+  background:var(--bg-elevated);border:1px solid var(--border);border-radius:var(--r-lg);
+  padding:22px;box-shadow:var(--shadow-1);}
+.kyh-score{font-family:var(--font-display);font-size:52px;font-weight:700;line-height:1;}
+.kyh-score span{font-size:22px;}
+.kyh-score.ok{color:var(--ok);} .kyh-score.warn{color:var(--warn);} .kyh-score.bad{color:var(--nc);}
+.kyh-score-card h3{font-size:19px;margin-bottom:4px;}
+.kyh-sub{font-size:12.5px;color:var(--fg-faint);line-height:1.6;}
+.kyh-tally{display:flex;gap:10px;flex-wrap:wrap;margin-top:8px;font-size:11.5px;font-weight:600;}
+.kyh-tally .t-met{color:var(--ok);} .kyh-tally .t-partial{color:var(--warn);} .kyh-tally .t-gap{color:var(--nc);}
+
+.kyh-bar{height:8px;background:var(--border-soft);border-radius:999px;overflow:hidden;margin:14px 0 22px;}
+.kyh-bar-fill{height:100%;border-radius:999px;transition:width .6s ease;}
+.kyh-bar-fill.ok{background:var(--ok);} .kyh-bar-fill.warn{background:var(--warn);} .kyh-bar-fill.bad{background:var(--nc);}
+
+.kyh-block{background:var(--bg-elevated);border:1px solid var(--border);border-radius:var(--r-lg);
+  padding:22px;box-shadow:var(--shadow-1);margin-bottom:16px;}
+.kyh-block h3{font-size:16px;margin-bottom:6px;}
+
+.kyh-gap{border-left:3px solid var(--nc);background:var(--bg);padding:13px 15px;
+  border-radius:0 10px 10px 0;margin-top:12px;}
+.kyh-gap-head{display:flex;gap:7px;align-items:center;flex-wrap:wrap;margin-bottom:6px;}
+.kyh-code{font-family:var(--font-mono);font-size:11.5px;font-weight:700;color:var(--brand-2);
+  background:var(--brand-tint);padding:3px 8px;border-radius:5px;}
+.kyh-cat{font-size:10px;font-weight:700;padding:3px 8px;border-radius:999px;text-transform:uppercase;letter-spacing:.03em;}
+.kyh-cat.c-CORE{background:var(--nc-tint);color:var(--nc);}
+.kyh-cat.c-Commitment{background:var(--warn-tint);color:var(--warn);}
+.kyh-cat.c-Achievement{background:var(--accent-bright-tint);color:var(--accent-bright);}
+.kyh-cat.c-Excellence{background:var(--info-tint);color:var(--info);}
+.kyh-sop{font-size:10px;font-weight:700;background:var(--warn-tint);color:var(--warn);padding:3px 8px;border-radius:999px;}
+.kyh-gap-text{font-size:13.5px;line-height:1.6;color:var(--fg-muted);margin-bottom:8px;}
+.kyh-gap-do{font-size:12.5px;line-height:1.6;color:var(--fg);background:var(--ok-tint);
+  padding:9px 12px;border-radius:8px;}
+
+.kyh-met-list{display:flex;flex-wrap:wrap;gap:5px;margin-top:8px;}
+.kyh-met-chip{font-family:var(--font-mono);font-size:10.5px;font-weight:700;background:var(--ok-tint);
+  color:var(--ok);padding:4px 9px;border-radius:999px;cursor:default;}
+
+.kyh-note{font-size:11.5px;line-height:1.7;color:var(--fg-faint);background:var(--bg);
+  border-left:3px solid var(--border);padding:13px 15px;border-radius:0 10px 10px 0;}
+.kyh-note b{color:var(--fg-muted);}
