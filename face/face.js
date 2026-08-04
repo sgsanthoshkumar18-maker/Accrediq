@@ -264,8 +264,6 @@
   }
   if (ORGANS) { showLabel(ORDER[0]); }
 
-  if (ORGANS) recomputeImpulse(ORDER[0]);
-
   const easeInOut = t => t < 0.5 ? 4 * t * t * t : 1 - Math.pow(-2 * t + 2, 3) / 2;
 
   // ---------- Functional motion + electrical impulse ----------
@@ -311,6 +309,9 @@
   indexFaceFeatures();
 
   let beatPhase = 0, breathPhase = 0, blinkAt = 1.2, blinkT = -1;
+
+  // Safe to call now: every const it depends on is initialised above.
+  if (ORGANS) recomputeImpulse(ORDER[0]);
 
   // ---------- Animate ----------
   const SWAY = THREE.MathUtils.degToRad(16);
