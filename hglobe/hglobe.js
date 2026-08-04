@@ -252,8 +252,11 @@
 
   // ---------- Camera interaction: real OrbitControls when available, manual drag as fallback ----------
   const MIN_D = 1.6, MAX_D = 4.2;
-  const IDLE_RESUME_MS = 2200; // how long the globe sits still before drifting again
-  let lastInteractionAt = -Infinity;
+  // Rotation pauses only while the cursor is actually over the globe, and
+  // resumes the moment it leaves — no idle timer, so it starts spinning on load
+  // and never sits still after the pointer has gone.
+  let cursorOverGlobe = false;
+  let dragging_ = false;
   let controls = null;
   let rotX = 0.15, rotY = -0.3, velX = 0, velY = 0, manualDragging = false;
 
@@ -267,7 +270,7 @@
     controls.maxDistance = MAX_D;
     controls.enablePan = false;
     controls.autoRotate = true;
-    controls.autoRotateSpeed = 0.22;   // gentle, unobtrusive drift
+    controls.autoRotateSpeed = 0.95;   // decent pace: clearly moving, not distracting
     controls.rotateSpeed = 0.5;
   } else {
     // Manual fallback (no OrbitControls loaded) — same drag/zoom feel as before.
@@ -630,13 +633,14 @@
     const tt = now / 1000;
 
     if (controls) {
-      controls.autoRotate = !reduceMotion && (performance.now() - lastInteractionAt > IDLE_RESUME_MS);
+      controls.autoRotate = !reduceMotion && !cursorOverGlobe && !dragging_;
       controls.update();
     } else {
       if (!manualDragging && !reduceMotion) {
         rotY += velX; rotX += velY;
         velX *= 0.94; velY *= 0.94;
-        rotY += 0.0006;
+        // Same rule as the OrbitControls path: spin unless the cursor is on it.
+        if (!cursorOverGlobe) rotY += 0.0075;
       }
       rig.rotation.set(rotX, rotY, 0);
       camera.position.set(0, 0, camDistance);
@@ -660,13 +664,17 @@
     updateHitPositions();
   }
 
-  // Auto-rotate pauses while you're interacting, then resumes once the globe has
-  // been left alone. Tracked on the wrapper so drags, wheel zoom and pinch all count.
-  if (controls) {
-    const markInteraction = () => { lastInteractionAt = performance.now(); };
-    ["pointerdown", "pointermove", "wheel", "touchstart", "touchmove"].forEach(evt => {
-      wrapEl.addEventListener(evt, markInteraction, { passive: true });
-    });
+  // Auto-rotate pauses while the cursor is over the globe. Registered for both
+  // the OrbitControls path and the manual fallback.
+  {
+    // registered regardless of which control path is active
+    wrapEl.addEventListener("pointerenter", () => { cursorOverGlobe = true; });
+    wrapEl.addEventListener("pointerleave", () => { cursorOverGlobe = false; dragging_ = false; });
+    wrapEl.addEventListener("pointerdown", () => { dragging_ = true; });
+    window.addEventListener("pointerup", () => { dragging_ = false; });
+    // Touch devices have no hover, so a touch pauses and lifting resumes.
+    wrapEl.addEventListener("touchstart", () => { cursorOverGlobe = true; }, { passive: true });
+    wrapEl.addEventListener("touchend", () => { cursorOverGlobe = false; });
   }
 
   requestAnimationFrame(() => {
