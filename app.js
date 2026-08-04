@@ -15,7 +15,7 @@
         { key: "committees", href: "tools/committees.html", label: "Committees" },
         { key: "sop", href: "sop.html", label: "SOP Generator" },
         { key: "surveyor", href: "surveyor.html", label: "Mock Surveyor" },
-        { key: "know", href: "know.html", label: "Know Your Hospital" },
+        { key: "know", href: "know.html", label: "Gap Analysis" },
       ]
     },
     { key: "videos", href: "videos.html", label: "Videos" },
@@ -102,7 +102,7 @@
             <a href="${base}tools/committees.html">Committees</a>
             <a href="${base}sop.html">SOP Generator</a>
             <a href="${base}surveyor.html">Mock Surveyor</a>
-            <a href="${base}know.html">Know Your Hospital</a>
+            <a href="${base}know.html">Gap Analysis</a>
             <a href="${base}tools/code-alerts.html">Code Alerts</a>
             <a href="${base}videos.html">Assessor Videos</a>
             <a href="${base}learn.html">Learn &amp; Test</a>

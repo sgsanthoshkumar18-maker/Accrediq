@@ -143,5 +143,55 @@ window.KnowEngine = (function () {
     };
   }
 
-  return { analyseStandard, OBLIGATIONS, EXAMPLES };
+  /** Freeform mode: find which elements across all 639 the description maps to. */
+  function analyseFreeform(userText, limit) {
+    const NABH = window.NABH_DATA.chapters;
+    const uText = " " + String(userText).toLowerCase() + " ";
+    const uTerms = subjectTerms(userText);
+    const hits = [];
+
+    Object.entries(NABH).forEach(([code, ch]) => {
+      ch.standards.forEach(std => std.elements.forEach(el => {
+        const subj = subjectTerms(el.text + " " + std.text);
+        if (!subj.length) return;
+        let n = 0;
+        subj.forEach(t => {
+          if (uTerms.some(u => u === t ||
+              (u.length > 5 && t.startsWith(u.slice(0, 5))) ||
+              (t.length > 5 && u.startsWith(t.slice(0, 5))))) n++;
+        });
+        const subjCover = n / subj.length;
+        if (subjCover < 0.18 || n < 2) return;   // must genuinely overlap, not by one stray word
+
+        const obs = obligationsFor(el, std.text).map(o => ({ ...o, met: o.evidence.test(uText) }));
+        const obsScore = obs.filter(o => o.met).length / obs.length;
+        const match = Math.round((subjCover * 0.55 + obsScore * 0.45) * 100);
+
+        hits.push({
+          chapter: code, standardCode: std.code, standardText: std.text,
+          code: `${std.code}.${el.letter}`, text: el.text,
+          category: el.category, sop: !!el.sop,
+          subjCover, obsScore, match, obligations: obs,
+          missing: obs.filter(o => !o.met),
+          status: (obsScore >= 0.6 && subjCover >= 0.25) ? "addressed"
+                : (subjCover >= 0.18) ? "partial" : "weak"
+        });
+      }));
+    });
+
+    hits.sort((a, b) => b.match - a.match || (b.category === "CORE") - (a.category === "CORE"));
+    const top = hits.slice(0, limit || 15);
+
+    // Which chapters does this practice actually belong to?
+    const byChapter = {};
+    top.forEach(h => { byChapter[h.chapter] = (byChapter[h.chapter] || 0) + 1; });
+
+    return {
+      total: hits.length, results: top, byChapter,
+      addressed: top.filter(r => r.status === "addressed"),
+      partial: top.filter(r => r.status === "partial")
+    };
+  }
+
+  return { analyseStandard, analyseFreeform, OBLIGATIONS, EXAMPLES };
 })();

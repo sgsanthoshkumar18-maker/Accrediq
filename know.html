@@ -4,8 +4,8 @@
 <script>(function(){try{var p=new URLSearchParams(location.search);if(p.has("dark")){var v=p.get("dark");if(v==="0"){localStorage.setItem("aq-theme","light");}else{localStorage.setItem("aq-theme","dark");}}if(localStorage.getItem("aq-theme")==="dark"){document.documentElement.setAttribute("data-theme","dark");}if(p.has("neon")){localStorage.setItem("aq-palette",p.get("neon")==="0"?"default":"neon");}if(localStorage.getItem("aq-palette")==="neon"){document.documentElement.setAttribute("data-palette","neon");}}catch(e){}})();</script>
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width, initial-scale=1">
-<title>Know Your Hospital — NABH gap analysis | AQcredix</title>
-<meta name="description" content="Describe your current practice and see how closely it aligns with the NABH 6th Edition Objective Elements, with a percentage and a list of what to address.">
+<title>Gap Analysis — compare your practice with NABH | AQcredix</title>
+<meta name="description" content="Compare your hospital practice against real NABH 6th Edition Objective Elements. Pick a standard, or describe what you do and see which elements it maps to.">
 <link rel="icon" href="data:image/svg+xml,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 26 30'><path d='M13 1 24 5v10c0 7-5 12-11 14C7 27 2 22 2 15V5L13 1Z' fill='%234F46E5'/></svg>">
 <link rel="stylesheet" href="styles.css">
 <link rel="stylesheet" href="know/know.css">
@@ -16,39 +16,16 @@
 
 <section class="page-head">
   <div class="wrap">
-    <nav class="breadcrumb"><a href="index.html">Home</a><span class="sep">/</span><span class="cur">Know Your Hospital</span></nav>
+    <nav class="breadcrumb"><a href="index.html">Home</a><span class="sep">/</span><span class="cur">Gap Analysis</span></nav>
     <span class="eyebrow">Where do you actually stand?</span>
-    <h1>Know Your Hospital.</h1>
-    <p class="lead">Describe what your hospital or department currently does, in your own words. Pick a chapter, then the specific standard you are checking. AQcredix works through that standard element by element, tells you what each one is really asking for, gives a plain everyday example, and shows exactly what to add to close the gap.</p>
+    <h1>Gap Analysis.</h1>
+    <p class="lead">Compare what your hospital actually does against the real NABH 6th Edition Objective Elements. Either pick the standard you are checking, or simply describe your practice and let AQcredix work out which chapter, standard and elements it falls under.</p>
   </div>
 </section>
 
 <section class="section wrap">
   <div class="kyh-shell">
-    <div class="kyh-form">
-      <label class="kyh-lbl" for="kyhChapter">1 · Which chapter?</label>
-      <select id="kyhChapter" class="kyh-select"></select>
-
-      <label class="kyh-lbl" for="kyhStandard">2 · Which standard within it?</label>
-      <p class="kyh-hint">Working one standard at a time gives genuinely specific feedback, element by element.</p>
-      <select id="kyhStandard" class="kyh-select" disabled><option value="">— Select a chapter first —</option></select>
-      <div id="kyhStdText"></div>
-
-      <label class="kyh-lbl" for="kyhInput">3 · What does your hospital currently do for this standard?</label>
-      <p class="kyh-hint">Write in full sentences, as if explaining to a colleague. The more you describe, the more accurate the comparison — a few lines will under-report your alignment.</p>
-      <textarea id="kyhInput" class="kyh-input" rows="8" placeholder="e.g. We have hand rub dispensers at every bedside and housekeeping refills them twice a day. Our infection control nurse audits hand hygiene compliance monthly and reports it to the infection control committee. All new staff are trained on the five moments during induction…"></textarea>
-
-      <div class="kyh-chips">
-        <button type="button" class="kyh-chip" data-text="We have alcohol hand rub dispensers at every bedside and near the nursing station. Housekeeping refills them twice daily and records it. The infection control nurse conducts hand hygiene compliance audits every month and presents the results to the infection control committee. New staff are trained on the WHO five moments during induction and retrained annually. We track healthcare associated infection rates and report them quarterly.">Example: infection control</button>
-        <button type="button" class="kyh-chip" data-text="Our pharmacy maintains a hospital formulary that is reviewed once a year by the pharmacy and therapeutics committee. High alert medications are stored separately with red labels. Look alike sound alike drugs are kept apart. We record fridge temperatures twice a day for vaccines. Medication errors are reported on a form and discussed in the committee. A registered pharmacist is on duty during all dispensing hours.">Example: pharmacy</button>
-      </div>
-
-      <button type="button" class="btn btn-primary kyh-run" id="kyhRun">Compare with this standard</button>
-
-      <p class="kyh-disclaimer"><b>What this is.</b> A structured self-check that compares the topics you mention against what each Objective Element covers. It is a learning and preparation aid — not an assessment, not an audit result, and not a substitute for reading the official standard or for a real gap analysis by a qualified assessor.</p>
-    </div>
-
-    <div class="kyh-result" id="kyhResult"></div>
+    <div id="gaStage"></div>
   </div>
 </section>
 
