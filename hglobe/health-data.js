@@ -1,32 +1,36 @@
-/* AQcredix — Live health data loader
- * ---------------------------------------------------------------
- * Tier 1  World Bank Indicators API  — free, no key, CORS-enabled, called directly.
- * Tier 2  WHO Global Health Observatory — free, no key, but NOT CORS-enabled, so it
- *         goes through our own /api/who serverless proxy (see api/who.js).
- * Tier 3  OpenStreetMap via Overpass — free, no key. Gives hospital NAMES and
- *         LOCATIONS only. OSM has no ratings, and bed counts are present on only a
- *         small minority of entries, so those fields render only when actually tagged.
+/* AQcredix — health data loader, WHO Global Health Observatory first.
+ * -------------------------------------------------------------------
+ * PRIMARY SOURCE: WHO GHO OData API (https://ghoapi.azureedge.net/api),
+ * reached through our own /api/who serverless proxy because WHO sends no
+ * CORS headers. Free, no key, authoritative.
  *
- * Every value returned carries its own source + year so the UI can cite it.
- * Nothing here estimates, interpolates or invents a figure: if an API has no
- * value, the field stays null and the UI shows "No data".
- * --------------------------------------------------------------- */
+ * Indicator LABELS are not hardcoded — they are fetched from WHO's own
+ * /Indicator catalogue, so what the panel says an indicator means is what
+ * WHO says it means.
+ *
+ * Also available: OpenStreetMap hospitals (names and locations only; OSM has
+ * no ratings, and bed counts appear only where contributors tagged them).
+ *
+ * Nothing here estimates or interpolates. If WHO has no value for a country,
+ * the field stays null and the UI shows "No data".
+ */
 window.HealthData = (function () {
 
-  // ---- World Bank indicator codes (all from the WDI database) ----
-  const WB_INDICATORS = {
-    lifeExpectancy:  { code: "SP.DYN.LE00.IN",    label: "Life expectancy at birth", unit: "years",        decimals: 1 },
-    infantMortality: { code: "SP.DYN.IMRT.IN",    label: "Infant mortality rate",    unit: "per 1,000 live births", decimals: 1 },
-    physicians:      { code: "SH.MED.PHYS.ZS",    label: "Physicians",               unit: "per 1,000 people",      decimals: 2 },
-    hospitalBeds:    { code: "SH.MED.BEDS.ZS",    label: "Hospital beds",            unit: "per 1,000 people",      decimals: 2 },
-    healthSpendGdp:  { code: "SH.XPD.CHEX.GD.ZS", label: "Health expenditure",       unit: "% of GDP",              decimals: 2 },
-    healthSpendPc:   { code: "SH.XPD.CHEX.PC.CD", label: "Health expenditure",       unit: "US$ per capita",        decimals: 0 },
-    oopSpend:        { code: "SH.XPD.OOPC.CH.ZS", label: "Out-of-pocket spending",   unit: "% of health spending",  decimals: 1 },
-    population:      { code: "SP.POP.TOTL",       label: "Population",               unit: "",                      decimals: 0 }
-  };
+  // Indicators shown on the capital panel, in display order.
+  const WHO_INDICATORS = [
+    { code: "WHOSIS_000001",      fallback: "Life expectancy at birth",        unit: "years",  decimals: 1 },
+    { code: "WHOSIS_000002",      fallback: "Healthy life expectancy (HALE)",  unit: "years",  decimals: 1 },
+    { code: "MDG_0000000001",     fallback: "Infant mortality rate",           unit: "per 1,000 live births", decimals: 1 },
+    { code: "MDG_0000000007",     fallback: "Under-five mortality rate",       unit: "per 1,000 live births", decimals: 1 },
+    { code: "MDG_0000000025",     fallback: "Maternal mortality ratio",        unit: "per 100,000 live births", decimals: 0 },
+    { code: "UHC_INDEX_REPORTED", fallback: "UHC service coverage index",      unit: "index",  decimals: 0 },
+    { code: "WHS4_100",           fallback: "WHO indicator WHS4_100",          unit: "",       decimals: 1 },
+    { code: "NCD_BMI_30C",        fallback: "Obesity prevalence",              unit: "%",      decimals: 1 },
+    { code: "SDGPM25",            fallback: "Ambient PM2.5 air pollution",     unit: "µg/m³",  decimals: 1 }
+  ];
 
-  const WB_BASE = "https://api.worldbank.org/v2";
   const cache = new Map();
+  let namesPromise = null;
 
   function cached(key, producer) {
     if (cache.has(key)) return cache.get(key);
@@ -35,128 +39,103 @@ window.HealthData = (function () {
     return p;
   }
 
-  /** Most recent non-empty value for every indicator, for one country. */
+  /** WHO's own indicator names, so labels are authoritative rather than assumed. */
+  function indicatorNames() {
+    if (namesPromise) return namesPromise;
+    namesPromise = fetch("/api/who?mode=meta")
+      .then(r => (r.ok ? r.json() : Promise.reject()))
+      .then(j => j.names || {})
+      .catch(() => ({}));           // fall back to our own labels if unreachable
+    return namesPromise;
+  }
+
+  /** Newest value for one WHO indicator, for one country. */
+  function whoValue(iso3, code) {
+    return cached(`who:${iso3}:${code}`, async () => {
+      const r = await fetch(`/api/who?indicator=${encodeURIComponent(code)}&country=${encodeURIComponent(iso3)}`);
+      if (!r.ok) return null;
+      const j = await r.json();
+      const rows = (j && j.value) || [];
+      if (!rows.length) return null;
+      // Prefer rows with no sex/age disaggregation, so we get the headline figure
+      // rather than a single subgroup. Fall back to any row if none are plain.
+      const plain = rows.filter(x => !x.Dim1 || x.Dim1 === "SEX_BTSX" || x.Dim1 === "BTSX");
+      const pool = plain.length ? plain : rows;
+      const newest = pool.reduce((a, b) => (Number(b.TimeDim || 0) > Number(a.TimeDim || 0) ? b : a));
+      const v = newest.NumericValue != null ? Number(newest.NumericValue) : null;
+      if (v == null || isNaN(v)) return null;
+      return { value: v, year: newest.TimeDim, source: "WHO Global Health Observatory" };
+    });
+  }
+
+  /** All panel indicators for one country, with WHO's own labels. */
   function fetchIndicators(iso3) {
-    return cached("wb:" + iso3, async () => {
-      const codes = Object.values(WB_INDICATORS).map(i => i.code).join(";");
-      // mrnev=1 -> most recent NON-EMPTY value, which avoids returning a run of nulls
-      const url = `${WB_BASE}/country/${iso3}/indicator/${codes}?format=json&mrnev=1&per_page=200&source=2`;
-      const res = await fetch(url);
-      if (!res.ok) throw new Error("World Bank request failed: " + res.status);
-      const json = await res.json();
-      const rows = Array.isArray(json) && Array.isArray(json[1]) ? json[1] : [];
-
-      const byCode = {};
-      rows.forEach(r => {
-        if (!r || r.value == null || !r.indicator) return;
-        const code = r.indicator.id;
-        // keep the newest year if several come back
-        if (!byCode[code] || Number(r.date) > Number(byCode[code].date)) byCode[code] = r;
-      });
-
-      const out = {};
-      Object.entries(WB_INDICATORS).forEach(([key, meta]) => {
-        const row = byCode[meta.code];
-        out[key] = row ? {
-          value: Number(row.value),
-          year: row.date,
-          label: meta.label,
+    return cached(`whoall:${iso3}`, async () => {
+      const [names, ...vals] = await Promise.all([
+        indicatorNames(),
+        ...WHO_INDICATORS.map(i => whoValue(iso3, i.code).catch(() => null))
+      ]);
+      return WHO_INDICATORS.map((meta, n) => {
+        const got = vals[n];
+        return {
+          code: meta.code,
+          label: names[meta.code] || meta.fallback,
           unit: meta.unit,
           decimals: meta.decimals,
-          source: "World Bank (WDI)"
-        } : null;
-      });
-      return out;
-    });
-  }
-
-  /** Time series for one indicator — powers the trend chart / time slider. */
-  function fetchSeries(iso3, key, from = 2000, to = 2024) {
-    const meta = WB_INDICATORS[key];
-    if (!meta) return Promise.resolve([]);
-    return cached(`wbs:${iso3}:${key}:${from}:${to}`, async () => {
-      const url = `${WB_BASE}/country/${iso3}/indicator/${meta.code}?format=json&date=${from}:${to}&per_page=200&source=2`;
-      const res = await fetch(url);
-      if (!res.ok) throw new Error("World Bank series failed: " + res.status);
-      const json = await res.json();
-      const rows = Array.isArray(json) && Array.isArray(json[1]) ? json[1] : [];
-      return rows
-        .filter(r => r && r.value != null)
-        .map(r => ({ year: Number(r.date), value: Number(r.value) }))
-        .sort((a, b) => a.year - b.year);
-    });
-  }
-
-  /** WHO GHO indicator via our proxy. Returns null (not an error) if unavailable. */
-  function fetchWho(iso3, indicator) {
-    return cached(`who:${iso3}:${indicator}`, async () => {
-      try {
-        const res = await fetch(`/api/who?indicator=${encodeURIComponent(indicator)}&country=${encodeURIComponent(iso3)}`);
-        if (!res.ok) return null;
-        const json = await res.json();
-        const rows = (json && json.value) || [];
-        if (!rows.length) return null;
-        // newest year wins
-        const newest = rows.reduce((a, b) => (Number(b.TimeDim) > Number(a.TimeDim) ? b : a));
-        return {
-          value: Number(newest.NumericValue),
-          year: newest.TimeDim,
+          value: got ? got.value : null,
+          year: got ? got.year : null,
           source: "WHO Global Health Observatory"
         };
-      } catch (e) {
-        return null; // proxy not deployed, offline, etc. — caller shows "No data"
-      }
+      });
     });
   }
 
-  /** Vaccination coverage (DTP3, % of 1-year-olds) — a widely used WHO indicator. */
-  function fetchVaccination(iso3) {
-    return fetchWho(iso3, "WHS4_100");
+  /** Time series for one indicator — powers the trend sparkline. */
+  function fetchSeries(iso3, code, from = 2000, to = 2024) {
+    return cached(`whoseries:${iso3}:${code}`, async () => {
+      const r = await fetch(`/api/who?indicator=${encodeURIComponent(code)}&country=${encodeURIComponent(iso3)}`);
+      if (!r.ok) return [];
+      const j = await r.json();
+      const rows = (j && j.value) || [];
+      const plain = rows.filter(x => !x.Dim1 || x.Dim1 === "SEX_BTSX" || x.Dim1 === "BTSX");
+      const pool = plain.length ? plain : rows;
+      const byYear = {};
+      pool.forEach(x => {
+        const y = Number(x.TimeDim);
+        const v = x.NumericValue != null ? Number(x.NumericValue) : null;
+        if (!y || y < from || y > to || v == null || isNaN(v)) return;
+        byYear[y] = v;
+      });
+      return Object.keys(byYear).map(Number).sort((a, b) => a - b)
+        .map(y => ({ year: y, value: byYear[y] }));
+    });
   }
 
-  /**
-   * Hospitals near a point, from OpenStreetMap via Overpass.
-   * NAMES + LOCATIONS are reliable. `beds` appears only when the OSM entry is
-   * actually tagged with it. OSM has no ratings at all, so none are returned.
-   */
+  /** Hospitals near a point from OpenStreetMap — names and locations only. */
   function fetchHospitals(lat, lon, radiusMeters = 25000, limit = 8) {
-    return cached(`osm:${lat}:${lon}:${radiusMeters}`, async () => {
-      const query = `
-        [out:json][timeout:20];
-        (
-          node["amenity"="hospital"](around:${radiusMeters},${lat},${lon});
-          way["amenity"="hospital"](around:${radiusMeters},${lat},${lon});
-        );
-        out center ${limit};`;
-      const res = await fetch("https://overpass-api.de/api/interpreter", {
-        method: "POST",
-        body: "data=" + encodeURIComponent(query),
+    return cached(`osm:${lat}:${lon}`, async () => {
+      const query = `[out:json][timeout:20];(node["amenity"="hospital"](around:${radiusMeters},${lat},${lon});way["amenity"="hospital"](around:${radiusMeters},${lat},${lon}););out center ${limit};`;
+      const r = await fetch("https://overpass-api.de/api/interpreter", {
+        method: "POST", body: "data=" + encodeURIComponent(query),
         headers: { "Content-Type": "application/x-www-form-urlencoded" }
       });
-      if (!res.ok) throw new Error("Overpass request failed: " + res.status);
-      const json = await res.json();
-      return (json.elements || [])
-        .filter(el => el.tags && el.tags.name)
-        .slice(0, limit)
-        .map(el => ({
-          name: el.tags.name,
-          beds: el.tags["beds"] ? Number(el.tags["beds"]) : null,
-          operator: el.tags["operator"] || null,
-          // OSM's operator:type distinguishes public/private where tagged
-          type: el.tags["operator:type"] || el.tags["healthcare"] || null,
-          source: "OpenStreetMap contributors (ODbL)"
-        }));
+      if (!r.ok) throw new Error("Overpass " + r.status);
+      const j = await r.json();
+      return (j.elements || []).filter(el => el.tags && el.tags.name).slice(0, limit).map(el => ({
+        name: el.tags.name,
+        beds: el.tags.beds ? Number(el.tags.beds) : null,
+        operator: el.tags.operator || null,
+        type: el.tags["operator:type"] || el.tags.healthcare || null,
+        source: "OpenStreetMap contributors (ODbL)"
+      }));
     });
   }
 
-  /** Format an indicator object for display, with its unit. */
   function format(ind) {
     if (!ind || ind.value == null || isNaN(ind.value)) return null;
-    const v = ind.decimals === 0
-      ? Math.round(ind.value).toLocaleString()
-      : ind.value.toFixed(ind.decimals);
+    const v = ind.decimals === 0 ? Math.round(ind.value).toLocaleString() : ind.value.toFixed(ind.decimals);
     return ind.unit ? `${v} ${ind.unit}` : v;
   }
 
-  return { WB_INDICATORS, fetchIndicators, fetchSeries, fetchWho, fetchVaccination, fetchHospitals, format };
+  return { WHO_INDICATORS, fetchIndicators, fetchSeries, fetchHospitals, format, indicatorNames };
 })();
