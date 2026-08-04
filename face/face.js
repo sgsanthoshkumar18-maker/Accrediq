@@ -80,7 +80,9 @@
   // All organs share one particle set; only their TARGET positions change, so
   // particles physically travel between shapes rather than vanishing.
   const N_POINTS = 850;
-  const ORGANS = window.OrganShapes ? window.OrganShapes.buildAll(N_POINTS, 1.55) : null;
+  const _built = window.OrganShapes ? window.OrganShapes.buildAll(N_POINTS, 1.55) : null;
+  const ORGANS = _built ? _built.shapes : null;
+  const META = _built ? _built.meta : {};
   const ORDER = window.OrganShapes ? window.OrganShapes.ORDER : ["face"];
   const LABELS = window.OrganShapes ? window.OrganShapes.LABELS : { face: "Face" };
 
@@ -96,7 +98,7 @@
     }
   }
 
-  const COLORS = [0x5eead4, 0x818cf8, 0x38bdf8, 0xa78bfa, 0xf472b6];
+  const COLORS = [0x5eead4, 0x38bdf8, 0x818cf8, 0xa78bfa, 0xf472b6, 0x34d399, 0x60a5fa, 0xc084fc];
   function glowTexture(hex) {
     const c = document.createElement("canvas"); c.width = c.height = 32;
     const ctx = c.getContext("2d");
@@ -260,9 +262,55 @@
     void labelEl.offsetWidth;
     labelEl.classList.add("show");
   }
-  if (ORGANS) showLabel(ORDER[0]);
+  if (ORGANS) { showLabel(ORDER[0]); }
+
+  if (ORGANS) recomputeImpulse(ORDER[0]);
 
   const easeInOut = t => t < 0.5 ? 4 * t * t * t : 1 - Math.pow(-2 * t + 2, 3) / 2;
+
+  // ---------- Functional motion + electrical impulse ----------
+  // Each organ does something real while it is held: the brain fires an impulse
+  // outward from the frontal pole, the heart beats, the lungs breathe, the face
+  // blinks and smiles. Everything else carries a travelling impulse wave.
+  //
+  // Timing note: the impulse is tuned to complete its sweep inside the 3s hold,
+  // so a shape never changes mid-function.
+  const impulseTex = glowTexture("#ffffff");
+  let impulseT = 0;                 // 0..1 sweep across the organ
+  let currentMotion = "impulse";
+  let pulseOrigin = new THREE.Vector3(0, 1.2, 0);
+
+  // Distance of each particle from the impulse origin, recomputed per organ so
+  // the wave travels through the shape rather than across the screen.
+  const impulseDist = new Float32Array(points.length);
+  let maxImpulseDist = 1;
+  function recomputeImpulse(name) {
+    const m = META[name] || {};
+    currentMotion = m.motion || "impulse";
+    const o = m.pulseFrom || [0, 1.2, 0];
+    pulseOrigin.set(o[0], o[1], o[2]).multiplyScalar(1.0);
+    maxImpulseDist = 0.0001;
+    for (let i = 0; i < points.length; i++) {
+      const d = to[i].distanceTo(pulseOrigin);
+      impulseDist[i] = d;
+      if (d > maxImpulseDist) maxImpulseDist = d;
+    }
+    impulseT = 0;
+  }
+
+  // Face features, used for the blink and smile.
+  const faceEyes = new Set(), faceMouth = new Set();
+  function indexFaceFeatures() {
+    faceEyes.clear(); faceMouth.clear();
+    if (!ORGANS) return;
+    ORGANS.face.forEach(([x, y, z], i) => {
+      if (z > 0.35 && y > 0.05 && y < 0.42 && Math.abs(x) > 0.18 && Math.abs(x) < 0.62) faceEyes.add(i);
+      if (z > 0.30 && y > -0.62 && y < -0.30 && Math.abs(x) < 0.46) faceMouth.add(i);
+    });
+  }
+  indexFaceFeatures();
+
+  let beatPhase = 0, breathPhase = 0, blinkAt = 1.2, blinkT = -1;
 
   // ---------- Animate ----------
   const SWAY = THREE.MathUtils.degToRad(16);
@@ -283,6 +331,7 @@
         nextIdx = (nextIdx + 1) % ORDER.length;
         setTargets(ORDER[organIdx], ORDER[nextIdx]);
         showLabel(ORDER[organIdx]);
+        recomputeImpulse(ORDER[organIdx]);
         morphT = 0;
         lastSwitch = now;
       }
@@ -298,14 +347,59 @@
       rig.scale.setScalar(1 + Math.sin(tt * 0.35) * 0.02);
     }
 
+    // --- functional motion, only once the shape has settled ---
+    const settled = morphT >= 1 ? 1 : 0;
+    if (!reduceMotion && settled) {
+      impulseT = Math.min(1.35, impulseT + dt * 0.85);   // completes well inside the 3s hold
+      beatPhase += dt * 5.6;                              // ~2.7 beats during the 3s hold
+      breathPhase += dt * 2.1;                            // ~1 full breath in / out
+      if (currentMotion === "face") {
+        if (blinkT < 0 && tt > blinkAt) blinkT = 0;
+        if (blinkT >= 0) { blinkT += dt; if (blinkT > 0.22) { blinkT = -1; blinkAt = tt + 1.6 + Math.random() * 2; } }
+      }
+    } else { impulseT = 0; }
+
+    // heartbeat: sharp contraction then elastic recoil
+    const beat = currentMotion === "heart" && settled
+      ? 1 - Math.max(0, Math.sin(beatPhase)) ** 8 * 0.13 : 1;
+    // breathing: slow sinusoidal expansion
+    const breath = currentMotion === "lungs" && settled
+      ? 1 + Math.sin(breathPhase) * 0.085 : 1;
+
     particles.forEach((p, i) => {
       // where this particle should be, mid-morph
-      const tx = from[i].x + (to[i].x - from[i].x) * k;
-      const ty = from[i].y + (to[i].y - from[i].y) * k;
-      const tz = from[i].z + (to[i].z - from[i].z) * k;
+      let tx = from[i].x + (to[i].x - from[i].x) * k;
+      let ty = from[i].y + (to[i].y - from[i].y) * k;
+      let tz = from[i].z + (to[i].z - from[i].z) * k;
+
+      if (settled && !reduceMotion) {
+        if (currentMotion === "heart") { tx *= beat; ty *= beat; tz *= beat; }
+        else if (currentMotion === "lungs") {
+          // expand outward from the midline, as a chest actually does
+          tx *= breath; tz *= breath; ty *= 1 + (breath - 1) * 0.35;
+        }
+        else if (currentMotion === "face") {
+          if (blinkT >= 0 && faceEyes.size) {
+            const close = blinkT < 0.11 ? blinkT / 0.11 : (0.22 - blinkT) / 0.11;
+            if (faceEyes.has(i)) ty += (0.22 - ty) * close * 0.85;
+          }
+          if (faceMouth.has(i)) {
+            const smile = (Math.sin(tt * 0.5) * 0.5 + 0.5) * 0.5 + 0.2;
+            ty += Math.abs(tx) * Math.abs(tx) * 0.55 * smile;
+          }
+        }
+      }
       p.basePos.set(tx, ty, tz);
 
-      let target = p.basePos, scaleMul = 1;
+      // impulse wave: a bright band sweeping outward from the origin
+      let impulse = 0;
+      if (settled && !reduceMotion) {
+        const front = impulseT * maxImpulseDist * 1.15;
+        const band = Math.abs(impulseDist[i] - front);
+        if (band < 0.28) impulse = 1 - band / 0.28;
+      }
+
+      let target = p.basePos, scaleMul = 1 + impulse * 1.4;
       if (cursor3D && !reduceMotion) {
         const world = p.basePos.clone().applyMatrix4(rig.matrixWorld);
         const d = world.distanceTo(new THREE.Vector3(cursor3D.x, cursor3D.y, world.z));
@@ -318,6 +412,7 @@
       p.mesh.position.lerp(target, morphT < 1 ? 0.35 : 0.15);
       const pulse = reduceMotion ? 1 : 1 + Math.sin(tt * 1.2 + p.phase) * 0.15;
       p.mesh.scale.setScalar(p.baseScale * pulse * scaleMul);
+      p.mesh.material.opacity = Math.min(1, 0.75 + impulse * 0.85);
     });
 
     if (!reduceMotion) {
