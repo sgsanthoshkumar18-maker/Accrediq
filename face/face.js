@@ -254,15 +254,8 @@
   }
   if (ORGANS) setTargets(ORDER[0], ORDER[1 % ORDER.length]);
 
-  const labelEl = document.getElementById("organLabel");
-  function showLabel(name) {
-    if (!labelEl) return;
-    labelEl.textContent = LABELS[name] || name;
-    labelEl.classList.remove("show");
-    void labelEl.offsetWidth;
-    labelEl.classList.add("show");
-  }
-  if (ORGANS) { showLabel(ORDER[0]); }
+  // Organ names are deliberately not shown — the shapes read as an evolving
+  // anatomical network rather than a labelled slideshow.
 
   const easeInOut = t => t < 0.5 ? 4 * t * t * t : 1 - Math.pow(-2 * t + 2, 3) / 2;
 
@@ -331,7 +324,6 @@
         organIdx = nextIdx;
         nextIdx = (nextIdx + 1) % ORDER.length;
         setTargets(ORDER[organIdx], ORDER[nextIdx]);
-        showLabel(ORDER[organIdx]);
         recomputeImpulse(ORDER[organIdx]);
         morphT = 0;
         lastSwitch = now;

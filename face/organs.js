@@ -33,20 +33,31 @@ window.OrganShapes = (function () {
 
   const SHAPES = {
 
-    // Front-facing head: cranium, tapering jaw, ears, and recessed features.
+    // Lateral head profile: forehead, brow ridge, nose, lips, chin, jaw, ear.
     face: {
-      box: [1.15, 1.5, 1.0], motion: "face", pulseFrom: [0, 1.2, 0],
+      box: [1.2, 1.5, 0.85], motion: "face", pulseFrom: [-0.2, 1.15, 0],
       inside(p) {
-        let rx;
-        if (p.y > 0.55)      rx = 0.90 - (p.y - 0.55) * 0.82;   // cranium curves in
-        else if (p.y > -0.3) rx = 0.95;                          // temples / cheekbones
-        else                 rx = 0.95 * (1 - (p.y + 0.3) / 1.25) + 0.20; // jaw to chin
-        const head = ell(p, rx, 1.08, 0.80 - Math.abs(p.y) * 0.07, 0, 0.06, 0) < 1;
-        // ears sit on the lateral surface, roughly eye-to-nose height
-        const ear = ell({ x: Math.abs(p.x), y: p.y, z: p.z }, 0.13, 0.26, 0.13, 0.90, 0.06, -0.10) < 1;
-        // neck below
-        const neck = Math.abs(p.x) < 0.36 && p.y < -0.95 && Math.abs(p.z) < 0.34;
-        return head || ear || neck;
+        // cranium mass, slightly back of centre
+        const cranium = ell(p, 0.86, 0.80, 0.62, 0.10, 0.52, 0) < 1;
+        // face mass below, tapering to the chin
+        const faceMass = ell(p, 0.72, 0.62, 0.55, 0.02, -0.22, 0) < 1 && p.y > -0.86;
+        // profile line: brow -> nose bridge -> tip -> philtrum -> lips -> chin
+        const prof = [
+          [-0.52, 0.72], [-0.62, 0.46], [-0.60, 0.28], [-0.72, 0.10],
+          [-0.86, -0.06], [-0.70, -0.14], [-0.66, -0.28], [-0.76, -0.40],
+          [-0.72, -0.52], [-0.58, -0.68], [-0.36, -0.82]
+        ];
+        let onProfile = false;
+        for (let i = 0; i < prof.length - 1 && !onProfile; i++) {
+          if (tube(p, prof[i][0], prof[i][1], prof[i+1][0], prof[i+1][1], 0.11, 0.34)) onProfile = true;
+        }
+        // jawline sweeping back from chin to below the ear
+        const jaw = tube(p, -0.34, -0.84, 0.66, -0.30, 0.12, 0.30);
+        // ear, set back on the side of the head
+        const ear = ell(p, 0.22, 0.28, 0.13, 0.52, 0.02, 0.30) < 1;
+        // neck
+        const neck = p.y < -0.88 && p.x > -0.28 && p.x < 0.62 && Math.abs(p.z) < 0.34;
+        return cranium || faceMass || onProfile || jaw || ear || neck;
       }
     },
 
@@ -71,75 +82,79 @@ window.OrganShapes = (function () {
       }
     },
 
-    // Anatomical heart: ventricular cone, atria, aortic arch and great vessels.
+    // Lateral heart: one compact muscular mass, apex pointing forward and down,
+    // with the aortic arch and great vessels rising from the base.
     heart: {
-      box: [1.1, 1.45, 0.9], motion: "heart", pulseFrom: [0.25, 0.55, 0],
+      box: [1.05, 1.35, 0.85], motion: "heart", pulseFrom: [0.2, 0.75, 0],
       inside(p) {
-        const c = Math.cos(0.28), s = Math.sin(0.28);
+        const c = Math.cos(0.30), s = Math.sin(0.30);
         const q = { x: p.x * c - p.y * s, y: p.x * s + p.y * c, z: p.z };
-        // ventricular mass tapering to an apex
-        const taper = q.y < 0 ? 1 + q.y * 0.55 : 1;
-        const vent = ell(q, 0.82 * Math.max(0.15, taper), 0.85, 0.66 * Math.max(0.2, taper), 0, -0.02, 0) < 1 && q.y > -0.92;
-        const atriaR = ell(q, 0.40, 0.30, 0.40, 0.34, 0.72, 0) < 1;
-        const atriaL = ell(q, 0.34, 0.27, 0.36, -0.32, 0.74, -0.04) < 1;
-        // aortic arch — the loop over the top in the reference
-        const ar = Math.hypot(q.x + 0.02, (q.y - 0.92) * 1.25);
-        const arch = Math.abs(ar - 0.34) < 0.11 && q.y > 0.88 && Math.abs(q.z) < 0.18;
-        const ascend = tube(q, 0.30, 0.72, 0.30, 1.05, 0.13, 0.16);
-        const pulmTrunk = tube(q, -0.16, 0.74, -0.30, 1.18, 0.12, 0.15);
-        const svc = tube(q, 0.52, 0.80, 0.56, 1.30, 0.10, 0.13);
-        return vent || atriaR || atriaL || arch || ascend || pulmTrunk || svc;
+        // single solid ventricular cone — no medial gap, so it cannot read as a pair
+        const t = q.y < 0.35 ? Math.max(0.16, 1 + (q.y - 0.35) * 0.78) : 1;
+        const mass = ((q.x + 0.04) / (0.74 * t)) ** 2 + ((q.y - 0.05) / 0.80) ** 2
+                   + (q.z / (0.60 * t)) ** 2 < 1 && q.y > -0.90;
+        // atrial base sitting on top of the ventricles
+        const base = ell(q, 0.64, 0.30, 0.52, -0.02, 0.74, 0) < 1;
+        // aortic arch looping over the base
+        const ar = Math.hypot(q.x + 0.06, (q.y - 0.98) * 1.3);
+        const arch = Math.abs(ar - 0.30) < 0.10 && q.y > 0.94 && Math.abs(q.z) < 0.17;
+        const ascend = tube(q, 0.22, 0.76, 0.24, 1.04, 0.12, 0.15);
+        const pulm   = tube(q, -0.24, 0.78, -0.36, 1.14, 0.11, 0.14);
+        const svc    = tube(q, 0.44, 0.82, 0.48, 1.24, 0.09, 0.12);
+        return mass || base || arch || ascend || pulm || svc;
       }
     },
 
-    // Two lungs with trachea and a branching bronchial tree.
+    // Lateral lung: a single lung in side profile — narrow apex, broad base,
+    // domed diaphragmatic surface, with the bronchial tree entering at the hilum.
     lungs: {
-      box: [1.45, 1.4, 0.75], motion: "lungs", pulseFrom: [0, 1.25, 0],
+      box: [1.1, 1.4, 0.9], motion: "lungs", pulseFrom: [0.1, 1.25, 0],
       inside(p) {
-        const side = p.x >= 0 ? 1 : -1;
-        const ax = Math.abs(p.x);
-        // lung body: narrower apex, broad base, slight medial flattening
-        const width = 0.30 + 0.24 * Math.max(0, 1 - Math.abs((p.y - 0.05) / 1.0) ** 2);
-        const body = ((ax - 0.62) / width) ** 2 + ((p.y - 0.02) / 0.96) ** 2 + (p.z / 0.44) ** 2 < 1;
-        const medialFlat = ax < 0.24;
-        // cardiac notch on the left lung (viewer's left = negative x)
-        const notch = side < 0 && ell(p, 0.34, 0.44, 0.6, -0.34, -0.22, 0) < 1;
-        const trachea = tube(p, 0, 1.28, 0, 0.52, 0.085, 0.11);
-        const bronchus = tube(p, 0, 0.52, side * 0.55, 0.10, 0.065, 0.09) && ax > 0.02;
-        const branch1 = tube(p, side * 0.5, 0.16, side * 0.78, 0.42, 0.045, 0.07);
-        const branch2 = tube(p, side * 0.5, 0.16, side * 0.80, -0.30, 0.045, 0.07);
-        const branch3 = tube(p, side * 0.55, -0.18, side * 0.72, -0.62, 0.04, 0.06);
-        return (body && !medialFlat && !notch) || trachea || bronchus || branch1 || branch2 || branch3;
+        // taper toward the apex, widen toward the base
+        const w = 0.34 + 0.44 * Math.max(0, 1 - ((p.y - 0.55) / 1.5) ** 2);
+        const body = ((p.x - 0.02) / w) ** 2 + ((p.y + 0.05) / 0.96) ** 2 + (p.z / 0.52) ** 2 < 1;
+        // concave diaphragmatic base
+        const diaphragm = p.y < -0.62 && ell(p, 0.9, 0.42, 0.62, 0.02, -1.22, 0) < 1;
+        // oblique fissure running down and forward
+        const fissure = Math.abs(p.y - 0.10 + p.x * 0.55) < 0.05 && Math.abs(p.x) < 0.72;
+        const trachea = tube(p, 0.16, 1.30, 0.10, 0.62, 0.075, 0.10);
+        const hilum   = tube(p, 0.10, 0.62, -0.10, 0.34, 0.06, 0.09);
+        const br1 = tube(p, -0.10, 0.34, -0.48, 0.52, 0.042, 0.07);
+        const br2 = tube(p, -0.10, 0.34, -0.44, -0.10, 0.042, 0.07);
+        const br3 = tube(p, -0.10, 0.34, -0.20, -0.52, 0.038, 0.06);
+        const br4 = tube(p, -0.44, -0.10, -0.66, -0.34, 0.032, 0.05);
+        return (body && !diaphragm && !fissure) || trachea || hilum || br1 || br2 || br3 || br4;
       }
     },
 
-    // Liver: large right lobe, smaller left, sharp inferior border.
+    // Lateral liver: the characteristic wedge — thick and rounded posteriorly,
+    // tapering to a sharp inferior border anteriorly.
     liver: {
-      box: [1.6, 0.9, 0.95], motion: "impulse", pulseFrom: [-1.1, 0.2, 0],
+      box: [1.5, 1.0, 0.9], motion: "impulse", pulseFrom: [-1.05, 0.1, 0],
       inside(p) {
-        const right = ell(p, 0.94, 0.60, 0.68, 0.40, 0.02, 0) < 1;
-        const left  = ell(p, 0.60, 0.38, 0.48, -0.66, 0.10, 0.04) < 1;
-        const inferior = p.y < 0.40 - Math.max(0, p.x) * 0.30;   // wedge edge
-        const falciform = Math.abs(p.x + 0.10) < 0.028 && p.y > -0.05;
-        return (right || left) && inferior && !falciform;
+        const mass = ell(p, 1.02, 0.62, 0.66, 0.24, 0.06, 0) < 1;
+        // sharp anterior/inferior border: cut away below a sloping plane
+        const wedge = p.y > -0.30 - (p.x + 0.9) * 0.42;
+        // rounded superior (diaphragmatic) surface
+        const dome = p.y < 0.52 + Math.max(0, 0.3 - Math.abs(p.x - 0.2)) * 0.35;
+        // gallbladder tucked under the inferior surface
+        const gall = ell(p, 0.17, 0.24, 0.15, -0.30, -0.44, 0.04) < 1;
+        return (mass && wedge && dome) || gall;
       }
     },
 
-    // Paired kidneys: deep medial hilum, renal vessels, descending ureter.
+    // Lateral kidney: a single bean in side profile, concave hilum facing
+    // forward, renal vessels entering and the ureter descending.
     kidney: {
-      box: [1.4, 1.25, 0.8], motion: "impulse", pulseFrom: [0, 0.9, 0],
+      box: [0.95, 1.35, 0.7], motion: "impulse", pulseFrom: [-0.4, 0.7, 0],
       inside(p) {
-        const side = p.x >= 0 ? 1 : -1;
-        const ax = Math.abs(p.x);
-        const q = { x: ax - 0.66, y: p.y, z: p.z };
-        const body = (q.x / 0.40) ** 2 + (q.y / 0.82) ** 2 + (q.z / 0.32) ** 2 < 1;
-        // hilum: concave bite out of the MEDIAL side (facing the midline)
-        const hilum = ((q.x + 0.30) / 0.34) ** 2 + (q.y / 0.30) ** 2 < 1;
-        // renal artery and vein entering the hilum
-        const vessels = Math.abs(p.y) < 0.12 && ax > 0.16 && ax < 0.52 && Math.abs(p.z) < 0.09;
-        // ureter descending from the hilum
-        const ureter = tube(p, side * 0.34, -0.10, side * 0.30, -1.02, 0.055, 0.075);
-        return (body && !hilum) || vessels || ureter;
+        const body = ((p.x - 0.10) / 0.52) ** 2 + (p.y / 0.98) ** 2 + (p.z / 0.40) ** 2 < 1;
+        // hilum: deep concave bite out of the anterior (left) border
+        const hilum = ((p.x + 0.46) / 0.42) ** 2 + (p.y / 0.34) ** 2 < 1;
+        const artery = tube(p, -0.72, 0.06, -0.16, 0.02, 0.055, 0.08);
+        const vein   = tube(p, -0.74, -0.12, -0.18, -0.10, 0.05, 0.075);
+        const ureter = tube(p, -0.26, -0.16, -0.16, -1.16, 0.05, 0.07);
+        return (body && !hilum) || artery || vein || ureter;
       }
     },
 
