@@ -60,3 +60,33 @@
 .kyh-note{font-size:11.5px;line-height:1.7;color:var(--fg-faint);background:var(--bg);
   border-left:3px solid var(--border);padding:13px 15px;border-radius:0 10px 10px 0;}
 .kyh-note b{color:var(--fg-muted);}
+
+/* ---- Standard preview card ---- */
+.kyh-stdcard{background:var(--bg);border-left:3px solid var(--brand-2);border-radius:0 10px 10px 0;
+  padding:13px 15px;margin-top:10px;}
+.kyh-stdcode{font-family:var(--font-mono);font-size:11.5px;font-weight:700;color:var(--brand-2);margin-bottom:5px;}
+.kyh-stdtext{font-size:13.5px;line-height:1.6;color:var(--fg-muted);}
+.kyh-stdmeta{font-size:11px;color:var(--fg-faint);margin-top:7px;font-family:var(--font-mono);}
+
+/* ---- Element result cards ---- */
+.kyh-el{border-left:3px solid var(--border);background:var(--bg);border-radius:0 10px 10px 0;
+  padding:14px 16px;margin-top:14px;}
+.kyh-el-ok{border-left-color:var(--ok);}
+.kyh-el-warn{border-left-color:var(--warn);}
+.kyh-el-bad{border-left-color:var(--nc);}
+.kyh-el-head{display:flex;gap:7px;align-items:center;flex-wrap:wrap;margin-bottom:8px;}
+.kyh-status{font-size:10px;font-weight:700;padding:3px 9px;border-radius:999px;margin-left:auto;
+  text-transform:uppercase;letter-spacing:.03em;}
+.kyh-status.s-ok{background:var(--ok-tint);color:var(--ok);}
+.kyh-status.s-warn{background:var(--warn-tint);color:var(--warn);}
+.kyh-status.s-bad{background:var(--nc-tint);color:var(--nc);}
+.kyh-el-text{font-size:13.5px;line-height:1.6;color:var(--fg);font-weight:500;margin-bottom:10px;}
+.kyh-el-body{border-top:1px solid var(--border-soft);padding-top:10px;}
+.kyh-el-line,.kyh-el-eg,.kyh-el-do,.kyh-el-also,.kyh-el-good{font-size:12.5px;line-height:1.65;margin-bottom:7px;}
+.kyh-el-line{color:var(--fg-muted);}
+.kyh-el-line b,.kyh-el-do b,.kyh-el-eg b{color:var(--fg);}
+.kyh-el-eg{color:var(--fg-faint);font-style:italic;}
+.kyh-el-do{background:var(--ok-tint);padding:9px 12px;border-radius:8px;color:var(--fg);}
+.kyh-el-also{color:var(--fg-faint);font-size:11.5px;}
+.kyh-el-good{color:var(--ok);}
+@media (max-width:600px){.kyh-status{margin-left:0;}}

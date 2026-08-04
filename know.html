@@ -19,18 +19,22 @@
     <nav class="breadcrumb"><a href="index.html">Home</a><span class="sep">/</span><span class="cur">Know Your Hospital</span></nav>
     <span class="eyebrow">Where do you actually stand?</span>
     <h1>Know Your Hospital.</h1>
-    <p class="lead">Describe what your hospital or department currently does, in your own words. AQcredix compares it against the real NABH 6th Edition Objective Elements and shows you how closely it aligns, what appears covered, and exactly what to address to close the gap.</p>
+    <p class="lead">Describe what your hospital or department currently does, in your own words. Pick a chapter, then the specific standard you are checking. AQcredix works through that standard element by element, tells you what each one is really asking for, gives a plain everyday example, and shows exactly what to add to close the gap.</p>
   </div>
 </section>
 
 <section class="section wrap">
   <div class="kyh-shell">
     <div class="kyh-form">
-      <label class="kyh-lbl" for="kyhArea">1 · Which area are you describing?</label>
-      <p class="kyh-hint">Choosing one chapter gives a sharper, more actionable result than comparing against all ten at once.</p>
-      <select id="kyhArea" class="kyh-select"></select>
+      <label class="kyh-lbl" for="kyhChapter">1 · Which chapter?</label>
+      <select id="kyhChapter" class="kyh-select"></select>
 
-      <label class="kyh-lbl" for="kyhInput">2 · What does your hospital currently do?</label>
+      <label class="kyh-lbl" for="kyhStandard">2 · Which standard within it?</label>
+      <p class="kyh-hint">Working one standard at a time gives genuinely specific feedback, element by element.</p>
+      <select id="kyhStandard" class="kyh-select" disabled><option value="">— Select a chapter first —</option></select>
+      <div id="kyhStdText"></div>
+
+      <label class="kyh-lbl" for="kyhInput">3 · What does your hospital currently do for this standard?</label>
       <p class="kyh-hint">Write in full sentences, as if explaining to a colleague. The more you describe, the more accurate the comparison — a few lines will under-report your alignment.</p>
       <textarea id="kyhInput" class="kyh-input" rows="8" placeholder="e.g. We have hand rub dispensers at every bedside and housekeeping refills them twice a day. Our infection control nurse audits hand hygiene compliance monthly and reports it to the infection control committee. All new staff are trained on the five moments during induction…"></textarea>
 
@@ -39,7 +43,7 @@
         <button type="button" class="kyh-chip" data-text="Our pharmacy maintains a hospital formulary that is reviewed once a year by the pharmacy and therapeutics committee. High alert medications are stored separately with red labels. Look alike sound alike drugs are kept apart. We record fridge temperatures twice a day for vaccines. Medication errors are reported on a form and discussed in the committee. A registered pharmacist is on duty during all dispensing hours.">Example: pharmacy</button>
       </div>
 
-      <button type="button" class="btn btn-primary kyh-run" id="kyhRun">Compare with NABH standards</button>
+      <button type="button" class="btn btn-primary kyh-run" id="kyhRun">Compare with this standard</button>
 
       <p class="kyh-disclaimer"><b>What this is.</b> A structured self-check that compares the topics you mention against what each Objective Element covers. It is a learning and preparation aid — not an assessment, not an audit result, and not a substitute for reading the official standard or for a real gap analysis by a qualified assessor.</p>
     </div>
@@ -53,6 +57,7 @@
 <script src="nabh-data.js"></script>
 <script src="app.js"></script>
 <script src="search/search.js"></script>
+<script src="know/know-engine.js"></script>
 <script src="know/know.js"></script>
 </body>
 </html>
