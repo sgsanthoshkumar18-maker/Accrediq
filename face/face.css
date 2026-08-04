@@ -57,3 +57,14 @@
   .face-stage{min-height:340px;height:auto;}
   .face-wrap{height:auto;aspect-ratio:1/1;}
 }
+
+/* ---- Organ name label, shown as each shape settles ---- */
+.organ-label{
+  position:absolute;left:50%;bottom:14px;transform:translateX(-50%) translateY(6px);
+  font-family:var(--font-mono);font-size:11px;letter-spacing:.14em;text-transform:uppercase;
+  color:var(--accent-bright);background:rgba(8,11,32,.72);backdrop-filter:blur(6px);
+  border:1px solid rgba(94,234,212,.28);border-radius:999px;padding:6px 16px;
+  pointer-events:none;opacity:0;transition:opacity .6s ease, transform .6s ease;white-space:nowrap;
+}
+.organ-label.show{opacity:1;transform:translateX(-50%) translateY(0);}
+@media (prefers-reduced-motion: reduce){.organ-label{transition:none;}}

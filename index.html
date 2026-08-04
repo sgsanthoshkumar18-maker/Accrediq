@@ -51,6 +51,7 @@
           <div class="face-loading" id="faceLoading"><div class="spin"></div>Initializing</div>
           <div id="faceNodeOverlay" style="position:absolute;inset:0;"></div>
           <div class="face-tooltip" id="faceTooltip"></div>
+          <div class="organ-label" id="organLabel"></div>
         </div>
       </div>
     </div>
@@ -258,9 +259,13 @@
   function loadFaceScript() {
     var d = document.createElement("script"); d.src = "nabh-data.js";
     d.onload = function () {
-      var r = document.createElement("script"); r.src = "face/face.js";
-      r.onload = r.onerror = loadWorldGlobe;
-      document.body.appendChild(r);
+      var o = document.createElement("script"); o.src = "face/organs.js";
+      o.onload = o.onerror = function () {
+        var r = document.createElement("script"); r.src = "face/face.js";
+        r.onload = r.onerror = loadWorldGlobe;
+        document.body.appendChild(r);
+      };
+      document.body.appendChild(o);
     };
     document.body.appendChild(d);
   }

@@ -76,98 +76,25 @@
   const rig = new THREE.Group();
   scene.add(rig);
 
-  // ---------- Procedural face-shaped point cloud ----------
-  // Cheap deterministic pseudo-noise (avoids an external noise-library dependency)
-  function hashNoise(x, y, z) {
-    const s = Math.sin(x * 12.9898 + y * 78.233 + z * 37.719) * 43758.5453;
-    return (s - Math.floor(s)) * 2 - 1;
-  }
-  function fractalNoise(x, y, z) {
-    return hashNoise(x, y, z) * 0.6 + hashNoise(x * 2.1, y * 2.1, z * 2.1) * 0.3 + hashNoise(x * 4.3, y * 4.3, z * 4.3) * 0.1;
-  }
+  // ---------- Morphing organ point cloud ----------
+  // All organs share one particle set; only their TARGET positions change, so
+  // particles physically travel between shapes rather than vanishing.
+  const N_POINTS = 850;
+  const ORGANS = window.OrganShapes ? window.OrganShapes.buildAll(N_POINTS, 1.55) : null;
+  const ORDER = window.OrganShapes ? window.OrganShapes.ORDER : ["face"];
+  const LABELS = window.OrganShapes ? window.OrganShapes.LABELS : { face: "Face" };
 
-  // Head silhouette: an egg-taper — wide at the cheekbones, narrowing to the chin below
-  // and rounding at the forehead above. y: +1 = crown, -1 = chin.
-  function headRadiusX(y) {
-    if (y > 0.55) return 0.92 - (y - 0.55) * 0.9;      // forehead curves in toward the crown
-    if (y > -0.35) return 0.98 + (0.55 - Math.abs(y - 0.1)) * 0.06; // cheekbone bulge
-    return 0.98 * (1 - (y + 0.35) / 1.15) + 0.18;        // taper down to the chin
-  }
-  function insideFace(p) {
-    const maxX = headRadiusX(p.y) * 1.0;
-    const maxZ = 0.82 - Math.abs(p.y) * 0.08;
-    const lx = p.x / maxX, lz = p.z / maxZ, ly = (p.y - 0.05) / 1.05;
-    let d = lx * lx + ly * ly + lz * lz;
-    d -= fractalNoise(p.x * 2.8, p.y * 2.8, p.z * 2.8) * 0.09;
-    return d < 1.0;
-  }
-
-  const N_POINTS = 620; // general shell — features below add the recognizable detail
+  // Fallback: if the shape module failed to load, keep a simple sphere so the
+  // hero still renders rather than showing nothing.
   const points = [];
-  let attempts = 0;
-  while (points.length < N_POINTS && attempts < N_POINTS * 40) {
-    attempts++;
-    const p = new THREE.Vector3((Math.random() * 2 - 1) * 1.0, (Math.random() * 2 - 1) * 1.15 + 0.05, (Math.random() * 2 - 1) * 0.85);
-    if (insideFace(p)) {
-      const shellTest = new THREE.Vector3(p.x * 1.07, (p.y - 0.05) * 1.07 + 0.05, p.z * 1.07);
-      if (!insideFace(shellTest) || Math.random() < 0.22) points.push(p);
+  if (ORGANS) {
+    ORGANS[ORDER[0]].forEach(([x, y, z]) => points.push(new THREE.Vector3(x, y, z)));
+  } else {
+    for (let i = 0; i < N_POINTS; i++) {
+      const y = 1 - (i / (N_POINTS - 1)) * 2, r = Math.sqrt(1 - y * y), th = i * 2.399963;
+      points.push(new THREE.Vector3(Math.cos(th) * r, y, Math.sin(th) * r).multiplyScalar(1.55));
     }
   }
-
-  // ---------- Structured facial features — what makes it actually read as a face ----------
-  function arc(cx, cy, cz, rx, ry, startDeg, endDeg, count, jitter) {
-    const pts = [];
-    for (let i = 0; i < count; i++) {
-      const t = i / (count - 1);
-      const a = THREE.MathUtils.degToRad(startDeg + (endDeg - startDeg) * t);
-      pts.push(new THREE.Vector3(
-        cx + Math.cos(a) * rx + (Math.random() - 0.5) * jitter,
-        cy + Math.sin(a) * ry + (Math.random() - 0.5) * jitter,
-        cz + (Math.random() - 0.5) * jitter
-      ));
-    }
-    return pts;
-  }
-  function line(x1, y1, z1, x2, y2, z2, count, jitter) {
-    const pts = [];
-    for (let i = 0; i < count; i++) {
-      const t = i / (count - 1);
-      pts.push(new THREE.Vector3(
-        x1 + (x2 - x1) * t + (Math.random() - 0.5) * jitter,
-        y1 + (y2 - y1) * t + (Math.random() - 0.5) * jitter,
-        z1 + (z2 - z1) * t + (Math.random() - 0.5) * jitter
-      ));
-    }
-    return pts;
-  }
-
-  const FRONT_Z = 0.74;
-  const eyeRanges = []; // [{start,end,side}] — indices into `points`, used later to animate blinking
-  let mouthRange = null;
-  [1, -1].forEach(side => {
-    // eyebrow
-    points.push(...arc(side * 0.42, 0.32, FRONT_Z + 0.02, 0.19, 0.05, side > 0 ? 195 : -15, side > 0 ? 345 : 165, 6, 0.015));
-    // eye outline — track its index range for blinking
-    const eyeStart = points.length;
-    points.push(...arc(side * 0.42, 0.15, FRONT_Z, 0.15, 0.08, 0, 360, 14, 0.012));
-    eyeRanges.push({ start: eyeStart, end: points.length, side, cx: side * 0.42, cy: 0.15, cz: FRONT_Z });
-    // cheek accent
-    points.push(...arc(side * 0.72, -0.15, FRONT_Z - 0.12, 0.14, 0.18, 0, 360, 8, 0.02));
-  });
-  // nose bridge + tip
-  points.push(...line(0, 0.2, FRONT_Z + 0.03, 0, -0.18, FRONT_Z + 0.14, 9, 0.012));
-  points.push(...arc(0, -0.2, FRONT_Z + 0.13, 0.09, 0.05, 200, 340, 6, 0.012));
-  // mouth — track its index range for the smile animation
-  const mouthStart = points.length;
-  points.push(...arc(0, -0.58, FRONT_Z + 0.02, 0.26, 0.09, 200, 340, 12, 0.014));
-  mouthRange = { start: mouthStart, end: points.length, cx: 0, cy: -0.58, cz: FRONT_Z + 0.02 };
-  // jawline (both sides, cheek down to chin)
-  [1, -1].forEach(side => {
-    points.push(...line(side * 0.9, -0.15, FRONT_Z - 0.25, side * 0.22, -0.92, FRONT_Z - 0.02, 10, 0.02));
-  });
-  // forehead crest
-  points.push(...arc(0, 0.62, FRONT_Z - 0.1, 0.55, 0.18, 200, 340, 9, 0.02));
-
 
   const COLORS = [0x5eead4, 0x818cf8, 0x38bdf8, 0xa78bfa, 0xf472b6];
   function glowTexture(hex) {
@@ -192,12 +119,13 @@
     return { mesh: sprite, basePos: p.clone(), baseScale: scale, phase: Math.random() * Math.PI * 2 };
   });
 
-  const eyeParticles = eyeRanges.map(r => ({ ...r, list: particles.slice(r.start, r.end) }));
-  const mouthParticles = mouthRange ? particles.slice(mouthRange.start, mouthRange.end) : [];
 
   // ---------- Nearest-neighbor connective edges (kept sparse for an elegant, non-cluttered look) ----------
   const edgePositions = [];
-  const K = 3; // connect each point to its ~3 nearest neighbors
+  // Edges are rebuilt each frame from live particle positions, so the web
+  // stretches and reforms with the morph instead of staying stuck to one shape.
+  const K = 3;
+  const edgePairs = [];
   for (let i = 0; i < points.length; i++) {
     const dists = [];
     for (let j = 0; j < points.length; j++) {
@@ -205,43 +133,48 @@
       dists.push([points[i].distanceToSquared(points[j]), j]);
     }
     dists.sort((a, b) => a[0] - b[0]);
-    for (let k = 0; k < K; k++) {
-      const [distSq, j] = dists[k];
-      if (distSq < 0.16) { // only connect genuinely nearby points
-        edgePositions.push(points[i].x, points[i].y, points[i].z, points[j].x, points[j].y, points[j].z);
-      }
-    }
+    for (let k = 0; k < K; k++) if (dists[k][0] < 0.20) edgePairs.push([i, dists[k][1]]);
   }
   const edgeGeo = new THREE.BufferGeometry();
-  edgeGeo.setAttribute("position", new THREE.Float32BufferAttribute(edgePositions, 3));
-  const edgeMat = new THREE.LineBasicMaterial({ color: 0x5eead4, transparent: true, opacity: 0.16 });
+  edgeGeo.setAttribute("position", new THREE.Float32BufferAttribute(new Float32Array(edgePairs.length * 6), 3));
+  const edgeMat = new THREE.LineBasicMaterial({ color: 0x5eead4, transparent: true, opacity: 0.15 });
   const edgeLines = new THREE.LineSegments(edgeGeo, edgeMat);
   rig.add(edgeLines);
 
-  // ---------- 10 real chapter nodes — larger, brighter, placed across the face surface ----------
+  // Only draw a link while its two particles are still close — during a morph
+  // some pairs fly apart, and stretching a line across the shape looks wrong.
+  function refreshEdges() {
+    const arr = edgeGeo.attributes.position.array;
+    for (let e = 0; e < edgePairs.length; e++) {
+      const a = particles[edgePairs[e][0]].mesh.position;
+      const b = particles[edgePairs[e][1]].mesh.position;
+      const o = e * 6;
+      if (a.distanceToSquared(b) > 0.5) {
+        arr[o] = arr[o+1] = arr[o+2] = arr[o+3] = arr[o+4] = arr[o+5] = 0;
+      } else {
+        arr[o] = a.x; arr[o+1] = a.y; arr[o+2] = a.z;
+        arr[o+3] = b.x; arr[o+4] = b.y; arr[o+5] = b.z;
+      }
+    }
+    edgeGeo.attributes.position.needsUpdate = true;
+  }
+
+  // ---------- 10 real chapter nodes, anchored to the morphing cloud ----------
   const nodeGlowTex = glowTexture("#e0f2fe");
   const nodeMat = new THREE.SpriteMaterial({ map: nodeGlowTex, transparent: true, depthWrite: false, blending: THREE.AdditiveBlending });
+  // Each chapter node rides a fixed particle index, so it travels with the
+  // shape through every morph and always sits on the current organ.
   const chapterNodes = [];
-  // Landmark positions spread across the face — forehead, temples, cheeks, jaw — front-facing.
-  const FACE_LANDMARKS = [
-    [0, 0.68, 0.66], [0.55, 0.5, 0.5], [-0.55, 0.5, 0.5],
-    [0.75, 0.02, 0.42], [-0.75, 0.02, 0.42],
-    [0.55, -0.35, 0.6], [-0.55, -0.35, 0.6],
-    [0.28, -0.85, 0.5], [-0.28, -0.85, 0.5],
-    [0, -0.42, 0.78]
-  ];
   for (let i = 0; i < CODES.length; i++) {
-    const [px, py, pz] = FACE_LANDMARKS[i % FACE_LANDMARKS.length];
-    const pos = new THREE.Vector3(px, py, pz);
-
+    const anchor = Math.floor((i + 0.5) * (points.length / CODES.length)) % points.length;
     const sprite = new THREE.Sprite(nodeMat);
     sprite.scale.setScalar(0.11);
-    sprite.position.copy(pos);
+    sprite.position.copy(points[anchor]);
     rig.add(sprite);
-
     const code = CODES[i];
-    const stat = chapterStats ? chapterStats[code] : { name: CHAPTER_NAMES[code] || code, possibleNC: null, ncCodes: [] };
-    chapterNodes.push({ code, mesh: sprite, basePos: pos, stat, phase: Math.random() * Math.PI * 2 });
+    const stat = chapterStats ? chapterStats[code]
+      : { name: CHAPTER_NAMES[code] || code, possibleNC: null, ncCodes: [] };
+    chapterNodes.push({ code, mesh: sprite, anchor, stat, phase: Math.random() * Math.PI * 2 });
   }
 
   // ---------- Cursor interaction: nearby particles brighten + nudge toward cursor ----------
@@ -305,12 +238,36 @@
     });
   }
 
-  // ---------- Animate: left-right sway (not full rotation) + breathing + blink + smile + cursor reaction ----------
-  const SWAY_AMPLITUDE = THREE.MathUtils.degToRad(18); // gentle head turn, not a spin
-  const SWAY_SPEED = 0.22;
+  // ---------- Morph state ----------
+  const HOLD_MS = 3000;                 // each organ is shown for 3s
+  const MORPH_MS = 1500;                // and takes 1.5s to travel to the next
+  let organIdx = 0, nextIdx = 1, morphT = 1, lastSwitch = performance.now();
+  const from = points.map(p => p.clone());
+  const to = points.map(p => p.clone());
+
+  function setTargets(nameA, nameB) {
+    if (!ORGANS) return;
+    ORGANS[nameA].forEach((v, i) => from[i].set(v[0], v[1], v[2]));
+    ORGANS[nameB].forEach((v, i) => to[i].set(v[0], v[1], v[2]));
+  }
+  if (ORGANS) setTargets(ORDER[0], ORDER[1 % ORDER.length]);
+
+  const labelEl = document.getElementById("organLabel");
+  function showLabel(name) {
+    if (!labelEl) return;
+    labelEl.textContent = LABELS[name] || name;
+    labelEl.classList.remove("show");
+    void labelEl.offsetWidth;
+    labelEl.classList.add("show");
+  }
+  if (ORGANS) showLabel(ORDER[0]);
+
+  const easeInOut = t => t < 0.5 ? 4 * t * t * t : 1 - Math.pow(-2 * t + 2, 3) / 2;
+
+  // ---------- Animate ----------
+  const SWAY = THREE.MathUtils.degToRad(16);
+  const SWAY_SPEED = 0.2;
   let t0 = performance.now();
-  let nextBlinkAt = 2 + Math.random() * 2.5;
-  let blinkT = -1; // -1 = not blinking; else elapsed time into the blink
 
   function animate() {
     requestAnimationFrame(animate);
@@ -319,64 +276,59 @@
     t0 = now;
     const tt = now / 1000;
 
-    if (!reduceMotion) {
-      rig.rotation.y = Math.sin(tt * SWAY_SPEED) * SWAY_AMPLITUDE;
-      const breathe = 1 + Math.sin(tt * 0.35) * 0.02;
-      rig.scale.setScalar(breathe);
+    // advance the morph
+    if (ORGANS && !reduceMotion) {
+      if (morphT >= 1 && now - lastSwitch > HOLD_MS) {
+        organIdx = nextIdx;
+        nextIdx = (nextIdx + 1) % ORDER.length;
+        setTargets(ORDER[organIdx], ORDER[nextIdx]);
+        showLabel(ORDER[organIdx]);
+        morphT = 0;
+        lastSwitch = now;
+      }
+      if (morphT < 1) {
+        morphT = Math.min(1, morphT + dt * (1000 / MORPH_MS));
+        if (morphT >= 1) lastSwitch = now;   // start the hold once travel completes
+      }
     }
+    const k = easeInOut(morphT);
 
     if (!reduceMotion) {
-      particles.forEach(p => {
-        let target = p.basePos;
-        let scaleMul = 1;
-        if (cursor3D) {
-          const worldBase = p.basePos.clone().applyMatrix4(rig.matrixWorld);
-          const d = worldBase.distanceTo(new THREE.Vector3(cursor3D.x, cursor3D.y, worldBase.z));
-          if (d < 0.9) {
-            const pull = (1 - d / 0.9) * 0.06;
-            const dir = cursor3D.clone().sub(worldBase).normalize();
-            target = p.basePos.clone().add(dir.multiplyScalar(pull));
-            scaleMul = 1 + (1 - d / 0.9) * 0.8;
-          }
+      rig.rotation.y = Math.sin(tt * SWAY_SPEED) * SWAY;
+      rig.scale.setScalar(1 + Math.sin(tt * 0.35) * 0.02);
+    }
+
+    particles.forEach((p, i) => {
+      // where this particle should be, mid-morph
+      const tx = from[i].x + (to[i].x - from[i].x) * k;
+      const ty = from[i].y + (to[i].y - from[i].y) * k;
+      const tz = from[i].z + (to[i].z - from[i].z) * k;
+      p.basePos.set(tx, ty, tz);
+
+      let target = p.basePos, scaleMul = 1;
+      if (cursor3D && !reduceMotion) {
+        const world = p.basePos.clone().applyMatrix4(rig.matrixWorld);
+        const d = world.distanceTo(new THREE.Vector3(cursor3D.x, cursor3D.y, world.z));
+        if (d < 0.9) {
+          const pull = (1 - d / 0.9) * 0.06;
+          target = p.basePos.clone().add(cursor3D.clone().sub(world).normalize().multiplyScalar(pull));
+          scaleMul = 1 + (1 - d / 0.9) * 0.8;
         }
-        p.mesh.position.lerp(target, 0.15);
-        const pulse = 1 + Math.sin(tt * 1.2 + p.phase) * 0.15;
-        p.mesh.scale.setScalar(p.baseScale * pulse * scaleMul);
-      });
+      }
+      p.mesh.position.lerp(target, morphT < 1 ? 0.35 : 0.15);
+      const pulse = reduceMotion ? 1 : 1 + Math.sin(tt * 1.2 + p.phase) * 0.15;
+      p.mesh.scale.setScalar(p.baseScale * pulse * scaleMul);
+    });
+
+    if (!reduceMotion) {
       chapterNodes.forEach(n => {
+        n.mesh.position.copy(particles[n.anchor].mesh.position);
         const pulse = 1 + Math.sin(tt * 1.5 + n.phase) * 0.18;
         n.mesh.scale.setScalar(0.11 * pulse);
       });
-
-      // ---------- Blinking: periodically compress the eye outlines vertically, then release ----------
-      if (blinkT < 0 && tt > nextBlinkAt) blinkT = 0;
-      if (blinkT >= 0) {
-        blinkT += dt;
-        const BLINK_DUR = 0.22;
-        const bp = Math.min(1, blinkT / BLINK_DUR);
-        const close = bp < 0.5 ? bp * 2 : (1 - bp) * 2; // close then reopen, 0..1..0
-        eyeParticles.forEach(eye => {
-          eye.list.forEach(p => {
-            const closedY = eye.cy + (p.basePos.y - eye.cy) * (1 - close * 0.92);
-            p.mesh.position.y = THREE.MathUtils.lerp(p.mesh.position.y, closedY, 0.9);
-          });
-        });
-        if (blinkT >= BLINK_DUR) {
-          blinkT = -1;
-          nextBlinkAt = tt + 2.5 + Math.random() * 3.5;
-        }
-      }
-
-      // ---------- Smiling: a slow, continuous gentle smile breathing at the mouth corners ----------
-      const smileAmount = (Math.sin(tt * 0.28) * 0.5 + 0.5) * 0.55 + 0.15; // 0.15..0.7, never fully flat
-      mouthParticles.forEach(p => {
-        const dx = p.basePos.x - mouthRange.cx;
-        const curve = Math.abs(dx) * Math.abs(dx) * 0.55; // corners lift more than the center
-        const smileY = p.basePos.y + curve * smileAmount;
-        p.mesh.position.y = THREE.MathUtils.lerp(p.mesh.position.y, smileY, 0.06);
-      });
     }
 
+    refreshEdges();
     rig.updateMatrixWorld();
     camera.lookAt(0, 0, 0);
     renderer.render(scene, camera);
