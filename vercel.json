@@ -1,0 +1,11 @@
+{
+  "$schema": "https://openapi.vercel.sh/vercel.json",
+  "framework": null,
+  "buildCommand": null,
+  "outputDirectory": ".",
+  "rewrites": [
+    { "source": "/api/icd", "destination": "/api/icd.js" },
+    { "source": "/api/who", "destination": "/api/who.js" },
+    { "source": "/api/news", "destination": "/api/news.js" }
+  ]
+}

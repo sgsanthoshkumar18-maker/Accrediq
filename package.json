@@ -1,0 +1,7 @@
+{
+  "name": "aqcredix",
+  "version": "1.0.0",
+  "private": true,
+  "description": "AQcredix — Accreditation & Quality Excellence. Static site with Vercel serverless functions.",
+  "engines": { "node": ">=18" }
+}
