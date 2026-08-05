@@ -1,0 +1,71 @@
+/* AQcredix — ICD-11 tool */
+.icd-shell{max-width:820px;margin:0 auto;}
+.icd-tabs{display:flex;gap:8px;margin-bottom:18px;flex-wrap:wrap;}
+.icd-tab{background:var(--bg-elevated);color:var(--fg-muted);border:1px solid var(--border);
+  border-radius:999px;padding:9px 18px;font-size:13.5px;cursor:pointer;font-family:var(--font-body);
+  transition:border-color .15s,color .15s,background .15s;}
+.icd-tab:hover{border-color:var(--brand-2);color:var(--brand-2);}
+.icd-tab.is-on{background:var(--brand-tint);border-color:var(--brand-2);color:var(--brand-2);font-weight:700;}
+
+.icd-card{background:var(--bg-elevated);border:1px solid var(--border);border-radius:var(--r-lg);
+  padding:22px;box-shadow:var(--shadow-1);margin-bottom:16px;}
+.icd-lbl{display:block;font-size:13px;font-weight:700;margin-bottom:6px;color:var(--fg);}
+.icd-hint{font-size:12.5px;color:var(--fg-faint);line-height:1.6;}
+.icd-err{font-size:13px;color:var(--nc);background:var(--nc-tint);padding:11px 14px;border-radius:8px;}
+.icd-row{display:flex;gap:8px;flex-wrap:wrap;margin-top:8px;}
+.icd-input{flex:1;min-width:180px;background:var(--bg);color:var(--fg);border:1px solid var(--border);
+  border-radius:10px;padding:12px 14px;font-size:15px;font-family:var(--font-body);}
+.icd-input:focus{outline:none;border-color:var(--brand-2);}
+.icd-chips{display:flex;flex-wrap:wrap;gap:6px;margin-top:10px;}
+.icd-chip{font-size:11.5px;background:var(--brand-tint);color:var(--brand-2);border:1px solid transparent;
+  border-radius:999px;padding:5px 12px;cursor:pointer;font-family:var(--font-body);}
+.icd-chip:hover{border-color:var(--brand-2);}
+
+.icd-res{display:flex;gap:12px;align-items:flex-start;width:100%;text-align:left;
+  background:var(--bg);color:var(--fg);border:1px solid var(--border);border-radius:10px;
+  padding:12px 14px;margin-bottom:8px;cursor:pointer;font-family:var(--font-body);
+  transition:border-color .15s,background .15s;}
+.icd-res:hover{border-color:var(--brand-2);background:var(--brand-tint);}
+.icd-code{font-family:var(--font-mono);font-size:12px;font-weight:700;color:var(--brand-2);
+  background:var(--brand-tint);padding:4px 9px;border-radius:6px;flex-shrink:0;}
+.icd-code.big{font-size:16px;padding:6px 13px;}
+.icd-res-main b{display:block;font-size:14px;font-weight:600;line-height:1.45;}
+.icd-res-main em{display:block;font-style:normal;font-size:11px;color:var(--fg-faint);margin-top:3px;font-family:var(--font-mono);}
+
+.icd-detail{display:none;background:var(--bg-elevated);border:1px solid var(--border);
+  border-radius:var(--r-lg);padding:24px;box-shadow:var(--shadow-1);margin-top:16px;}
+.icd-detail-head{display:flex;gap:10px;align-items:center;flex-wrap:wrap;margin-bottom:12px;}
+.icd-copy{background:var(--bg);border:1px solid var(--border);color:var(--fg-muted);border-radius:8px;
+  padding:6px 12px;font-size:12px;cursor:pointer;font-family:var(--font-body);}
+.icd-copy:hover{border-color:var(--brand-2);color:var(--brand-2);}
+.icd-detail h3{font-size:19px;margin-bottom:10px;}
+.icd-def{font-size:14px;line-height:1.7;color:var(--fg-muted);margin-bottom:16px;}
+.icd-block{margin-top:16px;border-top:1px solid var(--border-soft);padding-top:12px;}
+.icd-block h4{font-size:11.5px;text-transform:uppercase;letter-spacing:.05em;color:var(--fg-faint);
+  margin-bottom:7px;font-family:var(--font-mono);}
+.icd-block ul{margin:0 0 0 18px;}
+.icd-block li{font-size:13px;line-height:1.6;color:var(--fg-muted);margin-bottom:4px;}
+.icd-kids{display:flex;flex-wrap:wrap;gap:6px;}
+.icd-kid{font-family:var(--font-mono);font-size:11px;background:var(--bg);border:1px solid var(--border);
+  color:var(--fg-muted);border-radius:999px;padding:5px 11px;cursor:pointer;}
+.icd-kid:hover{border-color:var(--brand-2);color:var(--brand-2);}
+.icd-src{font-size:11px;color:var(--fg-faint);margin-top:14px;font-family:var(--font-mono);}
+
+.icd-conv-from{display:flex;gap:10px;align-items:center;flex-wrap:wrap;background:var(--bg);
+  border-left:3px solid var(--brand-2);border-radius:0 10px 10px 0;padding:12px 14px;margin-bottom:12px;}
+.icd-conv-from b{font-size:14px;}
+.icd-tagline{font-family:var(--font-mono);font-size:10px;text-transform:uppercase;letter-spacing:.06em;
+  color:var(--fg-faint);}
+.icd-conv-arrow{text-align:center;font-size:12px;color:var(--fg-faint);margin:10px 0;font-family:var(--font-mono);}
+.icd-warn{font-size:11.5px;line-height:1.65;color:var(--fg-muted);background:var(--warn-tint);
+  border-left:3px solid var(--warn);border-radius:0 8px 8px 0;padding:12px 14px;margin-top:12px;}
+.icd-warn b{color:var(--warn);}
+
+/* Homepage "Want a Code?" entry */
+.icd-cta{display:inline-flex;align-items:center;gap:9px;background:var(--bg-elevated);
+  border:1px solid var(--border);border-radius:999px;padding:10px 20px;text-decoration:none;
+  color:var(--fg);font-size:13.5px;font-weight:600;box-shadow:var(--shadow-1);
+  transition:border-color .15s,transform .15s,box-shadow .15s;}
+.icd-cta:hover{border-color:var(--brand-2);color:var(--brand-2);transform:translateY(-2px);box-shadow:var(--shadow-2);}
+.icd-cta svg{flex-shrink:0;}
+.icd-cta em{font-style:normal;font-size:11.5px;color:var(--fg-faint);font-weight:400;}
