@@ -5,12 +5,39 @@
 @media (max-width:700px){.ar-tiles{grid-template-columns:repeat(2,1fr);}}
 @media (max-width:460px){.ar-tiles{grid-template-columns:1fr;}}
 
-.ar-card{position:relative;color:var(--fg);}
-.ar-card h4{font-family:var(--font-display);font-size:14.5px;line-height:1.3;color:var(--fg);
-  padding-right:26px;}
-.ar-card-n{position:absolute;top:14px;right:14px;font-family:var(--font-mono);font-size:11px;
-  font-weight:700;color:var(--brand-2);background:var(--brand-tint);border-radius:6px;
-  padding:2px 7px;}
+/* Self-contained card styling — the area pages must not depend on the .dt-card rules
+   that live inside departments.html's inline <style>, or the text loses its colour. */
+.ar-card{
+  display:block;width:100%;text-align:left;cursor:pointer;position:relative;
+  background:var(--bg-elevated);
+  border:1px solid var(--border);
+  border-radius:var(--r-lg);
+  padding:18px;
+  color:var(--fg);                       /* buttons don't inherit colour — set it */
+  box-shadow:var(--shadow-1);
+  transition:transform .15s ease,box-shadow .15s ease,border-color .15s ease,background .15s ease;
+}
+.ar-card:hover{transform:translateY(-3px);box-shadow:var(--shadow-2);border-color:var(--brand-2);}
+.ar-card:focus-visible{outline:2px solid var(--brand-2);outline-offset:2px;}
+.ar-card.is-active{border-color:var(--brand-2);box-shadow:0 0 0 3px var(--brand-tint),var(--shadow-2);}
+
+.ar-card .ar-ico{
+  width:38px;height:38px;border-radius:10px;
+  background:var(--brand-tint);color:var(--brand-2);
+  display:flex;align-items:center;justify-content:center;margin-bottom:12px;
+}
+.ar-card h4{
+  font-family:var(--font-display);font-size:15px;line-height:1.3;
+  color:var(--fg);margin:0 0 6px;padding-right:28px;
+}
+.ar-card .ar-count{
+  display:block;font-family:var(--font-mono);font-size:11.5px;color:var(--fg-faint);
+}
+.ar-card-n{
+  position:absolute;top:16px;right:16px;
+  font-family:var(--font-mono);font-size:11px;font-weight:700;
+  color:var(--brand-2);background:var(--brand-tint);border-radius:6px;padding:2px 7px;
+}
 
 .ar-panel{display:none;margin-top:36px;}
 .ar-panel.is-open{display:block;animation:riseIn .25s ease both;}
@@ -71,3 +98,17 @@
 .ar-legend{display:flex;flex-wrap:wrap;gap:10px;margin:18px 0 6px;font-size:12px;
   color:var(--fg-faint);align-items:center;}
 .ar-legend b{color:var(--fg-muted);}
+
+/* Quick-list chips — also defined only inside departments.html, so redeclare here. */
+.ar-panel .chk-grid,.ac-card .chk-grid{display:flex;flex-wrap:wrap;gap:8px;}
+.ar-panel .chk-grid span,.ac-card .chk-grid span{font-size:12.5px;font-weight:600;
+  background:var(--warn-tint);color:var(--warn);padding:7px 13px;border-radius:999px;}
+
+/* Category badges used in the book-wording rows. */
+.ar-el .cat-badge{display:inline-flex;align-items:center;font-size:11px;font-weight:700;
+  padding:4px 9px;border-radius:999px;width:fit-content;height:fit-content;}
+.ar-el .cat-CORE{background:var(--nc-tint);color:var(--nc);}
+.ar-el .cat-Commitment{background:var(--warn-tint);color:var(--warn);}
+.ar-el .cat-Achievement{background:var(--accent-bright-tint);color:var(--accent-bright);}
+.ar-el .cat-Excellence{background:var(--info-tint);color:var(--info);}
+.ar-el .sop-flag{color:var(--warn);font-weight:700;margin-left:4px;}
