@@ -1,0 +1,43 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<script>(function(){try{var p=new URLSearchParams(location.search);if(p.has("dark")){var v=p.get("dark");if(v==="0"){localStorage.setItem("aq-theme","light");}else{localStorage.setItem("aq-theme","dark");}}if(localStorage.getItem("aq-theme")==="dark"){document.documentElement.setAttribute("data-theme","dark");}if(p.has("neon")){localStorage.setItem("aq-palette",p.get("neon")==="0"?"default":"neon");}if(localStorage.getItem("aq-palette")==="neon"){document.documentElement.setAttribute("data-palette","neon");}}catch(e){}})();</script>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Non-Clinical Areas — NABH Elements by Area | AQcredix</title>
+<meta name="description" content="All 18 NABH non-clinical areas — document review, quality management, HR, MRD, HIS, facilities, pharmacy, purchase, CSSD and more — with their applicable objective elements.">
+<link rel="icon" href="data:image/svg+xml,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 26 30'><path d='M13 1 24 5v10c0 7-5 12-11 14C7 27 2 22 2 15V5L13 1Z' fill='%234F46E5'/></svg>">
+<link rel="stylesheet" href="styles.css">
+<link rel="stylesheet" href="areas/areas.css">
+</head>
+<body data-page="nonclinicalareas" data-area-group="nonclinical">
+<div id="site-header"></div>
+
+<main id="aq-main"><section class="page-head">
+  <div class="wrap">
+    <nav class="breadcrumb"><a href="index.html">Home</a><span class="sep">/</span><a href="departments.html">Departments</a><span class="sep">/</span><span class="cur">Non-Clinical Areas</span></nav>
+    <span class="eyebrow">Non-administrative</span>
+    <h1>The areas behind the care.</h1>
+    <p class="lead">Document review, quality management, HR, medical records, facilities, CSSD and the rest — the non-clinical areas an assessor examines, each with its element groups, quick list and indicators.</p>
+  </div>
+</section>
+
+<section class="section wrap">
+  <div class="ar-legend">
+    <b>Reading the codes:</b>
+    <span class="ar-verified">verified</span> matched against the NABH 6th Edition data on this site ·
+    <span class="ar-unverified">not in 6th Ed</span> printed in the assessor checklist but renumbered or merged in the 6th Edition
+  </div>
+  <p class="ar-note">Source: NABH assessor checklist (5th Edition). Two chapters were renamed in the 6th Edition — <b>HIC</b> became <b>IPC</b> (Infection Prevention and Control) and <b>CQI</b> became <b>PSQ</b> (Patient Safety and Quality Improvement). Codes are shown as printed in the checklist and cross-checked against the 6th Edition element data. Where a code no longer resolves, this is stated plainly rather than guessed at.</p>
+  <div class="ar-tiles" id="arTiles"></div>
+  <div class="ar-panel" id="arPanel"></div>
+</section>
+</main>
+
+<div id="site-footer"></div>
+<script src="app.js"></script>
+<script src="nabh-data.js"></script>
+<script src="area-data.js"></script>
+<script src="areas/area-engine.js"></script>
+</body>
+</html>

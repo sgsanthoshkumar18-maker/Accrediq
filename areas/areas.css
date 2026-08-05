@@ -1,0 +1,73 @@
+/* AQcredix — Clinical / Non-Clinical area pages */
+
+.ar-tiles{display:grid;grid-template-columns:repeat(4,1fr);gap:14px;}
+@media (max-width:1000px){.ar-tiles{grid-template-columns:repeat(3,1fr);}}
+@media (max-width:700px){.ar-tiles{grid-template-columns:repeat(2,1fr);}}
+@media (max-width:460px){.ar-tiles{grid-template-columns:1fr;}}
+
+.ar-card{position:relative;color:var(--fg);}
+.ar-card h4{font-family:var(--font-display);font-size:14.5px;line-height:1.3;color:var(--fg);
+  padding-right:26px;}
+.ar-card-n{position:absolute;top:14px;right:14px;font-family:var(--font-mono);font-size:11px;
+  font-weight:700;color:var(--brand-2);background:var(--brand-tint);border-radius:6px;
+  padding:2px 7px;}
+
+.ar-panel{display:none;margin-top:36px;}
+.ar-panel.is-open{display:block;animation:riseIn .25s ease both;}
+
+.ar-head{border-bottom:1px solid var(--border-soft);padding-bottom:20px;margin-bottom:26px;
+  position:relative;}
+.ar-head h2{font-size:26px;margin-top:8px;line-height:1.25;}
+.ar-head p{margin-top:12px;color:var(--fg-muted);font-size:15px;max-width:76ch;line-height:1.65;}
+.ar-head .ar-n{font-family:var(--font-mono);font-size:11px;font-weight:700;color:var(--brand-2);
+  background:var(--brand-tint);border-radius:6px;padding:3px 9px;}
+
+.ar-sec{margin-bottom:34px;}
+.ar-sec h3{font-size:14px;text-transform:uppercase;letter-spacing:.06em;color:var(--fg-faint);
+  font-weight:700;margin-bottom:12px;}
+.ar-sub{font-family:var(--font-display);font-size:16px;margin:26px 0 12px;color:var(--fg);}
+.ar-note{font-size:13px;color:var(--fg-faint);margin-bottom:16px;max-width:76ch;line-height:1.6;}
+
+/* one element-group row */
+.ar-row{border:1px solid var(--border);border-radius:var(--r-lg);background:var(--bg-elevated);
+  box-shadow:var(--shadow-1);margin-bottom:14px;overflow:hidden;}
+.ar-row-head{display:flex;flex-wrap:wrap;align-items:center;gap:9px;padding:12px 18px;
+  background:var(--brand-tint);}
+.ar-src{font-family:var(--font-mono);font-size:12.5px;font-weight:700;color:var(--brand-2);}
+.ar-verified,.ar-unverified{font-size:10.5px;font-weight:700;padding:3px 9px;border-radius:999px;
+  letter-spacing:.02em;}
+.ar-verified{background:var(--accent-bright-tint);color:var(--accent-bright);}
+.ar-unverified{background:var(--warn-tint);color:var(--warn);}
+
+.ar-points{list-style:none;padding:14px 18px 4px;margin:0;display:grid;gap:8px;}
+.ar-points li{font-size:13.5px;color:var(--fg);line-height:1.55;padding-left:16px;position:relative;}
+.ar-points li::before{content:"";position:absolute;left:0;top:8px;width:5px;height:5px;
+  border-radius:50%;background:var(--brand-2);}
+
+.ar-book{margin:8px 14px 14px;border:1px solid var(--border-soft);border-radius:10px;
+  background:var(--bg);}
+.ar-book summary{cursor:pointer;padding:10px 14px;font-size:12.5px;font-weight:700;
+  color:var(--brand-2);list-style:none;}
+.ar-book summary::-webkit-details-marker{display:none;}
+.ar-book summary::before{content:"▸ ";}
+.ar-book[open] summary::before{content:"▾ ";}
+.ar-book-in{padding:0 14px 12px;}
+
+.ar-std{margin-top:10px;}
+.ar-std-h{font-size:12.5px;color:var(--fg-muted);line-height:1.5;padding-bottom:8px;
+  border-bottom:1px dashed var(--border-soft);margin-bottom:8px;}
+.ar-std-h .sc{font-family:var(--font-mono);font-weight:700;color:var(--brand-2);}
+.ar-el{display:grid;grid-template-columns:34px 96px 1fr;gap:10px;align-items:start;
+  padding:8px 0;font-size:13px;line-height:1.55;}
+@media (max-width:700px){.ar-el{grid-template-columns:1fr;gap:5px;}}
+.ar-el-l{font-family:var(--font-mono);font-weight:700;color:var(--fg-faint);}
+.ar-el-t{color:var(--fg);}
+
+.ar-missing{margin:0 18px 14px;font-size:12.5px;color:var(--warn);background:var(--warn-tint);
+  border-radius:8px;padding:10px 13px;line-height:1.6;}
+.ar-missing code{font-family:var(--font-mono);font-weight:700;background:rgba(0,0,0,.06);
+  padding:1px 5px;border-radius:4px;}
+
+.ar-legend{display:flex;flex-wrap:wrap;gap:10px;margin:18px 0 6px;font-size:12px;
+  color:var(--fg-faint);align-items:center;}
+.ar-legend b{color:var(--fg-muted);}

@@ -47,6 +47,40 @@ window.DEPT_DATA = [
         "Registered Pharmacist on duty at all times of dispensing, licence displayed and renewal-tracked.",
         "Biomedical waste authorisation for expired/discarded pharmaceutical waste disposal.",
       ]},
+    { h:"KRA / KPI — Pharmacy (dispensing & store)",
+      items:[
+        "KRA: Availability. KPI — percentage of stockouts of formulary medicines, measured monthly against the defined min-max levels (CQI/PSQ 4 a (ii)).",
+        "KRA: Availability. KPI — percentage of drugs and consumables procured by local (emergency) purchase rather than through the planned procurement route (CQI/PSQ 4 a (i)); a rising figure signals planning failure, not supplier failure.",
+        "KRA: Dispensing accuracy. KPI — medication dispensing error rate per 1,000 items dispensed, separated into wrong drug, wrong strength and wrong quantity.",
+        "KRA: Stock integrity. KPI — value and count of medicines expiring on shelf per month, as a percentage of stock value held.",
+        "KRA: Stock integrity. KPI — narcotic register reconciliation discrepancy count per month; the target is zero, and every non-zero result needs a documented investigation.",
+        "KRA: Cold chain. KPI — number of cold-chain excursions (temperature outside 2–8°C) per month and the percentage closed with a documented disposition of affected stock.",
+        "KRA: Turnaround. KPI — average time from receipt of an in-patient indent to delivery on the ward, and separately for emergency/STAT indents.",
+        "KRA: Statutory. KPI — percentage of pharmacy licences and pharmacist registrations valid and un-lapsed at any audit date; target 100%.",
+        "Other parameters tracked: inventory turnover ratio, holding value against budget, FEFO compliance on spot checks, LASA segregation audit score, and the percentage of high-alert medication orders verified before dispensing (MOM.6.e).",
+      ]},
+
+    { h:"Clinical Pharmacy — a distinct function, separately measured",
+      items:[
+        "Clinical pharmacy is not the dispensing counter. It is a patient-facing clinical service: reviewing orders before they reach the patient, rounding with clinical teams, and owning the pharmacology expertise behind formulary and antimicrobial decisions.",
+        "It should be staffed, rostered and measured separately from the pharmacy store — sharing one set of KPIs between the two functions hides whichever is underperforming.",
+        "Scope typically covers order review, drug reconciliation at admission and discharge, therapeutic drug monitoring, dose adjustment in renal and hepatic impairment, ADR causality assessment, patient counselling, and antimicrobial stewardship.",
+        "NABH anchors the role in MOM.1.b (multi-disciplinary medication management committee), MOM.4.h (drug reconciliation), MOM.8 (ADR and medication-error analysis) and IPC.3.e–g (antimicrobial usage policy and stewardship).",
+      ]},
+
+    { h:"KRA / KPI — Clinical Pharmacy",
+      items:[
+        "KRA: Order review. KPI — percentage of in-patient medication orders reviewed by a clinical pharmacist before first administration, by unit (ICU first, then wards).",
+        "KRA: Intervention. KPI — number of clinical pharmacist interventions per 100 admissions, split by type (dose adjustment, interaction, duplication, contraindication, route) and the percentage accepted by the prescriber.",
+        "KRA: Reconciliation. KPI — percentage of admissions with a documented drug reconciliation within the defined time frame, and the same at discharge (MOM.4.h).",
+        "KRA: Medication safety. KPI — medication error rate and near-miss rate (PSQ 3a (4), PSQ 4d(29)); a rising near-miss count with a falling error count is a healthy reporting culture, not a deteriorating one.",
+        "KRA: Medication safety. KPI — percentage of patients developing an ADR (PSQ 3a (6)), with causality assessment completed for each.",
+        "KRA: Stewardship. KPI — antimicrobial consumption in DDD per 100 bed-days; percentage of restricted-antimicrobial prescriptions with documented justification; percentage of empirical therapy de-escalated within 72 hours of culture results.",
+        "KRA: Prescription quality. KPI — prescription audit findings, at least monthly (MOM.4.k): legibility, CAPITAL-letter compliance, error-prone abbreviations, and allergy documentation.",
+        "KRA: Education. KPI — number of patients counselled on high-risk medication at discharge, as a percentage of those discharged on one.",
+        "Other parameters tracked: therapeutic drug monitoring turnaround, formulary adherence rate, percentage of ADRs reported to the national pharmacovigilance programme, and clinical pharmacist hours per occupied bed.",
+      ]},
+
     { h:"Checklists to maintain",
       items:[
         "Daily Cold-Chain Temperature Log (fridge/freezer, twice daily)",
@@ -55,6 +89,72 @@ window.DEPT_DATA = [
         "Monthly Pharmacy Storage & Housekeeping Audit Checklist",
         "Quarterly High-Alert Medication Storage Compliance Checklist",
         "Annual Full Physical Inventory Reconciliation",
+      ]}
+  ]
+},
+
+{
+  id:"purchase", name:"Purchase & Materials", icon:"box",
+  keywords:[/purchas/i,/procure/i,/procurement/i,/vendor/i,/indent/i,/store/i,/stock/i,/consumable/i,/material/i,/supply/i,/supplies/i,/implant/i,/prosthes/i,/inventory/i,/acquisition/i,/re-?order/i],
+  chapters:["MOM","FMS","ROM"],
+  intro:"Purchase is assessed as two distinct functions that happen to share a process. Pharmacy Purchase buys medicines under a drug licence, with formulary control and expiry risk. General Purchase buys everything else — consumables, implants, equipment, engineering spares — under a different risk profile entirely. NABH looks at both under MOM.2 (acquisition), MOM.11 (medical supplies and implantable prostheses) and FMS.3–4 (equipment planning, selection, replacement and disposal). The two are shown separately below because sharing one set of KPIs between them hides whichever is failing.",
+  sections:[
+    { h:"Why the two are assessed separately",
+      items:[
+        "Pharmacy Purchase operates under a drug licence, buys against a clinically-approved formulary, and carries expiry and cold-chain risk on almost every line item.",
+        "General Purchase carries no drug licence, buys against technical specification rather than formulary, and its highest-risk category — implants and prostheses — needs batch and serial traceability into the patient's case file (MOM.11.b, MOM.10.c).",
+        "The assessor checklist lists them in separate non-clinical areas: 'Pharmacy, Pharmacy Store' and 'Purchase, Stores & Materials Management'. Presenting one merged KPI sheet is a common finding.",
+        "Both share the same four procurement indicators (CQI/PSQ 4 a i–iv), which is precisely why they must be reported separately — a single blended number tells you nothing about where the problem sits.",
+      ]},
+
+    { h:"KRA / KPI — Pharmacy Purchase",
+      items:[
+        "KRA: Formulary-led procurement. KPI — percentage of medicine spend against formulary items versus non-formulary; every non-formulary purchase should trace to a documented approval (MOM.2.c).",
+        "KRA: Availability. KPI — percentage of stockouts of formulary medicines per month (PSQ 4 a (ii)), and separately for the defined emergency medication list, where the target is zero.",
+        "KRA: Planning discipline. KPI — percentage of drugs procured by local/emergency purchase (PSQ 4 a (i)). This is the single most diagnostic purchase indicator: a high figure means re-order levels are wrong, not that suppliers are slow.",
+        "KRA: Incoming quality. KPI — percentage of drugs rejected before GRN (PSQ 4 a (iii)), by reason — short expiry, damaged packaging, cold-chain breach in transit, wrong item.",
+        "KRA: Process compliance. KPI — percentage of variations from the documented procurement process (PSQ 4 a (iv)): purchases without an indent, without vendor evaluation, or without a purchase order.",
+        "KRA: Supplier performance. KPI — lead time per supplier (average and worst case) from purchase order to shelf-ready stock, reviewed when performance drifts.",
+        "KRA: Expiry control. KPI — value of stock received with less than the agreed minimum shelf life remaining, as a percentage of receipts.",
+        "KRA: Vendor governance. KPI — percentage of active drug vendors with a current drug licence on file and a completed periodic evaluation.",
+        "Other parameters: inventory turnover for medicines, holding value against budget, percentage of cold-chain items received within temperature specification, and price variance against the last purchase price.",
+      ]},
+
+    { h:"KRA / KPI — General Purchase (hospital-wide)",
+      items:[
+        "KRA: Availability. KPI — percentage of stockouts of critical consumables per month (PSQ 4 a (ii)), with 'critical' defined by clinical impact rather than by value.",
+        "KRA: Planning discipline. KPI — percentage of consumables procured by local purchase (PSQ 4 a (i)).",
+        "KRA: Incoming quality. KPI — percentage of consumables rejected before GRN (PSQ 4 a (iii)), by reason and by vendor.",
+        "KRA: Process compliance. KPI — percentage of variations from the procurement process (PSQ 4 a (iv)), including single-quote purchases above the defined threshold.",
+        "KRA: Implant traceability. KPI — percentage of implants and prostheses with batch and serial number entered in both the patient's case file and the master log book (MOM.10.c, MOM.11.b); target 100%, and this is directly sampled at assessment.",
+        "KRA: Implant governance. KPI — time to complete a prosthesis recall action from notification, and percentage of recall notices closed with affected patients identified.",
+        "KRA: Cycle time. KPI — average days from approved indent to goods receipt, by category (routine consumable, capital equipment, engineering spare).",
+        "KRA: Cost. KPI — price variance against last purchase price and against the rate contract, plus realised savings from negotiation and rate contracts.",
+        "KRA: Vendor governance. KPI — percentage of vendors with completed periodic evaluation; percentage of outsourced-service vendors with a documented agreement specifying service parameters (ROM.5.e), and evidence of quality monitoring against it (ROM.5.f).",
+        "KRA: Equipment lifecycle. KPI — percentage of equipment purchases made through the documented collaborative selection process (FMS.4.b), and percentage of condemned assets disposed of per the documented replacement and disposal procedure (FMS.4.h).",
+        "Other parameters: emergency purchase value as a percentage of total spend, storage condition audit score, inventory accuracy on cycle count, and the percentage of purchase orders raised against a valid approved indent.",
+      ]},
+
+    { h:"What the assessor physically checks",
+      items:[
+        "The indent-to-order-to-receipt trail for a sampled item, end to end, including who approved it and against what stock level.",
+        "Vendor selection records — how this supplier was chosen, and when they were last evaluated.",
+        "Storage in the main store: clean, safe and secure, with inventory control practices visibly in use (MOM.11.c–d).",
+        "For implants, the master log book against a patient case file — batch and serial number must match on both.",
+        "Documented agreements for every outsourced service, with the service parameters actually stated (ROM.5.e).",
+        "Equipment planning tied to the strategic plan, not to whoever asked loudest (FMS.4.a).",
+      ]},
+
+    { h:"Checklists to maintain",
+      items:[
+        "Daily Goods Receipt & Inspection Checklist (with rejection reason codes)",
+        "Weekly Critical Consumable Stockout Review",
+        "Monthly Local/Emergency Purchase Justification Review",
+        "Monthly Implant & Prosthesis Log Reconciliation (log book against case files)",
+        "Quarterly Vendor Performance Evaluation",
+        "Quarterly Rate Contract & Price Variance Review",
+        "Annual Vendor Licence & Documentation Renewal Audit",
+        "Annual Physical Stock Verification of Stores",
       ]}
   ]
 },

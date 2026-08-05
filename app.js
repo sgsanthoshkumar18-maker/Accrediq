@@ -6,7 +6,13 @@
   // unmodified whether the page lives at the site root or inside /tools/ or /tools/committees/.
   const NAV = [
     { key: "standards", href: "standards.html", label: "Standards" },
-    { key: "departments", href: "departments.html", label: "Departments" },
+    {
+      key: "deptgroup", label: "Departments", dropdown: [
+        { key: "departments", href: "departments.html", label: "Administrative Departments" },
+        { key: "clinicalareas", href: "clinical-areas.html", label: "Clinical Areas" },
+        { key: "nonclinicalareas", href: "nonclinical-areas.html", label: "Non-Clinical Areas" },
+      ]
+    },
     {
       key: "toolsgroup", label: "Tools", dropdown: [
         { key: "qualitytools", href: "tools/quality-tools.html", label: "Quality Tools" },
@@ -24,8 +30,15 @@
     { key: "about", href: "about.html", label: "About" }
   ];
 
-  // Keys that count as "inside Tools" for top-level highlighting purposes.
-  const TOOLS_GROUP_KEYS = ["qualitytools", "kpilibrary", "codealerts", "committees", "committeedetail", "sop", "surveyor", "know", "icd"];
+  // Extra keys that belong to a group for top-level highlighting but have no nav entry
+  // of their own (e.g. an individual committee detail page sits under Tools).
+  const EXTRA_GROUP_KEYS = { toolsgroup: ["committeedetail"] };
+
+  // True when currentKey lives inside the given dropdown group.
+  function inGroup(group, currentKey) {
+    if (group.dropdown.some(d => d.key === currentKey)) return true;
+    return (EXTRA_GROUP_KEYS[group.key] || []).includes(currentKey);
+  }
 
   const shieldMark = `<svg width="30" height="34" viewBox="0 0 26 30" fill="none" xmlns="http://www.w3.org/2000/svg">
       <path d="M13 1 24 5v10c0 7-5 12-11 14C7 27 2 22 2 15V5L13 1Z" fill="url(#qgrad)"/>
@@ -42,17 +55,17 @@
   function buildHeader(currentKey, base) {
     const links = NAV.map(n => {
       if (n.dropdown) {
-        const groupActive = TOOLS_GROUP_KEYS.includes(currentKey);
+        const groupActive = inGroup(n, currentKey);
         const items = n.dropdown.map(d => {
           const active = currentKey === d.key ? " active" : "";
           return `<a href="${base}${d.href}" class="nav-dd-item${active}" role="menuitem">${d.label}</a>`;
         }).join("");
-        return `<div class="nav-dropdown" id="toolsDropdown">
-          <button type="button" class="nav-dd-trigger${groupActive ? " active" : ""}" aria-haspopup="true" aria-expanded="false" id="toolsDropdownTrigger">
+        return `<div class="nav-dropdown" data-dd="${n.key}">
+          <button type="button" class="nav-dd-trigger${groupActive ? " active" : ""}" aria-haspopup="true" aria-expanded="false">
             ${n.label}
             <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.4" stroke-linecap="round" stroke-linejoin="round"><path d="M6 9l6 6 6-6"/></svg>
           </button>
-          <div class="nav-dd-panel" role="menu" aria-label="Tools">${items}</div>
+          <div class="nav-dd-panel" role="menu" aria-label="${n.label}">${items}</div>
         </div>`;
       }
       const active = currentKey === n.key ? " active" : "";
@@ -95,6 +108,8 @@
           <div class="footer-col"><h4>Learn</h4>
             <a href="${base}standards.html">Standards</a>
             <a href="${base}departments.html">Departments</a>
+            <a href="${base}clinical-areas.html">Clinical Areas</a>
+            <a href="${base}nonclinical-areas.html">Non-Clinical Areas</a>
             <a href="${base}dashboard.html">Quality Dashboard</a>
             <a href="${base}tools/kpi-library.html">KPI Library</a>
           </div>
@@ -147,28 +162,37 @@
       }));
     }
 
-    // Tools dropdown — click/keyboard toggle, works identically on desktop and the mobile slide-out.
-    const ddWrap = document.getElementById("toolsDropdown");
-    const ddTrigger = document.getElementById("toolsDropdownTrigger");
-    if (ddWrap && ddTrigger) {
-      const closeDropdown = () => {
-        ddWrap.classList.remove("open");
-        ddTrigger.setAttribute("aria-expanded", "false");
-      };
+    // Nav dropdowns (Departments, Tools) — click/keyboard toggle, works identically
+    // on desktop and the mobile slide-out. Opening one closes the others.
+    const dropdowns = Array.prototype.slice.call(document.querySelectorAll(".nav-dropdown"));
+    const closeAllDropdowns = (except) => {
+      dropdowns.forEach(dd => {
+        if (dd === except) return;
+        dd.classList.remove("open");
+        const t = dd.querySelector(".nav-dd-trigger");
+        if (t) t.setAttribute("aria-expanded", "false");
+      });
+    };
+    dropdowns.forEach(ddWrap => {
+      const ddTrigger = ddWrap.querySelector(".nav-dd-trigger");
+      if (!ddTrigger) return;
       ddTrigger.addEventListener("click", (e) => {
         e.stopPropagation();
         const willOpen = !ddWrap.classList.contains("open");
+        closeAllDropdowns(ddWrap);
         ddWrap.classList.toggle("open", willOpen);
         ddTrigger.setAttribute("aria-expanded", willOpen ? "true" : "false");
       });
+      ddWrap.querySelectorAll(".nav-dd-item").forEach(item => {
+        item.addEventListener("click", () => closeAllDropdowns());
+      });
+    });
+    if (dropdowns.length) {
       document.addEventListener("click", (e) => {
-        if (!ddWrap.contains(e.target)) closeDropdown();
+        if (!dropdowns.some(dd => dd.contains(e.target))) closeAllDropdowns();
       });
       document.addEventListener("keydown", (e) => {
-        if (e.key === "Escape") closeDropdown();
-      });
-      ddWrap.querySelectorAll(".nav-dd-item").forEach(item => {
-        item.addEventListener("click", closeDropdown);
+        if (e.key === "Escape") closeAllDropdowns();
       });
     }
   }
