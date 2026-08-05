@@ -80,7 +80,10 @@
   // All organs share one particle set; only their TARGET positions change, so
   // particles physically travel between shapes rather than vanishing.
   const N_POINTS = 850;
-  const _built = window.OrganShapes ? window.OrganShapes.buildAll(N_POINTS, 1.55) : null;
+  // Overall size of the organ in world units. Kept below the framing limit so the
+  // wireframe never clips against the canvas edge while breathing or beating.
+  const ORGAN_RADIUS = 1.24;
+  const _built = window.OrganShapes ? window.OrganShapes.buildAll(N_POINTS, ORGAN_RADIUS) : null;
   const ORGANS = _built ? _built.shapes : null;
   const META = _built ? _built.meta : {};
   const ORDER = window.OrganShapes ? window.OrganShapes.ORDER : ["face"];
@@ -94,7 +97,7 @@
   } else {
     for (let i = 0; i < N_POINTS; i++) {
       const y = 1 - (i / (N_POINTS - 1)) * 2, r = Math.sqrt(1 - y * y), th = i * 2.399963;
-      points.push(new THREE.Vector3(Math.cos(th) * r, y, Math.sin(th) * r).multiplyScalar(1.55));
+      points.push(new THREE.Vector3(Math.cos(th) * r, y, Math.sin(th) * r).multiplyScalar(ORGAN_RADIUS));
     }
   }
 
@@ -332,9 +335,12 @@
   function indexFaceFeatures() {
     faceEyes.clear(); faceMouth.clear();
     if (!ORGANS) return;
+    // Thresholds are expressed as a fraction of the organ radius so the eye and
+    // mouth regions stay correct if ORGAN_RADIUS changes.
+    const u = ORGAN_RADIUS / 1.55;
     ORGANS.face.forEach(([x, y, z], i) => {
-      if (z > 0.35 && y > 0.05 && y < 0.42 && Math.abs(x) > 0.18 && Math.abs(x) < 0.62) faceEyes.add(i);
-      if (z > 0.30 && y > -0.62 && y < -0.30 && Math.abs(x) < 0.46) faceMouth.add(i);
+      if (z > 0.35 * u && y > 0.05 * u && y < 0.42 * u && Math.abs(x) > 0.18 * u && Math.abs(x) < 0.62 * u) faceEyes.add(i);
+      if (z > 0.30 * u && y > -0.62 * u && y < -0.30 * u && Math.abs(x) < 0.46 * u) faceMouth.add(i);
     });
   }
   indexFaceFeatures();
@@ -342,7 +348,7 @@
   let beatPhase = 0, breathPhase = 0, blinkAt = 1.2, blinkT = -1;
 
   // Safe to call now: every const it depends on is initialised above.
-  if (ORGANS) recomputeImpulse(ORDER[0]);
+  if (ORGANS) recomputeImpulse(ORDER[Math.min(1, ORDER.length - 1)]);
 
   // ---------- Animate ----------
   const SWAY = THREE.MathUtils.degToRad(16);
@@ -362,7 +368,9 @@
         organIdx = nextIdx;
         nextIdx = (nextIdx + 1) % ORDER.length;
         setTargets(ORDER[organIdx], ORDER[nextIdx]);
-        recomputeImpulse(ORDER[organIdx]);
+        // The morph runs from organIdx TO nextIdx, so the shape that settles on
+        // screen — and therefore the one whose motion should play — is nextIdx.
+        recomputeImpulse(ORDER[nextIdx]);
         setEdgeShape(ORDER[organIdx]);       // wireframe of the shape we are leaving
         edgesSwapped = false;
         morphT = 0;
