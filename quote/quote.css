@@ -12,7 +12,7 @@
 
 .aq-quote-viewport{flex:1;overflow:hidden;position:relative;height:34px;}
 .aq-quote-track{display:flex;align-items:center;height:34px;width:max-content;
-  animation:aqQuoteScroll 18s linear infinite;}
+  animation:aqQuoteScroll 14s linear infinite;}
 .aq-quote:hover .aq-quote-track,.aq-quote:focus-within .aq-quote-track{animation-play-state:paused;}
 @keyframes aqQuoteScroll{from{transform:translateX(0)}to{transform:translateX(-50%)}}
 
