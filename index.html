@@ -281,9 +281,19 @@
     d.onload = function () {
       var o = document.createElement("script"); o.src = "face/organs.js";
       o.onload = o.onerror = function () {
-        var r = document.createElement("script"); r.src = "face/face.js";
-        r.onload = r.onerror = loadWorldGlobe;
-        document.body.appendChild(r);
+        // Real scanned organ meshes. If either file fails, organs-mesh.js is a no-op
+        // and the procedural shapes from organs.js are used instead.
+        var m = document.createElement("script"); m.src = "face/organ-mesh-data.js";
+        m.onload = m.onerror = function () {
+          var mo = document.createElement("script"); mo.src = "face/organs-mesh.js";
+          mo.onload = mo.onerror = function () {
+            var r = document.createElement("script"); r.src = "face/face.js";
+            r.onload = r.onerror = loadWorldGlobe;
+            document.body.appendChild(r);
+          };
+          document.body.appendChild(mo);
+        };
+        document.body.appendChild(m);
       };
       document.body.appendChild(o);
     };

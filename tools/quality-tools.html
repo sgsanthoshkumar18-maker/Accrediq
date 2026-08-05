@@ -8,6 +8,7 @@
 <meta name="description" content="The full quality-improvement toolkit for healthcare — RCA, PDCA, Fishbone, FMEA, CAPA, Lean, Six Sigma/DMAIC, SSM, CATWOE, Balanced Scorecard, Hoshin Kanri, PICK charts and more, each with a diagram and worked example.">
 <link rel="icon" href="data:image/svg+xml,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 26 30'><path d='M13 1 24 5v10c0 7-5 12-11 14C7 27 2 22 2 15V5L13 1Z' fill='%234F46E5'/></svg>">
 <link rel="stylesheet" href="../styles.css">
+<link rel="stylesheet" href="qt-interactive.css">
 <style>
   .tool-tiles{display:grid;grid-template-columns:repeat(4,1fr);gap:14px;}
   @media (max-width:1000px){.tool-tiles{grid-template-columns:repeat(3,1fr);}}
@@ -94,6 +95,20 @@
   </div>
 </section>
 
+<section class="section wrap">
+  <div class="qt-panel" id="fiveWhyPanel">
+    <h2>5 Why Analyser</h2>
+    <p class="lead">Describe the incident, then work down the chain one why at a time. Each level has a prompt to keep the questioning on the system rather than the person. Export the finished worksheet as a Word document for your CAPA file — the analysis stays yours, this tool structures and formats it.</p>
+    <div id="fiveWhy"></div>
+  </div>
+
+  <div class="qt-panel" id="auditChecklistPanel">
+    <h2>Internal Audit Checklist</h2>
+    <p class="lead">Pick the department or area you are auditing and download a checklist covering only that area — the assessor checklist lines, the matching NABH 6th Edition element wording, compliance columns and a findings summary, ready to print or fill in.</p>
+    <div id="auditChecklist"></div>
+  </div>
+</section>
+
 <section class="wrap" style="padding-bottom:60px;">
   <div class="cta-band">
     <h2>Tools work best tied to a real standard.</h2>
@@ -105,6 +120,11 @@
 </main>
 <div id="site-footer"></div>
 <script src="../tools-data.js"></script>
+<script src="../nabh-data.js"></script>
+<script src="../area-data.js"></script>
+<script src="../sop/sop-docx.js"></script>
+<script src="qt-interactive.js"></script>
+<script>(function loadJSZip(){var s=["https://cdn.jsdelivr.net/npm/jszip@3.10.1/dist/jszip.min.js","https://cdnjs.cloudflare.com/ajax/libs/jszip/3.10.1/jszip.min.js"];function t(i){if(i>=s.length)return;var e=document.createElement("script");e.src=s[i];e.onerror=function(){t(i+1)};document.head.appendChild(e)}t(0)})();</script>
 <script src="../app.js"></script>
 <script src="../search/search.js"></script>
 <script>

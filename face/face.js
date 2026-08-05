@@ -122,26 +122,58 @@
   });
 
 
-  // ---------- Nearest-neighbor connective edges (kept sparse for an elegant, non-cluttered look) ----------
-  const edgePositions = [];
-  // Edges are rebuilt each frame from live particle positions, so the web
-  // stretches and reforms with the morph instead of staying stuck to one shape.
-  const K = 3;
-  const edgePairs = [];
-  for (let i = 0; i < points.length; i++) {
-    const dists = [];
-    for (let j = 0; j < points.length; j++) {
-      if (i === j) continue;
-      dists.push([points[i].distanceToSquared(points[j]), j]);
-    }
-    dists.sort((a, b) => a[0] - b[0]);
-    for (let k = 0; k < K; k++) if (dists[k][0] < 0.20) edgePairs.push([i, dists[k][1]]);
+  // ---------- Wireframe mesh edges ----------
+  // When the real organ meshes are loaded (OrganShapes.source === "mesh"), the web is
+  // the organ's own surface wireframe: edges come from the mesh geometry, and the set
+  // swaps as the cloud morphs from one organ to the next. Without the mesh data this
+  // falls back to the original nearest-neighbour web, so the hero still renders.
+  const MESH_MODE = !!(window.OrganShapes && window.OrganShapes.source === "mesh" && window.OrganShapes.edgesFor);
+
+  const SHAPE_EDGES = {};
+  if (MESH_MODE) {
+    ORDER.forEach(name => { SHAPE_EDGES[name] = window.OrganShapes.edgesFor(name, N_POINTS) || []; });
   }
+
+  function nearestNeighbourEdges() {
+    const K = 3, pairs = [];
+    for (let i = 0; i < points.length; i++) {
+      const dists = [];
+      for (let j = 0; j < points.length; j++) {
+        if (i === j) continue;
+        dists.push([points[i].distanceToSquared(points[j]), j]);
+      }
+      dists.sort((a, b) => a[0] - b[0]);
+      for (let k = 0; k < K; k++) if (dists[k][0] < 0.20) pairs.push([i, dists[k][1]]);
+    }
+    return pairs;
+  }
+
+  let edgePairs = MESH_MODE ? (SHAPE_EDGES[ORDER[0]] || []) : nearestNeighbourEdges();
+
+  // Buffer sized to the largest edge set so the shape swap never reallocates.
+  const MAX_EDGES = MESH_MODE
+    ? ORDER.reduce((m, n) => Math.max(m, (SHAPE_EDGES[n] || []).length), 0)
+    : edgePairs.length;
+
   const edgeGeo = new THREE.BufferGeometry();
-  edgeGeo.setAttribute("position", new THREE.Float32BufferAttribute(new Float32Array(edgePairs.length * 6), 3));
-  const edgeMat = new THREE.LineBasicMaterial({ color: 0x5eead4, transparent: true, opacity: 0.15 });
+  edgeGeo.setAttribute("position", new THREE.Float32BufferAttribute(new Float32Array(MAX_EDGES * 6), 3));
+  // Brighter and denser than the old connective web — this is the organ's skin now,
+  // so it should read as a living surface rather than a faint scaffold.
+  const edgeMat = new THREE.LineBasicMaterial({
+    color: 0x5eead4,
+    transparent: true,
+    opacity: MESH_MODE ? 0.34 : 0.15,
+    blending: THREE.AdditiveBlending,
+    depthWrite: false
+  });
   const edgeLines = new THREE.LineSegments(edgeGeo, edgeMat);
   rig.add(edgeLines);
+
+  // Swap the wireframe to a different organ's edge set.
+  function setEdgeShape(name) {
+    if (!MESH_MODE) return;
+    edgePairs = SHAPE_EDGES[name] || [];
+  }
 
   // Only draw a link while its two particles are still close — during a morph
   // some pairs fly apart, and stretching a line across the shape looks wrong.
@@ -157,6 +189,11 @@
         arr[o] = a.x; arr[o+1] = a.y; arr[o+2] = a.z;
         arr[o+3] = b.x; arr[o+4] = b.y; arr[o+5] = b.z;
       }
+    }
+    // Blank any leftover slots from a previously larger edge set.
+    for (let e = edgePairs.length; e < MAX_EDGES; e++) {
+      const o = e * 6;
+      arr[o] = arr[o+1] = arr[o+2] = arr[o+3] = arr[o+4] = arr[o+5] = 0;
     }
     edgeGeo.attributes.position.needsUpdate = true;
   }
@@ -244,6 +281,7 @@
   const HOLD_MS = 3000;                 // each organ is shown for 3s
   const MORPH_MS = 1500;                // and takes 1.5s to travel to the next
   let organIdx = 0, nextIdx = 1, morphT = 1, lastSwitch = performance.now();
+  let edgesSwapped = true;   // true once the wireframe has moved to the incoming organ
   const from = points.map(p => p.clone());
   const to = points.map(p => p.clone());
 
@@ -325,11 +363,16 @@
         nextIdx = (nextIdx + 1) % ORDER.length;
         setTargets(ORDER[organIdx], ORDER[nextIdx]);
         recomputeImpulse(ORDER[organIdx]);
+        setEdgeShape(ORDER[organIdx]);       // wireframe of the shape we are leaving
+        edgesSwapped = false;
         morphT = 0;
         lastSwitch = now;
       }
       if (morphT < 1) {
         morphT = Math.min(1, morphT + dt * (1000 / MORPH_MS));
+        // Swap the wireframe at the midpoint, where the cloud stops reading as the
+        // old organ and starts reading as the new one.
+        if (!edgesSwapped && morphT >= 0.5) { setEdgeShape(ORDER[nextIdx]); edgesSwapped = true; }
         if (morphT >= 1) lastSwitch = now;   // start the hold once travel completes
       }
     }
