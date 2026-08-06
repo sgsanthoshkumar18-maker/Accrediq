@@ -99,28 +99,27 @@
     // because pretending to authenticate against nothing would be theatre.
     async gate() {
       W.user = await S.currentUser();
-      if (W.user) return true;
+      if (W.user) {
+        // Same watermark as the rest of the site, minus the copy/right-click
+        // restriction on your own account — see auth-gate.js for the full policy.
+        if (window.AQGate && W.user.role !== "owner") window.AQGate.watermark(W.user);
+        return true;
+      }
 
       var host = document.getElementById("wsGate");
       if (!host) return true;
 
       if (S.mode === "local") {
+        // No backend is connected, so there is nothing to authenticate against. Site
+        // policy is that every exclusive page requires a real account — a typed name
+        // is not that, so this is refused rather than accepted as a workaround.
         host.innerHTML =
-          '<div class="ws-auth"><h2>Name this workspace</h2>' +
-          '<p>This copy runs in local mode, so there is no account — the name is just a label ' +
-          "on your own data.</p>" +
-          '<label for="lgName">Your name</label><input id="lgName" type="text" placeholder="Dr. A. Kumar">' +
-          '<label for="lgOrg">Hospital</label><input id="lgOrg" type="text" placeholder="City General Hospital">' +
-          '<button type="button" class="btn btn-accent" id="lgGo">Open workspace</button></div>';
-        return new Promise(function (res) {
-          host.querySelector("#lgGo").addEventListener("click", async function () {
-            var n = host.querySelector("#lgName").value.trim() || "Quality Lead";
-            var o = host.querySelector("#lgOrg").value.trim() || "My Hospital";
-            W.user = await S.adapter.signIn({ name: n, org: o, role: "owner" });
-            location.reload();
-          });
-          res(false);
-        });
+          '<div class="ws-auth"><h2>Sign-in isn\u2019t connected yet</h2>' +
+          '<p>This copy of AQcredix has no backend configured. Until it is, the Workspace ' +
+          "cannot issue real accounts, so it stays locked rather than accept a typed name as " +
+          "a substitute for one.</p>" +
+          '<a class="btn btn-accent" href="../index.html">Back to Home</a></div>';
+        return false;
       }
 
       host.innerHTML =

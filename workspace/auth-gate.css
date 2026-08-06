@@ -1,0 +1,38 @@
+/* AQcredix — access gate overlay + watermark */
+
+.aq-gate-overlay{position:fixed;inset:0;z-index:9000;background:var(--bg,#0a0d1f);
+  display:flex;align-items:center;justify-content:center;padding:20px;overflow-y:auto;}
+.aq-gate-box{max-width:440px;width:100%;background:var(--bg-elevated,#12162F);
+  border:1px solid var(--border,#272C50);border-radius:var(--r-lg,14px);padding:32px;
+  box-shadow:var(--shadow-2);}
+.aq-gate-box h2{font-family:var(--font-display);font-size:23px;color:var(--fg,#F1F2FA);margin-bottom:10px;}
+.aq-gate-box p{font-size:13.5px;color:var(--fg-muted,#9A9FC2);line-height:1.65;margin-bottom:18px;}
+.aq-gate-tabs{display:flex;gap:4px;margin-bottom:14px;}
+.aq-gate-tabs button{flex:1;padding:9px;border:1px solid var(--border,#272C50);background:transparent;
+  color:var(--fg-muted,#9A9FC2);border-radius:8px;cursor:pointer;font-family:inherit;
+  font-size:13px;font-weight:600;}
+.aq-gate-tabs button.active{background:var(--brand-2,#6366F1);border-color:var(--brand-2,#6366F1);color:#fff;}
+.aq-gate-box label{display:block;font-size:12px;font-weight:700;color:var(--fg-muted,#9A9FC2);margin:12px 0 5px;}
+.aq-gate-box input{width:100%;padding:10px 12px;border:1px solid var(--border,#272C50);border-radius:9px;
+  background:var(--bg,#0a0d1f);color:var(--fg,#F1F2FA);font-family:inherit;font-size:14px;}
+.aq-gate-box input:focus{outline:none;border-color:var(--brand-2,#6366F1);}
+.aq-gate-box .btn{width:100%;margin-top:18px;justify-content:center;}
+.aq-gate-msg{font-size:12.5px;color:var(--warn,#F59E0B);margin-top:12px;line-height:1.55;}
+.aq-gate-back{display:inline-block;margin-top:18px;font-size:12.5px;color:var(--fg-faint,#7C81A6);
+  text-decoration:none;}
+.aq-gate-back:hover{color:var(--brand-2,#6366F1);}
+
+/* Tiled watermark over every protected page, naming who is signed in. Deliberately
+   faint and click-through, so it never interferes with using the site — the point is
+   traceability if a screenshot leaks, not obstructing the person reading it. */
+#aqWatermark{position:fixed;inset:0;z-index:8000;pointer-events:none;overflow:hidden;
+  display:flex;flex-wrap:wrap;align-content:space-between;transform:rotate(-22deg) scale(1.4);
+  opacity:.05;}
+#aqWatermark span{display:block;width:260px;padding:26px 10px;font-size:12px;
+  font-family:var(--font-mono);color:var(--fg,#F1F2FA);white-space:nowrap;}
+@media print{
+  body{visibility:hidden !important;}
+  body::after{content:"Printing is disabled for AQcredix account content.";
+    visibility:visible;position:fixed;top:40%;left:0;right:0;text-align:center;
+    font-size:18px;font-family:sans-serif;}
+}

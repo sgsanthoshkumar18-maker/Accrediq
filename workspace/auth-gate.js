@@ -1,0 +1,188 @@
+/* AQcredix — site-wide access gate.
+ *
+ * Loaded on every page that is NOT in the public set (home, about, standards, standard
+ * detail, privacy, terms, contact, 404). Blocks rendering until a signed-in AQStore user
+ * is confirmed, then reveals the page and applies a watermark tied to that user.
+ *
+ * Honesty, stated once here rather than repeated everywhere: this is a client-side gate
+ * on a static site with no server rendering. It stops casual and incidental access —
+ * the address bar, a shared link, a bookmark — for the overwhelming majority of visitors.
+ * It cannot stop someone who disables JavaScript, reads page source, or fetches a .js
+ * data file directly by URL; no code running in the browser can prevent that, and this
+ * file does not claim to. Real confidentiality for the underlying NABH content depends
+ * on the written-permission question, not on this gate.
+ *
+ * Load order required in <head>, before anything else render-affecting:
+ *   config.js -> store.js -> auth-gate.js
+ * (workspace pages already load this chain via shell.js and do not need this file too.)
+ */
+(function () {
+  "use strict";
+
+  // Hide the page instantly, before first paint, so there is no flash of protected
+  // content while the auth check runs. Removed only once access is confirmed.
+  var lock = document.createElement("style");
+  lock.id = "aqGateLock";
+  lock.textContent = "body{visibility:hidden !important;}";
+  document.head.appendChild(lock);
+
+  function esc(s) {
+    return String(s == null ? "" : s).replace(/[&<>"']/g, function (c) {
+      return { "&": "&amp;", "<": "&lt;", ">": "&gt;", '"': "&quot;", "'": "&#39;" }[c];
+    });
+  }
+
+  function reveal() {
+    var el = document.getElementById("aqGateLock");
+    if (el) el.remove();
+    var ov = document.getElementById("aqGateOverlay");
+    if (ov) ov.remove();
+  }
+
+  function watermark(user) {
+    var d = document.createElement("div");
+    d.id = "aqWatermark";
+    d.setAttribute("aria-hidden", "true");
+    var label = (user.email || user.name || "AQcredix") + " · " + new Date().toLocaleDateString();
+    var tiles = [];
+    for (var i = 0; i < 60; i++) tiles.push('<span>' + esc(label) + "</span>");
+    d.innerHTML = tiles.join("");
+    document.body.appendChild(d);
+
+    // A best-effort nudge, not a claim of protection: discourage casual copy/paste and
+    // right-click save of protected pages. Trivially bypassed by anyone who wants to,
+    // and deliberately NOT applied to form fields, so the workspace stays usable.
+    document.addEventListener("contextmenu", function (e) {
+      if (!e.target.closest("input, textarea, select, [contenteditable]")) e.preventDefault();
+    });
+    document.addEventListener("copy", function (e) {
+      if (!e.target.closest("input, textarea, select, [contenteditable]")) {
+        // Leave a trace in whatever gets pasted, rather than silently blocking copy —
+        // blocking it outright breaks legitimate use (citing an element code, etc).
+        var sel = document.getSelection();
+        if (sel && String(sel)) {
+          e.clipboardData.setData("text/plain", String(sel) + "\n\n— copied from AQcredix by " + label);
+          e.preventDefault();
+        }
+      }
+    });
+  }
+
+  function loginOverlay(kind) {
+    var ov = document.createElement("div");
+    ov.id = "aqGateOverlay";
+    ov.className = "aq-gate-overlay";
+    var here = encodeURIComponent(location.pathname + location.search);
+
+    if (kind === "unconfigured") {
+      // No backend connected at all — nothing to sign into. Say so rather than show a
+      // login form that cannot work, and point at the one page that still functions.
+      ov.innerHTML =
+        '<div class="aq-gate-box"><h2>Sign-in isn\u2019t connected yet</h2>' +
+        '<p>This copy of AQcredix has no backend configured, so there is no account system ' +
+        "to sign into. The public pages — Home, About and Standards — still work normally.</p>" +
+        '<a class="btn btn-accent" href="' + (document.body.getAttribute("data-base") || "") + 'index.html">Back to Home</a></div>';
+      document.body.appendChild(ov);
+      document.body.style.visibility = "visible";
+      var lk = document.getElementById("aqGateLock"); if (lk) lk.remove();
+      return;
+    }
+
+    ov.innerHTML =
+      '<div class="aq-gate-box">' +
+        '<h2>Sign in to continue</h2>' +
+        '<p>Home, About and Standards are open to everyone. Everything else — Departments, ' +
+        "Learn, the Quality Tools, the Workspace and the Dashboard — needs an account. " +
+        "Sign in once and every one of those pages opens without asking again.</p>" +
+        '<div class="aq-gate-tabs"><button type="button" class="active" data-t="in">Sign in</button>' +
+        '<button type="button" data-t="up">Create account</button></div>' +
+        '<div id="aqGateBody"></div><p class="aq-gate-msg" id="aqGateMsg"></p>' +
+        '<a class="aq-gate-back" href="' + (document.body.getAttribute("data-base") || "") + 'index.html">\u2190 Back to Home</a>' +
+      "</div>";
+    document.body.appendChild(ov);
+    document.body.style.visibility = "visible";
+    var lk2 = document.getElementById("aqGateLock"); if (lk2) lk2.remove();
+
+    var body = ov.querySelector("#aqGateBody"), msg = ov.querySelector("#aqGateMsg");
+    var S = window.AQStore;
+
+    function draw(tab) {
+      body.innerHTML =
+        '<label>Work email</label><input id="agEmail" type="email" autocomplete="email">' +
+        '<label>Password</label><input id="agPass" type="password" autocomplete="current-password">' +
+        (tab === "up"
+          ? '<label>Your name</label><input id="agName" type="text">' +
+            '<label>Hospital name</label><input id="agOrg" type="text">'
+          : "") +
+        '<button type="button" class="btn btn-accent" id="agGo">' +
+          (tab === "up" ? "Create account" : "Sign in") + "</button>";
+
+      body.querySelector("#agGo").addEventListener("click", async function () {
+        var e = body.querySelector("#agEmail").value.trim();
+        var p = body.querySelector("#agPass").value;
+        if (!e || !p) { msg.textContent = "Email and password are both needed."; return; }
+        this.disabled = true; msg.textContent = "Working\u2026";
+        try {
+          if (tab === "up") {
+            await S.adapter.signUp(e, p,
+              body.querySelector("#agName").value.trim() || e,
+              body.querySelector("#agOrg").value.trim() || "My Hospital");
+            msg.textContent = "Account created. If email confirmation is required, check your inbox, then sign in.";
+            this.disabled = false;
+          } else {
+            await S.adapter.signInPassword(e, p);
+            location.href = decodeURIComponent(here) || location.href;
+          }
+        } catch (err) {
+          msg.textContent = String(err.message || err).slice(0, 220);
+          this.disabled = false;
+        }
+      });
+    }
+    draw("in");
+    ov.querySelectorAll(".aq-gate-tabs button").forEach(function (b) {
+      b.addEventListener("click", function () {
+        ov.querySelectorAll(".aq-gate-tabs button").forEach(function (x) { x.classList.remove("active"); });
+        b.classList.add("active"); msg.textContent = ""; draw(b.getAttribute("data-t"));
+      });
+    });
+  }
+
+  async function run() {
+    window.AQGate = { watermark: watermark };
+    var S = window.AQStore;
+    if (!S) { reveal(); return; }               // store failed to load — fail open rather than lock everyone out permanently
+
+    if (S.mode !== "supabase") {
+      // No real backend: there is nothing to authenticate against. Local-mode "login"
+      // on a single page is not access control, so gating pretends nothing here —
+      // it would just be friction with zero security behind it.
+      loginOverlay("unconfigured");
+      return;
+    }
+
+    var user = await S.currentUser();
+    if (user) {
+      reveal();
+      // The account owner's own view carries no watermark and no copy/right-click
+      // restriction — those exist to trace a leak from someone ELSE's session, and
+      // applying them to the person running the site would just be friction.
+      if (user.role !== "owner") watermark(user);
+      return;
+    }
+    loginOverlay("supabase");
+  }
+
+    var LIBRARY_ONLY = document.body && document.body.getAttribute("data-page") === "workspace";
+
+  if (LIBRARY_ONLY) {
+    // Undo the instant lock style this file adds at load time — shell.js is doing
+    // its own hide/reveal via #wsGate / #wsBody, so this page must not also be
+    // forced invisible while its own auth flow is still running.
+    var l = document.getElementById("aqGateLock"); if (l) l.remove();
+    window.AQGate = { watermark: watermark };
+  } else {
+    if (document.readyState === "loading") document.addEventListener("DOMContentLoaded", run);
+    else run();
+  }
+})();
