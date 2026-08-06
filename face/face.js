@@ -101,29 +101,93 @@
     }
   }
 
-  const COLORS = [0x5eead4, 0x38bdf8, 0x818cf8, 0xa78bfa, 0xf472b6, 0x34d399, 0x60a5fa, 0xc084fc];
+  // ---------- Palette ----------
+  // Colours come from the Neon Heart model's own texture: crimson through violet to
+  // electric blue. The same ramp is applied to every organ so the hero reads as one
+  // family, while each particle's position on the ramp comes from the brightness of
+  // its real texel — so the organ's own internal structure still shows through.
+  const NEON_RAMP = [
+    [0xdf, 0x35, 0x1c], [0xad, 0x22, 0x4e], [0xa3, 0x22, 0x47],
+    [0x8a, 0x2a, 0x6a], [0x6a, 0x24, 0x90], [0x4d, 0x5c, 0xbb],
+    [0x2a, 0x90, 0xd7], [0x5e, 0xea, 0xd4]
+  ];
+  function rampAt(t) {
+    t = Math.max(0, Math.min(0.9999, t)) * (NEON_RAMP.length - 1);
+    const i = Math.floor(t), f = t - i;
+    const a = NEON_RAMP[i], b = NEON_RAMP[Math.min(i + 1, NEON_RAMP.length - 1)];
+    return [0, 1, 2].map(k => Math.round(a[k] + (b[k] - a[k]) * f));
+  }
+  function hexOf(rgb) {
+    return "#" + rgb.map(v => v.toString(16).padStart(2, "0")).join("");
+  }
+
+  const MESH_COLORS = (window.ORGAN_MESH && window.ORGAN_MESH.colors) || null;
+
+  // Map a source texel to a position on the neon ramp via its luminance, nudged by
+  // how red-vs-blue it already is, so warm areas stay warm and cool areas stay cool.
+  function rampKeyFor(hex) {
+    const r = parseInt(hex.slice(1, 3), 16), g = parseInt(hex.slice(3, 5), 16), b = parseInt(hex.slice(5, 7), 16);
+    const lum = (0.2126 * r + 0.7152 * g + 0.0722 * b) / 255;
+    const warm = (r - b) / 255;                       // +1 fully red, -1 fully blue
+    return Math.max(0, Math.min(1, 0.5 + lum * 0.5 - warm * 0.55));
+  }
+
   function glowTexture(hex) {
     const c = document.createElement("canvas"); c.width = c.height = 32;
     const ctx = c.getContext("2d");
     const g = ctx.createRadialGradient(16, 16, 0, 16, 16, 16);
-    g.addColorStop(0, hex); g.addColorStop(1, "rgba(0,0,0,0)");
+    g.addColorStop(0, hex); g.addColorStop(0.45, hex);
+    g.addColorStop(1, "rgba(0,0,0,0)");
     ctx.fillStyle = g; ctx.beginPath(); ctx.arc(16, 16, 16, 0, Math.PI * 2); ctx.fill();
     return new THREE.CanvasTexture(c);
   }
-  const colorTex = {};
-  COLORS.forEach(c => { colorTex[c] = glowTexture("#" + c.toString(16).padStart(6, "0")); });
+
+  // Quantise the ramp to 24 steps so we build 24 textures rather than 850.
+  const RAMP_STEPS = 24;
+  const rampTex = [];
+  for (let i = 0; i < RAMP_STEPS; i++) rampTex.push(glowTexture(hexOf(rampAt(i / (RAMP_STEPS - 1)))));
+  function texForKey(k) { return rampTex[Math.min(RAMP_STEPS - 1, Math.floor(k * RAMP_STEPS))]; }
+
+  // Per-organ colour keys, so a particle re-tints as it reintegrates into each organ.
+  const SHAPE_KEYS = {};
+  if (MESH_COLORS) {
+    ORDER.forEach(name => {
+      const src = MESH_COLORS[name];
+      if (!src) return;
+      SHAPE_KEYS[name] = points.map((_, i) => rampKeyFor(src[Math.floor(i * src.length / N_POINTS)] || "#888888"));
+    });
+  }
+  function keyFor(name, i) {
+    const k = SHAPE_KEYS[name];
+    return k ? k[i] : (i % RAMP_STEPS) / RAMP_STEPS;
+  }
 
   const particles = points.map((p, i) => {
-    const color = COLORS[i % COLORS.length];
-    const mat = new THREE.SpriteMaterial({ map: colorTex[color], transparent: true, depthWrite: false, blending: THREE.AdditiveBlending, opacity: 0.75 });
+    const key = keyFor(ORDER[0], i);
+    const mat = new THREE.SpriteMaterial({
+      map: texForKey(key), transparent: true, depthWrite: false,
+      blending: THREE.AdditiveBlending, opacity: 0.85
+    });
     const sprite = new THREE.Sprite(mat);
-    const scale = 0.028 + Math.random() * 0.03;
+    const scale = 0.026 + Math.random() * 0.028;
     sprite.scale.setScalar(scale);
     sprite.position.copy(p);
     rig.add(sprite);
-    return { mesh: sprite, basePos: p.clone(), baseScale: scale, phase: Math.random() * Math.PI * 2 };
-  });
 
+    // Where this particle waits while dispersed. A shell well outside the organ, so
+    // reintegration reads as material drawing inward from the surrounding space.
+    const dir = new THREE.Vector3(Math.random() * 2 - 1, Math.random() * 2 - 1, Math.random() * 2 - 1).normalize();
+    const scatterPos = dir.multiplyScalar(2.6 + Math.random() * 2.2);
+
+    return {
+      mesh: sprite, basePos: p.clone(), baseScale: scale,
+      phase: Math.random() * Math.PI * 2,
+      scatter: scatterPos,
+      drift: Math.random() * Math.PI * 2,
+      lag: Math.random(),            // staggers arrival so the shape resolves progressively
+      colKey: key
+    };
+  });
 
   // ---------- Wireframe mesh edges ----------
   // When the real organ meshes are loaded (OrganShapes.source === "mesh"), the web is
@@ -165,7 +229,7 @@
   const edgeMat = new THREE.LineBasicMaterial({
     color: 0x5eead4,
     transparent: true,
-    opacity: MESH_MODE ? 0.34 : 0.15,
+    opacity: MESH_MODE ? 0.18 : 0.10,
     blending: THREE.AdditiveBlending,
     depthWrite: false
   });
@@ -199,6 +263,9 @@
       arr[o] = arr[o+1] = arr[o+2] = arr[o+3] = arr[o+4] = arr[o+5] = 0;
     }
     edgeGeo.attributes.position.needsUpdate = true;
+    // Links only exist once the organ has actually reintegrated — while the particles
+    // are dispersed there is no structure to connect.
+    edgeMat.opacity = (MESH_MODE ? 0.18 : 0.10) * Math.max(0, (formT - 0.55) / 0.45);
   }
 
   // ---------- 10 real chapter nodes, anchored to the morphing cloud ----------
@@ -281,10 +348,12 @@
   }
 
   // ---------- Morph state ----------
-  const HOLD_MS = 3000;                 // each organ is shown for 3s
-  const MORPH_MS = 1500;                // and takes 1.5s to travel to the next
-  let organIdx = 0, nextIdx = 1, morphT = 1, lastSwitch = performance.now();
-  let edgesSwapped = true;   // true once the wireframe has moved to the incoming organ
+  // Reintegration cycle timing.
+  const FORM_MS  = 1600;   // particles converge and resolve into the organ
+  const HOLD_MS  = 3000;   // the organ stays complete and alive for 3s
+  const BREAK_MS = 1100;   // it disperses again
+  let organIdx = 0, morphT = 1;
+  let phase = "FORMING", cyclePhaseT = 0, formT = 0;
   const from = points.map(p => p.clone());
   const to = points.map(p => p.clone());
 
@@ -293,7 +362,7 @@
     ORGANS[nameA].forEach((v, i) => from[i].set(v[0], v[1], v[2]));
     ORGANS[nameB].forEach((v, i) => to[i].set(v[0], v[1], v[2]));
   }
-  if (ORGANS) setTargets(ORDER[0], ORDER[1 % ORDER.length]);
+  if (ORGANS) setTargets(ORDER[0], ORDER[0]);   // first organ forms from dispersed
 
   // Organ names are deliberately not shown — the shapes read as an evolving
   // anatomical network rather than a labelled slideshow.
@@ -348,7 +417,7 @@
   let beatPhase = 0, breathPhase = 0, blinkAt = 1.2, blinkT = -1;
 
   // Safe to call now: every const it depends on is initialised above.
-  if (ORGANS) recomputeImpulse(ORDER[Math.min(1, ORDER.length - 1)]);
+  if (ORGANS) recomputeImpulse(ORDER[0]);
 
   // ---------- Animate ----------
   const SWAY = THREE.MathUtils.degToRad(16);
@@ -362,27 +431,39 @@
     t0 = now;
     const tt = now / 1000;
 
-    // advance the morph
+    // ---- reintegration cycle ------------------------------------------------
+    // DISPERSED -> the particles are scattered in the surrounding space
+    // FORMING   -> they converge inward and resolve into the organ
+    // HELD      -> the organ is complete and alive for 3 seconds
+    // BREAKING  -> it disperses again, and the next organ begins forming
     if (ORGANS && !reduceMotion) {
-      if (morphT >= 1 && now - lastSwitch > HOLD_MS) {
-        organIdx = nextIdx;
-        nextIdx = (nextIdx + 1) % ORDER.length;
-        setTargets(ORDER[organIdx], ORDER[nextIdx]);
-        // The morph runs from organIdx TO nextIdx, so the shape that settles on
-        // screen — and therefore the one whose motion should play — is nextIdx.
-        recomputeImpulse(ORDER[nextIdx]);
-        setEdgeShape(ORDER[organIdx]);       // wireframe of the shape we are leaving
-        edgesSwapped = false;
-        morphT = 0;
-        lastSwitch = now;
+      cyclePhaseT += dt;
+      if (phase === "FORMING" && cyclePhaseT >= FORM_MS / 1000) {
+        phase = "HELD"; cyclePhaseT = 0;
+      } else if (phase === "HELD" && cyclePhaseT >= HOLD_MS / 1000) {
+        phase = "BREAKING"; cyclePhaseT = 0;
+      } else if (phase === "BREAKING" && cyclePhaseT >= BREAK_MS / 1000) {
+        // Next organ: retarget positions and re-tint every particle to its palette.
+        organIdx = (organIdx + 1) % ORDER.length;
+        const name = ORDER[organIdx];
+        ORGANS[name].forEach((v, i) => to[i].set(v[0], v[1], v[2]));
+        particles.forEach((p, i) => {
+          p.colKey = keyFor(name, i);
+          p.mesh.material.map = texForKey(p.colKey);
+          p.mesh.material.needsUpdate = true;
+        });
+        setEdgeShape(name);
+        recomputeImpulse(name);
+        phase = "FORMING"; cyclePhaseT = 0;
       }
-      if (morphT < 1) {
-        morphT = Math.min(1, morphT + dt * (1000 / MORPH_MS));
-        // Swap the wireframe at the midpoint, where the cloud stops reading as the
-        // old organ and starts reading as the new one.
-        if (!edgesSwapped && morphT >= 0.5) { setEdgeShape(ORDER[nextIdx]); edgesSwapped = true; }
-        if (morphT >= 1) lastSwitch = now;   // start the hold once travel completes
-      }
+
+      // formT: 0 = fully dispersed, 1 = fully integrated.
+      if (phase === "FORMING")       formT = easeInOut(Math.min(1, cyclePhaseT / (FORM_MS / 1000)));
+      else if (phase === "HELD")     formT = 1;
+      else if (phase === "BREAKING") formT = 1 - easeInOut(Math.min(1, cyclePhaseT / (BREAK_MS / 1000)));
+
+      // morphT drives the existing "is the shape settled" checks elsewhere.
+      morphT = formT;
     }
     const k = easeInOut(morphT);
 
@@ -411,10 +492,21 @@
       ? 1 + Math.sin(breathPhase) * 0.085 : 1;
 
     particles.forEach((p, i) => {
-      // where this particle should be, mid-morph
-      let tx = from[i].x + (to[i].x - from[i].x) * k;
-      let ty = from[i].y + (to[i].y - from[i].y) * k;
-      let tz = from[i].z + (to[i].z - from[i].z) * k;
+      // Reintegration: blend between the particle's dispersed position out in the
+      // surrounding space and its place within the organ. `lag` staggers arrival so
+      // the shape resolves progressively rather than snapping into being all at once.
+      const lagged = Math.max(0, Math.min(1, (k - p.lag * 0.35) / (1 - p.lag * 0.35)));
+      const a = easeInOut(lagged);
+
+      // While dispersed the particle drifts, so the cloud is never static.
+      const dr = 1 - a;
+      const sx = p.scatter.x + Math.sin(tt * 0.5 + p.drift) * 0.35 * dr;
+      const sy = p.scatter.y + Math.cos(tt * 0.42 + p.drift) * 0.35 * dr;
+      const sz = p.scatter.z + Math.sin(tt * 0.46 + p.drift * 1.7) * 0.35 * dr;
+
+      let tx = sx + (to[i].x - sx) * a;
+      let ty = sy + (to[i].y - sy) * a;
+      let tz = sz + (to[i].z - sz) * a;
 
       if (settled && !reduceMotion) {
         if (currentMotion === "heart") { tx *= beat; ty *= beat; tz *= beat; }
@@ -453,7 +545,9 @@
           scaleMul = 1 + (1 - d / 0.9) * 0.8;
         }
       }
-      p.mesh.position.lerp(target, morphT < 1 ? 0.35 : 0.15);
+      p.mesh.position.lerp(target, morphT < 1 ? 0.45 : 0.15);
+      // Dimmer and smaller while dispersed; full brightness once integrated.
+      p.mesh.material.opacity = 0.2 + 0.68 * a;
       const pulse = reduceMotion ? 1 : 1 + Math.sin(tt * 1.2 + p.phase) * 0.15;
       p.mesh.scale.setScalar(p.baseScale * pulse * scaleMul);
       p.mesh.material.opacity = Math.min(1, 0.75 + impulse * 0.85);

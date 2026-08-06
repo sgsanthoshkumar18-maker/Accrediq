@@ -18,32 +18,38 @@ MAP = {
 }
 
 def parse_obj(path):
-    """Return (verts, tris). Streams line by line; keeps only what we need."""
-    verts, tris = [], []
+    """Return (verts, uvs, tris). tris carry (vertIdx, uvIdx) pairs so we can look up
+    each sampled point's colour in the texture map."""
+    verts, uvs, tris = [], [], []
     with open(path, "r", errors="ignore") as f:
         for line in f:
             if line.startswith("v "):
                 p = line.split()
                 verts.append((float(p[1]), float(p[2]), float(p[3])))
+            elif line.startswith("vt "):
+                p = line.split()
+                uvs.append((float(p[1]), float(p[2])))
             elif line.startswith("f "):
                 idx = []
                 for tok in line.split()[1:]:
-                    v = tok.split("/")[0]
-                    if not v:
+                    parts = tok.split("/")
+                    if not parts[0]:
                         continue
-                    i = int(v)
-                    idx.append(i - 1 if i > 0 else len(verts) + i)
-                # fan-triangulate any polygon
+                    i = int(parts[0]); vi = i - 1 if i > 0 else len(verts) + i
+                    ti = -1
+                    if len(parts) > 1 and parts[1]:
+                        t = int(parts[1]); ti = t - 1 if t > 0 else len(uvs) + t
+                    idx.append((vi, ti))
                 for k in range(1, len(idx) - 1):
                     tris.append((idx[0], idx[k], idx[k + 1]))
-    return verts, tris
+    return verts, uvs, tris
 
-def sample_surface(verts, tris, n):
+def sample_surface(verts, uvs, tris, n, tex):
     """Area-weighted uniform sampling over the triangle soup."""
     areas, cum = [], []
     total = 0.0
-    for (a, b, c) in tris:
-        pa, pb, pc = verts[a], verts[b], verts[c]
+    for (A, B, C) in tris:
+        pa, pb, pc = verts[A[0]], verts[B[0]], verts[C[0]]
         ux, uy, uz = pb[0]-pa[0], pb[1]-pa[1], pb[2]-pa[2]
         vx, vy, vz = pc[0]-pa[0], pc[1]-pa[1], pc[2]-pa[2]
         cx, cy, cz = uy*vz-uz*vy, uz*vx-ux*vz, ux*vy-uy*vx
@@ -52,17 +58,33 @@ def sample_surface(verts, tris, n):
         areas.append(ar); cum.append(total)
 
     import bisect
-    out = []
+    out, cols = [], []
+    tw, th, px = tex if tex else (0, 0, None)
     for _ in range(n):
         r = random.random() * total
         t = tris[min(bisect.bisect_left(cum, r), len(tris) - 1)]
-        pa, pb, pc = verts[t[0]], verts[t[1]], verts[t[2]]
+        A, B, C = t
+        pa, pb, pc = verts[A[0]], verts[B[0]], verts[C[0]]
         u, v = random.random(), random.random()
         if u + v > 1.0:
             u, v = 1.0 - u, 1.0 - v
         w = 1.0 - u - v
         out.append([pa[i]*w + pb[i]*u + pc[i]*v for i in range(3)])
-    return out
+
+        # Interpolate UV, then read the texture — this is the particle's real colour.
+        c = (200, 200, 200)
+        if px and A[1] >= 0 and B[1] >= 0 and C[1] >= 0:
+            ta, tb, tc = uvs[A[1]], uvs[B[1]], uvs[C[1]]
+            uu = ta[0]*w + tb[0]*u + tc[0]*v
+            vv = ta[1]*w + tb[1]*u + tc[1]*v
+            x = int((uu % 1.0) * (tw - 1)); y = int((1.0 - (vv % 1.0)) * (th - 1))
+            try:
+                p = px[x, y]
+                c = (p[0], p[1], p[2])
+            except Exception:
+                pass
+        cols.append("#%02x%02x%02x" % c)
+    return out, cols
 
 def orient(pts, key):
     """Meshy exports are Y-up, facing +Z. face.js expects the lateral profile facing -X
@@ -103,7 +125,7 @@ def knn_edges(pts, k):
 
 def main():
     src = sys.argv[1]; dest = sys.argv[2]
-    shapes, edges = {}, {}
+    shapes, edges, colours = {}, {}, {}
     for d in sorted(glob.glob(os.path.join(src, "*"))):
         base = os.path.basename(d)
         key = next((v for k, v in MAP.items() if k in base), None)
@@ -112,9 +134,22 @@ def main():
         objs = glob.glob(os.path.join(d, "**", "*.obj"), recursive=True)
         if not objs:
             continue
-        verts, tris = parse_obj(objs[0])
-        pts = normalise(orient(sample_surface(verts, tris, N), key), RADIUS)
+        verts, uvs, tris = parse_obj(objs[0])
+        tex = None
+        import glob as _g
+        imgs = _g.glob(os.path.join(d, "**", "*.png"), recursive=True) + \
+               _g.glob(os.path.join(d, "**", "*.jpg"), recursive=True)
+        if imgs:
+            try:
+                from PIL import Image
+                im = Image.open(imgs[0]).convert("RGB")
+                tex = (im.size[0], im.size[1], im.load())
+            except Exception as e:
+                print("   (texture unreadable:", e, ")")
+        raw, cols = sample_surface(verts, uvs, tris, N, tex)
+        pts = normalise(orient(raw, key), RADIUS)
         shapes[key] = pts
+        colours[key] = cols
         edges[key] = knn_edges(pts, K)
         print(f"  {key:7s} {len(verts):>8,} verts -> {len(pts)} points, {len(edges[key])} edges")
 
@@ -130,6 +165,10 @@ def main():
     js.append("  edges: {")
     for k, v in edges.items():
         js.append(f'    "{k}": {json.dumps([list(e) for e in v], separators=(",", ":"))},')
+    js.append("  },")
+    js.append("  colors: {")
+    for k, v in colours.items():
+        js.append(f'    "{k}": {json.dumps(v, separators=(",", ":"))},')
     js.append("  }")
     js.append("};")
     open(dest, "w").write("\n".join(js) + "\n")
