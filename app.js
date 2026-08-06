@@ -14,6 +14,7 @@
       ]
     },
     { key: "workspace", href: "workspace/workspace.html", label: "Workspace" },
+    { key: "todaysquiz", href: "quiz.html", label: "Today's Quiz" },
     {
       key: "toolsgroup", label: "Tools", dropdown: [
         { key: "qualitytools", href: "tools/quality-tools.html", label: "Quality Tools" },
@@ -116,6 +117,7 @@
             <a href="${base}tools/kpi-library.html">KPI Library</a>
           </div>
           <div class="footer-col"><h4>Practice</h4>
+            <a href="${base}quiz.html">Today's Quiz</a>
             <a href="${base}tools/quality-tools.html">Quality Tools</a>
             <a href="${base}tools/committees.html">Committees</a>
             <a href="${base}sop.html">SOP Generator</a>

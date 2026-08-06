@@ -1,46 +1,58 @@
 <!DOCTYPE html>
 <html lang="en">
 <head>
+<script>(function(){try{var p=new URLSearchParams(location.search);if(p.has("dark")){var v=p.get("dark");if(v==="0"){localStorage.setItem("aq-theme","light");}else{localStorage.setItem("aq-theme","dark");}}if(localStorage.getItem("aq-theme")==="dark"){document.documentElement.setAttribute("data-theme","dark");}if(p.has("neon")){localStorage.setItem("aq-palette",p.get("neon")==="0"?"default":"neon");}if(localStorage.getItem("aq-palette")==="neon"){document.documentElement.setAttribute("data-palette","neon");}}catch(e){}})();</script>
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width, initial-scale=1">
-<title>Today's Quiz — AQcredix</title>
-<meta name="description" content="A daily scenario-based quiz for hospital quality managers. Ten questions, one department each day, certificate on a perfect score.">
+<title>Today's Quiz — Daily Scenarios for Quality Managers | AQcredix</title>
+<meta name="description" content="Ten scenario-based questions for hospital quality managers every day, one department at a time. Perfect score earns a dated certificate.">
+<link rel="icon" href="data:image/svg+xml,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 26 30'><path d='M13 1 24 5v10c0 7-5 12-11 14C7 27 2 22 2 15V5L13 1Z' fill='%234F46E5'/></svg>">
 <link rel="stylesheet" href="styles.css">
 <link rel="stylesheet" href="quiz/quiz.css">
+<link rel="stylesheet" href="workspace/auth-gate.css">
 <style>
-/* Critical CSS inlined deliberately.
-   External stylesheets on this site have failed to load from cache twice, and
-   when quiz.css is missing the option buttons fall back to a white face with
-   inherited-black text that reads as broken. These rules keep the page usable
-   on its own. Do not remove without reading the handover note on caching. */
-.aq-quiz-wrap{max-width:860px;margin:0 auto;padding:32px 20px 96px}
+/* Critical CSS inlined deliberately. External stylesheets on this site have
+   failed to load from cache twice; when quiz.css is missing, the option
+   buttons fall back to a default white face with inherited dark text and read
+   as broken. These rules keep the page usable on its own. See the handover
+   note on caching before removing. */
+.aq-quiz-wrap{max-width:860px;margin:0 auto;padding:8px 20px 96px}
 .aq-quiz-title{font-size:34px;line-height:1.2;color:var(--fg,#e8eef2);font-weight:700;margin:0 0 10px}
-.aq-quiz-eyebrow{color:#17a2b8;font-size:13px;letter-spacing:1.4px;text-transform:uppercase;font-weight:600;margin:0 0 6px}
+.aq-quiz-eyebrow{color:var(--accent,#17a2b8);font-size:13px;letter-spacing:1.4px;text-transform:uppercase;font-weight:600;margin:0 0 6px}
 .aq-quiz-sub{color:var(--muted,#9bb0bd);font-size:15px;line-height:1.65;margin:0}
 .aq-q-card{background:var(--card,#12202e);border:1px solid var(--border,#24384a);border-radius:14px;padding:22px;margin:0 0 18px}
 .aq-q-text{color:var(--fg,#e8eef2);font-size:16.5px;line-height:1.62;margin:0 0 18px}
 .aq-q-options{display:flex;flex-direction:column;gap:10px}
 .aq-opt{-webkit-appearance:none;appearance:none;display:flex;gap:12px;width:100%;text-align:left;padding:13px 15px;border-radius:10px;border:1px solid var(--border,#24384a);background:var(--bg,#0b1622);color:var(--fg,#e8eef2);font:inherit;font-size:15px;line-height:1.55;cursor:pointer}
-.aq-btn{-webkit-appearance:none;appearance:none;font:inherit;font-size:15px;font-weight:600;padding:12px 26px;border-radius:999px;border:1px solid #17a2b8;background:#17a2b8;color:#04222b;cursor:pointer}
+.aq-btn{-webkit-appearance:none;appearance:none;font:inherit;font-size:15px;font-weight:600;padding:12px 26px;border-radius:999px;border:1px solid var(--accent,#17a2b8);background:var(--accent,#17a2b8);color:#04222b;cursor:pointer}
 </style>
 </head>
-<body data-page="quiz">
+<body data-page="todaysquiz" data-base="">
 
-<!-- Auth gate. Loaded synchronously, not deferred: auth-gate.js checks
-     document.body for the data-page attribute and must run before anything
-     that calls window.AQGate. store.js must precede it so AQStore exists. -->
+<!-- Auth gate. Loaded synchronously (not deferred) and before anything that
+     calls window.AQGate, matching dashboard.html and the other gated pages.
+     store.js must precede auth-gate.js so AQStore exists when it checks. -->
 <script src="workspace/config.js"></script>
 <script src="workspace/store.js"></script>
 <script src="workspace/auth-gate.js"></script>
-<link rel="stylesheet" href="workspace/auth-gate.css">
 
-<div id="nav"></div>
+<div id="site-header"></div>
 
-<main class="aq-quiz-wrap">
+<main id="aq-main"><section class="page-head">
+  <div class="wrap">
+    <nav class="breadcrumb"><a href="index.html">Home</a><span class="sep">/</span><span class="cur">Today's Quiz</span></nav>
+    <span class="eyebrow">A new department every day</span>
+    <h1>Today's Quiz.</h1>
+    <p class="lead">Ten scenario questions for quality managers, rotating through one department a day. Every option is written to be defensible — the answer is the one an assessor would call correct, and each explanation tells you why the others fall short.</p>
+  </div>
+</section>
+
+<div class="aq-quiz-wrap">
   <div id="aqQuizRoot"></div>
+</div>
 </main>
 
-<div id="footer"></div>
+<div id="site-footer"></div>
 
 <script src="app.js"></script>
 <script src="quiz/quiz-data.js"></script>

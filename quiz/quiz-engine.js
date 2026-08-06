@@ -153,12 +153,13 @@
   function render() {
     root.innerHTML = "";
 
+    /* h2, not h1 — the page template already supplies the h1 ("Today's Quiz").
+       Two h1s on one page is both a document-outline error and an SEO one. */
     var head = el("div", "aq-quiz-head");
-    head.appendChild(el("p", "aq-quiz-eyebrow", "Today's Quiz \u00B7 " + longDate(set.date)));
-    head.appendChild(el("h1", "aq-quiz-title", set.department.name));
+    head.appendChild(el("p", "aq-quiz-eyebrow", longDate(set.date)));
+    head.appendChild(el("h2", "aq-quiz-title", set.department.name));
     head.appendChild(el("p", "aq-quiz-sub",
-      "Ten scenario questions for quality managers. Every option is plausible \u2014 read them all before choosing. " +
-      "A perfect score earns a dated certificate."));
+      "Every option is plausible \u2014 read all four before choosing. A perfect score earns a dated certificate."));
     root.appendChild(head);
 
     var bar = el("div", "aq-quiz-progress");
