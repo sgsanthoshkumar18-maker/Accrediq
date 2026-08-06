@@ -13,6 +13,7 @@
         { key: "nonclinicalareas", href: "nonclinical-areas.html", label: "Non-Clinical Areas" },
       ]
     },
+    { key: "workspace", href: "workspace/workspace.html", label: "Workspace" },
     {
       key: "toolsgroup", label: "Tools", dropdown: [
         { key: "qualitytools", href: "tools/quality-tools.html", label: "Quality Tools" },
@@ -108,6 +109,7 @@
           <div class="footer-col"><h4>Learn</h4>
             <a href="${base}standards.html">Standards</a>
             <a href="${base}departments.html">Departments</a>
+            <a href="${base}workspace/workspace.html">Workspace</a>
             <a href="${base}clinical-areas.html">Clinical Areas</a>
             <a href="${base}nonclinical-areas.html">Non-Clinical Areas</a>
             <a href="${base}dashboard.html">Quality Dashboard</a>
