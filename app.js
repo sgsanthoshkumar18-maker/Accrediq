@@ -14,9 +14,9 @@
       ]
     },
     { key: "workspace", href: "workspace/workspace.html", label: "Workspace" },
-    { key: "todaysquiz", href: "quiz.html", label: "Today's Quiz" },
     {
       key: "toolsgroup", label: "Tools", dropdown: [
+        { key: "todaysquiz", href: "quiz.html", label: "Today's Quiz" },
         { key: "qualitytools", href: "tools/quality-tools.html", label: "Quality Tools" },
         { key: "kpilibrary", href: "tools/kpi-library.html", label: "KPI Library" },
         { key: "codealerts", href: "tools/code-alerts.html", label: "Code Alerts" },
