@@ -1,0 +1,305 @@
+/* AQcredix — Today's Quiz styles.
+ *
+ * Every var() carries a hardcoded fallback, and every <button> sets colour and
+ * -webkit-appearance explicitly. Both are standing rules on this project: card
+ * titles have gone invisible twice when an external stylesheet failed to load
+ * and buttons fell back to the default white face.
+ */
+
+.aq-quiz-wrap {
+  max-width: 860px;
+  margin: 0 auto;
+  padding: 32px 20px 96px;
+}
+
+.aq-quiz-head { margin-bottom: 28px; }
+
+.aq-quiz-eyebrow {
+  margin: 0 0 6px;
+  font-size: 13px;
+  letter-spacing: 1.4px;
+  text-transform: uppercase;
+  color: var(--accent, #17a2b8);
+  font-weight: 600;
+}
+
+.aq-quiz-title {
+  margin: 0 0 10px;
+  font-size: 34px;
+  line-height: 1.2;
+  color: var(--fg, #e8eef2);
+  font-weight: 700;
+}
+
+.aq-quiz-sub {
+  margin: 0;
+  font-size: 15px;
+  line-height: 1.65;
+  color: var(--muted, #9bb0bd);
+  max-width: 62ch;
+}
+
+/* progress */
+.aq-quiz-progress {
+  height: 4px;
+  border-radius: 999px;
+  background: var(--border, #24384a);
+  overflow: hidden;
+  margin: 0 0 28px;
+}
+
+.aq-quiz-progress-fill {
+  height: 100%;
+  width: 0;
+  background: var(--accent, #17a2b8);
+  transition: width .25s ease;
+}
+
+/* question cards */
+.aq-q-card {
+  background: var(--card, #12202e);
+  border: 1px solid var(--border, #24384a);
+  border-radius: 14px;
+  padding: 22px 22px 20px;
+  margin: 0 0 18px;
+}
+
+.aq-q-num {
+  display: block;
+  font-size: 12px;
+  letter-spacing: 1.1px;
+  text-transform: uppercase;
+  color: var(--muted, #7e94a3);
+  margin-bottom: 10px;
+  font-weight: 600;
+}
+
+.aq-q-text {
+  margin: 0 0 18px;
+  font-size: 16.5px;
+  line-height: 1.62;
+  color: var(--fg, #e8eef2);
+}
+
+.aq-q-options {
+  display: flex;
+  flex-direction: column;
+  gap: 10px;
+}
+
+.aq-opt {
+  -webkit-appearance: none;
+  appearance: none;
+  display: flex;
+  align-items: flex-start;
+  gap: 12px;
+  width: 100%;
+  text-align: left;
+  padding: 13px 15px;
+  border-radius: 10px;
+  border: 1px solid var(--border, #24384a);
+  background: var(--bg, #0b1622);
+  color: var(--fg, #e8eef2);
+  font: inherit;
+  font-size: 15px;
+  line-height: 1.55;
+  cursor: pointer;
+  transition: border-color .15s ease, background .15s ease;
+}
+
+.aq-opt:hover:not(:disabled) {
+  border-color: var(--accent, #17a2b8);
+}
+
+.aq-opt:disabled { cursor: default; }
+
+.aq-opt-letter {
+  flex: 0 0 24px;
+  height: 24px;
+  border-radius: 6px;
+  background: var(--border, #24384a);
+  color: var(--fg, #e8eef2);
+  font-size: 12px;
+  font-weight: 700;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  margin-top: 1px;
+}
+
+.aq-opt-text { flex: 1 1 auto; color: inherit; }
+
+.aq-opt.is-picked {
+  border-color: var(--accent, #17a2b8);
+  background: rgba(23, 162, 184, .10);
+}
+
+.aq-opt.is-picked .aq-opt-letter {
+  background: var(--accent, #17a2b8);
+  color: #04222b;
+}
+
+.aq-opt.is-correct {
+  border-color: #2fa86b;
+  background: rgba(47, 168, 107, .12);
+}
+
+.aq-opt.is-correct .aq-opt-letter { background: #2fa86b; color: #04220f; }
+
+.aq-opt.is-wrong {
+  border-color: #d8604d;
+  background: rgba(216, 96, 77, .10);
+}
+
+.aq-opt.is-wrong .aq-opt-letter { background: #d8604d; color: #2b0b06; }
+
+/* explanations */
+.aq-q-why { display: none; }
+
+.aq-q-why.is-open {
+  display: block;
+  margin-top: 16px;
+  padding: 14px 16px;
+  border-radius: 10px;
+  border-left: 3px solid var(--accent, #17a2b8);
+  background: rgba(23, 162, 184, .07);
+}
+
+.aq-q-why.is-right { border-left-color: #2fa86b; background: rgba(47, 168, 107, .08); }
+.aq-q-why.is-miss { border-left-color: #d8604d; background: rgba(216, 96, 77, .07); }
+
+.aq-why-tag {
+  display: inline-block;
+  font-size: 11.5px;
+  letter-spacing: 1.1px;
+  text-transform: uppercase;
+  font-weight: 700;
+  margin-bottom: 7px;
+  color: var(--muted, #9bb0bd);
+}
+
+.aq-q-why.is-right .aq-why-tag { color: #43c489; }
+.aq-q-why.is-miss .aq-why-tag { color: #e8836f; }
+
+.aq-why-text {
+  margin: 0;
+  font-size: 14.5px;
+  line-height: 1.7;
+  color: var(--muted, #b6c6d1);
+}
+
+/* footer + submit */
+.aq-quiz-foot { margin-top: 26px; text-align: center; }
+
+.aq-btn {
+  -webkit-appearance: none;
+  appearance: none;
+  font: inherit;
+  font-size: 15px;
+  font-weight: 600;
+  padding: 12px 26px;
+  border-radius: 999px;
+  border: 1px solid var(--border, #24384a);
+  background: var(--card, #12202e);
+  color: var(--fg, #e8eef2);
+  cursor: pointer;
+  transition: opacity .15s ease, transform .1s ease;
+}
+
+.aq-btn:active:not(:disabled) { transform: scale(.98); }
+
+.aq-btn-primary {
+  background: var(--accent, #17a2b8);
+  border-color: var(--accent, #17a2b8);
+  color: #04222b;
+}
+
+.aq-btn:disabled { opacity: .45; cursor: not-allowed; }
+
+.aq-quiz-note {
+  margin: 14px 0 0;
+  font-size: 13px;
+  line-height: 1.6;
+  color: var(--muted, #7e94a3);
+}
+
+/* result */
+.aq-quiz-result { display: none; }
+
+.aq-quiz-result.is-open {
+  display: block;
+  margin-top: 30px;
+  padding: 28px 24px;
+  border-radius: 16px;
+  border: 1px solid var(--border, #24384a);
+  background: var(--card, #12202e);
+  text-align: center;
+}
+
+.aq-quiz-result.is-perfect { border-color: #2fa86b; }
+
+.aq-result-score {
+  margin: 0 0 8px;
+  font-size: 42px;
+  font-weight: 700;
+  color: var(--fg, #e8eef2);
+  line-height: 1.1;
+}
+
+.aq-quiz-result.is-perfect .aq-result-score { color: #43c489; }
+
+.aq-result-line {
+  margin: 0 auto;
+  max-width: 56ch;
+  font-size: 15px;
+  line-height: 1.65;
+  color: var(--muted, #9bb0bd);
+}
+
+.aq-cert-row {
+  display: flex;
+  gap: 10px;
+  justify-content: center;
+  flex-wrap: wrap;
+  margin-top: 20px;
+}
+
+.aq-cert-name {
+  -webkit-appearance: none;
+  appearance: none;
+  font: inherit;
+  font-size: 15px;
+  padding: 12px 16px;
+  min-width: 280px;
+  border-radius: 999px;
+  border: 1px solid var(--border, #24384a);
+  background: var(--bg, #0b1622);
+  color: var(--fg, #e8eef2);
+}
+
+.aq-cert-name.is-empty { border-color: #d8604d; }
+
+.aq-cert-preview { margin-top: 24px; }
+
+.aq-cert-preview img {
+  display: block;
+  width: 100%;
+  height: auto;
+  border-radius: 10px;
+  border: 1px solid var(--border, #24384a);
+  margin-bottom: 14px;
+}
+
+.aq-cert-meta {
+  margin: 0 0 14px;
+  font-size: 13px;
+  letter-spacing: .4px;
+  color: var(--muted, #7e94a3);
+  font-family: ui-monospace, "Courier New", monospace;
+}
+
+@media (max-width: 620px) {
+  .aq-quiz-title { font-size: 27px; }
+  .aq-q-card { padding: 18px 16px 16px; }
+  .aq-cert-name { min-width: 0; width: 100%; }
+}

@@ -1,0 +1,50 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Today's Quiz — AQcredix</title>
+<meta name="description" content="A daily scenario-based quiz for hospital quality managers. Ten questions, one department each day, certificate on a perfect score.">
+<link rel="stylesheet" href="styles.css">
+<link rel="stylesheet" href="quiz/quiz.css">
+<style>
+/* Critical CSS inlined deliberately.
+   External stylesheets on this site have failed to load from cache twice, and
+   when quiz.css is missing the option buttons fall back to a white face with
+   inherited-black text that reads as broken. These rules keep the page usable
+   on its own. Do not remove without reading the handover note on caching. */
+.aq-quiz-wrap{max-width:860px;margin:0 auto;padding:32px 20px 96px}
+.aq-quiz-title{font-size:34px;line-height:1.2;color:var(--fg,#e8eef2);font-weight:700;margin:0 0 10px}
+.aq-quiz-eyebrow{color:#17a2b8;font-size:13px;letter-spacing:1.4px;text-transform:uppercase;font-weight:600;margin:0 0 6px}
+.aq-quiz-sub{color:var(--muted,#9bb0bd);font-size:15px;line-height:1.65;margin:0}
+.aq-q-card{background:var(--card,#12202e);border:1px solid var(--border,#24384a);border-radius:14px;padding:22px;margin:0 0 18px}
+.aq-q-text{color:var(--fg,#e8eef2);font-size:16.5px;line-height:1.62;margin:0 0 18px}
+.aq-q-options{display:flex;flex-direction:column;gap:10px}
+.aq-opt{-webkit-appearance:none;appearance:none;display:flex;gap:12px;width:100%;text-align:left;padding:13px 15px;border-radius:10px;border:1px solid var(--border,#24384a);background:var(--bg,#0b1622);color:var(--fg,#e8eef2);font:inherit;font-size:15px;line-height:1.55;cursor:pointer}
+.aq-btn{-webkit-appearance:none;appearance:none;font:inherit;font-size:15px;font-weight:600;padding:12px 26px;border-radius:999px;border:1px solid #17a2b8;background:#17a2b8;color:#04222b;cursor:pointer}
+</style>
+</head>
+<body data-page="quiz">
+
+<!-- Auth gate. Loaded synchronously, not deferred: auth-gate.js checks
+     document.body for the data-page attribute and must run before anything
+     that calls window.AQGate. store.js must precede it so AQStore exists. -->
+<script src="workspace/config.js"></script>
+<script src="workspace/store.js"></script>
+<script src="workspace/auth-gate.js"></script>
+<link rel="stylesheet" href="workspace/auth-gate.css">
+
+<div id="nav"></div>
+
+<main class="aq-quiz-wrap">
+  <div id="aqQuizRoot"></div>
+</main>
+
+<div id="footer"></div>
+
+<script src="app.js"></script>
+<script src="quiz/quiz-data.js"></script>
+<script src="quiz/certificate.js"></script>
+<script src="quiz/quiz-engine.js"></script>
+</body>
+</html>
