@@ -727,3 +727,41 @@ a:focus-visible,button:focus-visible,input:focus-visible,select:focus-visible,te
 .ch-card .cc-sub, .dt-card .dt-count, .cm-card .cm-meta, .tl-card .cat {
   color: var(--fg-faint);
 }
+
+/* ============================================================
+   Mobile refinements.
+   The site is responsive by breakpoint, not by a device switch — one layout that adapts,
+   rather than two layouts to keep in sync. What follows reclaims vertical space on small
+   screens, where every pixel above the fold is competing with the content.
+   ============================================================ */
+@media (max-width:640px){
+
+  /* The brand caption wraps to five lines at phone width, pushing the whole page down on
+     every single view. The wordmark alone identifies the site; the caption is still in the
+     footer, the page title and the meta description for anyone who needs it. */
+  .site-header .brand .full-name{display:none;}
+  .site-header .brand{font-size:20px;}
+
+  /* The edition disclaimer is important but not urgent — it should be readable, not four
+     lines tall above the fold. Tightened, and clamped to two lines with the rest available
+     on tap. */
+  .aq-edition{font-size:10.5px;padding:6px 14px;line-height:1.45;text-align:left;}
+
+  /* The hero eyebrow repeats the brand caption verbatim. On a phone that is two wasted
+     lines directly above the headline that should be the first thing read. */
+  .hero .eyebrow{font-size:10px;letter-spacing:.04em;}
+
+  /* Tap targets. Anything interactive should clear the 44px Apple/WCAG guidance —
+     a mis-tap on a checklist row during a live ward round is worse than a slow page. */
+  .btn{min-height:44px;}
+  .main-nav a,.nav-dd-trigger{min-height:44px;display:flex;align-items:center;}
+
+  /* Long headings and codes should wrap rather than force a horizontal scrollbar. */
+  h1,h2,h3{overflow-wrap:break-word;}
+}
+
+/* Very small phones: the metric row goes two-up rather than trying to fit four. */
+@media (max-width:430px){
+  .hero-meta{gap:18px 26px;}
+  .hero-meta > div{flex:1 1 40%;}
+}
