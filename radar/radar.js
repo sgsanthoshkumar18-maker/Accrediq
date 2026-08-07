@@ -11,7 +11,7 @@
   const wrapEl = stage.querySelector(".radar-canvas-wrap");
 
   if (typeof THREE === "undefined") {
-    stage.innerHTML = `<div class="radar-fallback">AQcredix<br>Accreditation &amp; Quality Implementation Guidance</div>`;
+    stage.innerHTML = `<div class="radar-fallback">AQcredix<br>Accreditation &amp; Quality Implementation Guidance Platform</div>`;
     return;
   }
   if (!window.NABH_DATA) return;

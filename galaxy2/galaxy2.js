@@ -11,7 +11,7 @@
   const wrapEl = stage.querySelector(".gx-wrap");
 
   if (typeof THREE === "undefined") {
-    stage.innerHTML = `<div class="gx-fallback">AQcredix<br>Accreditation &amp; Quality Implementation Guidance</div>`;
+    stage.innerHTML = `<div class="gx-fallback">AQcredix<br>Accreditation &amp; Quality Implementation Guidance Platform</div>`;
     return;
   }
   if (!window.DEPT_DATA) return;

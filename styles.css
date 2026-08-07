@@ -240,7 +240,7 @@ p{margin:0 0 0;}
   border-bottom:1px solid var(--border);
 }
 .site-header .bar{display:flex;align-items:center;justify-content:space-between;padding:15px 28px;gap:20px;}
-.brand{display:flex;align-items:center;gap:10px;font-family:var(--font-display);font-weight:700;font-size:19px;letter-spacing:-.02em;color:var(--fg);}
+.brand{display:flex;align-items:center;gap:12px;font-family:var(--font-display);font-weight:700;font-size:19px;letter-spacing:-.02em;color:var(--fg);}
 .brand svg{flex-shrink:0;}
 .brand .full-name{display:block;font-family:var(--font-body);font-weight:600;font-size:9.5px;letter-spacing:.06em;text-transform:uppercase;color:var(--fg-faint);margin-top:1px;}
 .brand-stack{display:flex;flex-direction:column;line-height:1.1;}

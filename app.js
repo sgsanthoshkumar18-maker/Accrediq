@@ -46,7 +46,7 @@
   /* The ring mark: a three-quarter accent arc closing on a serif A. The open quarter
    is the point — accreditation readiness is a cycle that is never quite finished.
    Matches the mark drawn on the certificate, so the two read as one brand. */
-  const shieldMark = `<svg width="34" height="34" viewBox="0 0 40 40" fill="none" xmlns="http://www.w3.org/2000/svg" aria-hidden="true">
+  const shieldMark = `<svg width="46" height="46" viewBox="0 0 40 40" fill="none" xmlns="http://www.w3.org/2000/svg" aria-hidden="true">
       <circle cx="20" cy="20" r="16" stroke="#D8E0E6" stroke-width="3.4"/>
       <path d="M20 4a16 16 0 1 1-11.31 4.69" stroke="#17A2B8" stroke-width="3.4" stroke-linecap="round"/>
       <text x="20" y="26.6" text-anchor="middle" font-family="Georgia,'Times New Roman',serif" font-size="17" fill="#17A2B8">A</text>
@@ -83,7 +83,7 @@
       <div class="bar wrap">
         <a href="${base}index.html" class="brand">
           ${shieldMark}
-          <span class="brand-stack">AQcredix<span class="full-name">Accreditation &amp; Quality Implementation Guidance</span></span>
+          <span class="brand-stack">AQcredix<span class="full-name">Accreditation &amp; Quality Implementation Guidance Platform</span></span>
         </a>
         <nav class="main-nav" id="mainNav">${links}</nav>
         <div class="nav-actions">
@@ -106,7 +106,7 @@
       <div class="wrap">
         <div class="footer-grid">
           <div class="footer-brand">
-            <a href="${base}index.html" class="brand">${shieldMark}<span class="brand-stack">AQcredix<span class="full-name">Accreditation &amp; Quality Implementation Guidance</span></span></a>
+            <a href="${base}index.html" class="brand">${shieldMark}<span class="brand-stack">AQcredix<span class="full-name">Accreditation &amp; Quality Implementation Guidance Platform</span></span></a>
             <p>NABH accreditation, actually understood — every standard explained the way an assessor reads it.</p>
           </div>
           <div class="footer-col"><h4>Learn</h4>
@@ -139,7 +139,7 @@
           </div>
         </div>
         <div class="footer-bottom">
-          <span>© 2026 AQcredix — Accreditation &amp; Quality Implementation Guidance. An independent healthcare education forum. Not affiliated with NABH, QCI, JCI or any accreditation body.</span>
+          <span>© 2026 AQcredix — Accreditation &amp; Quality Implementation Guidance Platform. An independent healthcare education forum. Not affiliated with NABH, QCI, JCI or any accreditation body.</span>
           <span><a href="${base}contact.html" style="color:inherit;text-decoration:underline;">Found an error on this page? Tell us.</a></span>
         </div>
       </div>
