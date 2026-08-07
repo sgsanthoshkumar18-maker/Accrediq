@@ -1,0 +1,110 @@
+[
+  {
+    "dept": "emergency",
+    "token": "AAC.3 e",
+    "code": "AAC.3.e",
+    "reason": "no such element"
+  },
+  {
+    "dept": "emergency",
+    "token": "COP.3 a,h,i",
+    "code": "COP.3.h",
+    "reason": "no such element"
+  },
+  {
+    "dept": "emergency",
+    "token": "COP.3 a,h,i",
+    "code": "COP.3.i",
+    "reason": "no such element"
+  },
+  {
+    "dept": "emergency",
+    "token": "COP.6 a,b,e,f,g",
+    "code": "COP.6.g",
+    "reason": "no such element"
+  },
+  {
+    "dept": "emergency",
+    "token": "PRE.8 b,c,f",
+    "code": "PRE.8.f",
+    "reason": "no such element"
+  },
+  {
+    "dept": "ambulance",
+    "token": "COP.3 h",
+    "code": "COP.3.h",
+    "reason": "no such element"
+  },
+  {
+    "dept": "ambulance",
+    "token": "COP.3 i",
+    "code": "COP.3.i",
+    "reason": "no such element"
+  },
+  {
+    "dept": "opd",
+    "token": "AAC.2 f",
+    "code": "AAC.2.f",
+    "reason": "no such element"
+  },
+  {
+    "dept": "opd",
+    "token": "PRE.8 b,c,f",
+    "code": "PRE.8.f",
+    "reason": "no such element"
+  },
+  {
+    "dept": "wards",
+    "token": "IPC.3 e,f,g",
+    "code": "IPC.3.g",
+    "reason": "no such element"
+  },
+  {
+    "dept": "icu",
+    "token": "PRE.8 b,c,f",
+    "code": "PRE.8.f",
+    "reason": "no such element"
+  },
+  {
+    "dept": "ot",
+    "token": "PRE.8 b,c,f",
+    "code": "PRE.8.f",
+    "reason": "no such element"
+  },
+  {
+    "dept": "collection",
+    "token": "IPC.2 e",
+    "code": "IPC.2.e",
+    "reason": "no such element"
+  },
+  {
+    "dept": "laboratory",
+    "token": "PRE.4 d,g",
+    "code": "PRE.4.g",
+    "reason": "no such element"
+  },
+  {
+    "dept": "dental",
+    "token": "PRE.8 b,c,f",
+    "code": "PRE.8.f",
+    "reason": "no such element"
+  },
+  {
+    "dept": "facility",
+    "token": "IPC.2 k",
+    "code": "IPC.2.k",
+    "reason": "no such element"
+  },
+  {
+    "dept": "interview:care",
+    "token": "COP.17 e",
+    "code": "COP.17.e",
+    "reason": "no such element"
+  },
+  {
+    "dept": "interview:care",
+    "token": "PRE.8 f",
+    "code": "PRE.8.f",
+    "reason": "no such element"
+  }
+]

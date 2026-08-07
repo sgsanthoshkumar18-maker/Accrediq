@@ -158,12 +158,47 @@ create trigger on_auth_user_created
 -- =====================================================================
 -- Row-level security
 -- =====================================================================
+-- =====================================================================
+-- Internal audit: one row per department audit, many per user.
+-- Findings ride along as a JSON payload rather than a child table. That is a
+-- deliberate trade: an audit is written and read as a whole, never queried
+-- element-by-element across audits, so a child table would buy joins nobody
+-- performs at the cost of a second RLS surface. Findings that need tracking
+-- individually are written into public.capa on finish, which is where closure
+-- actually lives.
+-- =====================================================================
+create table if not exists public.audits (
+  id               text primary key,
+  org_id           uuid references public.orgs(id) on delete cascade,
+  department_id    text not null,
+  department_name  text not null,
+  auditor_id       uuid references auth.users(id),
+  auditor_name     text not null,
+  started_at       timestamptz not null,
+  finished_at      timestamptz,
+  duration_seconds int,
+  paused_seconds   int not null default 0,
+  status           text not null default 'in_progress',   -- in_progress | completed
+  total_elements   int,
+  compliant        int,
+  partial          int,
+  nc               int,
+  na               int,
+  readiness_score  numeric,
+  payload          jsonb,        -- { findings: {...}, kpi_checks: {...} }
+  created_at       timestamptz not null default now(),
+  updated_at       timestamptz not null default now()
+);
+
+create index if not exists audits_org_dept_idx on public.audits (org_id, department_id, started_at desc);
+
 alter table public.orgs              enable row level security;
 alter table public.members           enable row level security;
 alter table public.elements          enable row level security;
 alter table public.capa              enable row level security;
 alter table public.documents         enable row level security;
 alter table public.document_versions enable row level security;
+alter table public.audits            enable row level security;
 
 drop policy if exists org_read on public.orgs;
 create policy org_read on public.orgs
@@ -184,7 +219,7 @@ create policy members_write on public.members
 do $$
 declare t text;
 begin
-  foreach t in array array['elements','capa','documents','document_versions'] loop
+  foreach t in array array['elements','capa','documents','document_versions','audits'] loop
     execute format('drop policy if exists %I_read on public.%I', t, t);
     execute format(
       'create policy %I_read on public.%I for select using (org_id = public.my_org())', t, t);
@@ -210,7 +245,7 @@ end; $$;
 do $$
 declare t text;
 begin
-  foreach t in array array['elements','capa','documents','document_versions','members'] loop
+  foreach t in array array['elements','capa','documents','document_versions','members','audits'] loop
     execute format('drop trigger if exists set_org_%I on public.%I', t, t);
     execute format(
       'create trigger set_org_%I before insert on public.%I

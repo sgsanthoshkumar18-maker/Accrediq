@@ -1,0 +1,4 @@
+* text=auto eol=lf
+
+# Generated. Regenerate with: node build/build-scope.js
+audit/scope-data.js linguist-generated=true

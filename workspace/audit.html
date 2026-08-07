@@ -1,0 +1,81 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<script>(function(){try{var p=new URLSearchParams(location.search);if(p.has("dark")){localStorage.setItem("aq-theme",p.get("dark")==="0"?"light":"dark");}if(localStorage.getItem("aq-theme")==="dark"){document.documentElement.setAttribute("data-theme","dark");}if(localStorage.getItem("aq-palette")==="neon"){document.documentElement.setAttribute("data-palette","neon");}}catch(e){}})();</script>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Internal Audit — AQcredix Workspace</title>
+<meta name="robots" content="noindex">
+<link rel="icon" href="data:image/svg+xml,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 26 30'><path d='M13 1 24 5v10c0 7-5 12-11 14C7 27 2 22 2 15V5L13 1Z' fill='%234F46E5'/></svg>">
+<link rel="stylesheet" href="../styles.css">
+<link rel="stylesheet" href="workspace.css">
+<link rel="stylesheet" href="auth-gate.css">
+<link rel="stylesheet" href="../audit/audit.css">
+</head>
+<body data-page="workspace" data-base="../">
+<div id="site-header"></div>
+<div class="ws-nav" id="wsNav"></div>
+
+<main id="aq-main">
+  <div id="wsGate"></div>
+
+  <div id="wsBody" style="display:none">
+
+    <!-- HOME: pick a department, or open a past record -->
+    <div id="audHome" style="display:none">
+      <section class="page-head"><div class="wrap">
+        <h1>Internal audit, one department at a time</h1>
+        <p class="lead">The Readiness page scores the whole organisation. This audits a single
+          department against only the elements an assessor would actually check there —
+          then keeps the record, the workbook and the actions.</p>
+      </div></section>
+
+      <section class="section wrap">
+        <div id="audNotice"></div>
+        <div id="audPicker"></div>
+        <div id="audRecords" style="margin-top:38px"></div>
+      </section>
+    </div>
+
+    <!-- WORK: the checklist -->
+    <div id="audWork" style="display:none">
+      <section class="section wrap">
+        <div class="aud-head" id="audHead"></div>
+        <div id="audQuick"></div>
+        <div id="audBlockers"></div>
+        <div class="aud-sticky">
+          <div id="audFilters"></div>
+          <div id="audProgress"></div>
+        </div>
+        <div id="audList"></div>
+        <div id="audKpis" style="margin-top:26px"></div>
+      </section>
+    </div>
+
+    <!-- DONE: the analysis -->
+    <div id="audDone" style="display:none">
+      <section class="section wrap">
+        <p class="no-print"><button type="button" class="btn btn-ghost" id="audDoneBack">&larr; Back to audits</button></p>
+        <div id="audReportHost"></div>
+      </section>
+    </div>
+
+  </div>
+</main>
+
+<div id="site-footer"></div>
+<script src="config.js"></script>
+<script src="../app.js"></script>
+<script src="../nabh-data.js"></script>
+<script src="../department-data.js"></script>
+<script src="../audit/scope-data.js"></script>
+<script src="auth-gate.js"></script>
+<script src="store.js"></script>
+<script src="shell.js"></script>
+<script src="../audit/audit-engine.js"></script>
+<script src="../audit/audit-excel.js"></script>
+<script src="../audit/audit-report.js"></script>
+<script src="../audit/audit-ui.js"></script>
+<script>(function(){var s=["https://cdn.jsdelivr.net/npm/jszip@3.10.1/dist/jszip.min.js","https://cdnjs.cloudflare.com/ajax/libs/jszip/3.10.1/jszip.min.js"];function t(i){if(i>=s.length)return;var e=document.createElement("script");e.src=s[i];e.onerror=function(){t(i+1)};document.head.appendChild(e)}t(0)})();</script>
+</body>
+</html>
