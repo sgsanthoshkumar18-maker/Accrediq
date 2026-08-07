@@ -320,6 +320,37 @@ p{margin:0 0 0;}
    two lines instead of hanging off the cap-height of the first. */
 .hero-headline{--h1-size:clamp(30px,3.6vw,46px);display:flex;align-items:center;gap:clamp(16px,2.2vw,30px);}
 .hero-logo{flex:0 0 auto;width:calc(var(--h1-size) * 2 * 1.04);height:calc(var(--h1-size) * 2 * 1.04);}
+/* The accent arc travels around the ring rather than sitting still. The open quarter
+   reads as a gap that is always moving on — accreditation readiness is a cycle you never
+   quite close, which is the whole idea behind the mark.
+
+   transform-origin is set in the SVG's own user units (the viewBox is 0 0 40 40, so the
+   centre is 20 20), with transform-box:fill-box as the fallback path for engines that
+   resolve the origin against the element's bounding box instead. Without both, the arc
+   swings around a corner rather than spinning in place.
+
+   14s is deliberate: fast enough to notice on arrival, slow enough that it never competes
+   with the headline sitting beside it. */
+.hero-logo-arc{
+  transform-origin:20px 20px;
+  transform-box:view-box;
+  animation:aq-ring-spin 14s linear infinite;
+}
+@keyframes aq-ring-spin{to{transform:rotate(360deg);}}
+
+/* The mark also brightens and speeds up on hover, so it reads as a live element rather
+   than decoration that happens to move. */
+.hero-headline:hover .hero-logo-arc{animation-duration:4.5s;}
+.hero-logo{transition:filter .4s ease;}
+.hero-headline:hover .hero-logo{filter:drop-shadow(0 0 10px var(--accent-bright));}
+
+/* Motion is opt-out. A perpetually rotating element is a genuine problem for people with
+   vestibular disorders, so honour the OS setting rather than assuming nobody minds. */
+@media (prefers-reduced-motion: reduce){
+  .hero-logo-arc{animation:none;}
+  .hero-headline:hover .hero-logo{filter:none;}
+}
+
 .hero-headline h1{margin:0;}
 /* Below the two-column breakpoint the headline needs its full width, so the mark steps
    down to a single line's height and stops competing with the type. */
