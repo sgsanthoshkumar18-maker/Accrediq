@@ -11,7 +11,7 @@
   const wrapEl = stage.querySelector(".brain-wrap");
 
   if (typeof THREE === "undefined") {
-    stage.innerHTML = `<div class="brain-fallback">AQcredix<br>Accreditation &amp; Quality Excellence</div>`;
+    stage.innerHTML = `<div class="brain-fallback">AQcredix<br>Accreditation &amp; Quality Implementation Guidance</div>`;
     return;
   }
 

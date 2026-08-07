@@ -13,7 +13,7 @@
   const wrapEl = stage.querySelector(".ent-globe-wrap");
 
   if (typeof THREE === "undefined") {
-    stage.innerHTML = `<div class="ent-globe-fallback">AQcredix<br>Accreditation &amp; Quality Excellence</div>`;
+    stage.innerHTML = `<div class="ent-globe-fallback">AQcredix<br>Accreditation &amp; Quality Implementation Guidance</div>`;
     return;
   }
 

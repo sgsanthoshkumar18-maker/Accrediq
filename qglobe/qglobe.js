@@ -14,7 +14,7 @@
   const wrapEl = stage.querySelector(".qg-globe-wrap");
 
   if (typeof THREE === "undefined") {
-    stage.innerHTML = `<div class="qg-fallback">AQcredix<br>Accreditation &amp; Quality Excellence</div>`;
+    stage.innerHTML = `<div class="qg-fallback">AQcredix<br>Accreditation &amp; Quality Implementation Guidance</div>`;
     return;
   }
   if (!window.DASH_DEPTS || !window.NABH_DATA) return;

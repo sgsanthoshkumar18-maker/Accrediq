@@ -43,12 +43,13 @@
     return (EXTRA_GROUP_KEYS[group.key] || []).includes(currentKey);
   }
 
-  const shieldMark = `<svg width="30" height="34" viewBox="0 0 26 30" fill="none" xmlns="http://www.w3.org/2000/svg">
-      <path d="M13 1 24 5v10c0 7-5 12-11 14C7 27 2 22 2 15V5L13 1Z" fill="url(#qgrad)"/>
-      <path d="M8.2 14.6l3.1 3.2 6.5-7" stroke="#fff" stroke-width="2.1" stroke-linecap="round" stroke-linejoin="round"/>
-      <defs><linearGradient id="qgrad" x1="2" y1="1" x2="24" y2="29" gradientUnits="userSpaceOnUse">
-        <stop stop-color="#4F46E5"/><stop offset="1" stop-color="#0EA5A0"/>
-      </linearGradient></defs>
+  /* The ring mark: a three-quarter accent arc closing on a serif A. The open quarter
+   is the point — accreditation readiness is a cycle that is never quite finished.
+   Matches the mark drawn on the certificate, so the two read as one brand. */
+  const shieldMark = `<svg width="34" height="34" viewBox="0 0 40 40" fill="none" xmlns="http://www.w3.org/2000/svg" aria-hidden="true">
+      <circle cx="20" cy="20" r="16" stroke="#D8E0E6" stroke-width="3.4"/>
+      <path d="M20 4a16 16 0 1 1-11.31 4.69" stroke="#17A2B8" stroke-width="3.4" stroke-linecap="round"/>
+      <text x="20" y="26.6" text-anchor="middle" font-family="Georgia,'Times New Roman',serif" font-size="17" fill="#17A2B8">A</text>
     </svg>`;
 
   function getBase() {
@@ -82,7 +83,7 @@
       <div class="bar wrap">
         <a href="${base}index.html" class="brand">
           ${shieldMark}
-          <span class="brand-stack">AQcredix<span class="full-name">Accreditation & Quality Excellence</span></span>
+          <span class="brand-stack">AQcredix<span class="full-name">Accreditation &amp; Quality Implementation Guidance</span></span>
         </a>
         <nav class="main-nav" id="mainNav">${links}</nav>
         <div class="nav-actions">
@@ -105,7 +106,7 @@
       <div class="wrap">
         <div class="footer-grid">
           <div class="footer-brand">
-            <a href="${base}index.html" class="brand">${shieldMark}<span class="brand-stack">AQcredix<span class="full-name">Accreditation & Quality Excellence</span></span></a>
+            <a href="${base}index.html" class="brand">${shieldMark}<span class="brand-stack">AQcredix<span class="full-name">Accreditation &amp; Quality Implementation Guidance</span></span></a>
             <p>NABH accreditation, actually understood — every standard explained the way an assessor reads it.</p>
           </div>
           <div class="footer-col"><h4>Learn</h4>
@@ -138,7 +139,7 @@
           </div>
         </div>
         <div class="footer-bottom">
-          <span>© 2026 AQcredix — Accreditation &amp; Quality Excellence. An independent healthcare education forum. Not affiliated with NABH, QCI, JCI or any accreditation body.</span>
+          <span>© 2026 AQcredix — Accreditation &amp; Quality Implementation Guidance. An independent healthcare education forum. Not affiliated with NABH, QCI, JCI or any accreditation body.</span>
           <span><a href="${base}contact.html" style="color:inherit;text-decoration:underline;">Found an error on this page? Tell us.</a></span>
         </div>
       </div>

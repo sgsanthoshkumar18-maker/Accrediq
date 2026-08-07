@@ -312,6 +312,13 @@
 
   function issue(name, score, box) {
     if (!window.AQCert) return;
+    // The countersignature is loaded from disk, and render() reads the canvas back
+    // immediately. Without this wait the very first certificate of a session would
+    // download unsigned while the preview quietly showed the signed one.
+    window.AQCert.ready().then(function () { draw(name, score, box); });
+  }
+
+  function draw(name, score, box) {
     var res = window.AQCert.render({
       name: name,
       department: set.department.name,
