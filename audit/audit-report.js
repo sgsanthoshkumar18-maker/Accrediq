@@ -13,11 +13,11 @@ window.AQAuditReport = (function () {
 
   function donut(sc) {
     var segs = [
-      { k: "compliant", n: sc.counts.compliant, c: "var(--aq-ok, #2E7D32)" },
-      { k: "partial", n: sc.counts.partial, c: "var(--aq-warn, #C99700)" },
-      { k: "nc", n: sc.counts.nc, c: "var(--aq-bad, #B3261E)" },
-      { k: "na", n: sc.counts.na, c: "#B0BEC5" },
-      { k: "unassessed", n: sc.counts.unassessed, c: "#E3E8EB" }
+      { k: "compliant", n: sc.counts.compliant, c: "var(--ok)" },
+      { k: "partial", n: sc.counts.partial, c: "var(--warn)" },
+      { k: "nc", n: sc.counts.nc, c: "var(--nc)" },
+      { k: "na", n: sc.counts.na, c: "var(--fg-faint)" },
+      { k: "unassessed", n: sc.counts.unassessed, c: "var(--border)" }
     ];
     var total = segs.reduce(function (n, s) { return n + s.n; }, 0) || 1;
     var C = 2 * Math.PI * 54, off = 0;
@@ -33,7 +33,7 @@ window.AQAuditReport = (function () {
       arcs +
       '<text x="70" y="66" text-anchor="middle" font-size="26" font-weight="600" fill="currentColor">' +
       sc.weighted + '%</text>' +
-      '<text x="70" y="86" text-anchor="middle" font-size="10" fill="#7A8A96">READINESS</text></svg>';
+      '<text x="70" y="86" text-anchor="middle" font-size="10" fill="currentColor" opacity=".55">READINESS</text></svg>';
   }
 
   function chapterStrip(sc) {

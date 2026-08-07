@@ -1,21 +1,22 @@
 /* AQcredix — internal audit.
-   Colour tokens follow the Kamishibai convention used in the Excel export, so the screen
-   and the workbook read the same way. Status is never colour alone — every chip carries
-   its letter. */
+   Colours come from the site's own theme tokens (styles.css) rather than a private
+   palette, so this page follows light / dark / neon automatically. The earlier version
+   hardcoded white cards and only overrode them under [data-theme="dark"], which left the
+   whole page glaring white in the neon palette.
+
+   The status tints are the one thing defined locally, because the Kamishibai convention
+   is fixed — green / amber / red mean the same thing on screen and in the Excel export —
+   but even those are re-tinted per theme so they sit on the surface instead of shouting
+   off it. Status is never colour alone: every chip carries its letter. */
 
 :root {
-  --aud-ok-bg: #C8E6C9;   --aud-ok-fg: #1B5E20;   --aud-ok-line: #2E7D32;
-  --aud-warn-bg: #FFF3C4; --aud-warn-fg: #7A5200; --aud-warn-line: #C99700;
-  --aud-bad-bg: #FFCDD2;  --aud-bad-fg: #B3261E;  --aud-bad-line: #B3261E;
-  --aud-na-bg: #ECEFF1;   --aud-na-fg: #5A6C7A;
-  --aud-line: #D8E0E6;    --aud-soft: #F5F7F8;
-}
-[data-theme="dark"] {
-  --aud-ok-bg: #14361B;   --aud-ok-fg: #9CD8A4;
-  --aud-warn-bg: #3A2E08; --aud-warn-fg: #E8C766;
-  --aud-bad-bg: #3B1512;  --aud-bad-fg: #F0A9A2;
-  --aud-na-bg: #22282C;   --aud-na-fg: #93A2AC;
-  --aud-line: #2A343B;    --aud-soft: #1A2126;
+  --aud-ok-bg: var(--ok-tint);     --aud-ok-fg: var(--ok);     --aud-ok-line: var(--ok);
+  --aud-warn-bg: var(--warn-tint); --aud-warn-fg: var(--warn); --aud-warn-line: var(--warn);
+  --aud-bad-bg: var(--nc-tint);    --aud-bad-fg: var(--nc);    --aud-bad-line: var(--nc);
+  --aud-na-bg: var(--border-soft); --aud-na-fg: var(--fg-faint);
+  --aud-line: var(--border);
+  --aud-soft: var(--border-soft);
+  --aud-surface: var(--bg-elevated);
 }
 
 .aud-sub { color: var(--aud-na-fg); font-size: .92rem; margin: 4px 0 0; }
@@ -27,10 +28,10 @@
 
 /* ------------------------------- picker ------------------------------- */
 .aud-grid { display: grid; gap: 10px; grid-template-columns: repeat(auto-fill, minmax(215px, 1fr)); }
-.aud-dept { text-align: left; background: var(--card, #fff); border: 1px solid var(--aud-line);
+.aud-dept { text-align: left; background: var(--aud-surface); border: 1px solid var(--aud-line);
   border-radius: 10px; padding: 14px 15px; cursor: pointer; font: inherit; color: inherit;
   display: flex; flex-direction: column; gap: 4px; transition: border-color .15s, transform .15s; }
-.aud-dept:hover { border-color: #17A2B8; transform: translateY(-1px); }
+.aud-dept:hover { border-color: var(--accent-bright); transform: translateY(-1px); }
 .aud-dept .n { font-weight: 600; }
 .aud-dept .m { font-size: .8rem; color: var(--aud-na-fg); }
 
@@ -39,23 +40,23 @@
   gap: 16px; flex-wrap: wrap; margin-bottom: 14px; }
 .aud-headact { display: flex; gap: 8px; flex-wrap: wrap; }
 
-.aud-quick { background: var(--aud-soft); border: 1px solid var(--aud-line);
+.aud-quick { background: var(--aud-surface); border: 1px solid var(--aud-line);
   border-radius: 10px; padding: 10px 14px; margin-bottom: 14px; }
 .aud-quick summary { cursor: pointer; font-weight: 600; }
 .aud-quick ul { columns: 2; column-gap: 28px; margin: 10px 0 2px; padding-left: 18px; font-size: .9rem; }
 @media (max-width: 700px) { .aud-quick ul { columns: 1; } }
 
-.aud-sticky { position: sticky; top: 0; z-index: 5; background: var(--bg, #fff);
+.aud-sticky { position: sticky; top: 0; z-index: 5; background: var(--bg);
   padding: 10px 0; border-bottom: 1px solid var(--aud-line); }
 .aud-chips { display: flex; gap: 6px; flex-wrap: wrap; margin-bottom: 8px; }
 .aud-chip { border: 1px solid var(--aud-line); background: transparent; color: inherit;
   border-radius: 20px; padding: 4px 12px; font-size: .84rem; cursor: pointer; }
-.aud-chip.on { background: #17A2B8; border-color: #17A2B8; color: #fff; }
+.aud-chip.on { background: var(--accent-bright); border-color: var(--accent-bright); color: var(--bg-deep); }
 #audQ { width: 100%; max-width: 340px; padding: 7px 11px; border: 1px solid var(--aud-line);
   border-radius: 8px; background: transparent; color: inherit; }
 
 .aud-bar { height: 6px; background: var(--aud-soft); border-radius: 4px; overflow: hidden; margin: 8px 0 6px; }
-.aud-bar i { display: block; height: 100%; background: #17A2B8; transition: width .25s; }
+.aud-bar i { display: block; height: 100%; background: var(--accent-bright); transition: width .25s; }
 .aud-tallies { display: flex; gap: 12px; font-size: .82rem; flex-wrap: wrap; }
 .aud-tallies .aud-compliant { color: var(--aud-ok-line); }
 .aud-tallies .aud-partial { color: var(--aud-warn-line); }
@@ -63,13 +64,13 @@
 .aud-tallies .aud-na, .aud-tallies .aud-un { color: var(--aud-na-fg); }
 
 .aud-row { display: grid; grid-template-columns: 1fr 320px; gap: 18px;
-  border: 1px solid var(--aud-line); border-left-width: 4px; border-radius: 10px;
+  background: var(--aud-surface); border: 1px solid var(--aud-line); border-left-width: 4px; border-radius: 10px;
   padding: 13px 15px; margin: 9px 0; outline: none; }
-.aud-row:focus { box-shadow: 0 0 0 2px #17A2B8; }
+.aud-row:focus { box-shadow: 0 0 0 2px var(--accent-bright); }
 .aud-row[data-status="compliant"] { border-left-color: var(--aud-ok-line); }
 .aud-row[data-status="partial"] { border-left-color: var(--aud-warn-line); }
 .aud-row[data-status="nc"] { border-left-color: var(--aud-bad-line); }
-.aud-row[data-status="na"] { border-left-color: #B0BEC5; }
+.aud-row[data-status="na"] { border-left-color: var(--fg-faint); }
 .aud-row.aud-blocked { box-shadow: 0 0 0 2px var(--aud-bad-line); }
 @media (max-width: 820px) { .aud-row { grid-template-columns: 1fr; } }
 
@@ -78,7 +79,7 @@
 .aud-ch, .aud-cat, .aud-sop, .aud-iv { font-size: .7rem; text-transform: uppercase;
   letter-spacing: .05em; padding: 2px 7px; border-radius: 4px; background: var(--aud-soft);
   color: var(--aud-na-fg); }
-.aud-sop { background: #E8F4F7; color: #0E6B7A; }
+.aud-sop { background: var(--accent-bright-tint); color: var(--accent-bright); }
 .aud-el { margin: 0 0 5px; line-height: 1.45; }
 .aud-std { margin: 0; font-size: .8rem; color: var(--aud-na-fg); }
 
@@ -110,8 +111,8 @@
   gap: 16px; flex-wrap: wrap; margin-bottom: 16px; }
 .aud-rep-grid { display: grid; gap: 14px; grid-template-columns: 300px 1fr; margin-bottom: 14px; }
 @media (max-width: 800px) { .aud-rep-grid { grid-template-columns: 1fr; } }
-.aud-card { border: 1px solid var(--aud-line); border-radius: 12px; padding: 16px 18px;
-  margin-bottom: 14px; }
+.aud-card { background: var(--aud-surface); border: 1px solid var(--aud-line);
+  border-radius: 12px; padding: 16px 18px; margin-bottom: 14px; }
 .aud-card h3 { margin: 0 0 10px; font-size: 1rem; }
 .aud-score { text-align: center; }
 .aud-band { display: inline-block; padding: 4px 14px; border-radius: 20px; font-weight: 600;
@@ -129,8 +130,8 @@
 .aud-legend b { margin-left: auto; }
 .sw { width: 13px; height: 13px; border-radius: 3px; display: inline-block; }
 .sw.ok { background: var(--aud-ok-line); } .sw.warn { background: var(--aud-warn-line); }
-.sw.bad { background: var(--aud-bad-line); } .sw.na { background: #B0BEC5; }
-.sw.un { background: #E3E8EB; border: 1px solid var(--aud-line); }
+.sw.bad { background: var(--aud-bad-line); } .sw.na { background: var(--fg-faint); }
+.sw.un { background: transparent; border: 1px solid var(--aud-line); }
 .aud-flag { margin: 10px 0 0; font-size: .87rem; color: var(--aud-bad-fg); }
 .aud-caveat { font-size: .84rem; color: var(--aud-na-fg); margin: 10px 0 0; }
 
@@ -171,7 +172,7 @@
 .aud-del:hover { color: var(--aud-bad-fg); border-color: var(--aud-bad-line); }
 .aud-inprog { font-size: .7rem; background: var(--aud-warn-bg); color: var(--aud-warn-fg);
   border-radius: 4px; padding: 1px 6px; }
-.aud-spark { color: #17A2B8; opacity: .8; }
+.aud-spark { color: var(--accent-bright); opacity: .85; }
 
 @media print {
   .no-print, #site-header, #site-footer, .ws-nav, .aud-rep-actions { display: none !important; }
