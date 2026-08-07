@@ -81,8 +81,7 @@
     <div class="aq-edition">Content based on the <b>NABH Hospital Accreditation Standards, 6th Edition</b> — effective 1 January 2025. Educational use only; verify against the official standard.</div>
     <header class="site-header">
       <div class="bar wrap">
-        <a href="${base}index.html" class="brand">
-          ${shieldMark}
+        <a href="${base}index.html" class="brand brand-nomark">
           <span class="brand-stack">AQcredix<span class="full-name">Accreditation &amp; Quality Implementation Guidance Platform</span></span>
         </a>
         <nav class="main-nav" id="mainNav">${links}</nav>
