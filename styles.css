@@ -319,7 +319,14 @@ p{margin:0 0 0;}
    that drifts as the type scales. align-items:center keeps it optically centred on the
    two lines instead of hanging off the cap-height of the first. */
 .hero-headline{--h1-size:clamp(30px,3.6vw,46px);display:flex;align-items:center;gap:clamp(16px,2.2vw,30px);}
-.hero-logo{flex:0 0 auto;width:calc(var(--h1-size) * 2 * 1.04);height:calc(var(--h1-size) * 2 * 1.04);}
+.hero-logo{flex:0 0 auto;
+  /* The box is 1.3x the mark's two-line height so the orbit has room outside the ring,
+     and the negative margin pulls that extra back in on every side. Net effect: the
+     mark keeps the same optical weight against the two lines and the headline does not
+     move. Kept modest so the icons stay inside the wrap and are never clipped by the
+     section edge. */
+  width:calc(var(--h1-size) * 2.6);height:calc(var(--h1-size) * 2.6);
+  margin:calc(var(--h1-size) * -0.26);}
 /* The accent arc travels around the ring rather than sitting still. The open quarter
    reads as a gap that is always moving on — accreditation readiness is a cycle you never
    quite close, which is the whole idea behind the mark.
@@ -765,3 +772,59 @@ a:focus-visible,button:focus-visible,input:focus-visible,select:focus-visible,te
   .hero-meta{gap:18px 26px;}
   .hero-meta > div{flex:1 1 40%;}
 }
+
+/* ============================================================
+   Orbiting mark (orbit.js)
+   The ring logo with department symbols circling it. All geometry is in percentages of
+   the host box, so the same component fills a 90px hero slot and a 380px About panel
+   without a single hardcoded pixel.
+   ============================================================ */
+.aq-orbit{--aqo-in:15px;--aqo-out:17px;--aqo-ring-dim:var(--border);position:relative;display:block;aspect-ratio:1;}
+.hero .aq-orbit,.acc-band .aq-orbit{--aqo-ring-dim:rgba(255,255,255,.22);}
+.aqo-stage{position:absolute;inset:0;display:block;}
+
+/* Each ring is a full-size layer that rotates as one group. */
+.aqo-ring{position:absolute;inset:0;display:block;
+  animation-name:aqo-spin;animation-timing-function:linear;animation-iteration-count:infinite;}
+@keyframes aqo-spin{to{transform:rotate(360deg);}}
+
+/* The arm places an icon: rotate out, translate along the radius, un-rotate the glyph.
+   left/top 50% with a -50% translate would fight the transform above, so the arm is a
+   zero-size point at the centre and the icon is centred on it instead. */
+.aqo-arm{position:absolute;inset:0;display:block;}
+.aqo-ico{position:absolute;left:50%;display:block;line-height:0;
+  color:var(--accent-bright);opacity:.62;
+  /* translate centres the glyph on its point; --aqo-a cancels the arm's own rotation so
+     the symbol sits upright. The animation then cancels the group spin on top of that,
+     because a tumbling pill icon reads as a bug and an upright one reads as intent. */
+  transform:translate(-50%,-50%) rotate(var(--aqo-a,0deg));
+  animation-name:aqo-counter;animation-timing-function:linear;animation-iteration-count:infinite;}
+@keyframes aqo-counter{
+  from{transform:translate(-50%,-50%) rotate(var(--aqo-a,0deg));}
+  to{transform:translate(-50%,-50%) rotate(calc(var(--aqo-a,0deg) + 360deg));}
+}
+
+/* The mark sits dead centre, above the orbits. */
+.aqo-core{position:absolute;left:50%;top:50%;transform:translate(-50%,-50%);display:block;}
+.aqo-mark{width:100%;height:100%;display:block;overflow:visible;}
+
+/* Hover: the whole assembly quickens and the mark warms. Applied on the host so it works
+   whether the component sits in the hero or in a panel. */
+.aq-orbit:hover .aqo-ring,.aq-orbit:hover .aqo-ico{animation-duration:9s;}
+.aq-orbit:hover .aqo-ico{opacity:.9;}
+.aq-orbit .aqo-core{transition:filter .4s ease;}
+.aq-orbit:hover .aqo-core{filter:drop-shadow(0 0 12px var(--accent-bright));}
+
+/* Below the two-column breakpoint the outer ring crowds the mark, so it steps aside. */
+@media (max-width:640px){
+  .aqo-ring:nth-of-type(2){display:none;}
+}
+
+@media (prefers-reduced-motion: reduce){
+  .aqo-ring,.aqo-ico{animation:none;}
+  .aq-orbit:hover .aqo-core{filter:none;}
+}
+
+/* About page: the orbit fills the panel it is given. */
+.about-orbit{display:flex;align-items:center;justify-content:center;padding:8px;}
+.about-orbit .aq-orbit{width:100%;max-width:380px;}
