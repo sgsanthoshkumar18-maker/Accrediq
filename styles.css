@@ -320,13 +320,9 @@ p{margin:0 0 0;}
    two lines instead of hanging off the cap-height of the first. */
 .hero-headline{--h1-size:clamp(30px,3.6vw,46px);display:flex;align-items:center;gap:clamp(16px,2.2vw,30px);}
 .hero-logo{flex:0 0 auto;
-  /* The box is 1.3x the mark's two-line height so the orbit has room outside the ring,
-     and the negative margin pulls that extra back in on every side. Net effect: the
-     mark keeps the same optical weight against the two lines and the headline does not
-     move. Kept modest so the icons stay inside the wrap and are never clipped by the
-     section edge. */
-  width:calc(var(--h1-size) * 2.6);height:calc(var(--h1-size) * 2.6);
-  margin:calc(var(--h1-size) * -0.26);}
+  /* Sized off the headline's own line-height so the mark spans exactly two lines and
+     stays correct if the type scale ever changes. */
+  width:calc(var(--h1-size) * 2 * 1.04);height:calc(var(--h1-size) * 2 * 1.04);}
 /* The accent arc travels around the ring rather than sitting still. The open quarter
    reads as a gap that is always moving on — accreditation readiness is a cycle you never
    quite close, which is the whole idea behind the mark.
