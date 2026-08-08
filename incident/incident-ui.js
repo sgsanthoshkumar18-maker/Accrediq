@@ -446,16 +446,58 @@
 
   /* -------------------------------- boot -------------------------------- */
 
+  /* A failure here used to leave the page blank: boot() awaited refresh(), the rejected
+     promise aborted the rest of boot, and none of the three views was ever shown. The
+     overwhelmingly likely cause is the incidents table not existing yet, so say that
+     plainly rather than rendering nothing. */
   async function refresh() {
-    rows = await I.list();
+    try {
+      rows = await I.list();
+    } catch (e) {
+      rows = [];
+      showSetupError(e);
+      return false;
+    }
     renderStats();
     renderFilters();
     renderRegister();
+    return true;
+  }
+
+  function showSetupError(e) {
+    var msg = String((e && e.message) || e || "");
+    var missingTable = /incidents/i.test(msg) &&
+      /(does not exist|not find|relation|404|schema cache)/i.test(msg);
+    el("incStats").innerHTML = "";
+    el("incFilters").innerHTML = "";
+    el("incList").innerHTML =
+      '<div class="inc-note bad"><b>The incident register could not be loaded.</b>' +
+      (missingTable
+        ? "<p>The <code>incidents</code> table does not exist in this workspace\u2019s database " +
+          "yet. Open your Supabase project, paste the whole of <code>workspace/schema.sql</code> " +
+          "into the SQL editor and run it \u2014 every statement is safe to re-run and will not " +
+          "touch existing data. Then reload this page.</p>"
+        : "<p>Reporting a new incident will still work, but saving it will fail until this " +
+          "is resolved.</p>") +
+      "<p class=\"inc-sub\">Technical detail: " + esc(msg || "unknown error") + "</p></div>";
   }
 
   function goHome() { current = null; view("incHome"); refresh(); }
 
   async function boot() {
+    try { await bootInner(); }
+    catch (e) {
+      var host = el("incList");
+      if (host) {
+        el("wsBody").style.display = "";
+        view("incHome");
+        showSetupError(e);
+      }
+      throw e;   // still surface it in the console for debugging
+    }
+  }
+
+  async function bootInner() {
     if (!(await W.gate())) return;
     W.renderNav("incidents");
     el("wsBody").style.display = "";
@@ -470,8 +512,10 @@
       catch (e) { W.toast("Could not build the form: " + (e.message || e), "bad"); }
     });
 
-    await refresh();
+    // Show the page first, then load. If the load fails the user still sees the header,
+    // the buttons and a diagnosis, rather than an empty screen.
     view("incHome");
+    await refresh();
   }
 
   if (document.readyState === "loading") document.addEventListener("DOMContentLoaded", boot);
