@@ -235,8 +235,9 @@
 
     // wiring
     var map = [["f_occurred", "occurred_at"], ["f_dept", "department"], ["f_loc", "location"],
-      ["f_pname", "person_name"], ["f_page", "person_age"], ["f_pgender", "person_gender"],
-      ["f_pid", "person_id"], ["f_details", "details"], ["f_immediate", "immediate_action"],
+      // No patient-identifier fields here by design — they exist only as ruled blanks on
+      // the printed form, so nothing identifiable reaches the database.
+      ["f_details", "details"], ["f_immediate", "immediate_action"],
       ["f_witness", "witnesses"], ["f_rname", "reporter_name"], ["f_rdept", "reporter_dept"]];
     map.forEach(function (m) {
       var n = el(m[0]);
