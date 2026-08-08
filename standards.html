@@ -75,8 +75,9 @@
 </style>
 <script type="application/ld+json">{"@context":"https://schema.org","@type":"EducationalOrganization","name":"AQcredix","alternateName":"AQcredix \u2014 Accreditation & Quality Implementation Guidance Platform","url":"https://accrediq.vercel.app/","description":"An independent healthcare quality education and training forum covering NABH accreditation standards, department roles, KPIs, quality tools and mock assessment.","founder":{"@type":"Person","name":"Dr. Santhoshkumar SG","jobTitle":"Founder & Chief Quality Officer, AQcredix; Infectious Disease Clinical Pharmacologist","honorificSuffix":"ISQua Fellow, CPQIH (Basic) (CAHO)"},"knowsAbout":["NABH accreditation","Healthcare quality improvement","Hospital infection control","Patient safety","Standard operating procedures","Clinical audit"]}</script>
 <script type="application/ld+json">{"@context":"https://schema.org","@type":"WebSite","name":"AQcredix","url":"https://accrediq.vercel.app/","potentialAction":{"@type":"SearchAction","target":"https://accrediq.vercel.app/standards.html?q={search_term_string}","query-input":"required name=search_term_string"}}</script>
+<link rel="stylesheet" href="billing/page-gate.css">
 </head>
-<body data-page="standards">
+<body data-page="standards" data-access="login">
 <div id="site-header"></div>
 
 <main id="aq-main"><section class="page-head">
@@ -313,5 +314,10 @@
   tryLoad(0);
 })();
 </script>
+<script src="workspace/config.js"></script>
+<script src="billing/billing-config.js"></script>
+<script src="workspace/store.js"></script>
+<script src="billing/billing.js"></script>
+<script src="billing/page-gate.js"></script>
 </body>
 </html>

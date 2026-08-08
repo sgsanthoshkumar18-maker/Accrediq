@@ -36,8 +36,9 @@
   background:var(--brand-tint,rgba(79,70,229,.2));border-radius:6px;padding:2px 7px;}
 </style>
 <link rel="stylesheet" href="workspace/auth-gate.css">
+<link rel="stylesheet" href="billing/page-gate.css">
 </head>
-<body data-page="clinicalareas" data-area-group="clinical">
+<body data-page="clinicalareas" data-area-group="clinical" data-access="paid">
 <script src="workspace/config.js"></script>
 <script src="workspace/store.js"></script>
 <script src="workspace/auth-gate.js"></script>
@@ -70,5 +71,8 @@
 <script src="nabh-data.js"></script>
 <script src="area-data.js?v=20260805c"></script>
 <script src="areas/area-view.js"></script>
+<script src="billing/billing-config.js"></script>
+<script src="billing/billing.js"></script>
+<script src="billing/page-gate.js"></script>
 </body>
 </html>

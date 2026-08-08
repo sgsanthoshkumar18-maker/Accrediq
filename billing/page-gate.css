@@ -1,0 +1,9 @@
+/* AQcredix — page access gate. Uses the site's theme tokens so it follows light/dark/neon. */
+.ag-wrap{display:flex;align-items:center;justify-content:center;min-height:58vh;padding:48px 20px;}
+.ag-card{max-width:520px;text-align:center;background:var(--bg-elevated);
+  border:1px solid var(--border);border-radius:16px;padding:36px 32px;}
+.ag-mark{width:64px;height:64px;margin:0 auto 18px;display:block;}
+.ag-card h1{font-size:1.5rem;margin:0 0 12px;}
+.ag-card p{color:var(--fg-muted);line-height:1.6;margin:0 0 14px;}
+.ag-actions{display:flex;gap:10px;justify-content:center;flex-wrap:wrap;margin-top:22px;}
+@media (max-width:640px){.ag-card{padding:28px 22px;}.ag-actions .btn{min-height:44px;}}

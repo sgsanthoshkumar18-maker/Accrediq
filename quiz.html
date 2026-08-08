@@ -26,8 +26,9 @@
 .aq-opt{-webkit-appearance:none;appearance:none;display:flex;gap:12px;width:100%;text-align:left;padding:13px 15px;border-radius:10px;border:1px solid var(--border,#24384a);background:var(--bg,#0b1622);color:var(--fg,#e8eef2);font:inherit;font-size:15px;line-height:1.55;cursor:pointer}
 .aq-btn{-webkit-appearance:none;appearance:none;font:inherit;font-size:15px;font-weight:600;padding:12px 26px;border-radius:999px;border:1px solid var(--accent,#17a2b8);background:var(--accent,#17a2b8);color:#04222b;cursor:pointer}
 </style>
+<link rel="stylesheet" href="billing/page-gate.css">
 </head>
-<body data-page="todaysquiz" data-base="">
+<body data-page="todaysquiz" data-base="" data-access="paid">
 
 <!-- Auth gate. Loaded synchronously (not deferred) and before anything that
      calls window.AQGate, matching dashboard.html and the other gated pages.
@@ -58,5 +59,8 @@
 <script src="quiz/quiz-data.js"></script>
 <script src="quiz/certificate.js"></script>
 <script src="quiz/quiz-engine.js"></script>
+<script src="billing/billing-config.js"></script>
+<script src="billing/billing.js"></script>
+<script src="billing/page-gate.js"></script>
 </body>
 </html>

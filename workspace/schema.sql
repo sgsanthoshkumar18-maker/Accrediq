@@ -332,8 +332,14 @@ create table if not exists public.subscriptions (
   activated_at  timestamptz,
   expires_at    timestamptz,
   approved_by   text,
-  created_at    timestamptz not null default now()
+  created_at    timestamptz not null default now(),
+  -- store.js stamps updated_at on every write, so every table it touches must have it.
+  updated_at    timestamptz not null default now()
 );
+
+-- For anyone who created this table before updated_at was added: `create table if not
+-- exists` will not alter an existing table, so add the column explicitly. Safe to re-run.
+alter table public.subscriptions add column if not exists updated_at timestamptz not null default now();
 
 create index if not exists subscriptions_user_idx on public.subscriptions (user_id, status, expires_at desc);
 
