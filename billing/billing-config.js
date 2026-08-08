@@ -10,9 +10,14 @@ window.AQ_BILLING = {
   /* ---------------------------------------------------------------
      Free access. Matched on email, case-insensitive.
      Add co-founders or a demo account here. Everyone else pays.
+
+     Gmail ignores dots in the local part, so s.g.name@gmail.com and
+     sgname@gmail.com are the same mailbox. isOwner() normalises that,
+     so either spelling works and you cannot lock yourself out by
+     signing in with the dotted form of your own address.
      --------------------------------------------------------------- */
   ownerEmails: [
-    "sgsanthoshkumar18@gmail.com"
+    "s.g.santhoshkumar18@gmail.com"
   ],
 
   /* ---------------------------------------------------------------
@@ -59,5 +64,5 @@ window.AQ_BILLING = {
   razorpayKeyId: "",
 
   /* Support contact shown on the payment screen when something goes wrong. */
-  supportEmail: "sgsanthoshkumar18@gmail.com"
+  supportEmail: "s.g.santhoshkumar18@gmail.com"
 };

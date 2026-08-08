@@ -346,10 +346,26 @@ create index if not exists subscriptions_user_idx on public.subscriptions (user_
 alter table public.subscriptions enable row level security;
 
 -- Who counts as an owner. Keep this list in step with ownerEmails in billing-config.js.
+--
+-- Gmail ignores dots in the local part and anything after a '+', so s.g.name@gmail.com
+-- and sgname@gmail.com are the same mailbox. The address is normalised the same way the
+-- browser does it before comparing, so signing in with either spelling still grants owner
+-- rights. Without this, the owner could be locked out of their own approval queue by the
+-- punctuation of the address they happened to register with.
+create or replace function public.aq_norm_email(raw text) returns text
+language sql immutable as $$
+  select case
+    when split_part(lower(coalesce(raw, '')), '@', 2) in ('gmail.com', 'googlemail.com')
+      then replace(split_part(split_part(lower(raw), '@', 1), '+', 1), '.', '') || '@gmail.com'
+    else lower(coalesce(raw, ''))
+  end;
+$$;
+
 create or replace function public.aq_is_owner() returns boolean
 language sql stable as $$
   select coalesce(
-    (select lower(auth.jwt() ->> 'email') in ('sgsanthoshkumar18@gmail.com')),
+    public.aq_norm_email(auth.jwt() ->> 'email')
+      in (public.aq_norm_email('s.g.santhoshkumar18@gmail.com')),
     false);
 $$;
 

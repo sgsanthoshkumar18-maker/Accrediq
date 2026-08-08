@@ -45,11 +45,32 @@ window.AQBilling = (function () {
 
   /* The owner never pays. Matched on email so it survives a database reset — an ID would
    * not. Configured in billing-config.js, not hardcoded here. */
+  /* Gmail ignores dots in the local part and everything after a "+", so
+     s.g.name@gmail.com, sgname@gmail.com and sgname+test@gmail.com are one mailbox.
+     Comparing the raw strings would have let the owner sign in with a spelling of their
+     own address that the site then treated as a stranger — which is exactly the failure
+     that locked the approval queue behind a paywall. Normalise before comparing.
+
+     The normalisation is applied only to Gmail and Googlemail: for most other providers
+     dots are significant, and stripping them there would wrongly match a different
+     person's account. */
+  function normalizeEmail(raw) {
+    var email = String(raw || "").toLowerCase().trim();
+    var at = email.lastIndexOf("@");
+    if (at < 1) return email;
+    var local = email.slice(0, at), domain = email.slice(at + 1);
+    if (domain === "gmail.com" || domain === "googlemail.com") {
+      local = local.split("+")[0].replace(/\./g, "");
+      domain = "gmail.com";
+    }
+    return local + "@" + domain;
+  }
+
   function isOwner(user) {
     if (!user) return false;
-    var owners = (CFG.ownerEmails || []).map(function (e) { return String(e).toLowerCase().trim(); });
-    var email = String(user.email || "").toLowerCase().trim();
-    return email && owners.indexOf(email) >= 0;
+    var owners = (CFG.ownerEmails || []).map(normalizeEmail);
+    var email = normalizeEmail(user.email);
+    return !!email && owners.indexOf(email) >= 0;
   }
 
   function planOf(key) {
@@ -262,7 +283,7 @@ window.AQBilling = (function () {
 
   return {
     PLANS: PLANS, CFG: CFG,
-    isOwner: isOwner, planOf: planOf, rupees: rupees, fmtDate: fmtDate,
+    isOwner: isOwner, normalizeEmail: normalizeEmail, planOf: planOf, rupees: rupees, fmtDate: fmtDate,
     status: status, submitClaim: submitClaim, approve: approve, reject: reject,
     list: list, upiUri: upiUri,
     razorpayReady: razorpayReady, payWithRazorpay: payWithRazorpay
