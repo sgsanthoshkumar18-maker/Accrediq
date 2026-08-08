@@ -19,10 +19,10 @@
   /* ============================ LOCAL ADAPTER ============================ */
   // IndexedDB rather than localStorage: evidence notes and long CAPA text blow past
   // the 5MB localStorage ceiling quickly once a hospital is a few months in.
-  var DB_NAME = "aqcredix-workspace", DB_VER = 2;
+  var DB_NAME = "aqcredix-workspace", DB_VER = 3;
   // v2 adds "audits". createObjectStore is additive inside onupgradeneeded, so the
   // bump creates the new store and leaves existing element/CAPA data untouched.
-  var STORES = ["elements", "capa", "documents", "members", "audits", "meta"];
+  var STORES = ["elements", "capa", "documents", "members", "audits", "incidents", "meta"];
   var _db = null;
 
   function openDB() {
@@ -298,11 +298,12 @@
         capa: await A.list("capa"),
         documents: await A.list("documents"),
         members: await A.list("members"),
-        audits: await A.list("audits")
+        audits: await A.list("audits"),
+        incidents: await A.list("incidents")
       };
     },
     async importAll(data) {
-      var stores = ["elements", "capa", "documents", "members", "audits"];
+      var stores = ["elements", "capa", "documents", "members", "audits", "incidents"];
       for (var i = 0; i < stores.length; i++) {
         var rows = data[stores[i]] || [];
         for (var j = 0; j < rows.length; j++) await A.put(stores[i], rows[j]);

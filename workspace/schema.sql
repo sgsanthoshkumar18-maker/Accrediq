@@ -192,6 +192,37 @@ create table if not exists public.audits (
 
 create index if not exists audits_org_dept_idx on public.audits (org_id, department_id, started_at desc);
 
+-- =====================================================================
+-- Incident reporting. One row per reported patient-safety event.
+-- The full form rides in `payload` for the same reason audits do: an incident is written
+-- and read whole. The columns lifted out are the ones the register filters, sorts and
+-- charts on, so those queries never have to open the JSON.
+--
+-- occurred_at vs submitted_at is deliberate and load-bearing: the gap between them is the
+-- reporting delay, which is the single most useful number about a reporting culture and
+-- is lost forever if only one timestamp is stored.
+-- =====================================================================
+create table if not exists public.incidents (
+  id             text primary key,
+  org_id         uuid references public.orgs(id) on delete cascade,
+  reference      text not null,
+  occurred_at    timestamptz,
+  reported_at    timestamptz,
+  submitted_at   timestamptz,
+  department     text,
+  classification text,          -- near_miss | no_harm | adverse | sentinel | other
+  severity       int,           -- 1..4, derived from classification
+  status         text not null default 'reported',
+  reporter_name  text,
+  closed_at      timestamptz,
+  payload        jsonb,
+  created_at     timestamptz not null default now(),
+  updated_at     timestamptz not null default now()
+);
+
+create index if not exists incidents_org_time_idx
+  on public.incidents (org_id, occurred_at desc);
+
 alter table public.orgs              enable row level security;
 alter table public.members           enable row level security;
 alter table public.elements          enable row level security;
@@ -199,6 +230,7 @@ alter table public.capa              enable row level security;
 alter table public.documents         enable row level security;
 alter table public.document_versions enable row level security;
 alter table public.audits            enable row level security;
+alter table public.incidents         enable row level security;
 
 drop policy if exists org_read on public.orgs;
 create policy org_read on public.orgs
@@ -219,7 +251,7 @@ create policy members_write on public.members
 do $$
 declare t text;
 begin
-  foreach t in array array['elements','capa','documents','document_versions','audits'] loop
+  foreach t in array array['elements','capa','documents','document_versions','audits','incidents'] loop
     execute format('drop policy if exists %I_read on public.%I', t, t);
     execute format(
       'create policy %I_read on public.%I for select using (org_id = public.my_org())', t, t);
@@ -245,7 +277,7 @@ end; $$;
 do $$
 declare t text;
 begin
-  foreach t in array array['elements','capa','documents','document_versions','members','audits'] loop
+  foreach t in array array['elements','capa','documents','document_versions','members','audits','incidents'] loop
     execute format('drop trigger if exists set_org_%I on public.%I', t, t);
     execute format(
       'create trigger set_org_%I before insert on public.%I

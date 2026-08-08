@@ -12,6 +12,8 @@
       desc: "Element-by-element accreditation status" },
     { key: "audits", href: "audit.html", label: "Internal Audit",
       desc: "Department-level audits against the assessor checklist" },
+    { key: "incidents", href: "incidents.html", label: "Incidents",
+      desc: "Report, analyse and close patient-safety events" },
     { key: "capa", href: "capa.html", label: "NC & CAPA",
       desc: "Findings, corrective actions, verification" },
     { key: "documents", href: "documents.html", label: "Documents",

@@ -24,6 +24,7 @@
         { key: "sop", href: "sop.html", label: "SOP Generator" },
         { key: "surveyor", href: "surveyor.html", label: "Mock Surveyor" },
         { key: "internalaudit", href: "workspace/audit.html", label: "Internal Audit" },
+        { key: "incidents", href: "workspace/incidents.html", label: "Incident Reporting" },
         { key: "know", href: "know.html", label: "Gap Analysis" },
         { key: "icd", href: "icd.html", label: "ICD-11 Codes" },
       ]
