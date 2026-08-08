@@ -19,10 +19,10 @@
   /* ============================ LOCAL ADAPTER ============================ */
   // IndexedDB rather than localStorage: evidence notes and long CAPA text blow past
   // the 5MB localStorage ceiling quickly once a hospital is a few months in.
-  var DB_NAME = "aqcredix-workspace", DB_VER = 3;
+  var DB_NAME = "aqcredix-workspace", DB_VER = 4;
   // v2 adds "audits". createObjectStore is additive inside onupgradeneeded, so the
   // bump creates the new store and leaves existing element/CAPA data untouched.
-  var STORES = ["elements", "capa", "documents", "members", "audits", "incidents", "meta"];
+  var STORES = ["elements", "capa", "documents", "members", "audits", "incidents", "subscriptions", "meta"];
   var _db = null;
 
   function openDB() {

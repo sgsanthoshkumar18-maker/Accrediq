@@ -303,3 +303,67 @@ drop trigger if exists doc_version_log on public.documents;
 create trigger doc_version_log
   after insert or update on public.documents
   for each row execute function public.log_document_version();
+
+-- =====================================================================
+-- Subscriptions. One row per purchase attempt.
+--
+-- Row-level security here is different from every other table: a subscription belongs to
+-- a USER, not to an org, and a user must be able to read their own row before any org
+-- membership exists. So the read policy is keyed on auth.uid(), and INSERT is allowed
+-- only for one's own row with status 'pending'.
+--
+-- Critically, ordinary users must NOT be able to UPDATE their own row — otherwise anyone
+-- could set status='active' and grant themselves free access. Approval is an owner-only
+-- operation, enforced below.
+-- =====================================================================
+create table if not exists public.subscriptions (
+  id            text primary key,
+  user_id       uuid references auth.users(id) on delete cascade,
+  email         text,
+  name          text,
+  plan          text not null,
+  months        int  not null default 1,
+  amount_paise  int  not null default 0,
+  method        text not null default 'upi_manual',
+  txn_ref       text,
+  note          text,
+  status        text not null default 'pending',   -- pending | active | rejected
+  requested_at  timestamptz not null default now(),
+  activated_at  timestamptz,
+  expires_at    timestamptz,
+  approved_by   text,
+  created_at    timestamptz not null default now()
+);
+
+create index if not exists subscriptions_user_idx on public.subscriptions (user_id, status, expires_at desc);
+
+alter table public.subscriptions enable row level security;
+
+-- Who counts as an owner. Keep this list in step with ownerEmails in billing-config.js.
+create or replace function public.aq_is_owner() returns boolean
+language sql stable as $$
+  select coalesce(
+    (select lower(auth.jwt() ->> 'email') in ('sgsanthoshkumar18@gmail.com')),
+    false);
+$$;
+
+drop policy if exists subscriptions_read on public.subscriptions;
+create policy subscriptions_read on public.subscriptions
+  for select using (user_id = auth.uid() or public.aq_is_owner());
+
+drop policy if exists subscriptions_insert on public.subscriptions;
+create policy subscriptions_insert on public.subscriptions
+  for insert with check (
+    user_id = auth.uid() and status = 'pending'
+  );
+
+-- Only an owner may activate, extend or reject. This is the line that makes the paywall
+-- real: without it a user could PATCH their own row to active and pay nothing.
+drop policy if exists subscriptions_update on public.subscriptions;
+create policy subscriptions_update on public.subscriptions
+  for update using (public.aq_is_owner()) with check (public.aq_is_owner());
+
+drop policy if exists subscriptions_delete on public.subscriptions;
+create policy subscriptions_delete on public.subscriptions
+  for delete using (public.aq_is_owner());
+

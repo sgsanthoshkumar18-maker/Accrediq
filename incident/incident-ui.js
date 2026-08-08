@@ -193,12 +193,17 @@
           (inc.affected.indexOf(a.key) >= 0 ? " checked" : "") + "> " + esc(a.label) + "</label>";
       }).join("") + "</div>";
 
-    h += '<div class="inc-grid">' +
-      field("Name of individual involved", "f_pname", "text", inc.person_name) +
-      field("Age", "f_page", "text", inc.person_age) +
-      field("Gender", "f_pgender", "text", inc.person_gender) +
-      field("UHID / employee number", "f_pid", "text", inc.person_id) +
-      "</div></section>";
+    /* Patient identifiers are deliberately NOT collected here. The printed form carries
+       ruled blanks for them instead, filled by hand and kept in the hospital's own
+       records. That keeps identifiable patient data out of this platform entirely, which
+       removes the whole class of data-protection obligations that would otherwise attach
+       to it. Describe the person by role in the details field, not by name. */
+    h += '<div class="inc-note ok"><b>Do not enter patient names or UHIDs here.</b> ' +
+      "Identifiers stay on the printed form, completed in pen and filed in your own " +
+      "records. Refer to the person by role in the description below \u2014 " +
+      "\u201Ca 64-year-old male in bay 2\u201D, not a name. This keeps identifiable " +
+      "patient data out of the platform altogether.</div>";
+    h += "</section>";
 
     h += '<section class="inc-block"><h3>2 \u00B7 Classification <i class="req">required</i></h3>' +
       '<p class="inc-sub">These four definitions are the standard patient-safety ladder. ' +
@@ -331,8 +336,7 @@
       "<div><dt>Affected</dt><dd>" + (inc.affected.map(function (a) {
         return (I.AFFECTED.filter(function (x) { return x.key === a; })[0] || {}).label || a;
       }).join(", ") || "\u2014") + "</dd></div>" +
-      "<div><dt>Individual</dt><dd>" + esc([inc.person_name, inc.person_age, inc.person_gender]
-        .filter(Boolean).join(", ") || "\u2014") + "</dd></div>" +
+
       "</dl>" +
       "<h4>Details</h4><p>" + esc(inc.details || "\u2014") + "</p>" +
       "<h4>Immediate action</h4><p>" + esc(inc.immediate_action || "\u2014") + "</p>" +

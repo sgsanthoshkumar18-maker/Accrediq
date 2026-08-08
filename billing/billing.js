@@ -1,0 +1,266 @@
+/* AQcredix — subscriptions and access control.
+ *
+ * Gates the workspace behind a paid plan. Sits between the auth gate (are you signed in?)
+ * and the feature (are you entitled to this?).
+ *
+ * Two payment paths, because they solve different problems:
+ *
+ *   1. UPI + manual verification. The payer scans the QR, pays, and submits the UPI
+ *      transaction reference. The owner approves it from the Access panel. This works
+ *      today with no gateway account and no fees.
+ *
+ *      It is important to understand WHY the approval step exists rather than trusting
+ *      the claim: a static UPI QR sends no callback to this site. Nothing here can see
+ *      that a payment happened. Any design that unlocks access the moment someone types a
+ *      reference number is unlocking access for anyone who types anything.
+ *
+ *   2. Razorpay. Real verification — the gateway signs the payment and the signature is
+ *      checked server-side before access is granted. This is the path to run a business
+ *      on. Wired and dormant until keys are configured.
+ */
+window.AQBilling = (function () {
+  "use strict";
+
+  var S = window.AQStore;
+  var CFG = window.AQ_BILLING || {};
+
+  /* Plans. Amounts in the smallest currency unit (paise) so nothing ever depends on
+   * floating-point arithmetic touching money. */
+  var PLANS = [
+    {
+      key: "monthly",
+      label: "Monthly",
+      months: 1,
+      inr: CFG.monthlyInr != null ? CFG.monthlyInr : 100,   // paise -> ₹1 while testing
+      note: "Billed each month. Cancel any time."
+    },
+    {
+      key: "yearly",
+      label: "Annual",
+      months: 12,
+      inr: CFG.yearlyInr != null ? CFG.yearlyInr : 100,
+      note: "Two months free against the monthly rate."
+    }
+  ];
+
+  /* The owner never pays. Matched on email so it survives a database reset — an ID would
+   * not. Configured in billing-config.js, not hardcoded here. */
+  function isOwner(user) {
+    if (!user) return false;
+    var owners = (CFG.ownerEmails || []).map(function (e) { return String(e).toLowerCase().trim(); });
+    var email = String(user.email || "").toLowerCase().trim();
+    return email && owners.indexOf(email) >= 0;
+  }
+
+  function planOf(key) {
+    for (var i = 0; i < PLANS.length; i++) if (PLANS[i].key === key) return PLANS[i];
+    return null;
+  }
+
+  function rupees(paise) {
+    var r = paise / 100;
+    return "\u20B9" + (r % 1 === 0 ? r.toFixed(0) : r.toFixed(2));
+  }
+
+  function addMonths(d, n) {
+    var x = new Date(d.getTime());
+    x.setMonth(x.getMonth() + n);
+    return x;
+  }
+
+  /* ---------------------------- entitlement ---------------------------- */
+
+  /* The single question the rest of the app asks. Returns:
+   *   { active, reason, plan, expiresAt, daysLeft, owner, pending }
+   *
+   * Fails CLOSED. If the subscription table cannot be read, access is denied rather than
+   * granted — an availability problem must not become a free-access problem. The message
+   * distinguishes the two so a genuine outage is not mistaken for an expired plan. */
+  async function status(user) {
+    if (isOwner(user)) {
+      return { active: true, owner: true, reason: "owner", plan: null, daysLeft: null };
+    }
+    if (!user || !user.id) {
+      return { active: false, reason: "signed_out" };
+    }
+
+    var rows;
+    try {
+      rows = await S.adapter.list("subscriptions");
+    } catch (e) {
+      return { active: false, reason: "unavailable", error: String(e && e.message || e) };
+    }
+
+    var mine = (rows || []).filter(function (r) {
+      return r.user_id === user.id || (user.email && r.email &&
+        String(r.email).toLowerCase() === String(user.email).toLowerCase());
+    });
+
+    var now = Date.now();
+    var live = mine.filter(function (r) {
+      return r.status === "active" && r.expires_at && new Date(r.expires_at).getTime() > now;
+    }).sort(function (a, b) { return new Date(b.expires_at) - new Date(a.expires_at); })[0];
+
+    if (live) {
+      var days = Math.ceil((new Date(live.expires_at) - now) / 86400000);
+      return {
+        active: true, reason: "subscribed", plan: live.plan,
+        expiresAt: live.expires_at, daysLeft: days, record: live
+      };
+    }
+
+    var pending = mine.filter(function (r) { return r.status === "pending"; })[0];
+    if (pending) return { active: false, reason: "pending", record: pending };
+
+    var expired = mine.filter(function (r) { return r.status === "active"; })[0];
+    if (expired) return { active: false, reason: "expired", record: expired };
+
+    return { active: false, reason: "none" };
+  }
+
+  /* ------------------------------ records ------------------------------ */
+
+  function newId() {
+    return "sub_" + Date.now().toString(36) + Math.random().toString(36).slice(2, 6);
+  }
+
+  /* A claimed UPI payment. Deliberately created as "pending": this record is the user's
+   * assertion that they paid, not evidence of it. Only owner approval turns it active. */
+  function claimUpi(user, planKey, txnRef, note) {
+    var p = planOf(planKey);
+    return {
+      id: newId(),
+      user_id: user.id,
+      email: user.email || "",
+      name: user.name || "",
+      plan: planKey,
+      months: p ? p.months : 1,
+      amount_paise: p ? p.inr : 0,
+      method: "upi_manual",
+      txn_ref: String(txnRef || "").trim(),
+      note: String(note || "").trim(),
+      status: "pending",
+      requested_at: new Date().toISOString(),
+      activated_at: null,
+      expires_at: null,
+      approved_by: null
+    };
+  }
+
+  async function submitClaim(user, planKey, txnRef, note) {
+    var rec = claimUpi(user, planKey, txnRef, note);
+    await S.adapter.put("subscriptions", rec);
+    return rec;
+  }
+
+  /* Owner action. Sets the window from the moment of approval, not from the claim, so a
+   * claim sitting unapproved for a week does not silently eat the subscriber's time. */
+  async function approve(rec, approver) {
+    var p = planOf(rec.plan) || PLANS[0];
+    var now = new Date();
+    rec.status = "active";
+    rec.activated_at = now.toISOString();
+    rec.expires_at = addMonths(now, p.months).toISOString();
+    rec.approved_by = (approver && (approver.email || approver.name)) || "owner";
+    await S.adapter.put("subscriptions", rec);
+    return rec;
+  }
+
+  async function reject(rec, approver, reason) {
+    rec.status = "rejected";
+    rec.approved_by = (approver && (approver.email || approver.name)) || "owner";
+    rec.note = (rec.note ? rec.note + " | " : "") + "Rejected: " + (reason || "no reason given");
+    await S.adapter.put("subscriptions", rec);
+    return rec;
+  }
+
+  function list() {
+    return S.adapter.list("subscriptions").then(function (rows) {
+      return (rows || []).sort(function (a, b) {
+        return String(b.requested_at).localeCompare(String(a.requested_at));
+      });
+    });
+  }
+
+  /* -------------------------------- UPI -------------------------------- */
+
+  /* A UPI intent string. Any UPI app can render this as a QR, and on a phone it opens the
+   * app directly with the amount pre-filled — which removes the commonest failure of a
+   * printed QR, someone typing the wrong amount. */
+  function upiUri(planKey) {
+    var p = planOf(planKey) || PLANS[0];
+    var vpa = CFG.upiVpa || "";
+    var name = CFG.upiName || "AQcredix";
+    var amt = (p.inr / 100).toFixed(2);
+    var note = "AQcredix " + p.label;
+    return "upi://pay?pa=" + encodeURIComponent(vpa) +
+      "&pn=" + encodeURIComponent(name) +
+      "&am=" + encodeURIComponent(amt) +
+      "&cu=INR&tn=" + encodeURIComponent(note);
+  }
+
+  /* ----------------------------- Razorpay ------------------------------ */
+
+  function razorpayReady() {
+    return !!(CFG.razorpayKeyId && CFG.razorpayEnabled);
+  }
+
+  /* Opens Razorpay checkout. Verification happens server-side in /api/verify-payment —
+   * the signature must never be checked in the browser, because anything the browser
+   * decides, the browser can be made to decide differently. */
+  function payWithRazorpay(user, planKey, onDone, onFail) {
+    if (!razorpayReady()) return onFail(new Error("Razorpay is not configured."));
+    if (!window.Razorpay) return onFail(new Error("Razorpay script has not loaded."));
+    var p = planOf(planKey) || PLANS[0];
+
+    fetch("/api/create-order", {
+      method: "POST",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify({ plan: planKey, amount: p.inr, email: user.email })
+    }).then(function (r) { return r.json(); }).then(function (order) {
+      if (!order || !order.id) throw new Error(order && order.error || "Could not create order.");
+      var rz = new window.Razorpay({
+        key: CFG.razorpayKeyId,
+        amount: p.inr,
+        currency: "INR",
+        name: "AQcredix",
+        description: p.label + " subscription",
+        order_id: order.id,
+        prefill: { email: user.email || "", name: user.name || "" },
+        theme: { color: "#17A2B8" },
+        handler: function (resp) {
+          fetch("/api/verify-payment", {
+            method: "POST",
+            headers: { "Content-Type": "application/json" },
+            body: JSON.stringify({
+              razorpay_order_id: resp.razorpay_order_id,
+              razorpay_payment_id: resp.razorpay_payment_id,
+              razorpay_signature: resp.razorpay_signature,
+              plan: planKey, user_id: user.id, email: user.email
+            })
+          }).then(function (r) { return r.json(); }).then(function (v) {
+            if (v && v.verified) onDone(v);
+            else onFail(new Error(v && v.error || "Payment could not be verified."));
+          }).catch(onFail);
+        },
+        modal: { ondismiss: function () { onFail(new Error("Payment cancelled.")); } }
+      });
+      rz.open();
+    }).catch(onFail);
+  }
+
+  function fmtDate(iso) {
+    if (!iso) return "\u2014";
+    var d = new Date(iso);
+    return isNaN(d) ? "\u2014" : d.toLocaleDateString(undefined,
+      { day: "2-digit", month: "short", year: "numeric" });
+  }
+
+  return {
+    PLANS: PLANS, CFG: CFG,
+    isOwner: isOwner, planOf: planOf, rupees: rupees, fmtDate: fmtDate,
+    status: status, submitClaim: submitClaim, approve: approve, reject: reject,
+    list: list, upiUri: upiUri,
+    razorpayReady: razorpayReady, payWithRazorpay: payWithRazorpay
+  };
+})();

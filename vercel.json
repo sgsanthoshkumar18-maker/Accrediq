@@ -4,8 +4,25 @@
   "buildCommand": null,
   "outputDirectory": ".",
   "rewrites": [
-    { "source": "/api/icd", "destination": "/api/icd.js" },
-    { "source": "/api/who", "destination": "/api/who.js" },
-    { "source": "/api/news", "destination": "/api/news.js" }
+    {
+      "source": "/api/icd",
+      "destination": "/api/icd.js"
+    },
+    {
+      "source": "/api/who",
+      "destination": "/api/who.js"
+    },
+    {
+      "source": "/api/news",
+      "destination": "/api/news.js"
+    },
+    {
+      "source": "/api/create-order",
+      "destination": "/api/create-order.js"
+    },
+    {
+      "source": "/api/verify-payment",
+      "destination": "/api/verify-payment.js"
+    }
   ]
 }

@@ -18,6 +18,8 @@
       desc: "Findings, corrective actions, verification" },
     { key: "documents", href: "documents.html", label: "Documents",
       desc: "Controlled document register" },
+    { key: "access", href: "access.html", label: "Access", ownerOnly: true,
+      desc: "Subscriptions and payment approvals" },
     { key: "team", href: "team.html", label: "Team",
       desc: "Seats, roles and departments" }
   ];
@@ -66,7 +68,13 @@
       el.innerHTML =
         '<div class="ws-nav-inner">' +
           '<div class="ws-nav-links">' +
-            PAGES.map(function (p) {
+            PAGES.filter(function (p) {
+              // Owner-only tabs are hidden from everyone else. This is presentation, not
+              // security — access.html enforces it again server-side via RLS, because a
+              // hidden link is not a locked door.
+              if (!p.ownerOnly) return true;
+              return window.AQBilling && window.AQBilling.isOwner(W.user);
+            }).map(function (p) {
               return '<a href="' + p.href + '" class="ws-nav-link' +
                 (p.key === activeKey ? " active" : "") + '">' + esc(p.label) + "</a>";
             }).join("") +
@@ -98,6 +106,23 @@
         "</div>";
     },
 
+    /* ---------- subscription gate ----------
+       Runs after authentication. Renders the paywall into the same host the auth gate
+       uses, so an unentitled user sees the subscribe screen exactly where they would
+       have seen the sign-in form. */
+    async entitled() {
+      if (!window.AQBilling) return true;   // billing not deployed; do not lock people out
+      var st = await window.AQBilling.status(W.user);
+      W.subscription = st;
+      if (st.active) return true;
+
+      var host = document.getElementById("wsGate");
+      if (!host) return false;
+      if (window.AQPaywall) window.AQPaywall.render(host, W.user, st);
+      else host.innerHTML = '<div class="ws-auth"><h2>Subscription required</h2></div>';
+      return false;
+    },
+
     /* ---------- auth gate ---------- */
     // Returns true when the page may render. In local mode it asks only for a name,
     // because pretending to authenticate against nothing would be theatre.
@@ -107,7 +132,10 @@
         // Same watermark as the rest of the site, minus the copy/right-click
         // restriction on your own account — see auth-gate.js for the full policy.
         if (window.AQGate && W.user.role !== "owner") window.AQGate.watermark(W.user);
-        return true;
+        // Signed in is not the same as entitled. The paywall is a second gate, and it
+        // fails closed: if entitlement cannot be established, access is held rather
+        // than granted.
+        return await W.entitled();
       }
 
       var host = document.getElementById("wsGate");

@@ -95,10 +95,9 @@ window.AQIncident = (function () {
       department: "",
       location: "",
       affected: [],                     // patient / staff / visitor / property
-      person_name: "",
-      person_age: "",
-      person_gender: "",
-      person_id: "",                    // UHID / employee number
+      // No patient identifiers are stored. They are written by hand on the printed form
+      // and kept in the hospital's own records, which keeps identifiable patient data out
+      // of this platform and out of scope for the obligations that would follow it.
       classification: "",
       details: "",
       immediate_action: "",
