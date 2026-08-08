@@ -193,7 +193,11 @@ window.AQBilling = (function () {
     var name = CFG.upiName || "AQcredix";
     var amt = (p.inr / 100).toFixed(2);
     var note = "AQcredix " + p.label;
-    return "upi://pay?pa=" + encodeURIComponent(vpa) +
+    // The VPA is NOT percent-encoded. Its legal characters (letters, digits, dot, hyphen,
+    // underscore, @) are all URL-safe already, and while %40 is technically correct for
+    // the @, several UPI apps fail to resolve a payee address that arrives encoded. Every
+    // other parameter is encoded normally.
+    return "upi://pay?pa=" + String(vpa).trim() +
       "&pn=" + encodeURIComponent(name) +
       "&am=" + encodeURIComponent(amt) +
       "&cu=INR&tn=" + encodeURIComponent(note);

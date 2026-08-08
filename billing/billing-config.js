@@ -29,9 +29,10 @@ window.AQ_BILLING = {
   /* ---------------------------------------------------------------
      UPI — manual verification path.
 
-     upiVpa is your UPI ID, not your phone number. For most Google Pay
-     users on a mobile number it is <number>@okaxis, @oksbi, @okhdfcbank
-     or @okicici depending on the bank behind the account.
+     upiVpa is your UPI ID, not your phone number. Google Pay issues a
+     handle per linked bank — the suffix (@oksbi, @okhdfcbank, @okicici,
+     @okaxis) identifies the bank, and the local part is not necessarily
+     your mobile number.
 
      Find the exact one: Google Pay → tap your photo → Bank accounts →
      your account → "UPI IDs". Copy it character for character.
@@ -40,7 +41,7 @@ window.AQ_BILLING = {
      a maddening thing to debug, so verify it by scanning your own QR
      with a different phone before you launch.
      --------------------------------------------------------------- */
-  upiVpa: "9962679338@okaxis",
+  upiVpa: "s.g.santhoshkumar18-1@oksbi",
   upiName: "AQcredix",
   upiPhone: "9962679338",
 
