@@ -367,11 +367,48 @@ window.AQPaywall = (function () {
 
   /* --------------------------- owner panel ---------------------------- */
 
+  /* What the DATABASE thinks of this session, which is the only opinion that decides
+     whether an approval is allowed to land. The browser has its own owner check in
+     billing-config.js, and when the two lists disagree the panel renders Approve buttons
+     that row-level security then silently refuses — the row stays pending and the owner
+     clicks in a loop with nothing on screen to explain it. This strip makes the
+     disagreement visible. Do not remove it: the Supabase SQL editor cannot answer this
+     question, because it carries no JWT and so always reports "not owner". */
+  async function ownerDiagnostics() {
+    try {
+      var w = await window.AQWorkspace.adapter.rpc("aq_whoami");
+      if (!w) return "";                                  // local mode: no server opinion
+      if (w.is_owner) {
+        return '<details class="pw-note"><summary>Database recognises you as owner ' +
+          "\u2014 approvals will save.</summary><p class=\"pw-tech\">" +
+          esc(w.resolved_email || "") + " \u2192 " + esc(w.normalised || "") +
+          "</p></details>";
+      }
+      return '<div class="pw-note bad"><b>The database does not recognise you as an owner.</b>' +
+        "<p>Approvals will be refused until this is fixed. Your browser thinks you are the " +
+        "owner (that is why this panel opened), but row-level security disagrees, so every " +
+        "write is rejected.</p><p>The database sees your address as <code>" +
+        esc(w.resolved_email || "(none)") + "</code>, normalised to <code>" +
+        esc(w.normalised || "(none)") + "</code>. Add that exact normalised address to the " +
+        "owner list by running this in the Supabase SQL editor:</p>" +
+        "<p><code>insert into public.aq_owners (email_norm) values ('" +
+        esc(w.normalised || "") + "') on conflict do nothing;</code></p></div>";
+    } catch (e) {
+      // aq_whoami() missing means schema.sql predates it. Say so rather than failing.
+      return '<div class="pw-note warn"><b>Could not check owner status with the database.</b>' +
+        "<p>Re-run <code>workspace/schema.sql</code> in Supabase to install the " +
+        "<code>aq_whoami()</code> diagnostic.</p><p class=\"pw-tech\">" +
+        esc(String(e && e.message || e)) + "</p></div>";
+    }
+  }
+
   async function renderAdmin(host, user) {
     var rows = await B.list();
+    var diag = await ownerDiagnostics();
     var pending = rows.filter(function (r) { return r.status === "pending"; });
 
-    var h = '<div class="pw-admin"><h2>Access &amp; subscriptions</h2><div id="pwAdminMsg"></div>' +
+    var h = '<div class="pw-admin"><h2>Access &amp; subscriptions</h2>' + diag +
+      '<div id="pwAdminMsg"></div>' +
       '<p class="pw-sub">Every UPI payment is a claim until you match it against your bank ' +
       "statement. Approve only what you can actually see credited \u2014 a transaction ID " +
       "typed into a box is not proof that money arrived.</p>";
@@ -437,6 +474,9 @@ window.AQPaywall = (function () {
             "<p>The database accepted the request but the row is still pending, which " +
             "normally means a row-level security policy refused the write. Re-run " +
             "<code>workspace/schema.sql</code> in Supabase and try again.</p></div>";
+          // The table can be long enough to push this note off-screen, which reads as
+          // "nothing happened" — the exact confusion this message exists to end.
+          msg.scrollIntoView({ behavior: "smooth", block: "center" });
           return false;
         }
         msg.innerHTML = "";
@@ -444,6 +484,7 @@ window.AQPaywall = (function () {
       } catch (e) {
         msg.innerHTML = '<div class="pw-note bad"><b>The ' + verb + " failed.</b>" +
           '<p class="pw-tech">' + esc(String(e && e.message || e)) + "</p></div>";
+        msg.scrollIntoView({ behavior: "smooth", block: "center" });
         return false;
       }
     }

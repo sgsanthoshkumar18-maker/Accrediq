@@ -361,13 +361,70 @@ language sql immutable as $$
   end;
 $$;
 
-create or replace function public.aq_is_owner() returns boolean
-language sql stable as $$
+-- Owner addresses live in a table, not in the body of a function. Editing a function
+-- means re-running the whole schema; editing a row means one insert. Keep this in step
+-- with ownerEmails in billing-config.js — the browser and the database each keep their
+-- own copy of the list, and when the two disagree the panel renders Approve buttons that
+-- the database then refuses. That disagreement is invisible without aq_whoami() below.
+create table if not exists public.aq_owners (
+  email_norm text primary key,
+  added_at   timestamptz not null default now()
+);
+
+alter table public.aq_owners enable row level security;
+
+-- Nobody reads this table from the browser. aq_is_owner() is security definer and reads
+-- it on the caller's behalf, so no policy is needed and none is granted: an anonymous
+-- visitor must not be able to enumerate who the owners are.
+insert into public.aq_owners (email_norm)
+values (public.aq_norm_email('s.g.santhoshkumar18@gmail.com'))
+on conflict (email_norm) do nothing;
+
+-- The signed-in address, hunted down in the three places it can hide.
+--
+-- The top-level 'email' claim is the normal case. It is absent for some providers and for
+-- sessions minted before the claim was added, in which case the address is either in
+-- user_metadata or nowhere in the token at all — hence the final lookup against
+-- auth.users by uid, which is always authoritative. Reading auth.users requires elevated
+-- rights, which is why the callers below are security definer.
+create or replace function public.aq_jwt_email() returns text
+language sql stable security definer set search_path = public, auth as $$
   select coalesce(
-    public.aq_norm_email(auth.jwt() ->> 'email')
-      in (public.aq_norm_email('s.g.santhoshkumar18@gmail.com')),
-    false);
+    nullif(auth.jwt() ->> 'email', ''),
+    nullif(auth.jwt() -> 'user_metadata' ->> 'email', ''),
+    (select u.email from auth.users u where u.id = auth.uid())
+  );
 $$;
+
+-- security definer so it can reach auth.users through aq_jwt_email() and read aq_owners,
+-- neither of which the anon role may touch directly. It returns a boolean and nothing
+-- else, so it leaks no addresses.
+create or replace function public.aq_is_owner() returns boolean
+language sql stable security definer set search_path = public, auth as $$
+  select exists (
+    select 1 from public.aq_owners o
+    where o.email_norm = public.aq_norm_email(public.aq_jwt_email())
+  );
+$$;
+
+-- Diagnostic. The SQL editor cannot answer "does the database think I am the owner?"
+-- because the editor has no JWT — aq_is_owner() is false there no matter what, which has
+-- already sent one debugging session down a blind alley. This function called from the
+-- signed-in browser answers it truthfully, and the Access panel surfaces the result.
+create or replace function public.aq_whoami() returns jsonb
+language sql stable security definer set search_path = public, auth as $$
+  select jsonb_build_object(
+    'uid',            auth.uid(),
+    'jwt_email',      auth.jwt() ->> 'email',
+    'resolved_email', public.aq_jwt_email(),
+    'normalised',     public.aq_norm_email(public.aq_jwt_email()),
+    'is_owner',       public.aq_is_owner(),
+    'owner_count',    (select count(*) from public.aq_owners)
+  );
+$$;
+
+grant execute on function public.aq_whoami() to anon, authenticated;
+grant execute on function public.aq_is_owner() to anon, authenticated;
 
 drop policy if exists subscriptions_read on public.subscriptions;
 create policy subscriptions_read on public.subscriptions

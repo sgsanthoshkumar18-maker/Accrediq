@@ -77,6 +77,9 @@
     async remove(store, id) {
       await tx(store, "readwrite", function (s) { s.delete(id); });
     },
+    /* No server, so no server opinion to report. Returning null rather than throwing
+       keeps the diagnostics panel from erroring out in local mode. */
+    async rpc() { return null; },
     async clearAll() {
       for (var i = 0; i < STORES.length; i++) {
         await tx(STORES[i], "readwrite", function (s) { s.clear(); });
@@ -175,6 +178,14 @@
       async remove(store, id) {
         await req("/rest/v1/" + store + "?id=eq." + encodeURIComponent(id),
           { method: "DELETE", headers: headers() });
+      },
+      /* Call a Postgres function as the signed-in user. Used for aq_whoami(), which is
+         the only way to learn what the database believes about the current session —
+         the Supabase SQL editor carries no JWT, so it cannot answer that question. */
+      async rpc(fn, args) {
+        return await req("/rest/v1/rpc/" + fn, {
+          method: "POST", headers: headers(), body: JSON.stringify(args || {})
+        });
       },
       async invite(email, name, role) {
         return await this.put("members", {
