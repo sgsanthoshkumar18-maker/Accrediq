@@ -373,10 +373,16 @@ drop policy if exists subscriptions_read on public.subscriptions;
 create policy subscriptions_read on public.subscriptions
   for select using (user_id = auth.uid() or public.aq_is_owner());
 
+-- store.js writes every row with PostgREST's upsert (INSERT ... ON CONFLICT DO UPDATE),
+-- so an owner approving a claim arrives here as an INSERT of a row whose status is
+-- 'active'. The original policy only permitted inserts with status 'pending', which
+-- silently rejected every approval — the request simply stayed pending forever.
+-- An owner may write any row; everyone else may still only lodge their own claim.
 drop policy if exists subscriptions_insert on public.subscriptions;
 create policy subscriptions_insert on public.subscriptions
   for insert with check (
-    user_id = auth.uid() and status = 'pending'
+    public.aq_is_owner()
+    or (user_id = auth.uid() and status = 'pending')
   );
 
 -- Only an owner may activate, extend or reject. This is the line that makes the paywall

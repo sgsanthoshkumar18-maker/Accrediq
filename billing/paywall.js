@@ -371,7 +371,7 @@ window.AQPaywall = (function () {
     var rows = await B.list();
     var pending = rows.filter(function (r) { return r.status === "pending"; });
 
-    var h = '<div class="pw-admin"><h2>Access &amp; subscriptions</h2>' +
+    var h = '<div class="pw-admin"><h2>Access &amp; subscriptions</h2><div id="pwAdminMsg"></div>' +
       '<p class="pw-sub">Every UPI payment is a claim until you match it against your bank ' +
       "statement. Approve only what you can actually see credited \u2014 a transaction ID " +
       "typed into a box is not proof that money arrived.</p>";
@@ -421,13 +421,41 @@ window.AQPaywall = (function () {
     h += "</div>";
     host.innerHTML = h;
 
+    /* Both handlers verify the write actually landed rather than assuming it did.
+       An earlier version awaited the save and re-rendered regardless; when row-level
+       security silently refused the update, the row simply reappeared as pending and the
+       owner was left clicking Approve in a loop with nothing on screen to explain why.
+       A write that cannot be confirmed must say so. */
+    async function act(rec, fn, verb) {
+      var msg = host.querySelector("#pwAdminMsg");
+      try {
+        await fn();
+        var after = await B.list();
+        var now = after.filter(function (r) { return r.id === rec.id; })[0];
+        if (!now || now.status === "pending") {
+          msg.innerHTML = '<div class="pw-note bad"><b>The ' + verb + " did not save.</b>" +
+            "<p>The database accepted the request but the row is still pending, which " +
+            "normally means a row-level security policy refused the write. Re-run " +
+            "<code>workspace/schema.sql</code> in Supabase and try again.</p></div>";
+          return false;
+        }
+        msg.innerHTML = "";
+        return true;
+      } catch (e) {
+        msg.innerHTML = '<div class="pw-note bad"><b>The ' + verb + " failed.</b>" +
+          '<p class="pw-tech">' + esc(String(e && e.message || e)) + "</p></div>";
+        return false;
+      }
+    }
+
     host.querySelectorAll("[data-ok]").forEach(function (b) {
       b.addEventListener("click", async function () {
         var rec = rows.filter(function (r) { return r.id === b.getAttribute("data-ok"); })[0];
         if (!confirm("Approve " + (rec.email || "this user") + "?\n\nConfirm the payment is " +
           "actually credited in your bank or GPay statement first.")) return;
-        await B.approve(rec, user);
-        renderAdmin(host, user);
+        b.disabled = true;
+        var ok = await act(rec, function () { return B.approve(rec, user); }, "approval");
+        if (ok) renderAdmin(host, user); else b.disabled = false;
       });
     });
     host.querySelectorAll("[data-no]").forEach(function (b) {
@@ -435,8 +463,9 @@ window.AQPaywall = (function () {
         var rec = rows.filter(function (r) { return r.id === b.getAttribute("data-no"); })[0];
         var why = prompt("Reason for rejecting (shown in the record):", "Payment not found");
         if (why === null) return;
-        await B.reject(rec, user, why);
-        renderAdmin(host, user);
+        b.disabled = true;
+        var ok = await act(rec, function () { return B.reject(rec, user, why); }, "rejection");
+        if (ok) renderAdmin(host, user); else b.disabled = false;
       });
     });
   }
