@@ -85,13 +85,16 @@
         <a href="${base}index.html" class="brand brand-nomark">
           <span class="brand-stack">AQcredix<span class="full-name">Accreditation &amp; Quality Implementation Guidance Platform</span></span>
         </a>
-        <nav class="main-nav" id="mainNav">${links}</nav>
+        <nav class="main-nav" id="mainNav">${links}<a href="${base}dashboard.html" class="nav-mobile-only">Quality Dashboard</a></nav>
         <div class="nav-actions">
           <button type="button" class="aq-search-btn" id="aqSearchBtn" aria-label="Search the site">
             <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="11" cy="11" r="7"/><path d="M21 21l-4.3-4.3" stroke-linecap="round"/></svg>
             <span>Search</span><kbd>Ctrl K</kbd>
           </button>
           <a class="btn btn-primary btn-sm" href="${base}dashboard.html">Quality Dashboard</a>
+          <button type="button" class="theme-toggle" id="themeToggle" aria-label="Switch between neon dark and light" title="Switch theme">
+            <svg width="17" height="17" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"><path d="M21 12.8A9 9 0 1 1 11.2 3a7 7 0 0 0 9.8 9.8z"/></svg>
+          </button>
           <button class="nav-toggle" id="navToggle" aria-label="Toggle menu" aria-expanded="false">
             <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round"><path d="M4 7h16M4 12h16M4 17h16"/></svg>
           </button>
@@ -155,17 +158,76 @@
     if (footerMount) footerMount.innerHTML = buildFooter(base);
 
 
+    /* The mobile menu is positioned from the bottom of the header, whose height varies:
+       the edition banner wraps to two or three lines on a narrow screen, and the phone
+       address bar changes the viewport as it collapses. A hardcoded offset left the top
+       of the menu hidden behind the header. Measure it instead, and re-measure whenever
+       the layout can change. */
+    /* Until now the only way to change theme was to type the word "dark" or "neon", which
+       no phone user can do — a visitor on a handset was permanently stuck on whatever the
+       default was. This button flips the whole look at once: neon dark is the house style,
+       so the pair moves together rather than exposing two separate switches. */
+    const themeBtn = document.getElementById("themeToggle");
+    if (themeBtn) {
+      themeBtn.addEventListener("click", (e) => {
+        e.stopPropagation();
+        const html = document.documentElement;
+        const goingLight = html.getAttribute("data-theme") === "dark";
+        if (goingLight) {
+          html.removeAttribute("data-theme");
+          html.removeAttribute("data-palette");
+          try {
+            localStorage.setItem("aq-theme", "light");
+            localStorage.setItem("aq-palette", "default");
+          } catch (err) {}
+        } else {
+          html.setAttribute("data-theme", "dark");
+          html.setAttribute("data-palette", "neon");
+          try {
+            localStorage.setItem("aq-theme", "dark");
+            localStorage.setItem("aq-palette", "neon");
+          } catch (err) {}
+        }
+      });
+    }
+
+    const header = document.querySelector(".site-header");
+    const edition = document.querySelector(".aq-edition");
+    function measureHeader() {
+      const h = (header ? header.getBoundingClientRect().height : 0) +
+                (edition ? edition.getBoundingClientRect().height : 0);
+      if (h > 0) document.documentElement.style.setProperty("--aq-header-h", Math.round(h) + "px");
+    }
+    measureHeader();
+    // Fonts land after first paint and change the header height, so measure again once.
+    if (document.fonts && document.fonts.ready) document.fonts.ready.then(measureHeader);
+    window.addEventListener("resize", measureHeader);
+    window.addEventListener("orientationchange", () => setTimeout(measureHeader, 200));
+
     const toggle = document.getElementById("navToggle");
     const nav = document.getElementById("mainNav");
     if (toggle && nav) {
-      toggle.addEventListener("click", () => {
-        const open = nav.classList.toggle("open");
+      const setNav = (open) => {
+        nav.classList.toggle("open", open);
+        // Locking the body stops the page scrolling under the open menu, which on a phone
+        // reads as the menu itself refusing to scroll.
+        document.body.classList.toggle("aq-nav-open", open);
         toggle.setAttribute("aria-expanded", open ? "true" : "false");
+      };
+      toggle.addEventListener("click", (e) => {
+        e.stopPropagation();          // otherwise the document handler below reads the
+                                      // same tap and closes the menu as it opens
+        measureHeader();
+        setNav(!nav.classList.contains("open"));
       });
-      nav.querySelectorAll("a").forEach(a => a.addEventListener("click", () => {
-        nav.classList.remove("open");
-        toggle.setAttribute("aria-expanded", "false");
-      }));
+      nav.querySelectorAll("a").forEach(a => a.addEventListener("click", () => setNav(false)));
+      // Escape and taps outside — a menu with no visible way out traps the reader.
+      document.addEventListener("keydown", (e) => { if (e.key === "Escape") setNav(false); });
+      document.addEventListener("click", (e) => {
+        if (nav.classList.contains("open") && !nav.contains(e.target) && !toggle.contains(e.target)) {
+          setNav(false);
+        }
+      });
     }
 
     // Nav dropdowns (Departments, Tools) — click/keyboard toggle, works identically
