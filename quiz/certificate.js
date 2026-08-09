@@ -139,12 +139,23 @@ window.AQCert = (function () {
       ctx.beginPath();
       ctx.arc(cx, cy, r, -Math.PI / 2, -Math.PI / 2 + Math.PI * 1.5);
       ctx.stroke();
-      ctx.fillStyle = ACCENT;
-      ctx.font = "500 " + Math.round(s * 0.42) + "px Georgia, 'Times New Roman', serif";
-      ctx.textAlign = "center";
-      ctx.textBaseline = "middle";
-      ctx.fillText("A", cx, cy + s * 0.02);
-      ctx.textBaseline = "alphabetic";
+      /* Drawn, not typeset. textBaseline "middle" centres on the em box, not the cap
+         height, so a glyph A sits high by roughly a third of its own height — and by a
+         different amount in every fallback font, since Georgia is absent on most phones.
+         The certificate is a document a hospital may show an assessor; the mark on it
+         must match the mark on the site exactly. Geometry centred on (cx,cy). */
+      var cap = s * 0.33;                 // cap height, matching the web mark's proportion
+      var halfW = cap * 0.50;             // half the base width
+      ctx.lineWidth = s * 0.075;
+      ctx.lineCap = "round";
+      ctx.lineJoin = "round";
+      ctx.beginPath();
+      ctx.moveTo(cx - halfW, cy + cap / 2);
+      ctx.lineTo(cx, cy - cap / 2);
+      ctx.lineTo(cx + halfW, cy + cap / 2);
+      ctx.moveTo(cx - halfW * 0.62, cy + cap * 0.115);
+      ctx.lineTo(cx + halfW * 0.62, cy + cap * 0.115);
+      ctx.stroke();
     } else if (MARK === "seal") {
       var R = s * 0.44;
       ctx.strokeStyle = ACCENT;
