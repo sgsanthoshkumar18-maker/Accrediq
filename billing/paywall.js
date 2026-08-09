@@ -376,7 +376,11 @@ window.AQPaywall = (function () {
      question, because it carries no JWT and so always reports "not owner". */
   async function ownerDiagnostics() {
     try {
-      var w = await window.AQWorkspace.adapter.rpc("aq_whoami");
+      // AQStore owns the adapter. AQWorkspace is the page shell (nav, gate) and has no
+      // data layer on it — reaching for .adapter there throws before any query is made.
+      var store = window.AQStore;
+      if (!store || !store.adapter || !store.adapter.rpc) return "";
+      var w = await store.adapter.rpc("aq_whoami");
       if (!w) return "";                                  // local mode: no server opinion
       if (w.is_owner) {
         return '<details class="pw-note"><summary>Database recognises you as owner ' +
