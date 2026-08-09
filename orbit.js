@@ -69,7 +69,7 @@ window.AQOrbit = (function () {
       '<circle cx="20" cy="20" r="16" stroke="var(--aqo-ring-dim)" stroke-width="2.6"/>' +
       '<path class="hero-logo-arc" d="M20 4a16 16 0 1 1-11.31 4.69" ' +
       'stroke="var(--accent-bright)" stroke-width="2.6" stroke-linecap="round"/>' +
-      '<path d="M13.6 26.6L20 13.4L26.4 26.6M16.15 21.5H23.85" fill="none" stroke="var(--accent-bright)" stroke-width="2.4" stroke-linecap="round" stroke-linejoin="round"/></svg>';
+      '<path d="M19.15 14.05H20.85L25.61 25.015H26.97V25.95H22.21V25.015H23.315L22 22H18L16.685 25.015H17.79V25.95H13.03V25.015H14.39ZM20 16.26L22.027 20.935H17.973Z" fill="var(--accent-bright)" fill-rule="evenodd"/></svg>';
   }
 
   /* mount(el, opts)

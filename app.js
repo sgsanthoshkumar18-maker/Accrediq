@@ -50,7 +50,7 @@
   const shieldMark = `<svg width="46" height="46" viewBox="0 0 40 40" fill="none" xmlns="http://www.w3.org/2000/svg" aria-hidden="true">
       <circle cx="20" cy="20" r="16" stroke="#D8E0E6" stroke-width="3.4"/>
       <path d="M20 4a16 16 0 1 1-11.31 4.69" stroke="#17A2B8" stroke-width="3.4" stroke-linecap="round"/>
-      <path d="M13.6 26.6L20 13.4L26.4 26.6M16.15 21.5H23.85" fill="none" stroke="#17A2B8" stroke-width="3" stroke-linecap="round" stroke-linejoin="round"/>
+      <path d="M19.15 14.05H20.85L25.61 25.015H26.97V25.95H22.21V25.015H23.315L22 22H18L16.685 25.015H17.79V25.95H13.03V25.015H14.39ZM20 16.26L22.027 20.935H17.973Z" fill="#17A2B8" fill-rule="evenodd"/>
     </svg>`;
 
   function getBase() {

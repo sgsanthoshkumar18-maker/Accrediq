@@ -139,23 +139,33 @@ window.AQCert = (function () {
       ctx.beginPath();
       ctx.arc(cx, cy, r, -Math.PI / 2, -Math.PI / 2 + Math.PI * 1.5);
       ctx.stroke();
-      /* Drawn, not typeset. textBaseline "middle" centres on the em box, not the cap
-         height, so a glyph A sits high by roughly a third of its own height — and by a
-         different amount in every fallback font, since Georgia is absent on most phones.
-         The certificate is a document a hospital may show an assessor; the mark on it
-         must match the mark on the site exactly. Geometry centred on (cx,cy). */
-      var cap = s * 0.33;                 // cap height, matching the web mark's proportion
-      var halfW = cap * 0.50;             // half the base width
-      ctx.lineWidth = s * 0.075;
-      ctx.lineCap = "round";
-      ctx.lineJoin = "round";
+      /* The same outlined serif A as the web mark, drawn rather than typeset.
+         textBaseline "middle" centres on the em box, not the cap height, so a glyph A
+         sits high — by a different amount in every fallback font, and Georgia is absent
+         on most phones. The certificate is a document a hospital may show an assessor,
+         so its mark must match the site's exactly. Coordinates are the 40-unit viewBox
+         of the web mark, mapped onto the canvas so the two stay in step. */
+      var u = (s * 0.84) / 40;                 // viewBox unit → canvas px
+      var px = function (vx) { return cx + (vx - 20) * u; };
+      var py = function (vy) { return cy + (vy - 20) * u; };
+      var outer = [[19.15,14.05],[20.85,14.05],[25.61,25.015],[26.97,25.015],[26.97,25.95],
+                   [22.21,25.95],[22.21,25.015],[23.315,25.015],[22,22],[18,22],
+                   [16.685,25.015],[17.79,25.015],[17.79,25.95],[13.03,25.95],
+                   [13.03,25.015],[14.39,25.015]];
+      var counter = [[20,16.26],[22.027,20.935],[17.973,20.935]];
+      ctx.fillStyle = ACCENT;
       ctx.beginPath();
-      ctx.moveTo(cx - halfW, cy + cap / 2);
-      ctx.lineTo(cx, cy - cap / 2);
-      ctx.lineTo(cx + halfW, cy + cap / 2);
-      ctx.moveTo(cx - halfW * 0.62, cy + cap * 0.115);
-      ctx.lineTo(cx + halfW * 0.62, cy + cap * 0.115);
-      ctx.stroke();
+      outer.forEach(function (p, i) {
+        if (i === 0) ctx.moveTo(px(p[0]), py(p[1])); else ctx.lineTo(px(p[0]), py(p[1]));
+      });
+      ctx.closePath();
+      // Wound as a second subpath and filled evenodd so the counter stays open — filled
+      // "nonzero" it closes up and the A reads as a solid triangle.
+      counter.forEach(function (p, i) {
+        if (i === 0) ctx.moveTo(px(p[0]), py(p[1])); else ctx.lineTo(px(p[0]), py(p[1]));
+      });
+      ctx.closePath();
+      ctx.fill("evenodd");
     } else if (MARK === "seal") {
       var R = s * 0.44;
       ctx.strokeStyle = ACCENT;
