@@ -109,6 +109,12 @@
     var user = null;
     try { user = await S.currentUser(); } catch (e) { user = null; }
 
+    /* The gate runs on every protected page and is the one place the signed-in user is
+       resolved, so it is where the activity ledger learns whose history to write to.
+       Without this every entry files under "guest" and the profile page reports zero for
+       someone who has been using the site all week. */
+    if (window.AQActivity) window.AQActivity.setUser(user);
+
     if (!user) { block(signInPrompt(mode === "paid")); return; }
     if (mode === "login") return;
 

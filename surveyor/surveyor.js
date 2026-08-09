@@ -25,6 +25,15 @@
     (all[key] = all[key] || []).unshift(attempt);
     all[key] = all[key].slice(0, 25);
     try { localStorage.setItem(STORE, JSON.stringify(all)); } catch {}
+    // Mirrored into the shared ledger so the profile page can report it alongside
+    // everything else. This store keeps only the last 25 attempts; the ledger keeps the
+    // running count, so the profile does not under-report a heavy user.
+    if (window.AQActivity) {
+      window.AQActivity.record("mock_audit", {
+        department: attempt && attempt.dept, score: attempt && attempt.score,
+        title: attempt && attempt.dept
+      });
+    }
   }
   function attemptsFor(email) { return loadAll()[String(email || "").trim().toLowerCase()] || []; }
 

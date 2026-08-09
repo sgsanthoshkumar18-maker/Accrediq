@@ -305,6 +305,75 @@ create trigger doc_version_log
   for each row execute function public.log_document_version();
 
 -- =====================================================================
+-- Activity. One row per completed piece of work, tied to the USER.
+--
+-- This is what makes a subscriber's progress permanent: quizzes, certificates, videos,
+-- gap analyses, mock surveys and SOPs previously existed only in the browser, so they
+-- vanished on a new device or a cleared cache. A quality manager works from a ward
+-- tablet, an office PC and a phone; the record has to be the same in all three.
+--
+-- SECURITY: this is keyed on auth.uid(), NOT on org, and deliberately so. Unlike audits
+-- or incidents — which are the hospital's records and are shared with colleagues — a
+-- person's learning history is their own. The policies below mean a row is visible only
+-- to the account that created it: no other subscriber, no colleague in the same
+-- hospital, and nobody without that account's email and password can read it. Even the
+-- org's admins cannot, because org membership is not consulted anywhere in these rules.
+--
+-- user_id is set by the trigger below from auth.uid() rather than trusted from the
+-- client, so a forged user_id in a request body cannot write a row into someone else's
+-- history. The insert policy independently rejects a mismatched user_id as well; the two
+-- together mean neither a bug in the client nor a hand-crafted request can cross accounts.
+--
+-- Rows are never updated, only inserted and read — an activity log that can be edited is
+-- not a log. There is no delete policy for the same reason.
+-- =====================================================================
+create table if not exists public.activity (
+  id         text primary key,
+  user_id    uuid not null references auth.users(id) on delete cascade,
+  type       text not null,          -- quiz_completed | certificate_earned | video_watched | ...
+  meta       jsonb not null default '{}'::jsonb,
+  at         timestamptz not null default now(),
+  created_at timestamptz not null default now(),
+  -- store.js stamps updated_at on every write, so every table it touches must have it.
+  updated_at timestamptz not null default now()
+);
+
+-- The profile page reads one user's rows ordered by time; without this index that is a
+-- sequential scan of every subscriber's history on every page load.
+create index if not exists activity_user_at_idx on public.activity(user_id, at desc);
+-- Distinct-counting (certificates by serial, gap analyses by day) filters on type first.
+create index if not exists activity_user_type_idx on public.activity(user_id, type);
+
+alter table public.activity enable row level security;
+
+-- Stamp the owner server-side. The client never sends user_id, and if it does, it is
+-- overwritten — the JWT is the only authority on who is writing.
+create or replace function public.set_activity_user()
+returns trigger language plpgsql security definer set search_path = public as $$
+begin
+  new.user_id := auth.uid();
+  return new;
+end; $$;
+
+drop trigger if exists set_activity_user_trg on public.activity;
+create trigger set_activity_user_trg before insert on public.activity
+  for each row execute function public.set_activity_user();
+
+-- Read your own history and nobody else's.
+drop policy if exists activity_select on public.activity;
+create policy activity_select on public.activity
+  for select using (user_id = auth.uid());
+
+-- Write only as yourself. Belt and braces with the trigger above.
+drop policy if exists activity_insert on public.activity;
+create policy activity_insert on public.activity
+  for insert with check (user_id = auth.uid());
+
+-- No update and no delete policy: with RLS enabled, the absence of a policy is a denial.
+-- History is append-only, so a subscriber cannot quietly rewrite their own record before
+-- an assessment, and a bug cannot wipe it.
+
+-- =====================================================================
 -- Subscriptions. One row per purchase attempt.
 --
 -- Row-level security here is different from every other table: a subscription belongs to

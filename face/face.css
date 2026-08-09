@@ -57,6 +57,20 @@
   .face-stage{min-height:340px;height:auto;}
   .face-wrap{height:auto;aspect-ratio:1/1;}
 }
+@media (max-width:600px){
+  /* The hero stacks to one column here, so the canvas would otherwise run the full
+     width of the screen and sit tight against the headline above and the stat row
+     below. Capping it and adding breathing room keeps the organ clear of both; face.js
+     dollies the camera back to match so the model still fills its box properly rather
+     than shrinking into a corner. */
+  .face-stage{min-height:260px;margin:8px auto 4px;}
+  .face-wrap{max-width:300px;margin:0 auto;}
+  /* The tooltip is anchored above the node it describes and is not clipped by the
+     canvas, so near the top of the model it could float over the headline. Keeping it
+     inside the stage and narrower stops that. */
+  .face-tooltip{max-width:220px;font-size:11.5px;}
+  .organ-label{font-size:10px;padding:5px 12px;bottom:6px;}
+}
 
 /* ---- Organ name label, shown as each shape settles ---- */
 .organ-label{

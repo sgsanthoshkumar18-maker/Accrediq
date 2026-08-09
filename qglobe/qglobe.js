@@ -491,17 +491,86 @@
     overlay.appendChild(btn);
     return btn;
   });
+
+  /* Standing name labels on every hub.
+   *
+   * The hover tooltip alone meant hunting: to find one department you had to point at
+   * node after node and read them one at a time. With the name always on the node you
+   * can see where you are going before you click.
+   *
+   * They are decorative duplicates of the button's aria-label, so they are hidden from
+   * assistive tech to avoid every department being announced twice. */
+  /* Names on the globe have to survive at ~11px on a curved surface next to 24 others,
+     and they run as long as "Medical Records Department (MRD)". This keeps whichever
+     part actually identifies the department:
+       - a parenthesised acronym is the clearest short form, so it wins outright
+         ("Medical Records Department (MRD)" -> "MRD")
+       - otherwise take the part before "&" or "/", which is the head noun
+         ("Purchase & Materials" -> "Purchase")
+       - and only then truncate, as a last resort.
+     The full name is still on the hover tooltip, the panel and the button's aria-label,
+     so nothing is lost — this is the at-a-glance form only. */
+  function shortName(name) {
+    const acronym = /\(([A-Z]{2,5})\)/.exec(name);
+    if (acronym) return acronym[1];
+    let s = name.split(/\s*[&/]\s*/)[0].trim();
+    // "Emergency Department" and "Quality Department" identify themselves without the
+    // word Department, and dropping it avoids an ellipsis that helps nobody.
+    s = s.replace(/\s+Department$/i, "");
+    if (s.length > 17) s = s.slice(0, 16).trim() + "\u2026";
+    return s;
+  }
+
+  const labelEls = hubs.map((h) => {
+    const tag = document.createElement("span");
+    tag.className = "qg-hub-label";
+    tag.setAttribute("aria-hidden", "true");
+    tag.textContent = shortName(h.dept.name || "");
+    overlay.appendChild(tag);
+    return tag;
+  });
+
   function updateHitPositions() {
     const w = wrapEl.clientWidth, h = wrapEl.clientHeight;
-    hubs.forEach((hub, i) => {
+
+    /* Labels are placed nearest-first and any that would land on top of one already
+       placed is dropped. Twenty-five names on a sphere otherwise overlap into an
+       unreadable smear around the rim, which is worse than no labels at all. The
+       selected and hovered nodes always win their place, so the one you care about
+       never disappears. */
+    const placed = [];
+    const minGapX = 66, minGapY = 15;
+    const order = hubs.map((hub, i) => {
       const world = hub.mesh.getWorldPosition(new THREE.Vector3());
       const p = world.clone().project(camera);
-      const sx = (p.x * 0.5 + 0.5) * w, sy = (-p.y * 0.5 + 0.5) * h;
+      return { i, p, sx: (p.x * 0.5 + 0.5) * w, sy: (-p.y * 0.5 + 0.5) * h };
+    }).sort((a, b) => a.p.z - b.p.z);   // nearest the camera first
+
+    order.forEach(({ i, p, sx, sy }) => {
+      const hub = hubs[i];
       const el = hitEls[i];
       el.style.left = sx + "px"; el.style.top = sy + "px";
       const behind = p.z > 1;
       el.style.opacity = behind ? "0" : "1";
       el.style.pointerEvents = behind ? "none" : "auto";
+
+      const tag = labelEls[i];
+      const isFocus = i === hoveredIndex || hub.dept.id === selectedDeptId;
+      let show = !behind;
+      if (show && !isFocus) {
+        show = !placed.some(q => Math.abs(q.sx - sx) < minGapX && Math.abs(q.sy - sy) < minGapY);
+      }
+      if (show) {
+        placed.push({ sx, sy });
+        tag.style.left = sx + "px";
+        tag.style.top = (sy + 11) + "px";
+        // Fade with depth so the far side of the globe recedes instead of competing.
+        tag.style.opacity = isFocus ? "1" : String(Math.max(0.35, 1 - p.z * 0.9));
+        tag.classList.toggle("is-focus", isFocus);
+        tag.style.display = "block";
+      } else {
+        tag.style.display = "none";
+      }
 
       // Keep the tooltip pinned to its node as the globe rotates.
       if (i === hoveredIndex) {

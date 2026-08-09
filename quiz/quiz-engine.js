@@ -269,6 +269,16 @@
     var btn = document.getElementById("aqQuizSubmit");
     if (btn) btn.style.display = "none";
 
+    /* Recorded here rather than on page load: opening the quiz is not attempting it, and
+       counting an open as an attempt would inflate the profile's numbers. Guarded because
+       the ledger is not loaded on every page that embeds the quiz engine. */
+    if (window.AQActivity) {
+      window.AQActivity.record("quiz_completed", {
+        department: set.department && set.department.name,
+        score: score, outOf: set.questions.length, date: set.date
+      });
+    }
+
     showResult(score);
     document.getElementById("aqQuizResult").scrollIntoView({ behavior: "smooth", block: "center" });
   }
@@ -339,6 +349,16 @@
     var meta = el("p", "aq-cert-meta",
       "Serial " + res.serial + " \u00B7 valid one year from issue");
     wrap.appendChild(meta);
+
+    /* Keyed on the serial. A person may re-open the certificate or regenerate it after
+       correcting the spelling of their name, and each of those would otherwise count as
+       another certificate earned. The profile counts distinct serials. */
+    if (window.AQActivity) {
+      window.AQActivity.record("certificate_earned", {
+        serial: res.serial, department: set.department && set.department.name,
+        title: set.department && set.department.name, date: set.date
+      });
+    }
 
     var dl = el("button", "aq-btn aq-btn-primary", "Download PNG");
     dl.type = "button";

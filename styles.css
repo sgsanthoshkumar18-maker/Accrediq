@@ -286,6 +286,13 @@ p{margin:0 0 0;}
   border:1px solid var(--border);border-radius:10px;width:40px;height:40px;color:var(--fg);
   touch-action:manipulation;-webkit-tap-highlight-color:transparent;cursor:pointer;flex-shrink:0;}
 .theme-toggle:hover,.theme-toggle:active{background:var(--brand-tint);color:var(--brand-2);}
+/* Same shape as the theme toggle so the two read as a pair of header controls. */
+.profile-btn{display:flex;align-items:center;justify-content:center;
+  border:1px solid var(--border);border-radius:10px;width:40px;height:40px;color:var(--fg);
+  touch-action:manipulation;-webkit-tap-highlight-color:transparent;flex-shrink:0;
+  text-decoration:none;}
+.profile-btn:hover,.profile-btn:active{background:var(--brand-tint);color:var(--brand-2);}
+.profile-btn.is-active{border-color:var(--brand-2);color:var(--brand-2);}
 /* Dashboard has a button in the header bar on desktop, so the in-menu copy would be a
    duplicate there. On a phone the bar has no room for it and this is its only route. */
 .nav-mobile-only{display:none;}
@@ -812,6 +819,11 @@ a:focus-visible,button:focus-visible,input:focus-visible,select:focus-visible,te
   .aq-search-btn span,
   .aq-search-btn kbd{display:none;}
   .aq-search-btn{width:40px;height:40px;padding:0;justify-content:center;flex-shrink:0;}
+  /* Four controls share the bar on a phone: search, theme, profile, menu. Slightly
+     tighter boxes and gaps keep them all on one line at 360px without shrinking the
+     hamburger's touch target. */
+  .nav-actions{gap:6px;}
+  .aq-search-btn,.theme-toggle,.profile-btn{width:38px;height:38px;}
   /* Dashboard is one tap away inside the menu, so it need not also sit in the bar. */
   .nav-actions .btn-primary{display:none;}
 }

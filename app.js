@@ -92,6 +92,9 @@
             <span>Search</span><kbd>Ctrl K</kbd>
           </button>
           <a class="btn btn-primary btn-sm" href="${base}dashboard.html">Quality Dashboard</a>
+          <a class="profile-btn" id="profileBtn" href="${base}profile.html" aria-label="My progress and subscription" title="My progress">
+            <svg width="17" height="17" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="8" r="3.6"/><path d="M4.8 20a7.2 7.2 0 0 1 14.4 0"/></svg>
+          </a>
           <button type="button" class="theme-toggle" id="themeToggle" aria-label="Switch between neon dark and light" title="Switch theme">
             <svg width="17" height="17" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"><path d="M21 12.8A9 9 0 1 1 11.2 3a7 7 0 0 0 9.8 9.8z"/></svg>
           </button>
@@ -167,6 +170,12 @@
        no phone user can do — a visitor on a handset was permanently stuck on whatever the
        default was. This button flips the whole look at once: neon dark is the house style,
        so the pair moves together rather than exposing two separate switches. */
+    // Matches how nav links mark themselves current, using the page's data-page value.
+    if (document.body.getAttribute("data-page") === "profile") {
+      const pb = document.getElementById("profileBtn");
+      if (pb) pb.classList.add("is-active");
+    }
+
     const themeBtn = document.getElementById("themeToggle");
     if (themeBtn) {
       themeBtn.addEventListener("click", (e) => {

@@ -160,6 +160,13 @@
       }
       var saved = await S.saveCapa(data);
       var i = rows.findIndex(function (r) { return r.id === saved.id; });
+      /* Only a CAPA that was not already in the list is a new one. Editing an existing
+         record repeatedly must not read as raising a dozen CAPAs. */
+      if (i < 0 && window.AQActivity) {
+        window.AQActivity.record("capa_created", {
+          id: saved.id, title: saved.title, department: saved.department
+        });
+      }
       if (i >= 0) rows[i] = saved; else rows.push(saved);
       m.classList.remove("open"); render(); W.toast("Saved");
     });

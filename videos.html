@@ -12,6 +12,11 @@
 <script type="application/ld+json">{"@context":"https://schema.org","@type":"WebSite","name":"AQcredix","url":"https://accrediq.vercel.app/","potentialAction":{"@type":"SearchAction","target":"https://accrediq.vercel.app/standards.html?q={search_term_string}","query-input":"required name=search_term_string"}}</script>
 <link rel="stylesheet" href="workspace/auth-gate.css">
 <link rel="stylesheet" href="billing/page-gate.css">
+<style>
+/* Marks a card the reader has already opened. Tokens only — light, dark and neon follow. */
+.video-embed.is-watched{outline:2px solid var(--brand-2);outline-offset:-2px;}
+.video-embed.is-watched .play{background:var(--brand-2);color:var(--bg);}
+</style>
 </head>
 <body data-page="videos" data-access="paid">
 <script src="workspace/config.js"></script>
@@ -70,6 +75,8 @@
 </main>
 <div id="site-footer"></div>
 <script src="app.js"></script>
+<script src="profile/activity.js"></script>
+<script src="videos/videos.js"></script>
 <script src="search/search.js"></script>
 <script src="billing/billing-config.js"></script>
 <script src="billing/billing.js"></script>

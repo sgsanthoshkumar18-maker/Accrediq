@@ -19,10 +19,13 @@
   /* ============================ LOCAL ADAPTER ============================ */
   // IndexedDB rather than localStorage: evidence notes and long CAPA text blow past
   // the 5MB localStorage ceiling quickly once a hospital is a few months in.
-  var DB_NAME = "aqcredix-workspace", DB_VER = 4;
+  /* DB_VER bumped to 5 for the "activity" store. An existing visitor's IndexedDB was
+   created at version 4 and will not contain it; without the bump, local-mode writes to
+   activity throw NotFoundError inside a feature's success path. */
+  var DB_NAME = "aqcredix-workspace", DB_VER = 5;
   // v2 adds "audits". createObjectStore is additive inside onupgradeneeded, so the
   // bump creates the new store and leaves existing element/CAPA data untouched.
-  var STORES = ["elements", "capa", "documents", "members", "audits", "incidents", "subscriptions", "meta"];
+  var STORES = ["elements", "capa", "documents", "members", "audits", "incidents", "subscriptions", "activity", "meta"];
   var _db = null;
 
   function openDB() {

@@ -299,6 +299,12 @@
     if (!current.submitted_at) current.submitted_at = new Date().toISOString();
     current.status = current.status === "reported" ? "under_review" : current.status;
     await I.save(current, true);
+    /* After the save resolves, so a rejected write is not counted as a report filed.
+       Only the reference is stored — no patient identifiers, matching the rule that they
+       never enter the web form or any store. */
+    if (window.AQActivity) {
+      window.AQActivity.record("incident_reported", { title: current.reference });
+    }
     W.toast("Incident " + current.reference + " recorded");
     await refresh();
     openOne(current.id);

@@ -391,6 +391,14 @@
     stopClock();
 
     await A.save(session, true);
+    /* After the save resolves — a completed audit is one that persisted. Recorded here
+       rather than in showReport() so re-opening a finished report does not count again. */
+    if (window.AQActivity) {
+      window.AQActivity.record("audit_completed", {
+        id: session.id, title: session.department || session.scope_label,
+        department: session.department
+      });
+    }
     try {
       var n = await A.pushToCapa(session);
       if (n) W.toast(n + " finding" + (n === 1 ? "" : "s") + " sent to NC & CAPA");

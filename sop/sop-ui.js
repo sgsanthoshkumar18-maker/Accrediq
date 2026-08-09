@@ -96,6 +96,11 @@
       try {
         const safe = result.meta.title.replace(/[^\w\s-]/g, "").replace(/\s+/g, "-");
         await window.SopDocx.download(result.blocks, "SOP-" + safe);
+        /* Recorded after the download resolves, not on click: a failed export must not
+           count as an SOP produced. */
+        if (window.AQActivity) {
+          window.AQActivity.record("sop_generated", { title: result.meta.title });
+        }
         btn.textContent = "Downloaded ✓";
         setTimeout(() => { btn.textContent = original; btn.disabled = false; }, 1800);
       } catch (err) {

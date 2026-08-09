@@ -60,11 +60,28 @@
   camera.position.set(0, 0.05, 3.4);
   camera.lookAt(0, 0, 0);
 
+  /* How far back the camera sits, by viewport width.
+   *
+   * On a phone the hero stacks to one column and the canvas becomes a full-width square,
+   * which rendered the brain and kidney large enough to run under the headline and the
+   * stat row above and below them. Scaling the canvas down instead would shrink the
+   * touch targets on the nodes too; dollying the camera back keeps the model comfortably
+   * inside its own box at full canvas size, so nothing overlaps the text.
+   *
+   * Desktop is deliberately untouched at 3.4 — the layout there has always been correct. */
+  function cameraDistance() {
+    var w = window.innerWidth;
+    if (w <= 600) return 4.75;
+    if (w <= 900) return 4.20;
+    return 3.4;
+  }
+
   function sizeRenderer() {
     const w = wrapEl.clientWidth, h = wrapEl.clientHeight;
     if (!w || !h) return;
     renderer.setSize(w, h, false);
     camera.aspect = w / h;
+    camera.position.z = cameraDistance();
     camera.updateProjectionMatrix();
   }
   sizeRenderer();

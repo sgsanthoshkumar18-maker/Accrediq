@@ -128,6 +128,11 @@
     // because pretending to authenticate against nothing would be theatre.
     async gate() {
       W.user = await S.currentUser();
+      /* Workspace pages gate through here rather than billing/page-gate.js, so the
+         activity ledger has to be told the user in both places — audits, incidents and
+         CAPAs are recorded from inside the workspace and would otherwise all file under
+         "guest". */
+      if (window.AQActivity) window.AQActivity.setUser(W.user);
       if (W.user) {
         // Same watermark as the rest of the site, minus the copy/right-click
         // restriction on your own account — see auth-gate.js for the full policy.

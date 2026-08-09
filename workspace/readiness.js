@@ -212,6 +212,16 @@
           statusMap[code] = statusMap[code] || { id: code };
           statusMap[code].status = s;
           await S.setElement(code, { status: s });
+          /* One gap analysis means a session of assessment work, not a single element.
+             Scoring fires on every button press — hundreds in one sitting — so this is
+             stamped with the day and the profile counts distinct days. Counting raw
+             presses would show "247 gap analyses" after one afternoon, which nobody
+             would believe or find useful. */
+          if (window.AQActivity) {
+            window.AQActivity.record("gap_saved", {
+              day: new Date().toISOString().slice(0, 10), element: code
+            });
+          }
           renderSummary();
         });
       });

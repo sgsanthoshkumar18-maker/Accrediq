@@ -1,0 +1,110 @@
+/* AQcredix — profile / my progress.
+   Every colour is a theme token so light, dark and neon follow automatically. Hardcoding
+   a colour here has already caused one bug elsewhere in the site; don't reintroduce it. */
+
+.pf-wrap{padding-bottom:80px;}
+.pf-section{margin:0 0 40px;}
+.pf-section h2{font-size:20px;margin:0 0 14px;}
+
+/* ---- identity ---- */
+.pf-id{display:flex;align-items:center;gap:16px;}
+.pf-id h1{margin:0;font-size:30px;line-height:1.15;overflow-wrap:anywhere;}
+.pf-email{margin:3px 0 0;color:var(--fg-faint);font-size:14px;overflow-wrap:anywhere;}
+.pf-avatar{width:54px;height:54px;flex-shrink:0;border-radius:50%;
+  display:flex;align-items:center;justify-content:center;
+  background:var(--brand-tint);color:var(--brand-2);
+  font-family:var(--font-display,Georgia,serif);font-size:24px;font-weight:700;
+  border:1px solid var(--border);}
+
+.pf-chips{display:flex;gap:10px;flex-wrap:wrap;margin-top:16px;}
+.pf-chip{background:var(--bg-elevated);border:1px solid var(--border);border-radius:12px;
+  padding:9px 15px;display:flex;align-items:baseline;gap:7px;}
+.pf-chip b{font-size:19px;color:var(--brand-2);}
+.pf-chip span{font-size:12.5px;color:var(--fg-faint);}
+.pf-chip-ok b{color:var(--ok,var(--brand-2));}
+.pf-chip-warn{background:var(--warn-tint);border-color:var(--warn);}
+.pf-chip-warn b{color:var(--warn);}
+
+/* ---- coverage ---- */
+.pf-coverage{background:var(--bg-elevated);border:1px solid var(--border);
+  border-radius:14px;padding:18px 20px;margin:0 0 26px;}
+.pf-cov-head{display:flex;justify-content:space-between;align-items:baseline;gap:12px;margin-bottom:10px;}
+.pf-cov-head b{font-size:17px;}
+.pf-cov-head span{color:var(--brand-2);font-weight:600;}
+.pf-coverage p{margin:11px 0 0;color:var(--fg-faint);font-size:13.5px;line-height:1.6;}
+
+.pf-bar{height:6px;border-radius:999px;background:var(--brand-tint);overflow:hidden;}
+.pf-bar>span{display:block;height:100%;background:var(--brand-2);border-radius:999px;
+  transition:width .4s ease;}
+.pf-bar-lg{height:9px;}
+
+/* ---- stat cards ---- */
+.pf-group{font-size:12.5px;letter-spacing:.09em;text-transform:uppercase;
+  color:var(--fg-faint);margin:24px 0 12px;font-weight:600;}
+.pf-grid{display:grid;grid-template-columns:repeat(auto-fill,minmax(210px,1fr));gap:14px;}
+.pf-stat{display:block;text-decoration:none;color:inherit;
+  background:var(--bg-elevated);border:1px solid var(--border);border-radius:14px;padding:16px 17px;
+  transition:border-color .18s ease,transform .18s ease;}
+.pf-stat:hover{border-color:var(--brand-2);transform:translateY(-2px);}
+.pf-stat-n{font-size:30px;font-weight:700;line-height:1;color:var(--brand-2);}
+.pf-stat-l{font-size:13.5px;margin:7px 0 11px;line-height:1.4;}
+.pf-stat-m{font-size:12px;color:var(--fg-faint);margin-top:8px;}
+/* Server-backed cards carry a quiet accent edge so the hospital-wide, synced figures are
+   distinguishable at a glance from the device-local personal ones. */
+.pf-stat.is-synced{border-left:2px solid var(--brand-2);}
+.pf-stat.is-synced .pf-stat-m{color:var(--brand-2);}
+
+/* ---- subscription ---- */
+.pf-sub{background:var(--bg-elevated);border:1px solid var(--border);border-radius:14px;
+  padding:6px 20px;}
+.pf-sub-row{display:flex;justify-content:space-between;align-items:baseline;gap:16px;
+  padding:13px 0;border-bottom:1px solid var(--border);}
+.pf-sub-row:last-child{border-bottom:none;}
+.pf-sub-row span{color:var(--fg-faint);font-size:13.5px;}
+.pf-sub-row b{text-align:right;overflow-wrap:anywhere;}
+.pf-sub-note{margin:11px 2px 0;font-size:13px;color:var(--fg-faint);line-height:1.6;}
+.pf-ok{color:var(--ok,var(--brand-2));}
+.pf-warn{color:var(--warn);}
+.pf-sub-owner{border-color:var(--brand-2);}
+.pf-sub-warn{background:var(--warn-tint);border-color:var(--warn);padding:16px 20px;}
+.pf-sub-warn b{color:var(--warn);}
+.pf-sub-warn p,.pf-sub-none p{margin:8px 0 0;font-size:13.5px;line-height:1.6;}
+.pf-sub-none{padding:18px 20px;}
+.pf-sub-none .btn{margin-top:13px;}
+.pf-tech{font-family:ui-monospace,SFMono-Regular,Menlo,monospace;font-size:12px;
+  color:var(--fg-faint);overflow-wrap:anywhere;}
+
+/* ---- next steps ---- */
+.pf-next{list-style:none;padding:0;margin:0;display:grid;
+  grid-template-columns:repeat(auto-fill,minmax(230px,1fr));gap:12px;}
+.pf-next a{display:block;text-decoration:none;color:inherit;padding:15px 17px;
+  background:var(--bg-elevated);border:1px solid var(--border);border-radius:12px;
+  transition:border-color .18s ease;}
+.pf-next a:hover{border-color:var(--brand-2);}
+.pf-next b{display:block;font-size:14.5px;}
+.pf-next span{display:block;font-size:12.5px;color:var(--fg-faint);margin-top:4px;}
+.pf-next-done{background:var(--brand-tint);border:1px solid var(--border);border-radius:12px;
+  padding:16px 18px;font-size:14px;line-height:1.6;}
+
+/* ---- timeline ---- */
+.pf-timeline{list-style:none;padding:0;margin:0;}
+.pf-timeline li{display:flex;align-items:baseline;gap:12px;padding:11px 0;
+  border-bottom:1px solid var(--border);font-size:14px;}
+.pf-timeline li:last-child{border-bottom:none;}
+.pf-timeline b{font-weight:600;}
+.pf-tl-x{color:var(--fg-faint);font-size:13px;flex:1;overflow-wrap:anywhere;}
+.pf-timeline time{margin-left:auto;color:var(--fg-faint);font-size:12.5px;white-space:nowrap;}
+
+.pf-empty{color:var(--fg-faint);font-size:14px;line-height:1.6;margin:0;}
+.pf-foot{margin:18px 0 0;font-size:12.5px;color:var(--fg-faint);line-height:1.6;}
+.pf-sub-lead{color:var(--fg-faint);}
+
+@media (max-width:640px){
+  .pf-id h1{font-size:24px;}
+  .pf-grid{grid-template-columns:repeat(auto-fill,minmax(150px,1fr));gap:11px;}
+  .pf-stat-n{font-size:26px;}
+  /* Label and value stack rather than being squeezed onto one line; long plan names and
+     dates were colliding at narrow widths. */
+  .pf-sub-row{flex-direction:column;gap:3px;}
+  .pf-sub-row b{text-align:left;}
+}
