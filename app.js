@@ -191,6 +191,9 @@
       });
     }
 
+    /* The panel is anchored in CSS with top:100%, so its position needs no measurement.
+       This value only caps its height, so a long menu scrolls inside itself instead of
+       running off the bottom of the screen. */
     const header = document.querySelector(".site-header");
     const edition = document.querySelector(".aq-edition");
     function measureHeader() {

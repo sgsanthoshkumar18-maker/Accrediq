@@ -294,22 +294,30 @@ p{margin:0 0 0;}
 }
 
 @media (max-width:980px){
-  /* The panel used to be pinned at a hardcoded 64px from the top. The real header is
-     taller than that on a phone — the edition banner wraps to two or three lines and the
-     brand stacks — so the top of the menu sat behind an opaque sticky header and the
-     first items were unreachable. --aq-header-h is measured at runtime in app.js and
-     kept current on resize and orientation change.
+  /* Anchored to the header with position:absolute, NOT fixed.
+     .site-header carries backdrop-filter, and any ancestor with backdrop-filter, filter
+     or transform becomes the containing block for fixed-position descendants — so a
+     `position:fixed` panel in here resolves against the header box, not the viewport.
+     With top set to the header height and bottom:0 inside a box that IS the header, the
+     panel collapsed to zero height: it opened correctly and rendered nothing, which is
+     indistinguishable from a dead button.
 
-     z-index matters too: the header is z-index 60 and some pages mount a full-bleed hero
-     canvas, so without an explicit value the panel could paint underneath both. */
-  .main-nav{position:fixed;top:var(--aq-header-h,64px);left:0;right:0;bottom:0;z-index:70;
+     top:100% sits it flush under the header and needs no measurement at all. The header
+     is sticky, so the panel travels with it. dvh accounts for the phone address bar
+     collapsing; the vh line above it is the fallback for browsers without dvh. */
+  .main-nav{position:absolute;top:100%;left:0;right:0;z-index:70;
+    max-height:calc(100vh - var(--aq-header-h,64px));
+    max-height:calc(100dvh - var(--aq-header-h,64px));
     background:var(--bg-elevated);flex-direction:column;align-items:stretch;
     padding:14px 14px calc(14px + env(safe-area-inset-bottom));gap:2px;
     transform:translateY(-8px);opacity:0;pointer-events:none;transition:opacity .2s ease,transform .2s ease;
-    border-top:1px solid var(--border);overflow-y:auto;-webkit-overflow-scrolling:touch;
-    overscroll-behavior:contain;}
-  .main-nav.open{transform:translateY(0);opacity:1;pointer-events:auto;}
-  /* Stops the page behind the open menu from scrolling under the finger. */
+    border-top:1px solid var(--border);border-bottom:1px solid var(--border);
+    box-shadow:0 18px 40px rgba(0,0,0,.28);
+    overflow-y:auto;-webkit-overflow-scrolling:touch;overscroll-behavior:contain;
+    display:none;}
+  /* display:none while closed keeps the collapsed panel from swallowing taps meant for
+     the page underneath; it is flipped to flex only when open. */
+  .main-nav.open{display:flex;transform:translateY(0);opacity:1;pointer-events:auto;}
   body.aq-nav-open{overflow:hidden;}
   .main-nav a{padding:13px 16px;border-radius:10px;}
   .nav-toggle{display:flex;}
