@@ -44,6 +44,15 @@
   --font-body:'Inter', -apple-system, BlinkMacSystemFont, "Segoe UI", sans-serif;
   --font-mono:'IBM Plex Mono', ui-monospace, SFMono-Regular, Menlo, monospace;
 
+  /* Deep decorative surfaces. These were hardcoded indigo (#232a6b / #090b21) in the
+     hero, CTA band, video embeds and tile borders, which meant every component using
+     them needed its own :root[data-palette="neon"] override — and anything that got
+     missed stayed indigo while the rest of the page went neon. As tokens they re-tint
+     with the palette automatically, so a new component is neon-correct by default. */
+  --deep-1:#232a6b;          /* the lit corner of a deep gradient */
+  --deep-2:#090b21;          /* its far, darkest corner */
+  --border-strong:#CBD0F0;   /* hover borders on tiles and live cards */
+  --on-deep:#ffffff;         /* text on any of the above */
   --wrap:1180px;
 }
 
@@ -92,6 +101,14 @@
   --shadow-2:0 4px 12px rgba(0,0,0,.75), 0 26px 56px -18px rgba(34,211,238,.40);
 
   --hero-tint:#22D3EE;
+
+  /* Neon re-tint of the deep surfaces: the indigo becomes the same cyan-lit navy the
+     hero uses, and hover borders drop to the palette's own border colour so nothing
+     glows lavender on a black page. */
+  --deep-1:#06283D;
+  --deep-2:#000000;
+  --border-strong:#38BDF8;
+  --on-deep:#EAF6FF;
 }
 
 /* Surfaces hand-tinted for the indigo palette, re-tinted for neon blue. */
@@ -147,6 +164,13 @@
 
   --shadow-1:0 1px 2px rgba(0,0,0,.4), 0 10px 28px -12px rgba(0,0,0,.55);
   --shadow-2:0 4px 10px rgba(0,0,0,.45), 0 24px 48px -16px rgba(0,0,0,.6);
+
+  /* Dark keeps the indigo family but sinks it, so the hero and CTA band do not glow
+     brighter than the page around them. Without these the dark theme would inherit the
+     light palette's values and those surfaces would sit oddly light. */
+  --deep-1:#1B2050;
+  --deep-2:#05060F;
+  --border-strong:#3A4180;
 }
 :root[data-theme="dark"] .page-head{background:linear-gradient(180deg,rgba(79,70,229,.14),var(--bg) 88%);}
 :root[data-theme="dark"] .site-header{background:rgba(10,13,30,.82);}
@@ -336,7 +360,7 @@ p{margin:0 0 0;}
 }
 
 /* ---------- Hero ---------- */
-.hero{background:radial-gradient(120% 140% at 78% -10%, #232a6b 0%, var(--bg-deep) 52%, #090b21 100%);color:#fff;padding:76px 0 96px;position:relative;overflow:hidden;}
+.hero{background:radial-gradient(120% 140% at 78% -10%, var(--deep-1) 0%, var(--bg-deep) 52%, var(--deep-2) 100%);color:var(--on-deep);padding:76px 0 96px;position:relative;overflow:hidden;}
 .hero::after{content:"";position:absolute;inset:0;background:radial-gradient(60% 50% at 90% 100%, rgba(14,165,160,.20), transparent 70%);pointer-events:none;}
 .hero-grid{display:grid;grid-template-columns:1.02fr 0.98fr;gap:48px;align-items:center;position:relative;}
 @property --hero-tint {
@@ -459,7 +483,7 @@ p{margin:0 0 0;}
   transition:transform .18s ease, box-shadow .18s ease, border-color .18s ease;
   display:block;
 }
-a.tile:hover{transform:translateY(-3px);box-shadow:var(--shadow-2);border-color:#CBD0F0;}
+a.tile:hover{transform:translateY(-3px);box-shadow:var(--shadow-2);border-color:var(--border-strong);}
 .tile .ico{width:42px;height:42px;border-radius:12px;background:var(--brand-tint);color:var(--brand-2);display:flex;align-items:center;justify-content:center;margin-bottom:16px;}
 .tile h3{margin-top:2px;}
 .tile p{color:var(--fg-muted);font-size:14.5px;margin-top:9px;}
@@ -491,7 +515,7 @@ a.tile:hover .more{text-decoration:underline;}
 
 /* ---------- CTA band ---------- */
 .cta-band{
-  background:linear-gradient(120deg,var(--bg-deep),#232a6b 120%);
+  background:linear-gradient(120deg,var(--bg-deep),var(--deep-1) 120%);
   color:#fff;border-radius:var(--r-xl);padding:50px 44px;text-align:left;
   display:flex;flex-direction:column;align-items:flex-start;gap:16px;position:relative;overflow:hidden;
 }
@@ -513,7 +537,7 @@ a.tile:hover .more{text-decoration:underline;}
 @media (max-width:900px){.acc-grid{grid-template-columns:repeat(2,1fr);}}
 @media (max-width:600px){.acc-grid{grid-template-columns:1fr;}}
 .acc{border:1px solid var(--border);border-radius:var(--r-lg);padding:22px;background:var(--bg);}
-.acc.live{background:linear-gradient(160deg,var(--brand-tint),var(--bg-elevated));border-color:#CBD0F0;}
+.acc.live{background:linear-gradient(160deg,var(--brand-tint),var(--bg-elevated));border-color:var(--border-strong);}
 .acc .st{display:block;margin-bottom:12px;}
 .acc .abbr{font-family:var(--font-display);font-weight:700;font-size:22px;}
 .acc .full{font-size:13px;color:var(--fg-muted);margin-top:3px;font-weight:600;}
@@ -551,7 +575,7 @@ a.tile:hover .more{text-decoration:underline;}
 .dm{display:block;font-size:12.5px;color:var(--fg-faint);margin-top:2px;}
 
 /* ---------- Video ---------- */
-.video-embed{position:relative;background:linear-gradient(140deg,var(--bg-deep),#232a6b);border-radius:var(--r-lg);border:1px solid var(--border);display:flex;align-items:center;justify-content:center;overflow:hidden;}
+.video-embed{position:relative;background:linear-gradient(140deg,var(--bg-deep),var(--deep-1));border-radius:var(--r-lg);border:1px solid var(--border);display:flex;align-items:center;justify-content:center;overflow:hidden;}
 .video-embed .play{width:56px;height:56px;border-radius:50%;background:rgba(255,255,255,.14);border:1px solid rgba(255,255,255,.3);color:#fff;display:flex;align-items:center;justify-content:center;cursor:pointer;backdrop-filter:blur(6px);transition:transform .18s ease, background .18s ease;}
 .video-embed .play:hover{transform:scale(1.08);background:var(--accent-bright);color:#04241F;}
 .video-embed .cap{position:absolute;left:0;right:0;bottom:0;padding:16px 18px;background:linear-gradient(0deg,rgba(6,8,26,.86),transparent);color:#fff;display:flex;flex-direction:column;gap:2px;}
@@ -607,7 +631,7 @@ a.tile:hover .more{text-decoration:underline;}
   transition:transform .16s ease,box-shadow .16s ease,border-color .16s ease;
   display:flex;flex-direction:column;gap:12px;position:relative;
 }
-.dept-tile:hover{transform:translateY(-3px);box-shadow:var(--shadow-2);border-color:#CBD0F0;}
+.dept-tile:hover{transform:translateY(-3px);box-shadow:var(--shadow-2);border-color:var(--border-strong);}
 .dept-tile.is-active{border-color:var(--brand-2);box-shadow:0 0 0 3px var(--brand-tint), var(--shadow-2);}
 .dept-tile .dt-top{display:flex;align-items:center;justify-content:space-between;}
 .dept-tile .dt-ico{width:38px;height:38px;border-radius:10px;background:var(--brand-tint);color:var(--brand-2);display:flex;align-items:center;justify-content:center;}

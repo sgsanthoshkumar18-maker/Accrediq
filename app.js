@@ -95,7 +95,7 @@
           <a class="profile-btn" id="profileBtn" href="${base}profile.html" aria-label="My progress and subscription" title="My progress">
             <svg width="17" height="17" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="8" r="3.6"/><path d="M4.8 20a7.2 7.2 0 0 1 14.4 0"/></svg>
           </a>
-          <button type="button" class="theme-toggle" id="themeToggle" aria-label="Switch between neon dark and light" title="Switch theme">
+          <button type="button" class="theme-toggle" id="themeToggle" aria-label="Switch between dark and light" title="Switch theme">
             <svg width="17" height="17" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"><path d="M21 12.8A9 9 0 1 1 11.2 3a7 7 0 0 0 9.8 9.8z"/></svg>
           </button>
           <button class="nav-toggle" id="navToggle" aria-label="Toggle menu" aria-expanded="false">
@@ -184,17 +184,20 @@
         const goingLight = html.getAttribute("data-theme") === "dark";
         if (goingLight) {
           html.removeAttribute("data-theme");
+          /* Neon is a true-black palette and is unreadable over a light theme, so it
+             steps aside while light is on. The stored preference is left alone, so the
+             owner's neon comes back when they switch to dark again. */
           html.removeAttribute("data-palette");
-          try {
-            localStorage.setItem("aq-theme", "light");
-            localStorage.setItem("aq-palette", "default");
-          } catch (err) {}
+          try { localStorage.setItem("aq-theme", "light"); } catch (err) {}
         } else {
           html.setAttribute("data-theme", "dark");
-          html.setAttribute("data-palette", "neon");
           try {
             localStorage.setItem("aq-theme", "dark");
-            localStorage.setItem("aq-palette", "neon");
+            // Restore neon only for the owner. This button gives subscribers dark and
+            // light and nothing else; the palette is not theirs to reach.
+            if (isOwnerBrowser() && localStorage.getItem("aq-palette") === "neon") {
+              html.setAttribute("data-palette", "neon");
+            }
           } catch (err) {}
         }
       });
@@ -309,7 +312,31 @@
     });
   }
 
+  /* Is this browser the owner's?
+   *
+   * The neon palette is the owner's own control, not a user-facing setting: subscribers
+   * choose only dark or light. This is a presentation decision, not a security boundary
+   * — a determined person can set the attribute by hand in dev tools, and that is fine,
+   * because all it does is change colours. Anything that actually matters is enforced by
+   * row-level security in the database, never here.
+   *
+   * billing.js already resolves ownership from the signed-in account, with the Gmail
+   * dot/+tag normalisation. Reusing it keeps one definition of "owner" rather than a
+   * second one that could drift. The cached flag is written by the gate once the user is
+   * known, because this runs on every page including ones that never resolve a session. */
+  function isOwnerBrowser() {
+    try {
+      if (window.AQBilling && window.AQ_CURRENT_USER) {
+        return !!window.AQBilling.isOwner(window.AQ_CURRENT_USER);
+      }
+      return localStorage.getItem("aq-is-owner") === "1";
+    } catch (err) { return false; }
+  }
+
   function togglePalette() {
+    // Silently ignored for everyone else: no message, because a subscriber typing the
+    // word by accident should not learn that a hidden switch exists.
+    if (!isOwnerBrowser()) return;
     const html = document.documentElement;
     const isNeon = html.getAttribute("data-palette") === "neon";
     if (isNeon) {

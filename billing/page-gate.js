@@ -115,6 +115,25 @@
        someone who has been using the site all week. */
     if (window.AQActivity) window.AQActivity.setUser(user);
 
+    /* Remembered so app.js can decide, on any page, whether the neon palette control is
+       available — it runs before a session is resolved and on pages that never resolve
+       one. Cleared for non-owners so a shared machine does not leave the flag set after
+       the owner signs out. Colours only; nothing is gated on this. */
+    try {
+      var owner = user && window.AQBilling && window.AQBilling.isOwner(user);
+      window.AQ_CURRENT_USER = user || null;
+      if (owner) {
+        localStorage.setItem("aq-is-owner", "1");
+      } else {
+        localStorage.removeItem("aq-is-owner");
+        // A non-owner must not be left on the owner's palette.
+        if (localStorage.getItem("aq-palette") === "neon") {
+          localStorage.setItem("aq-palette", "default");
+          document.documentElement.removeAttribute("data-palette");
+        }
+      }
+    } catch (e) { /* storage unavailable: the palette simply stays as booted */ }
+
     if (!user) { block(signInPrompt(mode === "paid")); return; }
     if (mode === "login") return;
 

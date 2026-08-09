@@ -133,6 +133,20 @@
          CAPAs are recorded from inside the workspace and would otherwise all file under
          "guest". */
       if (window.AQActivity) window.AQActivity.setUser(W.user);
+      /* Workspace pages gate here rather than through billing/page-gate.js, so the
+         owner flag that unlocks the neon palette has to be set in both places. */
+      try {
+        window.AQ_CURRENT_USER = W.user || null;
+        if (W.user && window.AQBilling && window.AQBilling.isOwner(W.user)) {
+          localStorage.setItem("aq-is-owner", "1");
+        } else {
+          localStorage.removeItem("aq-is-owner");
+          if (localStorage.getItem("aq-palette") === "neon") {
+            localStorage.setItem("aq-palette", "default");
+            document.documentElement.removeAttribute("data-palette");
+          }
+        }
+      } catch (e) { /* storage unavailable: palette stays as booted */ }
       if (W.user) {
         // Same watermark as the rest of the site, minus the copy/right-click
         // restriction on your own account — see auth-gate.js for the full policy.

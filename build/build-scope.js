@@ -12,7 +12,13 @@ const fs = require("fs");
 const path = require("path");
 
 global.window = {};
-require(path.join(__dirname, "..", "AccrediQ", "nabh-data.js"));
+/* The repo root is the parent of build/, found by walking up rather than by naming the
+   folder. The folder name used to be hardcoded as "AccrediQ", which broke this script
+   the moment the directory was renamed — and it is the only place in the project that
+   cared about the folder's name at all. Everything the website serves uses relative
+   paths, so the checkout can be called anything. */
+const ROOT = path.join(__dirname, "..");
+require(path.join(ROOT, "nabh-data.js"));
 const D = global.window.NABH_DATA;
 const SRC = require("./scope-source.js");
 
@@ -167,7 +173,7 @@ const header =
  */
 `;
 
-const outDir = path.join(__dirname, "..", "AccrediQ", "audit");
+const outDir = path.join(ROOT, "audit");
 fs.mkdirSync(outDir, { recursive: true });
 fs.writeFileSync(path.join(outDir, "scope-data.js"),
   header +
