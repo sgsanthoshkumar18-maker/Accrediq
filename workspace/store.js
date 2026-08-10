@@ -83,6 +83,10 @@
     /* No server, so no server opinion to report. Returning null rather than throwing
        keeps the diagnostics panel from erroring out in local mode. */
     async rpc() { return null; },
+    /* No accounts in local mode, so nothing to recover. Present so callers need not
+       branch on which adapter is active. */
+    async resetPassword() { return null; },
+    async resendConfirmation() { return null; },
     async clearAll() {
       for (var i = 0; i < STORES.length; i++) {
         await tx(STORES[i], "readwrite", function (s) { s.clear(); });
@@ -162,6 +166,24 @@
         });
         setSession(s);
         return s;
+      },
+      /* Password reset and confirmation resend. Without these, an account created on one
+         device with a password nobody wrote down is simply lost — there was no way back
+         in from a second device, which is exactly the situation these were added for.
+         Both are fire-and-forget: Supabase deliberately returns success whether or not
+         the address exists, so an attacker cannot use them to discover who has an
+         account. That means a "sent" message is not proof the address is registered. */
+      async resetPassword(email) {
+        return await req("/auth/v1/recover", {
+          method: "POST", headers: { apikey: key, "Content-Type": "application/json" },
+          body: JSON.stringify({ email: email })
+        });
+      },
+      async resendConfirmation(email) {
+        return await req("/auth/v1/resend", {
+          method: "POST", headers: { apikey: key, "Content-Type": "application/json" },
+          body: JSON.stringify({ type: "signup", email: email })
+        });
       },
       async signOut() {
         try { await req("/auth/v1/logout", { method: "POST", headers: headers() }); } catch (e) {}

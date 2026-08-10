@@ -106,6 +106,42 @@
     var body = ov.querySelector("#aqGateBody"), msg = ov.querySelector("#aqGateMsg");
     var S = window.AQStore;
 
+
+    /* Supabase returns machine-readable JSON on failure, and this panel used to print it
+       raw and truncated at 220 characters. A person locked out on a new device then sees
+       something like {"code":"email_not_confirmed","message":... and cannot tell whether
+       the account is missing, unconfirmed, or the password is simply wrong — three very
+       different problems with three different fixes. Translate them. */
+    function friendlyAuthError(err) {
+      var raw = String((err && err.message) || err || "");
+      var code = "";
+      try { code = (JSON.parse(raw) || {}).error_code || (JSON.parse(raw) || {}).code || ""; }
+      catch (e) { code = ""; }
+      var t = (code + " " + raw).toLowerCase();
+
+      if (t.indexOf("email_not_confirmed") >= 0 || t.indexOf("not confirmed") >= 0) {
+        return { text: "This email has not been confirmed yet. Open the confirmation link " +
+                 "sent when the account was created, then sign in.", resend: true };
+      }
+      if (t.indexOf("invalid_credentials") >= 0 || t.indexOf("invalid login") >= 0) {
+        return { text: "That email and password do not match an account. If the account " +
+                 "was created on another device, use Reset password below.", reset: true };
+      }
+      if (t.indexOf("user_already_exists") >= 0 || t.indexOf("already registered") >= 0) {
+        return { text: "An account with this email already exists \u2014 use Sign in instead." };
+      }
+      if (t.indexOf("over_email_send_rate") >= 0 || t.indexOf("rate limit") >= 0) {
+        return { text: "Too many attempts just now. Wait a minute and try again." };
+      }
+      if (t.indexOf("weak_password") >= 0 || t.indexOf("password should be") >= 0) {
+        return { text: "That password is too short \u2014 six characters or more." };
+      }
+      if (t.indexOf("failed to fetch") >= 0 || t.indexOf("networkerror") >= 0) {
+        return { text: "No connection to the server. Check the network and try again." };
+      }
+      return { text: raw.slice(0, 200) || "Sign-in failed. Please try again." };
+    }
+
     function draw(tab) {
       body.innerHTML =
         '<label>Work email</label><input id="agEmail" type="email" autocomplete="email">' +
@@ -134,7 +170,26 @@
             location.href = decodeURIComponent(here) || location.href;
           }
         } catch (err) {
-          msg.textContent = String(err.message || err).slice(0, 220);
+          var f = friendlyAuthError(err);
+          msg.innerHTML = f.text +
+            (f.reset || f.resend
+              ? ' <button type="button" class="aq-gate-link" id="agRecover">' +
+                (f.resend ? "Resend confirmation" : "Reset password") + "</button>"
+              : "");
+          var rec = msg.querySelector("#agRecover");
+          if (rec) {
+            rec.addEventListener("click", async function () {
+              rec.disabled = true;
+              try {
+                if (f.resend) await S.adapter.resendConfirmation(e);
+                else await S.adapter.resetPassword(e);
+                msg.textContent = "Sent. Check the inbox for " + e +
+                  " (including the spam folder).";
+              } catch (e2) {
+                msg.textContent = friendlyAuthError(e2).text;
+              }
+            });
+          }
           this.disabled = false;
         }
       });

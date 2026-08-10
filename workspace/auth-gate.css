@@ -36,3 +36,11 @@
     visibility:visible;position:fixed;top:40%;left:0;right:0;text-align:center;
     font-size:18px;font-family:sans-serif;}
 }
+
+/* Inline recovery action inside the gate's message line. Styled as a link rather than a
+   button so it reads as a next step, not a second primary action competing with Sign in. */
+.aq-gate-link{
+  background:none;border:none;padding:0;margin:0;
+  color:var(--brand-2);font:inherit;text-decoration:underline;cursor:pointer;
+}
+.aq-gate-link:disabled{opacity:.55;cursor:default;}
