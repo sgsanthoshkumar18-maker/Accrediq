@@ -21,6 +21,30 @@ window.AQ_BILLING = {
   ],
 
   /* ---------------------------------------------------------------
+     COMPLIMENTARY ACCESS — lifetime, no payment.
+
+     These accounts get everything a paying subscriber gets and are
+     never shown the payment page. They are NOT owners: no Access
+     panel, no approving other people's payments, no palette control.
+     Ownership stays with ownerEmails above and nowhere else.
+
+     Use this for pilot hospitals, a reference customer, or anyone you
+     have promised free access to. Adding an address here is the whole
+     job — nothing else needs changing.
+
+     The same list must also be present in workspace/schema.sql, in
+     aq_is_comp(). This copy decides what the browser DISPLAYS; the SQL
+     copy decides what the database will actually hand over. The second
+     one is the one that matters — keep them in step.
+
+     Dots and +tags in Gmail addresses are normalised, so any spelling
+     of the same mailbox works.
+     --------------------------------------------------------------- */
+  complimentaryEmails: [
+    "mavisneha@gmail.com"
+  ],
+
+  /* ---------------------------------------------------------------
      Prices, in PAISE (100 paise = ₹1).
      Integers only — money should never touch a floating-point number.
 

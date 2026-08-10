@@ -66,6 +66,15 @@ window.AQBilling = (function () {
     return local + "@" + domain;
   }
 
+  /* Lifetime free access, granted by address in billing-config.js. Deliberately separate
+     from isOwner(): free access and ownership are different things, and conflating them
+     would hand a pilot hospital the Access panel. */
+  function isComplimentary(user) {
+    var list = (CFG.complimentaryEmails || []).map(normalizeEmail);
+    var email = normalizeEmail(user && user.email);
+    return !!email && list.indexOf(email) >= 0;
+  }
+
   function isOwner(user) {
     if (!user) return false;
     var owners = (CFG.ownerEmails || []).map(normalizeEmail);
@@ -103,6 +112,17 @@ window.AQBilling = (function () {
     }
     if (!user || !user.id) {
       return { active: false, reason: "signed_out" };
+    }
+    /* Complimentary accounts: everything a subscriber gets, for life, with no payment
+       page ever shown. Checked before the table read, so their access does not depend on
+       the subscriptions table being reachable — and note owner:false, because these are
+       guests of the platform, not operators of it. The Access panel, the palette control
+       and approving other people's payments stay with the owner alone. */
+    if (isComplimentary(user)) {
+      return {
+        active: true, owner: false, reason: "complimentary",
+        plan: "complimentary", daysLeft: null, expiresAt: null
+      };
     }
 
     var rows;
@@ -283,7 +303,7 @@ window.AQBilling = (function () {
 
   return {
     PLANS: PLANS, CFG: CFG,
-    isOwner: isOwner, normalizeEmail: normalizeEmail, planOf: planOf, rupees: rupees, fmtDate: fmtDate,
+    isOwner: isOwner, isComplimentary: isComplimentary, normalizeEmail: normalizeEmail, planOf: planOf, rupees: rupees, fmtDate: fmtDate,
     status: status, submitClaim: submitClaim, approve: approve, reject: reject,
     list: list, upiUri: upiUri,
     razorpayReady: razorpayReady, payWithRazorpay: payWithRazorpay

@@ -15,7 +15,11 @@ eq(/own&&p.has\("neon"\)/.test(boot), true, 'only the owner may CHANGE the palet
 eq(/q==="neon"&&t!=="light"/.test(boot), true, 'every visitor APPLIES the published palette');
 eq(/q==="neon"&&t!=="light"/.test(boot), true, 'neon never rides over the light theme');
 eq(/localStorage.getItem\("aq-is-owner"\)==="1"/.test(boot), true, 'boot reads the owner flag');
-eq(/aq-palette"\)\|\|"default"/.test(boot), true, 'palette defaults to plain, not neon');
+// The shipped default is now neon: falling back to "default" made the site open blue on
+// a cold load and only turn neon after site_settings had been fetched and cached, which
+// looked like needing two or three refreshes.
+eq(/aq-palette"\)\|\|DEF/.test(boot), true, 'palette falls back to the shipped default');
+eq(/var DEF="neon"/.test(boot), true, 'the shipped default is neon');
 eq(/aq-theme"\)\|\|"dark"/.test(boot), true, 'theme still defaults to dark for everyone');
 
 // --- the typed shortcut is owner-gated

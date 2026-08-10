@@ -60,6 +60,29 @@
     document.body.setAttribute("data-gated", "1");
   }
 
+  /* A gated page must never be served from memory.
+   *
+   * block() rewrites the DOM, and the browser's back/forward cache stores that rewritten
+   * page as-is. Press Back, or return to an old tab, and the payment screen reappears
+   * even though the person has since paid — or has signed out and in as somebody else
+   * entirely, which is the case that made switching accounts in one tab so awkward.
+   * A restored gated page is therefore always reloaded so the gate runs again against
+   * the current session. Only pages that were actually gated reload, so normal
+   * back-navigation stays instant. */
+  window.addEventListener("pageshow", function (e) {
+    if (e.persisted && document.body.getAttribute("data-gated") === "1") {
+      window.location.reload();
+    }
+  });
+
+  /* Sign-in and sign-out happen in a different tab as often as not. store.js keeps the
+     session under this key, and the storage event fires in every OTHER tab when it
+     changes — so a tab left sitting on a payment screen picks up the new session instead
+     of stranding the reader on a page that no longer applies to them. */
+  window.addEventListener("storage", function (e) {
+    if (e.key === "aq-sb-session") window.location.reload();
+  });
+
   function signInPrompt(paid) {
     var b = base();
     return shell(
@@ -129,12 +152,11 @@
       if (owner) {
         localStorage.setItem("aq-is-owner", "1");
       } else {
+        /* Clears only the right to CHANGE the palette. The palette itself is published
+           site-wide from site_settings, so a subscriber keeps whatever the owner chose —
+           stripping it here would have fought the shipped default and flipped the site
+           back to blue for every non-owner on sign-in. */
         localStorage.removeItem("aq-is-owner");
-        // A non-owner must not be left on the owner's palette.
-        if (localStorage.getItem("aq-palette") === "neon") {
-          localStorage.setItem("aq-palette", "default");
-          document.documentElement.removeAttribute("data-palette");
-        }
       }
     } catch (e) { /* storage unavailable: the palette simply stays as booted */ }
 

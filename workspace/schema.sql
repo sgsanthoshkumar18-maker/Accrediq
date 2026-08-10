@@ -561,3 +561,57 @@ drop policy if exists subscriptions_delete on public.subscriptions;
 create policy subscriptions_delete on public.subscriptions
   for delete using (public.aq_is_owner());
 
+
+-- ---------- Complimentary accounts ----------
+-- Lifetime free access, by address. These are guests of the platform, not operators:
+-- aq_is_comp() is NOT aq_is_owner(), and nothing owner-gated consults it. Keep this list
+-- in step with complimentaryEmails in billing/billing-config.js — that copy decides what
+-- the browser shows, this one decides what the database will actually hand over, and the
+-- database is the one that matters.
+create or replace function public.aq_is_comp() returns boolean
+language sql stable security definer set search_path = public, auth as $$
+  select public.aq_norm_email(public.aq_jwt_email()) in (
+    public.aq_norm_email('mavisneha@gmail.com')
+  );
+$$;
+
+grant execute on function public.aq_is_comp() to anon, authenticated;
+
+-- A real row, so the account looks and behaves like any other active subscriber
+-- everywhere — the profile page, the Access panel, any future report — rather than being
+-- a special case each of those has to know about. Dated far out rather than null because
+-- every expiry comparison in the code expects a date; a null would read as "no expiry
+-- recorded" and fail closed.
+--
+-- user_id is left null: it is filled in the first time they sign in, by the trigger
+-- below. It cannot be set here because the account may not exist yet.
+insert into public.subscriptions
+  (id, user_id, email, name, plan, months, amount_paise, method, status,
+   requested_at, activated_at, expires_at, approved_by, note)
+values
+  ('sub_comp_mavisneha', null, 'mavisneha@gmail.com', 'Complimentary',
+   'complimentary', 1200, 0, 'complimentary', 'active',
+   now(), now(), now() + interval '100 years', 'owner',
+   'Lifetime complimentary access granted by the owner.')
+on conflict (id) do update
+  set status = 'active',
+      expires_at = excluded.expires_at,
+      amount_paise = 0,
+      method = 'complimentary';
+
+-- Bind the complimentary row to the account the first time that person signs in, so the
+-- normal user_id lookups find it. Without this the row is matched by email only, which
+-- works but leaves user_id null forever.
+create or replace function public.aq_claim_comp_subscription()
+returns trigger language plpgsql security definer set search_path = public, auth as $$
+begin
+  update public.subscriptions
+     set user_id = new.id
+   where user_id is null
+     and public.aq_norm_email(email) = public.aq_norm_email(new.email);
+  return new;
+end; $$;
+
+drop trigger if exists aq_claim_comp_trg on auth.users;
+create trigger aq_claim_comp_trg after insert on auth.users
+  for each row execute function public.aq_claim_comp_subscription();
