@@ -69,24 +69,28 @@
    ============================================================ */
 :root[data-palette="neon"]{
   --bg:#000000;              /* true black */
-  --bg-elevated:#080C14;     /* cards lift just enough to separate */
+  --bg-elevated:#04100E;     /* cards lift just enough to separate, tinted teal not blue */
   --bg-deep:#000000;
-  --bg-deep-2:#05080F;
+  --bg-deep-2:#02090A;
 
-  --fg:#EAF6FF;              /* 18.9:1 on black */
-  --fg-muted:#A7C8E0;        /* 10.1:1 on black */
-  --fg-faint:#7FA3BF;        /*  6.5:1 on black — still comfortably readable */
+  --fg:#E6FFFA;              /* 18.2:1 on black */
+  --fg-muted:#9FD8CE;        /* 10.4:1 on black */
+  --fg-faint:#6FA79E;        /*  5.9:1 on black — still comfortably readable */
 
-  --border:#12324A;
-  --border-soft:#0B2033;
+  --border:#10403A;
+  --border-soft:#0A2A26;
 
-  --brand:#22D3EE;
-  --brand-2:#38BDF8;         /*  8.6:1 on black */
-  --brand-tint:rgba(56,189,248,.14);
+  /* The whole family is the brain's teal (#5EEAD4) and its neighbours. Previously these
+     were sky blue (#38BDF8), which is why the header, buttons and chips stayed blue while
+     the hero canvas — which picks its own colours — glowed teal. One family everywhere
+     means no blue survives anywhere once neon is on. */
+  --brand:#2DD4BF;
+  --brand-2:#5EEAD4;         /* 13.9:1 on black */
+  --brand-tint:rgba(94,234,212,.14);
 
-  --accent:#38BDF8;
-  --accent-bright:#22D3EE;   /* 10.9:1 on black */
-  --accent-bright-tint:rgba(34,211,238,.14);
+  --accent:#2DD4BF;
+  --accent-bright:#5EEAD4;   /* 13.9:1 on black */
+  --accent-bright-tint:rgba(94,234,212,.14);
 
   --ok:#34D399;
   --ok-tint:rgba(52,211,153,.14);
@@ -94,39 +98,37 @@
   --warn-tint:rgba(251,191,36,.14);
   --nc:#FF6B8A;              /* lifted from the light-mode red so it passes on black */
   --nc-tint:rgba(255,107,138,.15);
-  --info:#60A5FA;
-  --info-tint:rgba(96,165,250,.15);
+  --info:#5EEAD4;            /* was blue; folded into the teal family */
+  --info-tint:rgba(94,234,212,.15);
 
-  --shadow-1:0 1px 2px rgba(0,0,0,.8), 0 10px 30px -12px rgba(34,211,238,.28);
-  --shadow-2:0 4px 12px rgba(0,0,0,.75), 0 26px 56px -18px rgba(34,211,238,.40);
+  --shadow-1:0 1px 2px rgba(0,0,0,.8), 0 10px 30px -12px rgba(45,212,191,.28);
+  --shadow-2:0 4px 12px rgba(0,0,0,.75), 0 26px 56px -18px rgba(45,212,191,.40);
 
-  --hero-tint:#22D3EE;
+  --hero-tint:#5EEAD4;
 
-  /* Neon re-tint of the deep surfaces: the indigo becomes the same cyan-lit navy the
-     hero uses, and hover borders drop to the palette's own border colour so nothing
-     glows lavender on a black page. */
-  --deep-1:#06283D;
+  /* Deep decorative surfaces, re-tinted from navy to a teal-lit black. */
+  --deep-1:#06322C;
   --deep-2:#000000;
-  --border-strong:#38BDF8;
-  --on-deep:#EAF6FF;
+  --border-strong:#2DD4BF;
+  --on-deep:#E6FFFA;
 }
 
 /* Surfaces hand-tinted for the indigo palette, re-tinted for neon blue. */
 :root[data-palette="neon"] body{background:#000;}
-:root[data-palette="neon"] .page-head{background:linear-gradient(180deg,rgba(56,189,248,.10),#000 88%);}
+:root[data-palette="neon"] .page-head{background:linear-gradient(180deg,rgba(94,234,212,.10),#000 88%);}
 :root[data-palette="neon"] .site-header{background:rgba(0,0,0,.9);border-bottom-color:var(--border);}
-:root[data-palette="neon"] .hero{background:radial-gradient(120% 140% at 78% -10%, #06283D 0%, #010A12 55%, #000 100%);}
-:root[data-palette="neon"] .hero::after{background:radial-gradient(60% 50% at 90% 100%, rgba(34,211,238,.16), transparent 70%);}
+:root[data-palette="neon"] .hero{background:radial-gradient(120% 140% at 78% -10%, #06322C 0%, #01100E 55%, #000 100%);}
+:root[data-palette="neon"] .hero::after{background:radial-gradient(60% 50% at 90% 100%, rgba(45,212,191,.16), transparent 70%);}
 :root[data-palette="neon"] .acc-band{background:var(--bg-elevated);border-color:var(--border-soft);}
-:root[data-palette="neon"] .acc{background:#04070C;}
-:root[data-palette="neon"] .acc.live{background:linear-gradient(160deg,rgba(56,189,248,.14),var(--bg-elevated));border-color:var(--border);}
-:root[data-palette="neon"] .lens-strip{background:#03060B;}
+:root[data-palette="neon"] .acc{background:var(--bg-elevated);}
+:root[data-palette="neon"] .acc.live{background:linear-gradient(160deg,rgba(94,234,212,.14),var(--bg-elevated));border-color:var(--border);}
+:root[data-palette="neon"] .lens-strip{background:#020A09;}
 :root[data-palette="neon"] .humor{background:#000;}
-:root[data-palette="neon"] .cta-band{background:linear-gradient(120deg,#010A12,#06283D 120%);}
+:root[data-palette="neon"] .cta-band{background:linear-gradient(120deg,#01100E,#06322C 120%);}
 :root[data-palette="neon"] .dl{background:var(--bg-elevated);}
-:root[data-palette="neon"] .video-embed{background:linear-gradient(140deg,#010A12,#06283D);}
-:root[data-palette="neon"] ::selection{background:var(--accent-bright);color:#00131A;}
-:root[data-palette="neon"] .code-chip{background:#06283D;color:#EAF6FF;}
+:root[data-palette="neon"] .video-embed{background:linear-gradient(140deg,#01100E,#06322C);}
+:root[data-palette="neon"] ::selection{background:var(--accent-bright);color:#001512;}
+:root[data-palette="neon"] .code-chip{background:#06322C;color:#E6FFFA;}
 :root[data-palette="neon"] .tile,
 :root[data-palette="neon"] .kpi-card,
 :root[data-palette="neon"] .quiz{background:var(--bg-elevated);border-color:var(--border);}
@@ -139,12 +141,62 @@
 :root[data-palette="neon"] .btn-ghost:hover{color:var(--accent-bright);border-color:var(--accent-bright);}
 
 /* Accent buttons carry dark text on a bright fill — keep that legible. */
-:root[data-palette="neon"] .btn-accent{background:var(--accent-bright);color:#00131A;}
-:root[data-palette="neon"] .btn-primary{background:var(--brand-2);color:#00131A;}
+/* ---- Neon surface treatment -------------------------------------------------
+   Every panel on the site gets the same finish as the Quality Dashboard card: a
+   near-black surface a shade above the page, a teal-tinted hairline border, and a
+   soft teal bloom instead of a grey drop shadow. Grey shadows read as dirt on a true
+   black background — the glow is what makes the surface look lit rather than muddy.
+
+   Applied by shared selector rather than per component so a panel added later inherits
+   it automatically; that per-component drift is exactly what left parts of the site
+   blue while the rest went teal. Borders stay hairline and the bloom stays low —
+   restraint is what keeps this looking like an accreditation tool and not a game UI. */
+:root[data-palette="neon"] .card,
+:root[data-palette="neon"] .panel,
+:root[data-palette="neon"] .tile,
+:root[data-palette="neon"] .dept-tile,
+:root[data-palette="neon"] .kpi-card,
+:root[data-palette="neon"] .stat-card,
+:root[data-palette="neon"] .quiz,
+:root[data-palette="neon"] .acc,
+:root[data-palette="neon"] .pf-stat,
+:root[data-palette="neon"] .pf-sub,
+:root[data-palette="neon"] .pf-coverage,
+:root[data-palette="neon"] .pf-chip,
+:root[data-palette="neon"] .pf-next a,
+:root[data-palette="neon"] .video-embed,
+:root[data-palette="neon"] .qg-metric-card,
+:root[data-palette="neon"] .sv-opt,
+:root[data-palette="neon"] .hg-shell{
+  background:var(--bg-elevated);
+  border:1px solid var(--border);
+  box-shadow:0 0 0 1px rgba(45,212,191,.05), 0 18px 44px -24px rgba(45,212,191,.35);
+}
+/* Lift on hover comes from the border and the bloom, not from a colour change: the
+   surface itself stays put so a grid of cards does not flicker as the pointer crosses it. */
+:root[data-palette="neon"] .card:hover,
+:root[data-palette="neon"] .tile:hover,
+:root[data-palette="neon"] .dept-tile:hover,
+:root[data-palette="neon"] .pf-stat:hover,
+:root[data-palette="neon"] .pf-next a:hover,
+:root[data-palette="neon"] .sv-opt:hover{
+  border-color:var(--brand-2);
+  box-shadow:0 0 0 1px rgba(45,212,191,.18), 0 22px 54px -22px rgba(45,212,191,.55);
+}
+/* Bars, rails and wells: the recessed counterparts of the cards above. */
+:root[data-palette="neon"] .site-header,
+:root[data-palette="neon"] .aq-edition,
+:root[data-palette="neon"] .site-footer,
+:root[data-palette="neon"] .breadcrumb,
+:root[data-palette="neon"] .page-head{
+  border-color:var(--border-soft);
+}
+:root[data-palette="neon"] .btn-accent{background:var(--accent-bright);color:#001512;}
+:root[data-palette="neon"] .btn-primary{background:var(--brand-2);color:#001512;}
 
 /* Neon glow on primary calls to action */
-:root[data-palette="neon"] .btn-primary{box-shadow:0 0 22px -4px rgba(56,189,248,.7);}
-:root[data-palette="neon"] .btn-accent{box-shadow:0 0 24px -4px rgba(34,211,238,.75);}
+:root[data-palette="neon"] .btn-primary{box-shadow:0 0 22px -4px rgba(94,234,212,.7);}
+:root[data-palette="neon"] .btn-accent{box-shadow:0 0 24px -4px rgba(45,212,191,.75);}
 
 :root[data-theme="dark"]{
   --bg:#0A0D1E;
@@ -697,38 +749,38 @@ a.tile:hover .more{text-decoration:underline;}
 /* ---- Neon palette overrides for feature modules (their CSS hardcodes the
    indigo/teal accents, so they are re-pointed here rather than duplicated). ---- */
 :root[data-palette="neon"] .qg-shell,
-:root[data-palette="neon"] .hg-shell{background:linear-gradient(160deg,#000,#06283D);border-color:rgba(56,189,248,.28);border-top-color:var(--accent-bright);}
+:root[data-palette="neon"] .hg-shell{background:linear-gradient(160deg,#000,#06322C);border-color:rgba(94,234,212,.28);border-top-color:var(--accent-bright);}
 :root[data-palette="neon"] .qg-right,
 :root[data-palette="neon"] .hg-right{background:rgba(0,0,0,.7);}
 :root[data-palette="neon"] .qg-live .dot{background:var(--accent-bright);box-shadow:0 0 6px var(--accent-bright);}
-:root[data-palette="neon"] .qg-panel-cta{background:var(--accent-bright);color:#00131A;}
+:root[data-palette="neon"] .qg-panel-cta{background:var(--accent-bright);color:#001512;}
 :root[data-palette="neon"] .qg-panel-cta:hover{background:var(--brand-2);}
 :root[data-palette="neon"] .qg-metric-card:hover,
-:root[data-palette="neon"] .qg-metric-card.is-active{border-color:var(--accent-bright);background:rgba(34,211,238,.10);}
+:root[data-palette="neon"] .qg-metric-card.is-active{border-color:var(--accent-bright);background:rgba(45,212,191,.10);}
 :root[data-palette="neon"] .qg-detail-panel,
 :root[data-palette="neon"] .qg-hub-tip,
 :root[data-palette="neon"] .hg-hub-tip,
 :root[data-palette="neon"] .gx-tooltip,
 :root[data-palette="neon"] .gx-auto-label,
-:root[data-palette="neon"] .kn-tip{background:rgba(2,6,12,.96);border-color:rgba(34,211,238,.4);}
+:root[data-palette="neon"] .kn-tip{background:rgba(2,6,12,.96);border-color:rgba(45,212,191,.4);}
 :root[data-palette="neon"] .qg-detail-panel h3,
 :root[data-palette="neon"] .qg-hub-tip,
 :root[data-palette="neon"] .hg-coord-val,
 :root[data-palette="neon"] .gx-tooltip span{color:var(--accent-bright);}
-:root[data-palette="neon"] .qg-zoom-controls button{background:rgba(0,0,0,.85);border-color:rgba(34,211,238,.35);color:var(--accent-bright);}
-:root[data-palette="neon"] .qg-zoom-controls button:hover{background:rgba(34,211,238,.18);border-color:var(--accent-bright);}
+:root[data-palette="neon"] .qg-zoom-controls button{background:rgba(0,0,0,.85);border-color:rgba(45,212,191,.35);color:var(--accent-bright);}
+:root[data-palette="neon"] .qg-zoom-controls button:hover{background:rgba(45,212,191,.18);border-color:var(--accent-bright);}
 :root[data-palette="neon"] .gx-wrap,
-:root[data-palette="neon"] .kn-wrap{background:radial-gradient(circle at 50% 45%, rgba(56,189,248,.18), transparent 70%);}
+:root[data-palette="neon"] .kn-wrap{background:radial-gradient(circle at 50% 45%, rgba(94,234,212,.18), transparent 70%);}
 :root[data-palette="neon"] .qg-loading .spin,
 :root[data-palette="neon"] .hg-loading .spin,
 :root[data-palette="neon"] .gx-loading .spin,
 :root[data-palette="neon"] .sv-progress-fill{border-top-color:var(--accent-bright);background:var(--accent-bright);}
 :root[data-palette="neon"] .face-canvas-wrap,
-:root[data-palette="neon"] .hg-globe-wrap{box-shadow:0 0 60px -10px rgba(34,211,238,.42), 0 0 100px -20px rgba(56,189,248,.3);}
+:root[data-palette="neon"] .hg-globe-wrap{box-shadow:0 0 60px -10px rgba(45,212,191,.42), 0 0 100px -20px rgba(94,234,212,.3);}
 :root[data-palette="neon"] .sv-title-bar{border-bottom-color:var(--accent-bright);}
 :root[data-palette="neon"] .sop-page{border-color:var(--border);}
 :root[data-palette="neon"] .sd-title{border-bottom-color:var(--brand-2);}
-:root[data-palette="neon"] .sv-opt.is-picked{border-color:var(--accent-bright);background:rgba(34,211,238,.14);color:var(--accent-bright);}
+:root[data-palette="neon"] .sv-opt.is-picked{border-color:var(--accent-bright);background:rgba(45,212,191,.14);color:var(--accent-bright);}
 
 /* The empty-state icons now inherit colour, so give their containers one. */
 .qg-panel-empty svg, .hg-panel-empty svg, .sop-empty svg{color:var(--accent-bright);}

@@ -5,12 +5,15 @@ const eq = (g, w, m) => { if (JSON.stringify(g) === JSON.stringify(w)) pass++;
   else { fail++; console.log('FAIL:', m, '- got', g, 'want', w); } };
 
 const css = fs.readFileSync(path.join(__dirname, '../styles.css'), 'utf8');
+const sql = fs.readFileSync(path.join(__dirname, '../workspace/schema.sql'), 'utf8');
 const app = fs.readFileSync(path.join(__dirname, '../app.js'), 'utf8');
 const html = fs.readFileSync(path.join(__dirname, '../index.html'), 'utf8');
 
 // --- the boot snippet must not give neon to a non-owner
 const boot = /<script>\(function\(\)\{try\{[\s\S]*?\}\)\(\);<\/script>/.exec(html)[0];
-eq(/own&&q==="neon"/.test(boot), true, 'boot applies neon only when the owner flag is set');
+eq(/own&&p.has\("neon"\)/.test(boot), true, 'only the owner may CHANGE the palette via ?neon=');
+eq(/q==="neon"&&t!=="light"/.test(boot), true, 'every visitor APPLIES the published palette');
+eq(/q==="neon"&&t!=="light"/.test(boot), true, 'neon never rides over the light theme');
 eq(/localStorage.getItem\("aq-is-owner"\)==="1"/.test(boot), true, 'boot reads the owner flag');
 eq(/aq-palette"\)\|\|"default"/.test(boot), true, 'palette defaults to plain, not neon');
 eq(/aq-theme"\)\|\|"dark"/.test(boot), true, 'theme still defaults to dark for everyone');
@@ -44,6 +47,27 @@ const build = fs.readFileSync(path.join(__dirname, '../build/build-scope.js'), '
 const buildCode = build.replace(/\/\*[\s\S]*?\*\//g, '').replace(/^\s*\/\/.*$/gm, '');
 eq(/AccrediQ/.test(buildCode), false, 'build script no longer hardcodes the folder name');
 eq(/path\.join\(ROOT, "audit"\)/.test(buildCode), true, 'build output path derived from the repo root');
+
+// --- the neon palette must be teal, with no blue left anywhere in it
+// Strip comments: the word "blue" appears in one explaining why it was removed.
+const neonBlock = /:root\[data-palette="neon"\]\{[\s\S]*?\n\}/.exec(css)[0]
+  .replace(/\/\*[\s\S]*?\*\//g, '');
+['#38BDF8', '#22D3EE', '56,189,248', '34,211,238'].forEach(blue => {
+  eq(neonBlock.includes(blue), false, 'neon palette contains no ' + blue);
+});
+eq(/--brand-2:#5EEAD4/.test(neonBlock), true, 'neon brand is the brain teal');
+const neonRules = css.split('\n').filter(l => l.includes('data-palette="neon"')).join('\n');
+['#38BDF8', '#22D3EE', '56,189,248', '34,211,238', '#06283D'].forEach(blue => {
+  eq(neonRules.includes(blue), false, 'no ' + blue + ' left in any neon rule');
+});
+
+// --- site_settings: everyone reads, only the owner writes
+eq(/create policy site_settings_read on public\.site_settings\s+for select using \(true\)/.test(sql),
+   true, 'site settings are readable by every visitor');
+eq(/create policy site_settings_insert[\s\S]*?with check \(public\.aq_is_owner\(\)\)/.test(sql),
+   true, 'only the owner may create the palette setting');
+eq(/create policy site_settings_update[\s\S]*?using \(public\.aq_is_owner\(\)\)[\s\S]*?with check \(public\.aq_is_owner\(\)\)/.test(sql),
+   true, 'only the owner may change the palette setting');
 
 console.log(`\n${pass} passed, ${fail} failed`);
 process.exit(fail ? 1 : 0);

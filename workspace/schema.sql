@@ -305,6 +305,46 @@ create trigger doc_version_log
   for each row execute function public.log_document_version();
 
 -- =====================================================================
+-- Site settings. Owner-controlled values that every visitor reads.
+--
+-- The palette lives here so that the owner's choice reaches subscribers: switching to
+-- neon is a decision about how the product looks to everyone, not a per-browser
+-- preference. A signed-in user picks it up on their next page load; anyone already on a
+-- page sees it when they navigate.
+--
+-- Readable by everyone including anonymous visitors — it holds nothing private, and the
+-- palette has to apply before sign-in. Writable only by the owner, so a subscriber cannot
+-- restyle the site for every other hospital.
+-- =====================================================================
+create table if not exists public.site_settings (
+  key        text primary key,
+  value      jsonb not null default '{}'::jsonb,
+  updated_at timestamptz not null default now()
+);
+
+alter table public.site_settings enable row level security;
+
+drop policy if exists site_settings_read on public.site_settings;
+create policy site_settings_read on public.site_settings
+  for select using (true);
+
+-- One policy per command rather than "for all": an owner-only write must not be able to
+-- widen the read rule by accident.
+drop policy if exists site_settings_insert on public.site_settings;
+create policy site_settings_insert on public.site_settings
+  for insert with check (public.aq_is_owner());
+
+drop policy if exists site_settings_update on public.site_settings;
+create policy site_settings_update on public.site_settings
+  for update using (public.aq_is_owner()) with check (public.aq_is_owner());
+
+-- Seeded so the first read returns a row rather than nothing, which the client would
+-- otherwise have to treat as an error it cannot distinguish from a failed request.
+insert into public.site_settings (key, value)
+values ('palette', '{"palette":"default"}'::jsonb)
+on conflict (key) do nothing;
+
+-- =====================================================================
 -- Activity. One row per completed piece of work, tied to the USER.
 --
 -- This is what makes a subscriber's progress permanent: quizzes, certificates, videos,

@@ -333,19 +333,57 @@
     } catch (err) { return false; }
   }
 
+  /* The site-wide palette, published by the owner and read by everyone.
+   *
+   * The owner's choice is a decision about how the product looks to all subscribers, so
+   * it is stored server-side rather than in the owner's browser. Visitors pick it up on
+   * their next page load. The local copy is a cache so the palette is correct on first
+   * paint — waiting for a network round trip before styling would flash the wrong colours
+   * on every page. */
+  async function publishPalette(palette) {
+    try {
+      const S = window.AQStore;
+      if (!S || S.mode !== "supabase" || !S.adapter) return false;
+      await S.adapter.put("site_settings", { key: "palette", value: { palette: palette } });
+      return true;
+    } catch (e) { return false; }
+  }
+
+  async function loadSitePalette() {
+    try {
+      const S = window.AQStore;
+      if (!S || S.mode !== "supabase" || !S.adapter) return;
+      const rows = await S.adapter.list("site_settings");
+      if (!Array.isArray(rows)) return;
+      const row = rows.filter(r => r && r.key === "palette")[0];
+      if (!row || !row.value) return;
+      const want = row.value.palette === "neon" ? "neon" : "default";
+      try { localStorage.setItem("aq-palette", want); } catch (err) {}
+      const html = document.documentElement;
+      // Never neon over the light theme: it is a true-black palette and unreadable there.
+      if (want === "neon" && html.getAttribute("data-theme") === "dark") {
+        html.setAttribute("data-palette", "neon");
+      } else if (want !== "neon") {
+        html.removeAttribute("data-palette");
+      }
+    } catch (e) { /* offline: the cached palette from boot stands */ }
+  }
+  window.AQLoadSitePalette = loadSitePalette;
+
   function togglePalette() {
     // Silently ignored for everyone else: no message, because a subscriber typing the
     // word by accident should not learn that a hidden switch exists.
     if (!isOwnerBrowser()) return;
     const html = document.documentElement;
     const isNeon = html.getAttribute("data-palette") === "neon";
-    if (isNeon) {
-      html.removeAttribute("data-palette");
-      try { localStorage.setItem("aq-palette", "default"); } catch (err) {}
-    } else {
-      html.setAttribute("data-palette", "neon");
-      try { localStorage.setItem("aq-palette", "neon"); } catch (err) {}
-    }
+    const next = isNeon ? "default" : "neon";
+    if (next === "neon") html.setAttribute("data-palette", "neon");
+    else html.removeAttribute("data-palette");
+    try { localStorage.setItem("aq-palette", next); } catch (err) {}
+    // Publish to every user. Fire and forget: the owner's own view has already changed,
+    // and a failed write only means subscribers keep the previous palette until the next
+    // successful toggle — never a broken page.
+    publishPalette(next);
   }
 
   function toggleTheme() {

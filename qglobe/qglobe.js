@@ -533,20 +533,33 @@
   function updateHitPositions() {
     const w = wrapEl.clientWidth, h = wrapEl.clientHeight;
 
-    /* Labels are placed nearest-first and any that would land on top of one already
-       placed is dropped. Twenty-five names on a sphere otherwise overlap into an
-       unreadable smear around the rim, which is worse than no labels at all. The
-       selected and hovered nodes always win their place, so the one you care about
-       never disappears. */
+    /* Only the hubs facing the viewer are named.
+     *
+     * Labelling every visible hub meant twenty-odd names stacked across the globe at once,
+     * including the ones raking away at the rim where they crowd into each other — busy
+     * and hard to read. A hub sits on a sphere centred on the origin, so its own world
+     * position IS its outward normal: the dot product of that normal with the direction
+     * from the hub to the camera says how squarely it faces us. 1 is dead centre, 0 is
+     * exactly on the rim. Above FACING_MIN a hub is turned towards the viewer and earns
+     * its name; as the globe turns, names fade in as hubs rotate into view and fade out
+     * as they swing away. */
+    const FACING_MIN = 0.62;
+    const camPos = camera.position;
+
     const placed = [];
     const minGapX = 66, minGapY = 15;
     const order = hubs.map((hub, i) => {
       const world = hub.mesh.getWorldPosition(new THREE.Vector3());
       const p = world.clone().project(camera);
-      return { i, p, sx: (p.x * 0.5 + 0.5) * w, sy: (-p.y * 0.5 + 0.5) * h };
-    }).sort((a, b) => a.p.z - b.p.z);   // nearest the camera first
+      const normal = world.clone().normalize();
+      const toCam = camPos.clone().sub(world).normalize();
+      return {
+        i, p, facing: normal.dot(toCam),
+        sx: (p.x * 0.5 + 0.5) * w, sy: (-p.y * 0.5 + 0.5) * h
+      };
+    }).sort((a, b) => b.facing - a.facing);   // squarest to the viewer first
 
-    order.forEach(({ i, p, sx, sy }) => {
+    order.forEach(({ i, p, sx, sy, facing }) => {
       const hub = hubs[i];
       const el = hitEls[i];
       el.style.left = sx + "px"; el.style.top = sy + "px";
@@ -556,7 +569,9 @@
 
       const tag = labelEls[i];
       const isFocus = i === hoveredIndex || hub.dept.id === selectedDeptId;
-      let show = !behind;
+      // The hovered or selected hub keeps its name even as it turns away, so the one
+      // being read never vanishes mid-read.
+      let show = !behind && (isFocus || facing >= FACING_MIN);
       if (show && !isFocus) {
         show = !placed.some(q => Math.abs(q.sx - sx) < minGapX && Math.abs(q.sy - sy) < minGapY);
       }
@@ -564,8 +579,10 @@
         placed.push({ sx, sy });
         tag.style.left = sx + "px";
         tag.style.top = (sy + 11) + "px";
-        // Fade with depth so the far side of the globe recedes instead of competing.
-        tag.style.opacity = isFocus ? "1" : String(Math.max(0.35, 1 - p.z * 0.9));
+        /* Fade across the last of the facing range rather than switching on hard at the
+           threshold, so a name arrives and leaves smoothly as the globe turns. */
+        const ramp = Math.min(1, (facing - FACING_MIN) / 0.18);
+        tag.style.opacity = isFocus ? "1" : String(0.25 + 0.75 * Math.max(0, ramp));
         tag.classList.toggle("is-focus", isFocus);
         tag.style.display = "block";
       } else {

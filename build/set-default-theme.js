@@ -17,18 +17,18 @@ const path = require("path");
 const SNIPPET =
   '<script>(function(){try{' +
   'var p=new URLSearchParams(location.search);' +
-  // The neon palette is the owner's own control; subscribers get dark or light only.
-  // Read from a flag the gate writes after resolving the account, because this runs in
-  // <head> long before any session exists.
+  // Only the owner may CHANGE the palette (the ?neon= override and the typed shortcut);
+  // everyone APPLIES it, because it is published site-wide from site_settings and cached
+  // here so the first paint is correct without waiting for a network read.
   'var own=localStorage.getItem("aq-is-owner")==="1";' +
   'if(p.has("dark")){localStorage.setItem("aq-theme",p.get("dark")==="0"?"light":"dark");}' +
   'if(own&&p.has("neon")){localStorage.setItem("aq-palette",p.get("neon")==="0"?"default":"neon");}' +
   'var t=localStorage.getItem("aq-theme")||"dark";' +
   'var q=localStorage.getItem("aq-palette")||"default";' +
   'if(t!=="light"){document.documentElement.setAttribute("data-theme","dark");}' +
-  'if(own&&q==="neon"){document.documentElement.setAttribute("data-palette","neon");}' +
+  // Neon is a true-black palette and unreadable over light, so it only rides with dark.
+  'if(q==="neon"&&t!=="light"){document.documentElement.setAttribute("data-palette","neon");}' +
   '}catch(e){' +
-  // Private browsing throws on localStorage. Fall back to plain dark.
   'document.documentElement.setAttribute("data-theme","dark");' +
   '}})();<\/script>';
 

@@ -115,6 +115,10 @@
        someone who has been using the site all week. */
     if (window.AQActivity) window.AQActivity.setUser(user);
 
+    /* Pick up the owner's published palette. Runs for signed-in and anonymous visitors
+       alike — the setting is public and has to apply before sign-in too. */
+    if (window.AQLoadSitePalette) window.AQLoadSitePalette();
+
     /* Remembered so app.js can decide, on any page, whether the neon palette control is
        available — it runs before a session is resolved and on pages that never resolve
        one. Cleared for non-owners so a shared machine does not leave the flag set after
