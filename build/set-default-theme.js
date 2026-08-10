@@ -22,13 +22,27 @@ const SNIPPET =
      load, once the gate had fetched site_settings and cached it. The owner's published
      choice still overrides this on the next load; this only decides the cold start. */
   'var DEF="neon";' +
+  /* One-time cache reset. The bug that stamped aq-palette="default" ran for months, so
+     every device that ever opened a workspace page is carrying that value right now.
+     Fixing the writer does not help them: "default" is a legitimate published choice, so
+     nothing downstream can tell a poisoned cache from a real one. Bumping this marker
+     clears the stored palette exactly once per device; the owner's published choice is
+     re-read from site_settings on the next protected page and lands again within a load.
+     Raise the number if a future bug ever poisons it again. */
+  'if(localStorage.getItem("aq-palette-v")!=="2"){localStorage.removeItem("aq-palette");' +
+  'localStorage.setItem("aq-palette-v","2");}' +
   'var p=new URLSearchParams(location.search);' +
   // Only the owner may CHANGE the palette; everyone applies whatever is published.
   'var own=localStorage.getItem("aq-is-owner")==="1";' +
   'if(p.has("dark")){localStorage.setItem("aq-theme",p.get("dark")==="0"?"light":"dark");}' +
   'if(own&&p.has("neon")){localStorage.setItem("aq-palette",p.get("neon")==="0"?"default":"neon");}' +
   'var t=localStorage.getItem("aq-theme")||"dark";' +
-  'var q=localStorage.getItem("aq-palette")||DEF;' +
+  /* Anything that is not the literal string "default" means neon. A plain ||DEF
+     fallback only covered a MISSING value, so any other string left behind by an older
+     build — or a stale "default" written by a bug since fixed — quietly opted the device
+     out of the house look with no way back. Neon is the floor; only the owner's
+     published "default" lifts it. */
+  'var q=localStorage.getItem("aq-palette")||DEF;if(q!=="default"){q="neon";}' +
   'if(t!=="light"){document.documentElement.setAttribute("data-theme","dark");}' +
   // Neon is a true-black palette and unreadable over light, so it only rides with dark.
   'if(q==="neon"&&t!=="light"){document.documentElement.setAttribute("data-palette","neon");}' +

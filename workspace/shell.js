@@ -140,11 +140,15 @@
         if (W.user && window.AQBilling && window.AQBilling.isOwner(W.user)) {
           localStorage.setItem("aq-is-owner", "1");
         } else {
+          /* Clears only the right to CHANGE the palette, never the palette itself.
+             This used to also write aq-palette="default" and strip the attribute for
+             every non-owner — including a signed-out visitor, since W.user is null on
+             this branch too. That write is sticky: one visit to a workspace page while
+             signed out flipped the cache to blue permanently, on every page, on that
+             device, and no amount of reloading brought neon back. It is the reason the
+             site opened blue on a phone. page-gate.js already learned this lesson; the
+             two gates must agree. */
           localStorage.removeItem("aq-is-owner");
-          if (localStorage.getItem("aq-palette") === "neon") {
-            localStorage.setItem("aq-palette", "default");
-            document.documentElement.removeAttribute("data-palette");
-          }
         }
       } catch (e) { /* storage unavailable: palette stays as booted */ }
       if (W.user) {

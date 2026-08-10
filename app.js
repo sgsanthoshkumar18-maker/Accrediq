@@ -193,9 +193,14 @@
           html.setAttribute("data-theme", "dark");
           try {
             localStorage.setItem("aq-theme", "dark");
-            // Restore neon only for the owner. This button gives subscribers dark and
-            // light and nothing else; the palette is not theirs to reach.
-            if (isOwnerBrowser() && localStorage.getItem("aq-palette") === "neon") {
+            /* Restore whatever palette is published. This button gives everyone dark
+               and light and nothing else — it never CHANGES the palette — but coming
+               back to dark must return the visitor to the look the owner published.
+               Gating the restore on ownership meant a subscriber who tried light once
+               was stranded on blue for good, because nothing else ever re-applies the
+               attribute within a page's life. Absence of a stored value means the
+               shipped default, which is neon. */
+            if (localStorage.getItem("aq-palette") !== "default") {
               html.setAttribute("data-palette", "neon");
             }
           } catch (err) {}
@@ -356,8 +361,12 @@
       const rows = await S.adapter.list("site_settings");
       if (!Array.isArray(rows)) return;
       const row = rows.filter(r => r && r.key === "palette")[0];
-      if (!row || !row.value) return;
-      const want = row.value.palette === "neon" ? "neon" : "default";
+      /* No published row means the owner has never chosen, and the answer to that is
+         the shipped default — neon — not whatever happens to be cached. Returning early
+         here let a stale "default" written by an earlier bug survive indefinitely: the
+         boot snippet read it, nothing ever corrected it, and the device stayed blue.
+         The published row is the only thing allowed to say "default". */
+      const want = (row && row.value && row.value.palette === "default") ? "default" : "neon";
       try { localStorage.setItem("aq-palette", want); } catch (err) {}
       const html = document.documentElement;
       // Never neon over the light theme: it is a true-black palette and unreadable there.
@@ -394,7 +403,13 @@
       try { localStorage.setItem("aq-theme", "light"); } catch (err) {}
     } else {
       html.setAttribute("data-theme", "dark");
-      try { localStorage.setItem("aq-theme", "dark"); } catch (err) {}
+      try {
+        localStorage.setItem("aq-theme", "dark");
+        // Mirrors the header button: returning to dark returns the published palette.
+        if (localStorage.getItem("aq-palette") !== "default") {
+          html.setAttribute("data-palette", "neon");
+        }
+      } catch (err) {}
     }
   }
 

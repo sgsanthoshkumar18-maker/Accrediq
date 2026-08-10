@@ -29,7 +29,65 @@ eq(/function togglePalette\(\) \{\s*\/\/[\s\S]*?if \(!isOwnerBrowser\(\)\) retur
 const btn = /const themeBtn[\s\S]*?\n    \}/.exec(app)[0];
 eq(/localStorage.setItem\("aq-palette", "neon"\)/.test(btn), false,
    'the header button never turns neon on');
-eq(/isOwnerBrowser\(\)/.test(btn), true, 'the button restores neon only for the owner');
+/* It restores the PUBLISHED palette for everyone. Gating the restore on ownership left
+   a subscriber who tried light once stranded on blue for the rest of that page's life,
+   because nothing else re-applies the attribute after boot. */
+eq(/aq-palette"\) !== "default"/.test(btn), true,
+   'returning to dark restores the published palette for every user');
+eq(/isOwnerBrowser\(\)/.test(btn), false, 'the restore is not owner-gated');
+
+/* --- the three ways the site used to open blue, each now locked shut --- */
+
+// 1. Boot treats anything that is not an explicit "default" as neon.
+eq(/if\(q!=="default"\)\{q="neon";\}/.test(boot), true,
+   'any stored value other than "default" resolves to neon');
+
+// 1b. Devices poisoned by the old bug are cleared once, then boot neon.
+eq(/aq-palette-v"\)!=="2"/.test(boot), true, 'the poisoned palette cache is reset once');
+{
+  const store = { 'aq-palette': 'default', 'aq-theme': 'dark' };   // a phone as it is today
+  const attrs = {};
+  const body = boot.replace(/<\/?script>/g, '').replace('<\\/script>', '');
+  new Function('localStorage', 'document', 'location', 'URLSearchParams', body)(
+    { getItem: k => (k in store ? store[k] : null),
+      setItem: (k, v) => { store[k] = String(v); },
+      removeItem: k => { delete store[k]; } },
+    { documentElement: { setAttribute: (k, v) => { attrs[k] = v; },
+                         removeAttribute: k => { delete attrs[k]; } } },
+    { search: '' }, URLSearchParams);
+  eq(attrs['data-palette'], 'neon', 'a device carrying the old bad value now boots neon');
+  eq(store['aq-palette'], undefined, 'the poisoned value is cleared, not overwritten');
+
+  // ...but a genuine published "default" from the owner is still honoured.
+  const store2 = { 'aq-palette': 'default', 'aq-palette-v': '2', 'aq-theme': 'dark' };
+  const attrs2 = {};
+  new Function('localStorage', 'document', 'location', 'URLSearchParams', body)(
+    { getItem: k => (k in store2 ? store2[k] : null),
+      setItem: (k, v) => { store2[k] = String(v); },
+      removeItem: k => { delete store2[k]; } },
+    { documentElement: { setAttribute: (k, v) => { attrs2[k] = v; },
+                         removeAttribute: k => { delete attrs2[k]; } } },
+    { search: '' }, URLSearchParams);
+  eq(attrs2['data-palette'], undefined, "the owner's published 'default' is still obeyed");
+}
+
+// 2. The workspace gate must never write a palette. It used to stamp
+//    aq-palette="default" for every non-owner — including signed-out visitors, since
+//    that branch is also taken when there is no user — which stuck the device on blue.
+const shell = fs.readFileSync(path.join(__dirname, '../workspace/shell.js'), 'utf8');
+eq(/setItem\("aq-palette"/.test(shell), false,
+   'the workspace gate never writes the palette');
+eq(/removeAttribute\("data-palette"\)/.test(shell), false,
+   'the workspace gate never strips the palette');
+
+// 3. An absent site_settings row means the shipped default, not the stale cache.
+eq(/row\.value\.palette === "default"\) \? "default" : "neon"/.test(app), true,
+   'only a published "default" opts out of neon; anything else is neon');
+
+// The two gates must agree: neither may strip a non-owner's palette.
+const gate = fs.readFileSync(path.join(__dirname, '../billing/page-gate.js'), 'utf8');
+eq(/setItem\("aq-palette"/.test(gate), false,
+   'the billing gate never writes the palette either');
 
 // --- every palette must define the deep-surface tokens, or a theme inherits the wrong ones
 ['--deep-1', '--deep-2', '--border-strong'].forEach(tok => {
