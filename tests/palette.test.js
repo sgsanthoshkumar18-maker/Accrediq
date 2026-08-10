@@ -56,10 +56,26 @@ const neonBlock = /:root\[data-palette="neon"\]\{[\s\S]*?\n\}/.exec(css)[0]
   eq(neonBlock.includes(blue), false, 'neon palette contains no ' + blue);
 });
 eq(/--brand-2:#5EEAD4/.test(neonBlock), true, 'neon brand is the brain teal');
-const neonRules = css.split('\n').filter(l => l.includes('data-palette="neon"')).join('\n');
+/* The home hero is a deliberate, documented exception: it keeps the original cyan tone
+   to match the particle canvas it sits behind. Every OTHER neon rule must be teal, so
+   the hero rules are excluded here rather than the check being dropped — that way a
+   blue value creeping back into, say, the header would still fail. */
+const neonRules = css.split('\n')
+  .filter(l => l.includes('data-palette="neon"') && !l.includes('.hero'))
+  .join('\n');
 ['#38BDF8', '#22D3EE', '56,189,248', '34,211,238', '#06283D'].forEach(blue => {
-  eq(neonRules.includes(blue), false, 'no ' + blue + ' left in any neon rule');
+  eq(neonRules.includes(blue), false, 'no ' + blue + ' outside the hero exception');
 });
+// And the hero exception must actually still be there.
+eq(/:root\[data-palette="neon"\] \.hero\{[\s\S]*?--hero-tint:#22D3EE/.test(css), true,
+   'home hero keeps its original cyan tone');
+// It must be scoped to .hero — a bare override would repaint the whole site.
+// Check the global block itself (already isolated as neonBlock above), not a span of
+// the file that can run on into the hero rule.
+eq(/--brand-2:#38BDF8/.test(neonBlock), false,
+   'the cyan override is scoped to the hero, not the global palette');
+eq(/--brand-2:#5EEAD4/.test(neonBlock), true,
+   'the global neon brand stays teal');
 
 // --- site_settings: everyone reads, only the owner writes
 eq(/create policy site_settings_read on public\.site_settings\s+for select using \(true\)/.test(sql),
@@ -68,6 +84,31 @@ eq(/create policy site_settings_insert[\s\S]*?with check \(public\.aq_is_owner\(
    true, 'only the owner may create the palette setting');
 eq(/create policy site_settings_update[\s\S]*?using \(public\.aq_is_owner\(\)\)[\s\S]*?with check \(public\.aq_is_owner\(\)\)/.test(sql),
    true, 'only the owner may change the palette setting');
+
+/* Mobile must never need its own colour rules. Palette changes are made with CSS
+   variables on :root (and on .hero), which every breakpoint inherits — so a colour fixed
+   on desktop is fixed on the phone in the same edit. A hardcoded colour inside a media
+   query would break that guarantee silently, so this fails if one appears. */
+{
+  const lines = css.split('\n');
+  let depth = 0, media = null; const offenders = [];
+  lines.forEach((l, i) => {
+    if (/@media/.test(l)) media = { d: depth };
+    for (const c of l) {
+      if (c === '{') depth++;
+      else if (c === '}') { depth--; if (media && depth <= media.d) media = null; }
+    }
+    // Neutral black/white shadows and scrims are palette-independent by nature — a drop
+    // shadow is black in every theme — so they are not drift.
+    const neutral = /rgba?\(\s*(0\s*,\s*0\s*,\s*0|255\s*,\s*255\s*,\s*255)\s*[,)]/.test(l)
+                    && !/#[0-9a-fA-F]{3,8}/.test(l);
+    if (media && !neutral && /(background|color|border-color|box-shadow)\s*:/.test(l)
+              && /#[0-9a-fA-F]{3,8}|rgba?\(/.test(l)) {
+      offenders.push((i + 1) + ': ' + l.trim().slice(0, 70));
+    }
+  });
+  eq(offenders, [], 'no hardcoded colour inside a media query (mobile follows the palette)');
+}
 
 console.log(`\n${pass} passed, ${fail} failed`);
 process.exit(fail ? 1 : 0);

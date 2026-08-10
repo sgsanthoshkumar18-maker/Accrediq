@@ -117,8 +117,32 @@
 :root[data-palette="neon"] body{background:#000;}
 :root[data-palette="neon"] .page-head{background:linear-gradient(180deg,rgba(94,234,212,.10),#000 88%);}
 :root[data-palette="neon"] .site-header{background:rgba(0,0,0,.9);border-bottom-color:var(--border);}
-:root[data-palette="neon"] .hero{background:radial-gradient(120% 140% at 78% -10%, #06322C 0%, #01100E 55%, #000 100%);}
-:root[data-palette="neon"] .hero::after{background:radial-gradient(60% 50% at 90% 100%, rgba(45,212,191,.16), transparent 70%);}
+/* ---- Home hero: the original cyan-on-deep-navy tone --------------------------
+   The rest of the site moved to the teal family so nothing stayed accidentally blue.
+   The hero is the deliberate exception: its cyan against a deep navy-black is the look
+   that was asked to stay, and it sits behind the particle canvas, whose own particles
+   are drawn cyan in face.js — matching the surround to them keeps the artwork and its
+   background one picture rather than two colours meeting at the canvas edge.
+
+   Scoped with variable overrides on .hero rather than by restyling each child, so the
+   eyebrow, the italic emphasis, the stat numbers and the primary button all follow from
+   one place. Because these are plain CSS variables on a container, every breakpoint
+   inherits them — the phone layout needs no separate rule and cannot drift out of step. */
+:root[data-palette="neon"] .hero{
+  --brand:#22D3EE;
+  --brand-2:#38BDF8;
+  --brand-tint:rgba(56,189,248,.14);
+  --accent:#22D3EE;
+  --accent-bright:#22D3EE;
+  --accent-bright-tint:rgba(34,211,238,.14);
+  --hero-tint:#22D3EE;
+  background:radial-gradient(120% 140% at 78% -10%, #06283D 0%, #010A12 55%, #000 100%);
+}
+:root[data-palette="neon"] .hero::after{background:radial-gradient(60% 50% at 90% 100%, rgba(34,211,238,.16), transparent 70%);}
+/* The buttons sit inside .hero, so they pick up the overrides above automatically; these
+   only restate the glow, which is a shadow rather than a token. */
+:root[data-palette="neon"] .hero .btn-primary{box-shadow:0 0 22px -4px rgba(56,189,248,.7);}
+:root[data-palette="neon"] .hero .btn-accent{box-shadow:0 0 24px -4px rgba(34,211,238,.75);}
 :root[data-palette="neon"] .acc-band{background:var(--bg-elevated);border-color:var(--border-soft);}
 :root[data-palette="neon"] .acc{background:var(--bg-elevated);}
 :root[data-palette="neon"] .acc.live{background:linear-gradient(160deg,rgba(94,234,212,.14),var(--bg-elevated));border-color:var(--border);}
