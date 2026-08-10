@@ -70,14 +70,46 @@
   camera.position.set(0, 0, camDistance);
   camera.lookAt(0, 0, 0);
 
+  /* The smallest distance at which the globe and its atmosphere shell fit the canvas.
+   *
+   * The atmosphere is drawn at radius 1.12, and at the default 2.6 that overflows the
+   * canvas vertically at every width — which is why the sphere looked cropped top and
+   * bottom. On a narrow phone the horizontal field is tighter still, so it clipped at the
+   * sides too. Rather than pick another number, compute the distance that contains a
+   * sphere of that radius: r / sin(halfFov), using whichever field of view is narrower.
+   *
+   * On desktop, where the current framing is only marginally tight, the change is small;
+   * on a phone it pulls back as much as the aspect demands. The user's own zoom is not
+   * touched — this only sets the floor the zoom starts from. */
+  const FIT_RADIUS = 1.12 * 1.06;      // atmosphere shell plus a small margin
+
+  function fitDistance() {
+    const vFov = camera.fov * Math.PI / 180;
+    const hFov = 2 * Math.atan(Math.tan(vFov / 2) * (camera.aspect || 1));
+    return FIT_RADIUS / Math.sin(Math.min(vFov, hFov) / 2);
+  }
+
   function sizeRenderer() {
     const w = wrapEl.clientWidth, h = wrapEl.clientHeight;
     if (!w || !h) return;
     renderer.setSize(w, h, false);
     camera.aspect = w / h;
+    const need = fitDistance();
+    /* Only ever push out, never pull in: a user who has zoomed in stays where they put
+       themselves, and only a genuinely clipping frame is corrected.
+
+       `controls` and MIN_D are declared further down this file, so they are deliberately
+       NOT referenced here — sizeRenderer runs once during setup, before those exist, and
+       touching them would throw on the temporal dead zone and take the globe with it.
+       The orbit controls clamp their own minDistance when they are created. */
+    if (camDistance < need) {
+      camDistance = need;
+      camera.position.setLength(camDistance);
+    }
     camera.updateProjectionMatrix();
   }
   sizeRenderer();
+  window.addEventListener("orientationchange", () => setTimeout(sizeRenderer, 200));
   window.addEventListener("resize", sizeRenderer);
 
   const rig = new THREE.Group();
@@ -298,7 +330,8 @@
     controls.dampingFactor = 0.08;
     controls.enableRotate = true;   // drag to rotate
     controls.enableZoom = false;    // we handle wheel zoom ourselves (normalized for trackpads, and prevents page scroll)
-    controls.minDistance = MIN_D;
+    // Never let the user zoom out past the fit, nor in closer than the globe allows.
+    controls.minDistance = Math.min(MIN_D, fitDistance());
     controls.maxDistance = MAX_D;
     controls.enablePan = false;
     controls.autoRotate = true;

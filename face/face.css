@@ -63,8 +63,13 @@
      below. Capping it and adding breathing room keeps the organ clear of both; face.js
      dollies the camera back to match so the model still fills its box properly rather
      than shrinking into a corner. */
-  .face-stage{min-height:260px;margin:8px auto 4px;}
-  .face-wrap{max-width:300px;margin:0 auto;}
+  /* The canvas keeps a generous square; the shrinking is done by the camera in face.js,
+     which measures the widest shape and pulls back until it fits. Capping the canvas
+     harder than this would only shrink the drawing surface — the model would still meet
+     whatever edge it was going to meet, because the framing is set by field of view, not
+     by canvas size. 320px keeps the wireframe legible on a 360px screen. */
+  .face-stage{min-height:300px;margin:8px auto 4px;}
+  .face-wrap{max-width:320px;margin:0 auto;}
   /* The tooltip is anchored above the node it describes and is not clipped by the
      canvas, so near the top of the model it could float over the headline. Keeping it
      inside the stage and narrower stops that. */

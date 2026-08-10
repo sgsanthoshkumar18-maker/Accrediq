@@ -60,20 +60,33 @@
   camera.position.set(0, 0.05, 3.4);
   camera.lookAt(0, 0, 0);
 
-  /* How far back the camera sits, by viewport width.
+  /* How far back the camera sits.
    *
-   * On a phone the hero stacks to one column and the canvas becomes a full-width square,
-   * which rendered the brain and kidney large enough to run under the headline and the
-   * stat row above and below them. Scaling the canvas down instead would shrink the
-   * touch targets on the nodes too; dollying the camera back keeps the model comfortably
-   * inside its own box at full canvas size, so nothing overlaps the text.
+   * DESKTOP IS UNCHANGED at 3.4 — the framing there has always been right and must not
+   * move. Only narrow viewports pull back.
    *
-   * Desktop is deliberately untouched at 3.4 — the layout there has always been correct. */
-  function cameraDistance() {
-    var w = window.innerWidth;
-    if (w <= 600) return 4.75;
-    if (w <= 900) return 4.20;
-    return 3.4;
+   * The earlier attempt used a fixed distance per breakpoint and still clipped, because
+   * a guessed number cannot fit every shape: the camera's field of view is VERTICAL, and
+   * the kidneys are wider than they are tall, so on a square phone canvas they overflow
+   * sideways at a distance that frames the brain perfectly. So measure instead.
+   *
+   * maxExtent is the furthest any point of any shape reaches from the origin, taken
+   * across all shapes so the framing does not jump as they morph. The distance that just
+   * contains a sphere of that radius is r / sin(halfFov), using whichever of the two
+   * fields of view is narrower — on a square or portrait canvas that is the horizontal
+   * one, which is exactly the axis that was clipping. */
+  function cameraDistance(aspect) {
+    if (window.innerWidth > 900) return 3.4;      // desktop: leave exactly as it was
+
+    const vFov = camera.fov * Math.PI / 180;
+    const hFov = 2 * Math.atan(Math.tan(vFov / 2) * (aspect || 1));
+    const halfFov = Math.min(vFov, hFov) / 2;
+    /* 1.12 leaves a margin so the sprites — which have width of their own and pulse —
+       and the label under the canvas do not touch the edge. Without it the outermost
+       points sit exactly on the boundary and read as clipped. */
+    const fit = (maxExtent * 1.12) / Math.sin(halfFov);
+    // Never come closer than the desktop framing; only ever pull back.
+    return Math.max(3.4, fit);
   }
 
   function sizeRenderer() {
@@ -81,10 +94,13 @@
     if (!w || !h) return;
     renderer.setSize(w, h, false);
     camera.aspect = w / h;
-    camera.position.z = cameraDistance();
+    camera.position.z = cameraDistance(camera.aspect);
     camera.updateProjectionMatrix();
   }
-  sizeRenderer();
+  /* NOT called here: cameraDistance() reads maxExtent, which is measured from the point
+     clouds further down. Calling it before then throws on the const's temporal dead zone
+     and takes the whole hero with it. The first call is made immediately after maxExtent
+     is computed. */
   window.addEventListener("resize", sizeRenderer);
 
   scene.add(new THREE.AmbientLight(0x9db4ff, 0.5));
@@ -117,6 +133,28 @@
       points.push(new THREE.Vector3(Math.cos(th) * r, y, Math.sin(th) * r).multiplyScalar(ORGAN_RADIUS));
     }
   }
+
+  const maxExtent = (function () {
+    let m = 0;
+    const clouds = ORGANS ? Object.keys(ORGANS).map(k => ORGANS[k]) : [points];
+    clouds.forEach(cloud => {
+      if (!cloud) return;
+      for (let i = 0; i < cloud.length; i++) {
+        const p = cloud[i];
+        if (!p) continue;
+        const d = Math.sqrt(p.x * p.x + p.y * p.y + p.z * p.z);
+        if (d > m) m = d;
+      }
+    });
+    // Fall back to the nominal radius if the shape module did not load.
+    return m || ORGAN_RADIUS;
+  })();
+
+  // Safe from here: maxExtent exists, so the camera can be framed.
+  sizeRenderer();
+  // The phone address bar collapsing changes the viewport height and therefore the
+  // aspect the fit was computed from; re-frame when the layout settles.
+  window.addEventListener("orientationchange", () => setTimeout(sizeRenderer, 200));
 
   const COLORS = [0x5eead4, 0x38bdf8, 0x818cf8, 0xa78bfa, 0xf472b6, 0x34d399, 0x60a5fa, 0xc084fc];
   function glowTexture(hex) {
