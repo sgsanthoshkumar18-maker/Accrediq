@@ -41,7 +41,7 @@ window.AQ_BILLING = {
      of the same mailbox works.
      --------------------------------------------------------------- */
   complimentaryEmails: [
-    "mavisneha@gmail.com"
+    "mavissneha@gmail.com"
   ],
 
   /* ---------------------------------------------------------------

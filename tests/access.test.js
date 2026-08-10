@@ -10,11 +10,11 @@ const gate = R('billing/page-gate.js'), sql = R('workspace/schema.sql');
 const html = R('index.html');
 
 // --- the complimentary account is granted, and is NOT an owner
-eq(/complimentaryEmails:\s*\[\s*"mavisneha@gmail\.com"/.test(cfg), true,
+eq(/complimentaryEmails:\s*\[\s*"mavissneha@gmail\.com"/.test(cfg), true,
    'complimentary address is listed in the config');
 eq(/ownerEmails:\s*\[\s*"s\.g\.santhoshkumar18@gmail\.com"\s*\]/.test(cfg), true,
    'owner list still contains only the owner');
-eq(cfg.indexOf('mavisneha') > cfg.indexOf('complimentaryEmails'), true,
+eq(cfg.indexOf('mavissneha') > cfg.indexOf('complimentaryEmails'), true,
    'the address is in the complimentary list, not the owner list');
 eq(/isComplimentary\(user\)\)[\s\S]{0,220}owner: false/.test(bill), true,
    'complimentary status grants access with owner:false');
@@ -26,7 +26,15 @@ eq(bill.indexOf('isComplimentary(user)') < bill.indexOf('S.adapter.list("subscri
 
 // --- the database must agree, since RLS is what actually hands over data
 eq(/function public\.aq_is_comp\(\)/.test(sql), true, 'database has a complimentary predicate');
-eq(/aq_norm_email\('mavisneha@gmail\.com'\)/.test(sql), true, 'address present in SQL');
+eq(/aq_norm_email\('mavissneha@gmail\.com'\)/.test(sql), true, 'address present in SQL');
+// The row was first written with a misspelt address. The upsert has to correct it, or a
+// re-run leaves the old spelling on any project where it already landed.
+eq(/set status = 'active',[\s\S]{0,200}email = excluded\.email/.test(sql), true,
+   'the upsert corrects a stored address');
+eq(/user_id = null/.test(sql), true, 'and releases the binding so the trigger reclaims it');
+// One misspelling would silently deny access, so no stale spelling may survive anywhere.
+eq(/mavisneha@/.test(sql), false, 'no old spelling left in SQL');
+eq(/mavisneha@/.test(cfg), false, 'no old spelling left in the billing config');
 eq(/'sub_comp_mavisneha'[\s\S]{0,400}'active'/.test(sql), true, 'a real active subscription row exists');
 eq(/now\(\) \+ interval '100 years'/.test(sql), true, 'the row does not expire in any practical sense');
 // aq_is_comp must not be wired into anything owner-gated

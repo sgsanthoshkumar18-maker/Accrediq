@@ -145,7 +145,7 @@ label. Long names shortened by acronym, then head noun, then truncation.
 - Razorpay path built and dormant.
 - **Owner** (`ownerEmails`): `s.g.santhoshkumar18@gmail.com`. Bypasses billing, owns the
   Access panel and the palette control.
-- **Complimentary** (`complimentaryEmails`): `mavisneha@gmail.com` — lifetime free access,
+- **Complimentary** (`complimentaryEmails`): `mavissneha@gmail.com` (double s) — lifetime free access,
   never shown the payment page, but `owner: false`. Guests of the platform, not operators.
   Mirrored in SQL as `aq_is_comp()` plus a real `sub_comp_mavisneha` subscription row
   dated 100 years out, with a trigger binding `user_id` on first sign-in.
@@ -158,6 +158,15 @@ label. Long names shortened by acronym, then head noun, then truncation.
 Errors were printed as raw truncated JSON. Now translated to plain language with inline
 **Reset password** / **Resend confirmation** (`/auth/v1/recover`, `/auth/v1/resend`).
 Before this there was no way back into an account from a second device.
+
+**Confirmation and reset links now carry an explicit `redirect_to`, derived from
+`location.origin`.** Supabase otherwise builds them from the project's Site URL, which
+defaults to `http://localhost:3000` — so every new user's confirmation link went nowhere,
+the account never confirmed, and sign-in was refused. The developer's own laptop kept
+working off a saved session, which is why the site appeared fine to the one person who
+could not see the fault. **The code half is done; the Supabase dashboard half is not
+optional** — the live URL must be listed under Authentication -> URL Configuration ->
+Redirect URLs, or Supabase ignores the parameter and falls back to Site URL.
 
 ---
 
@@ -182,7 +191,12 @@ in a 618-line file. Open it with Notepad, not Word — smart quotes break it.
 
 ## Open items
 
-1. **`mavisneha@gmail.com` cannot sign in on a new device** — unresolved at handover. It
+1. **Sign-in on a second device** — the complimentary address was recorded with one `s`
+   throughout (`mavisneha@`) when the real mailbox is `mavissneha@`. Corrected in
+   `billing-config.js`, `aq_is_comp()` and the subscription row; the upsert now rewrites a
+   stored address and releases `user_id` so the trigger rebinds. A test forbids the old
+   spelling in either file. Note this was never the sign-in fault itself — a wrong address
+   in these lists denies *entitlement*, not authentication. It
    works on his device because a saved session bypasses the password check. Likely
    unconfirmed email, wrong password, or the account not existing on this project. The new
    error messages will name which; check Supabase → Authentication → Users.

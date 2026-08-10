@@ -571,7 +571,7 @@ create policy subscriptions_delete on public.subscriptions
 create or replace function public.aq_is_comp() returns boolean
 language sql stable security definer set search_path = public, auth as $$
   select public.aq_norm_email(public.aq_jwt_email()) in (
-    public.aq_norm_email('mavisneha@gmail.com')
+    public.aq_norm_email('mavissneha@gmail.com')
   );
 $$;
 
@@ -589,12 +589,20 @@ insert into public.subscriptions
   (id, user_id, email, name, plan, months, amount_paise, method, status,
    requested_at, activated_at, expires_at, approved_by, note)
 values
-  ('sub_comp_mavisneha', null, 'mavisneha@gmail.com', 'Complimentary',
+  ('sub_comp_mavisneha', null, 'mavissneha@gmail.com', 'Complimentary',
    'complimentary', 1200, 0, 'complimentary', 'active',
    now(), now(), now() + interval '100 years', 'owner',
    'Lifetime complimentary access granted by the owner.')
 on conflict (id) do update
+  -- email is updated too, and user_id reset, because this row was first written with a
+  -- misspelt address. Without both, re-running this file would leave the old spelling in
+  -- place on any project where it already landed, and the trigger below would never
+  -- rebind it to the real account. Resetting user_id is safe: the trigger reclaims it on
+  -- the next sign-in, and a stale binding to an account that was never created is worse
+  -- than none.
   set status = 'active',
+      email = excluded.email,
+      user_id = null,
       expires_at = excluded.expires_at,
       amount_paise = 0,
       method = 'complimentary';

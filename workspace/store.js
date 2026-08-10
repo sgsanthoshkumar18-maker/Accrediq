@@ -103,6 +103,13 @@
     var key = CFG.supabaseAnonKey;
     var TOKEN_KEY = "aq-sb-session";
 
+    /* Where confirmation and password-reset links should land. Taken from the browser
+       rather than hardcoded so the same build works on the live domain, on a Vercel
+       preview URL and on a local file server without anyone remembering to change it. */
+    function siteOrigin() {
+      try { return location.origin + "/"; } catch (e) { return ""; }
+    }
+
     function session() {
       try { return JSON.parse(localStorage.getItem(TOKEN_KEY) || "null"); } catch (e) { return null; }
     }
@@ -151,9 +158,19 @@
         } catch (e) { return null; }
       },
       async signUp(email, password, name, orgName) {
+        /* redirect_to is sent explicitly because Supabase otherwise builds the
+           confirmation link from the project's Site URL, which defaults to
+           http://localhost:3000. A new user on any machine but the developer's then gets
+           a confirmation email whose link goes nowhere, never confirms, and is refused at
+           sign-in with "email not confirmed" — while the developer's own machine keeps
+           working off a saved session and looks fine. Deriving it from the current origin
+           means it is correct on the live site, on a preview deploy and locally, with
+           nothing to keep in step by hand. The URL must still be listed under
+           Authentication -> URL Configuration -> Redirect URLs or Supabase ignores it. */
         var s = await req("/auth/v1/signup", {
           method: "POST", headers: { apikey: key, "Content-Type": "application/json" },
           body: JSON.stringify({ email: email, password: password,
+            options: { emailRedirectTo: siteOrigin() },
             data: { name: name, org_name: orgName } })
         });
         if (s && s.access_token) setSession(s);
@@ -174,13 +191,13 @@
          the address exists, so an attacker cannot use them to discover who has an
          account. That means a "sent" message is not proof the address is registered. */
       async resetPassword(email) {
-        return await req("/auth/v1/recover", {
+        return await req("/auth/v1/recover?redirect_to=" + encodeURIComponent(siteOrigin()), {
           method: "POST", headers: { apikey: key, "Content-Type": "application/json" },
           body: JSON.stringify({ email: email })
         });
       },
       async resendConfirmation(email) {
-        return await req("/auth/v1/resend", {
+        return await req("/auth/v1/resend?redirect_to=" + encodeURIComponent(siteOrigin()), {
           method: "POST", headers: { apikey: key, "Content-Type": "application/json" },
           body: JSON.stringify({ type: "signup", email: email })
         });

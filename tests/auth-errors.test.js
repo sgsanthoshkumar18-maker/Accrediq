@@ -35,5 +35,19 @@ eq((store.match(/async resendConfirmation/g) || []).length, 2, 'resendConfirmati
 eq(/\/auth\/v1\/recover/.test(store), true, 'reset uses the Supabase recover endpoint');
 eq(/\/auth\/v1\/resend/.test(store), true, 'resend uses the Supabase resend endpoint');
 
+
+/* --- confirmation links must point at the site the user is actually on ---
+   Without an explicit redirect Supabase builds the link from Site URL, which defaults
+   to localhost:3000. Every new user then gets a confirmation email whose link goes
+   nowhere, and is refused at sign-in — while the developer's own machine keeps working
+   off a saved session, so the site looks fine to the one person who cannot see it. */
+const storeJs = fs.readFileSync(path.join(__dirname, '../workspace/store.js'), 'utf8');
+eq(/function siteOrigin\(\)/.test(storeJs), true, 'the redirect target is derived, not hardcoded');
+eq(/emailRedirectTo: siteOrigin\(\)/.test(storeJs), true, 'sign-up sends a redirect target');
+eq(/recover\?redirect_to=/.test(storeJs), true, 'password reset sends a redirect target');
+eq(/resend\?redirect_to=/.test(storeJs), true, 'confirmation resend sends a redirect target');
+// Derived from location.origin, never a pasted domain that would rot on a rename.
+eq(/location\.origin/.test(storeJs), true, 'the redirect target comes from the browser');
+
 console.log(`\n${pass} passed, ${fail} failed`);
 process.exit(fail ? 1 : 0);
