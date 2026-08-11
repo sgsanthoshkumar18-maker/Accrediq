@@ -1,0 +1,91 @@
+/* AQcredix — motion layer styles.
+ *
+ * No colours are declared here at all. Everything is opacity and transform, so the
+ * palette (light / dark / neon) is untouched by definition and there is nothing to keep
+ * in step when the palette changes. Nothing here belongs inside a media query either.
+ */
+
+/* Reveal. The hidden state lives on .aq-reveal and is only ever applied by JS, so a
+   visitor with JavaScript disabled — or with reduced motion — sees ordinary content
+   rather than a blank page waiting for an animation that will never run. */
+.aq-reveal {
+  opacity: 0;
+  transform: translate3d(0, 18px, 0);
+  transition:
+    opacity 620ms cubic-bezier(.22, .61, .36, 1) var(--aq-delay, 0ms),
+    transform 620ms cubic-bezier(.22, .61, .36, 1) var(--aq-delay, 0ms);
+  will-change: opacity, transform;
+}
+.aq-reveal.aq-in {
+  opacity: 1;
+  transform: none;
+}
+/* Drop the hint once the element has arrived: a permanent will-change on dozens of
+   sections keeps a compositor layer alive for each one, which costs more on a low-end
+   hospital desktop than the animation ever saved. */
+.aq-reveal.aq-in {
+  will-change: auto;
+}
+
+/* Parallax. transform is written by JS each frame; this only promotes the element and
+   stops the drift from spilling outside its section. */
+[data-parallax] {
+  will-change: transform;
+}
+
+/* Page transition. Short and shallow on purpose — this is a working tool, and a long
+   theatrical wipe between an audit page and a checklist becomes an obstacle by the
+   twentieth navigation of the morning. */
+html.aq-page-enter body {
+  opacity: 0;
+  transform: translate3d(0, 8px, 0);
+}
+html.aq-page-leave body {
+  opacity: 0;
+  transform: translate3d(0, -6px, 0);
+  transition: opacity 180ms ease, transform 180ms ease;
+  pointer-events: none;
+}
+body {
+  transition: opacity 340ms ease, transform 340ms ease;
+}
+
+/* The inertial engine drives window.scrollTo itself, so the browser's own smooth
+   behaviour must be off or the two fight and the page stutters. */
+html.aq-smooth {
+  scroll-behavior: auto;
+}
+
+/* Reduced motion, and the class the engine sets when it stands down. Both are belt and
+   braces: the JS already refuses to animate, and this guarantees nothing is left
+   hidden or mid-transform if a class was applied before the preference was read. */
+html.aq-motion-off .aq-reveal,
+html.aq-motion-off [data-parallax] {
+  opacity: 1 !important;
+  transform: none !important;
+  transition: none !important;
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .aq-reveal,
+  .aq-reveal.aq-in,
+  [data-parallax],
+  html.aq-page-enter body,
+  html.aq-page-leave body,
+  body {
+    opacity: 1 !important;
+    transform: none !important;
+    transition: none !important;
+    animation: none !important;
+  }
+}
+
+/* Printing an audit or an SOP must never inherit a half-revealed state. */
+@media print {
+  .aq-reveal,
+  [data-parallax],
+  body {
+    opacity: 1 !important;
+    transform: none !important;
+  }
+}

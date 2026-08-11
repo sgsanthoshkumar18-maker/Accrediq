@@ -15,6 +15,7 @@
 <link rel="stylesheet" href="hglobe/hglobe.css">
 <script type="application/ld+json">{"@context":"https://schema.org","@type":"EducationalOrganization","name":"AQcredix","alternateName":"AQcredix \u2014 Accreditation & Quality Implementation Guidance Platform","url":"https://accrediq.vercel.app/","description":"An independent healthcare quality education and training forum covering NABH accreditation standards, department roles, KPIs, quality tools and mock assessment.","founder":{"@type":"Person","name":"Dr. Santhoshkumar SG","jobTitle":"Founder & Chief Quality Officer, AQcredix; Infectious Disease Clinical Pharmacologist","honorificSuffix":"ISQua Fellow, CPQIH (Basic) (CAHO)"},"knowsAbout":["NABH accreditation","Healthcare quality improvement","Hospital infection control","Patient safety","Standard operating procedures","Clinical audit"]}</script>
 <script type="application/ld+json">{"@context":"https://schema.org","@type":"WebSite","name":"AQcredix","url":"https://accrediq.vercel.app/","potentialAction":{"@type":"SearchAction","target":"https://accrediq.vercel.app/standards.html?q={search_term_string}","query-input":"required name=search_term_string"}}</script>
+<link rel="stylesheet" href="motion/motion.css">
 </head>
 <body data-page="home" data-access="free">
 <div id="site-header"></div>
@@ -77,9 +78,9 @@
 <!-- LENS STRIP -->
 <section class="lens-strip">
   <div class="wrap"><div class="lens-grid">
-    <div class="lens-col"><div class="step">01 — READ</div><h3>The standard, in plain English</h3><p>The official requirement and its intent, written so anyone on the floor can follow it.</p></div>
-    <div class="lens-col mid"><div class="step">02 — SEE</div><h3>What the assessor looks for</h3><p>The evidence, records and observations an assessor checks against that exact element.</p></div>
-    <div class="lens-col"><div class="step">03 — CLOSE</div><h3>The gap, before it's an NC</h3><p>The common mistake, the NC it becomes, and the practical fix — for every department.</p></div>
+    <div class="lens-col" data-parallax="0.045"><div class="step">01 — READ</div><h3>The standard, in plain English</h3><p>The official requirement and its intent, written so anyone on the floor can follow it.</p></div>
+    <div class="lens-col mid" data-parallax="-0.055"><div class="step">02 — SEE</div><h3>What the assessor looks for</h3><p>The evidence, records and observations an assessor checks against that exact element.</p></div>
+    <div class="lens-col" data-parallax="0.045"><div class="step">03 — CLOSE</div><h3>The gap, before it's an NC</h3><p>The common mistake, the NC it becomes, and the practical fix — for every department.</p></div>
   </div></div>
 </section>
 
@@ -144,7 +145,7 @@
 <!-- ACCREDITATIONS -->
 <section class="acc-band">
   <div class="wrap section">
-    <div class="section-head row"><div><span class="eyebrow">The roadmap</span><h2>Accreditations we cover.</h2><p>AQcredix launches deep on NABH, then expands framework by framework — built so every new standard slots in without a rebuild.</p></div><a class="btn btn-ghost btn-sm" href="about.html#roadmap">See the roadmap</a></div>
+    <div class="section-head row" data-parallax="0.05"><div><span class="eyebrow">The roadmap</span><h2>Accreditations we cover.</h2><p>AQcredix launches deep on NABH, then expands framework by framework — built so every new standard slots in without a rebuild.</p></div><a class="btn btn-ghost btn-sm" href="about.html#roadmap">See the roadmap</a></div>
     <div class="acc-grid">
       <div class="acc live"><span class="st"><span class="badge badge-ok">● Live now</span></span><div class="abbr">NABH</div><div class="full">National Accreditation Board for Hospitals &amp; Healthcare Providers</div><p class="desc">Hospital Accreditation Standards — chapters, Objective Elements, department roles, KPIs and assessor videos.</p></div>
       <div class="acc"><span class="st"><span class="badge badge-soon">Next</span></span><div class="abbr">NABH SHCO</div><div class="full">Small Healthcare Organisations</div><p class="desc">The lighter standard set for clinics and small facilities, mapped to the same Standard Card structure.</p></div>
@@ -321,5 +322,6 @@
   tryLoad(0);
 })();
 </script>
+<script src="motion/motion.js"></script>
 </body>
 </html>

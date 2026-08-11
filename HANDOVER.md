@@ -117,6 +117,27 @@ so those cards are **hospital totals** and are labelled "Hospital total · synce
 - Public pages carry no store, so they rely on the boot default and the shared cache
   rather than reading `site_settings` directly.
 
+### Motion layer (`motion/`)
+Four effects in one file, no library: inertial scroll, parallax, scroll reveals, page
+transitions. Inject with `node build/set-motion.js` (idempotent, path computed per page
+depth). Two things must not be undone:
+
+- **The scroll engine drives `window.scrollTo`, not a wrapper transform.** The usual
+  wrapper approach would break `.site-header`, which is sticky *and* carries
+  backdrop-filter — the same containing-block property that collapsed the mobile menu.
+  Native scroll also keeps the scrollbar, Ctrl+F and anchor links working.
+- **Inertial scroll is pointer-only.** A phone already has momentum in hardware;
+  intercepting it makes the page feel laggy. `prefers-reduced-motion` disables all four.
+
+The stylesheet declares **no colours at all** — pure opacity and transform — so the
+palette is untouched by construction. Reveals are applied by JS, never in markup, so a
+no-JS visitor is not left with a blank page. Page navigation uses a hard timeout rather
+than `transitionend`: an interrupted fade would otherwise swallow the click entirely.
+
+**Scroll-jacking was deliberately not built.** A quality manager is usually hunting one
+element inside a long chapter, and snap panels fight that — the one effect that would
+look modern and work worse.
+
 ### Mobile
 - Mobile menu was collapsing to zero height: `.site-header` has `backdrop-filter`, which
   makes it the containing block for `position:fixed` descendants. The panel is now
@@ -203,12 +224,13 @@ Redirect URLs, or Supabase ignores the parameter and falls back to Site URL.
 
 ---
 
-## Tests — 213 assertions, plain Node, no install
+## Tests — 247 assertions, plain Node, no install
 
     node tests/activity.test.js    node tests/sync.test.js
     node tests/profile.test.js     node tests/palette.test.js
     node tests/framing.test.js     node tests/access.test.js
     node tests/auth-errors.test.js  node tests/standards-export.test.js
+    node tests/motion.test.js
 
 `sync.test.js` is the important one: cross-device persistence against a fake Supabase, plus
 direct assertions on the RLS rules. `framing.test.js` locks the camera maths that was got
