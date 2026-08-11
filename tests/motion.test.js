@@ -197,5 +197,48 @@ ok(css.indexOf('.hero-headline h1.aq-split .aq-w-i') <
 ok(/padding-bottom: 0\.12em/.test(css) && /margin-bottom: -0\.12em/.test(css),
    'descenders have room inside the clipping wrapper');
 
+
+/* ------------------------------ scrollytelling ------------------------------ */
+{
+  const sc = read('motion/scrolly.js');
+  const home = read('index.html');
+
+  /* position:sticky, not transforms and not wheel interception. Faking a pin by stealing
+     the wheel is what earns scrollytelling its bad name, and it would fight the inertial
+     scroll engine in motion.js. */
+  ok(/position: sticky/.test(css), 'the pin is native sticky');
+  eq(/addEventListener\("wheel"/.test(sc), false, 'scrolly never intercepts the wheel');
+  eq(/preventDefault/.test(sc), false, 'and never blocks a scroll');
+
+  ok(/max-width: 760px/.test(sc), 'phones are detected');
+  ok(/scrolly-off/.test(sc) && /scrolly-off/.test(css), 'there is an unpinned fallback');
+  ok(/prefers-reduced-motion/.test(sc), 'reduced motion disables pinning');
+  // The fallback must SHOW everything — the content is the point, the pin is decoration.
+  ok(/scrolly-off[\s\S]{0,200}opacity: 1/.test(css), 'the fallback reveals every stage');
+
+  ok(/IntersectionObserver/.test(sc), 'steps activate by observer');
+  ok(/rootMargin: "-45% 0px -45% 0px"/.test(sc),
+     'a step activates at the middle of the viewport, not the top');
+  ok(/requestAnimationFrame\(measure\)/.test(sc),
+     'progress is measured in a frame, not on every scroll event');
+
+  // The pinned card must clear the sticky header, which has backdrop-filter and paints above.
+  ok(/\.scrolly-sticky \{[\s\S]{0,400}top: 96px/.test(css), 'the pinned element clears the header');
+
+  // Homepage wiring, and all three stages present.
+  ok(/data-scrolly\b/.test(home), 'the homepage has a scrolly section');
+  eq((home.match(/data-scrolly-step/g) || []).length, 3, 'with three steps');
+  ok(/data-scrolly-sticky/.test(home), 'and a pinned element');
+  eq((home.match(/data-face="\d"/g) || []).length, 3, 'the card has three faces');
+  ok(/motion\/scrolly\.js/.test(home), 'the script is loaded');
+
+  /* The faces must be absolutely positioned when inactive so the card keeps one height.
+     A card that resizes while pinned is more distracting than the fade it replaces. */
+  ok(/\.lens-face\{[^}]*position:absolute/.test(read('styles.css')),
+     'inactive faces are taken out of flow so the card never resizes');
+  ok(/\[data-stage="0"\] \.lens-face\[data-face="0"\]/.test(read('styles.css')),
+     'stage drives which face is visible');
+}
+
 console.log('\n' + pass + ' passed, ' + fail + ' failed');
 if (fail) process.exit(1);

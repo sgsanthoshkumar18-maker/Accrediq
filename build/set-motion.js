@@ -14,6 +14,7 @@ const path = require("path");
 const ROOT = path.join(__dirname, "..");
 const CSS_MARK = "motion/motion.css";
 const JS_MARK = "motion/motion.js";
+const SCROLLY_MARK = "motion/scrolly.js";
 
 /* Directories that are not part of the site: build tooling, tests, dependencies, and the
    ten abandoned hero experiments, which should not gain new script tags while they wait
@@ -47,7 +48,7 @@ for (const file of walk(ROOT)) {
   let html = fs.readFileSync(file, "utf8");
   const p = prefixFor(file);
 
-  if (html.includes(CSS_MARK) && html.includes(JS_MARK)) { already++; continue; }
+  if (html.includes(CSS_MARK) && html.includes(JS_MARK) && html.includes(SCROLLY_MARK)) { already++; continue; }
   if (!html.includes("</head>") || !html.includes("</body>")) { skipped++; continue; }
 
   if (!html.includes(CSS_MARK)) {
@@ -57,6 +58,10 @@ for (const file of walk(ROOT)) {
   if (!html.includes(JS_MARK)) {
     html = html.replace("</body>",
       '<script src="' + p + 'motion/motion.js"></script>\n</body>');
+  }
+  if (!html.includes(SCROLLY_MARK)) {
+    html = html.replace("</body>",
+      '<script src="' + p + 'motion/scrolly.js"></script>\n</body>');
   }
 
   fs.writeFileSync(file, html);

@@ -183,3 +183,53 @@ html.aq-motion-off .hero-logo-arc { stroke-dashoffset: 0 !important; }
     transform: none !important;
   }
 }
+
+/* ------------------------------ scrollytelling ------------------------------
+   position:sticky does the pinning; no transforms, no wheel interception. Colours are
+   tokens throughout and no colour appears inside a media query. */
+
+.scrolly {
+  position: relative;
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 48px;
+  align-items: start;
+}
+
+.scrolly-sticky {
+  position: sticky;
+  /* Cleared by the header height plus breathing room, or the pinned card sits under the
+     sticky nav — which has backdrop-filter and therefore paints above it. */
+  top: 96px;
+  align-self: start;
+}
+
+.scrolly-steps > [data-scrolly-step] {
+  /* Each step needs roughly a screen of travel to read as its own beat. Less and the
+     stages flicker past; more and the section outstays its welcome. */
+  min-height: 78vh;
+  display: flex;
+  flex-direction: column;
+  justify-content: center;
+  opacity: .34;
+  transition: opacity 420ms ease;
+}
+.scrolly-steps > [data-scrolly-step].is-active { opacity: 1; }
+
+/* Stacked fallback: reduced motion and phones get every stage, unpinned and fully
+   readable. Nothing is hidden — the content is the point, the pinning is decoration. */
+html.scrolly-off .scrolly { grid-template-columns: 1fr; gap: 26px; }
+html.scrolly-off .scrolly-sticky { position: static; top: auto; }
+html.scrolly-off .scrolly-steps > [data-scrolly-step] {
+  min-height: 0;
+  opacity: 1;
+  transition: none;
+}
+
+@media (max-width: 900px) {
+  /* Layout only — scrolly.js disables pinning below 760px, and between 760 and 900 a
+     two-column split is too cramped for the card and the text to share. */
+  .scrolly { grid-template-columns: 1fr; gap: 24px; }
+  .scrolly-sticky { position: static; }
+  .scrolly-steps > [data-scrolly-step] { min-height: 0; opacity: 1; }
+}

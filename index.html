@@ -76,15 +76,73 @@
   </div>
 </section>
 
-<!-- LENS STRIP -->
-<section class="lens-strip">
-  <div class="wrap"><div class="lens-grid">
-    <div class="lens-col" data-parallax="0.045"><div class="step">01 — READ</div><h3>The standard, in plain English</h3><p>The official requirement and its intent, written so anyone on the floor can follow it.</p></div>
-    <div class="lens-col mid" data-parallax="-0.055"><div class="step">02 — SEE</div><h3>What the assessor looks for</h3><p>The evidence, records and observations an assessor checks against that exact element.</p></div>
-    <div class="lens-col" data-parallax="0.045"><div class="step">03 — CLOSE</div><h3>The gap, before it's an NC</h3><p>The common mistake, the NC it becomes, and the practical fix — for every department.</p></div>
-  </div></div>
-</section>
+<!-- LENS STRIP — scrollytelling -->
+<section class="lens-strip" data-scrolly>
+  <div class="wrap">
+    <div class="scrolly">
 
+      <!-- The pinned card. One real Objective Element, shown three ways. -->
+      <div class="scrolly-sticky" data-scrolly-sticky data-stage="0">
+        <div class="lens-card">
+          <div class="lens-card-top">
+            <span class="lens-code">HIC.4.a</span>
+            <span class="lens-badge">✱ SOP required</span>
+          </div>
+
+          <div class="lens-face" data-face="0">
+            <h4>The standard</h4>
+            <p class="lens-verbatim">"Hand-hygiene facilities and practices are appropriate
+              and adequate throughout the organisation."</p>
+            <p class="lens-note">One line in the book. Every hospital reads it. Far fewer
+              can show what it means on their own floor.</p>
+          </div>
+
+          <div class="lens-face" data-face="1">
+            <h4>What the assessor looks for</h4>
+            <ul class="lens-list">
+              <li>Sinks, soap and rub within reach at the point of care</li>
+              <li>Your own compliance audit — data, not an assertion</li>
+              <li>Staff who can name the five moments, asked at random</li>
+              <li>Training records that match the roster</li>
+            </ul>
+          </div>
+
+          <div class="lens-face" data-face="2">
+            <h4>The gap, before it's an NC</h4>
+            <p class="lens-gap">The audit exists but stops at 60% compliance with no action
+              recorded against it.</p>
+            <p class="lens-fix"><b>The fix:</b> raise it as a finding, assign a department
+              owner, re-audit, and file the second set of numbers beside the first. That
+              second audit is the evidence — the first one on its own is the finding.</p>
+          </div>
+        </div>
+      </div>
+
+      <!-- The steps that drive it. -->
+      <div class="scrolly-steps">
+        <div data-scrolly-step>
+          <div class="step">01 — READ</div>
+          <h3>The standard, in plain English</h3>
+          <p>The official requirement and its intent, written so anyone on the floor can
+            follow it — not just the quality team.</p>
+        </div>
+        <div data-scrolly-step>
+          <div class="step">02 — SEE</div>
+          <h3>What the assessor looks for</h3>
+          <p>The evidence, records and observations an assessor checks against that exact
+            element. This is the part the book does not print.</p>
+        </div>
+        <div data-scrolly-step>
+          <div class="step">03 — CLOSE</div>
+          <h3>The gap, before it's an NC</h3>
+          <p>The common mistake, the Non-Conformity it becomes, and the practical fix —
+            for every department that owns it.</p>
+        </div>
+      </div>
+
+    </div>
+  </div>
+</section>
 
 <!-- WANT A CODE -->
 <section class="wrap" style="padding:0 28px;text-align:center;">
@@ -325,5 +383,6 @@
 </script>
 <script src="motion/motion.js"></script>
 <script src="search/command.js"></script>
+<script src="motion/scrolly.js"></script>
 </body>
 </html>

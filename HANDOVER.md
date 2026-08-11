@@ -226,6 +226,35 @@ interval rather than a fixed 30 days, which would flag every yearly task for a m
 never flag a weekly one. Removing a committee is a **soft delete**, because minutes
 recorded against it must survive it being stood down.
 
+**Preferred weekday.** A committee may prefer Mondays while its interval lands mid-week.
+Both dates are kept: `exact` is the compliance obligation an assessor measures against,
+`preferred` is the nearest chosen weekday and is when the meeting is held and shown.
+**The series always advances from the EXACT date** — advancing from the shifted one
+compounds the drift every cycle, so a quarterly Monday committee would walk away from its
+quarter over a year. Ties break FORWARD: meeting slightly late is defensible, pulling
+early shortens the interval each cycle. Status is measured against the preferred date, or
+a shifted committee reads as overdue for the shift window every single cycle.
+
+**The modal classes must match `workspace.css`.** The first version invented
+`ws-modal-box` / `ws-modal-foot` / `is-open`; none exist, so `.ws-modal` stayed
+`display:none` and both "Add a committee" and "Add a task" were dead buttons with no
+error. The real names are `.ws-modal.open`, `.ws-modal-in`, `.ws-form`, `.ws-f` (with a
+`<label>` child, not a span), `.ws-modal-actions`. A test now checks every class the page
+renders against the stylesheets that have to style it.
+
+### Scrollytelling (`motion/scrolly.js`)
+`[data-scrolly]` pins `[data-scrolly-sticky]` while `[data-scrolly-step]` elements advance
+it; the sticky element gets `data-stage="N"` and the section publishes `--scrolly-p`.
+Built on **native `position:sticky`** — no transforms, no wheel interception, so the
+scrollbar stays honest and the inertial engine needs no special case. Steps activate at
+the **middle** of the viewport, not the top, so the paragraph being read drives the
+visual. Phones and reduced-motion get `scrolly-off`: every stage stacked and fully
+readable, since the content is the point and the pin is decoration.
+
+Live on the homepage lens strip (READ / SEE / CLOSE against one real element, HIC.4.a).
+**Deliberately not used on standards or workspace pages** — holding the scroll fights
+someone hunting for a specific element.
+
 ### Command bar (`search/command.js`)
 Ctrl+K / Cmd+K, or `/` when not already typing. Indexes ~700 items — elements, standards,
 chapters, departments, committees, workspace pages — built **lazily on first open** from
@@ -266,7 +295,7 @@ Redirect URLs, or Supabase ignores the parameter and falls back to Site URL.
 
 ---
 
-## Tests — 339 assertions, plain Node, no install
+## Tests — 394 assertions, plain Node, no install
 
     node tests/activity.test.js    node tests/sync.test.js
     node tests/profile.test.js     node tests/palette.test.js

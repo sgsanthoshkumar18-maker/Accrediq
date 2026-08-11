@@ -87,6 +87,10 @@ create table if not exists public.committees (
   chairperson   text,
   secretary     text,
   last_met_on   date,
+  -- 0=Sunday..6=Saturday, matching JS getDay(). Null means no preference.
+  -- The series always advances from the EXACT interval date; this only moves the day the
+  -- meeting is shown and held, so a quarterly committee cannot creep away from its quarter.
+  pref_dow      smallint,
   active        boolean not null default true,
   notes         text,
   created_at    timestamptz not null default now(),
@@ -128,11 +132,17 @@ create table if not exists public.compliance_tasks (
   frequency     text not null default 'monthly',
   owner         text,
   last_done_on  date,
+  pref_dow      smallint,
   active        boolean not null default true,
   created_at    timestamptz not null default now(),
   updated_at    timestamptz not null default now()
 );
 create index if not exists ct_org_idx on public.compliance_tasks(org_id);
+
+-- Added after the tables shipped, so an existing project needs the column too.
+alter table public.committees        add column if not exists pref_dow smallint;
+alter table public.compliance_tasks  add column if not exists pref_dow smallint;
+alter table public.compliance_tasks  add column if not exists owner    text;
 
 -- ---------- document control (IMS.6.a) ----------
 create table if not exists public.documents (

@@ -75,6 +75,53 @@ window.AQSchedule = (function () {
     return Math.round((db - da) / 86400000);
   }
 
+  /* ------------------------- preferred weekday ------------------------- */
+
+  var DOW_NAMES = ["Sunday", "Monday", "Tuesday", "Wednesday", "Thursday", "Friday", "Saturday"];
+
+  function dowName(n) { return DOW_NAMES[n] || ""; }
+
+  /* Which weekday does this date fall on? 0 = Sunday, matching Date.getDay(). Built from
+     explicit parts so no timezone is ever consulted. */
+  function dayOfWeek(p) {
+    return new Date(p.y, p.m - 1, p.d).getDay();
+  }
+
+  /* The nearest date to `p` that falls on weekday `want`, searching both directions.
+     A quarterly committee is due exactly three months from its last sitting; if the
+     hospital prefers Mondays, that exact date will usually not BE a Monday. Both dates
+     matter and both are kept: the exact one is the compliance obligation an assessor
+     measures against, the nearest preferred one is when the meeting will actually be
+     held. Collapsing them into one number loses whichever the hospital needs to defend.
+
+     Ties go forward. Meeting slightly late is defensible; the alternative silently pulls
+     the interval shorter every cycle, so a "quarterly" committee drifts to meeting every
+     89 days and then 88, which compounds over a year. */
+  function nearestDow(p, want) {
+    if (want == null || want === "" || isNaN(want)) return p;
+    want = Number(want);
+    var have = dayOfWeek(p);
+    var fwd = (want - have + 7) % 7;
+    var back = (have - want + 7) % 7;
+    if (fwd === 0) return p;
+    return fwd <= back ? addDays(p, fwd) : addDays(p, -back);
+  }
+
+  /* Both dates for the next sitting. `exact` is the obligation; `preferred` is the day it
+     will actually be held. When no weekday preference is set they are the same date. */
+  function nextDates(lastIso, freq, prefDow) {
+    var last = parse(lastIso);
+    if (!last) return { exact: null, preferred: null, shifted: false };
+    var exact = advance(last, freq);
+    var pref = nearestDow(exact, prefDow);
+    return {
+      exact: fmt(exact),
+      preferred: fmt(pref),
+      shifted: fmt(exact) !== fmt(pref),
+      shiftDays: diffDays(exact, pref)
+    };
+  }
+
   /* ------------------------------ the actual rules ------------------------------ */
 
   function advance(p, freq) {
@@ -91,9 +138,12 @@ window.AQSchedule = (function () {
   }
 
   /* days < 0 is overdue, 0 is due today. `null` due means never met. */
-  function status(lastIso, freq, refIso) {
+  function status(lastIso, freq, refIso, dueOverride) {
     var ref = parse(refIso) || today();
-    var due = nextDue(lastIso, freq);
+    /* dueOverride carries the preferred-weekday date. Status must be measured against the
+       day the meeting will actually be held, or a committee shifted two days forward
+       would read as overdue for those two days every single cycle. */
+    var due = dueOverride || nextDue(lastIso, freq);
     if (!due) {
       return { state: "never", due: null, days: null,
                text: "Never recorded" };
@@ -114,14 +164,18 @@ window.AQSchedule = (function () {
 
   /* Every occurrence from the last meeting up to `untilIso`. Used to paint the calendar
      forward and to count how many sittings a committee has missed. */
-  function occurrences(lastIso, freq, untilIso, cap) {
+  function occurrences(lastIso, freq, untilIso, cap, prefDow) {
     var last = parse(lastIso), until = parse(untilIso);
     var out = [];
     if (!last || !until) return out;
     var cur = advance(last, freq);
     var limit = cap || 400;
     while (cmp(cur, until) <= 0 && out.length < limit) {
-      out.push(fmt(cur));
+      /* The series always advances from the EXACT date, never from the shifted one.
+         Advancing from a shifted date would compound the shift every cycle, so a
+         quarterly Monday committee would creep away from its true quarter. Only the
+         displayed date moves. */
+      out.push(fmt(nearestDow(cur, prefDow)));
       cur = advance(cur, freq);
     }
     return out;
@@ -137,10 +191,12 @@ window.AQSchedule = (function () {
   }
 
   /* Occurrences falling inside one calendar month, for the grid. */
-  function inMonth(lastIso, freq, y, m) {
+  function inMonth(lastIso, freq, y, m, prefDow) {
     if (!parse(lastIso)) return [];
-    var end = fmt({ y: y, m: m, d: daysInMonth(y, m) });
-    return occurrences(lastIso, freq, end).filter(function (iso) {
+    /* Look one month past the end: a date shifted forward to the preferred weekday can
+       land in the following month, and would otherwise vanish from both grids. */
+    var end = fmt(addMonths({ y: y, m: m, d: daysInMonth(y, m) }, 1));
+    return occurrences(lastIso, freq, end, null, prefDow).filter(function (iso) {
       var p = parse(iso);
       return p.y === y && p.m === m;
     });
@@ -148,6 +204,8 @@ window.AQSchedule = (function () {
 
   return {
     FREQ: FREQ, all: all, label: label,
+    DOW_NAMES: DOW_NAMES, dowName: dowName, dayOfWeek: dayOfWeek,
+    nearestDow: nearestDow, nextDates: nextDates,
     parse: parse, fmt: fmt, today: today, daysInMonth: daysInMonth,
     addDays: addDays, addMonths: addMonths, cmp: cmp, diffDays: diffDays,
     advance: advance, nextDue: nextDue, status: status,

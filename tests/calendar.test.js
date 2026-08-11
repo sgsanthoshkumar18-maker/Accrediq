@@ -166,5 +166,110 @@ ok(/r\.k\.indexOf\(q\) === 0/.test(cmd), 'an exact prefix match outranks a body-
 
 ok(/min-height: 40px/.test(read('calendar/calendar.css')), 'calendar controls are tap-sized');
 
+
+/* --------------------- the modal must use classes that EXIST ---------------------
+   The first version invented ws-modal-box / ws-modal-foot / is-open. None are in
+   workspace.css, so .ws-modal kept display:none and "Add a committee" did nothing at
+   all — no error, no modal, just a dead button. This checks every class the calendar
+   renders against the stylesheet that has to style it. */
+{
+  // Buttons come from the global stylesheet, so it counts as available styling too.
+  const wcss = read('styles.css') + read('workspace/workspace.css') + read('calendar/calendar.css');
+  const used = new Set();
+  const re = /class="([^"]+)"/g;
+  let m;
+  while ((m = re.exec(cal))) {
+    m[1].split(/\s+/).forEach(c => { if (c && !c.includes("'") && !c.includes('+')) used.add(c); });
+  }
+  // Escape every regex metacharacter, not just the hyphen — a class captured from a
+  // template literal can contain characters that would otherwise blow up RegExp.
+  const esc = c => c.replace(/[.*+?^${}()|[\]\\]/g, '\\$&');
+  const missing = [...used]
+    .filter(c => /^[a-zA-Z][\w-]*$/.test(c))
+    .filter(c => c !== 'cls')   // a template variable, not a literal class
+    .filter(c => !new RegExp('\\.' + esc(c) + '(?![\\w-])').test(wcss));
+  eq(missing.join(','), '', 'every class the calendar renders is defined in CSS');
+
+  // The open/close class must be the one the stylesheet actually keys display on.
+  ok(/\.ws-modal\.open\s*\{[^}]*display:\s*flex/.test(read('workspace/workspace.css')),
+     'the stylesheet opens the modal on .open');
+  ok(/classList\.add\("open"\)/.test(cal), 'and the page adds exactly that class');
+  eq(/is-open/.test(cal), false, 'no invented open class remains');
+}
+
+/* ------------------------- preferred weekday scheduling ------------------------- */
+
+// Quarterly from Tuesday 12 May, preferring Mondays: exact 12 Aug, held 10 Aug, both kept.
+{
+  const d = K.nextDates('2026-05-12', 'quarterly', 1);
+  eq(d.exact, '2026-08-12', 'the exact date is three months on');
+  eq(d.preferred, '2026-08-10', 'and the nearest Monday is two days earlier');
+  eq(d.shifted, true, 'the shift is flagged');
+  eq(K.dayOfWeek(K.parse(d.preferred)), 1, 'the preferred date really is a Monday');
+}
+eq(K.nextDates('2026-05-12', 'quarterly', null).shifted, false,
+   'no preference means exact and preferred are the same date');
+/* A date that ALREADY falls on the preferred weekday must not move at all — not forward
+   a week, not back one. 6 July 2026 is a Monday and is exactly one month after 6 June. */
+eq(K.dayOfWeek(K.parse('2026-07-06')), 1, '(sanity: 6 Jul 2026 is a Monday)');
+eq(K.nextDates('2026-06-06', 'monthly', 1).preferred, '2026-07-06',
+   'a date already on the preferred weekday stays put');
+eq(K.nextDates('2026-06-06', 'monthly', 1).shifted, false, 'and is not reported as shifted');
+{
+  const d = K.nextDates('2026-05-11', 'quarterly', 1);
+  eq(K.dayOfWeek(K.parse(d.preferred)), 1, 'a quarterly shift still lands on a Monday');
+}
+
+/* Ties go FORWARD. A date three days from the preferred weekday in both directions must
+   move late, not early: meeting slightly late is defensible, whereas pulling early
+   shortens the interval every cycle and a "quarterly" committee drifts to 88 days. */
+{
+  const thu = { y: 2026, m: 8, d: 13 };            // Thursday
+  eq(K.dayOfWeek(thu), 4, '(sanity: 13 Aug 2026 is a Thursday)');
+  const sun = K.nearestDow(thu, 0);                 // Sunday is 3 forward, 4 back
+  eq(K.fmt(sun), '2026-08-16', 'the nearer direction wins');
+  const mon = K.nearestDow({ y: 2026, m: 8, d: 14 }, 1);  // Fri: Mon is 3 fwd, 4 back
+  eq(K.fmt(mon), '2026-08-17', 'and forward wins a genuine tie');
+}
+
+/* THE SERIES MUST NOT DRIFT. Each occurrence advances from the exact interval date, never
+   from the shifted one — otherwise a weekly shift compounds and a quarterly committee
+   walks away from its quarter over a year. */
+{
+  const occ = K.occurrences('2026-01-06', 'quarterly', '2027-01-31', null, 1);
+  ok(occ.length >= 4, 'a year of quarterly sittings is generated');
+  occ.forEach(iso => eq(K.dayOfWeek(K.parse(iso)), 1, 'every shifted sitting is a Monday'));
+  // Without drift, four quarters from 6 Jan lands within a few days of 6 Jan next year.
+  const last = K.parse(occ[occ.length - 1]);
+  ok(Math.abs(K.diffDays({ y: 2027, m: 1, d: 6 }, last)) <= 4,
+     'four quarters on, the series has not drifted from its anchor');
+}
+
+// Status is measured against the day the meeting is actually held, or a shifted committee
+// reads as overdue for the shift window every single cycle.
+ok(/dueOverride/.test(src), 'status accepts the preferred date as the measured due date');
+{
+  const d = K.nextDates('2026-05-12', 'quarterly', 1);
+  eq(K.status('2026-05-12', 'quarterly', '2026-08-10', d.preferred).state, 'due',
+     'on the preferred day it reads as due, not overdue');
+}
+
+// A date shifted forward can land in the next month; the grid must look far enough ahead.
+ok(/addMonths\(\{ y: y, m: m, d: daysInMonth\(y, m\) \}, 1\)/.test(src),
+   'the month grid looks a month ahead so a forward shift is not lost');
+
+/* ------------------------- what the registers must show ------------------------- */
+
+ok(/Next: <b>/.test(cal), 'each committee shows its next sitting date');
+ok(/Next due: <b>/.test(cal), 'each recurring task shows its next due date');
+ok(/compliance date/.test(cal), 'the exact date is shown when it differs from the held date');
+ok(/Chairperson/.test(cal), 'the form asks who chairs it');
+ok(/Convener/.test(cal), 'and who convenes it');
+ok(/Preferred day of the week/.test(cal), 'and for a preferred weekday');
+ok(/function hint/.test(cal), 'the form previews both dates before saving');
+ok(/pref_dow/.test(read('workspace/schema.sql')), 'the preference is persisted');
+ok(/add column if not exists pref_dow/.test(read('workspace/schema.sql')),
+   'and an existing project gains the column on re-run');
+
 console.log('\n' + pass + ' passed, ' + fail + ' failed');
 if (fail) process.exit(1);

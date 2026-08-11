@@ -527,6 +527,35 @@ p{margin:0 0 0;}
 .lens-col .step{font-family:var(--font-mono);font-size:11.5px;letter-spacing:.09em;color:var(--accent-bright);margin-bottom:9px;}
 .lens-col h3{color:#fff;font-size:17px;margin-bottom:6px;}
 .lens-col p{font-size:13.5px;color:rgba(255,255,255,.6);}
+/* Lens scrollytelling card. The three faces occupy the same box and cross-fade by stage,
+   so the pinned card never resizes as the stage changes — a card that jumps height while
+   pinned is far more distracting than the fade it replaces. */
+.lens-strip[data-scrolly]{padding:70px 0;}
+.lens-card{border:1px solid rgba(255,255,255,.14);border-radius:var(--r-lg);
+  background:rgba(255,255,255,.04);padding:26px;position:relative;}
+.lens-card-top{display:flex;align-items:center;gap:10px;margin-bottom:18px;}
+.lens-code{font-family:var(--font-mono);font-weight:700;color:var(--accent-bright);font-size:13px;}
+.lens-badge{font-size:10.5px;font-weight:700;padding:3px 9px;border-radius:999px;
+  background:var(--warn-tint);color:var(--warn);}
+.lens-face{opacity:0;visibility:hidden;position:absolute;inset:auto 26px auto 26px;
+  transition:opacity 460ms ease;}
+.lens-card h4{font-size:12px;text-transform:uppercase;letter-spacing:.06em;
+  color:rgba(255,255,255,.55);margin-bottom:12px;}
+[data-stage="0"] .lens-face[data-face="0"],
+[data-stage="1"] .lens-face[data-face="1"],
+[data-stage="2"] .lens-face[data-face="2"]{opacity:1;visibility:visible;position:relative;inset:auto;}
+.lens-verbatim{font-family:var(--font-display);font-size:16px;line-height:1.55;
+  border-left:3px solid var(--accent-bright);padding-left:14px;margin-bottom:14px;}
+.lens-note,.lens-fix{font-size:13.5px;color:rgba(255,255,255,.72);line-height:1.6;}
+.lens-list{list-style:none;padding:0;display:grid;gap:9px;}
+.lens-list li{font-size:14px;padding-left:20px;position:relative;line-height:1.5;}
+.lens-list li::before{content:"";position:absolute;left:0;top:7px;width:8px;height:8px;
+  border-radius:2px;background:var(--accent-bright);}
+.lens-gap{font-size:14.5px;padding:12px 14px;border-radius:var(--r-md);
+  background:var(--nc-tint);color:var(--nc);font-weight:600;margin-bottom:14px;}
+.lens-fix b{color:#fff;}
+.scrolly-steps .step{color:var(--accent-bright);}
+
 @media (max-width:800px){.lens-grid{grid-template-columns:1fr;gap:22px;}.lens-col + .lens-col{border-left:none;border-top:1px solid rgba(255,255,255,.12);padding-top:22px;}}
 
 /* ---------- Page head (interior pages) ---------- */
