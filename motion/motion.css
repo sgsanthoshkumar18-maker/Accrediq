@@ -72,6 +72,22 @@
     opacity 900ms cubic-bezier(.19, 1, .22, 1);
   transition-delay: calc(var(--aq-i, 0) * 110ms);
 }
+/* The finished state must out-rank the hero start state above. The generic
+   `.aq-split.aq-split-in .aq-w-i` rule is (0,3,0) while the hero rule is (0,3,1), so the
+   generic one LOST and the -0.7em offset never cleared — every word sat shifted left with
+   its first letter eaten by its own clipping box. This selector is (0,4,1) and wins. */
+.hero-headline h1.aq-split.aq-split-in .aq-w-i {
+  transform: none;
+  opacity: 1;
+}
+
+/* Once the words have arrived there is nothing left to clip, and leaving overflow hidden
+   would shave italic and accented glyphs that legitimately extend past their box —
+   the italic "assessor" in this very headline is one. */
+.hero-headline h1.aq-split.aq-split-in .aq-w {
+  overflow: visible;
+}
+
 .hero-headline h1.aq-split .aq-w {
   /* Clip sideways here: the words emerge from the left edge, in the direction of the
      mark, instead of from below. */

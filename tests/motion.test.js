@@ -179,6 +179,20 @@ ok(/hero-headline h1\.aq-split \.aq-w-i \{[\s\S]*?translate3d\(-[\d.]+em, 0, 0\)
 ok(/hero-headline h1\.aq-split \.aq-w-i \{[\s\S]*?1250ms/.test(css),
    'and do so slowly enough to read as deliberate');
 
+/* SPECIFICITY. The hero start state is (0,3,1); the generic finished state is (0,3,0),
+   so the generic rule lost and the words stayed shifted left with their first letters
+   clipped away. The hero needs its own finished-state rule that out-ranks it. */
+ok(/\.hero-headline h1\.aq-split\.aq-split-in \.aq-w-i \{[\s\S]{0,120}transform: none/.test(css),
+   'the hero has a finished-state rule specific enough to clear its own offset');
+ok(/\.hero-headline h1\.aq-split\.aq-split-in \.aq-w \{[\s\S]{0,80}overflow: visible/.test(css),
+   'and stops clipping once the words have arrived');
+
+// Order matters as well as specificity: the finished state must come after the offset it
+// overrides, or an equal-specificity future edit would silently lose again.
+ok(css.indexOf('.hero-headline h1.aq-split .aq-w-i') <
+   css.indexOf('.hero-headline h1.aq-split.aq-split-in .aq-w-i'),
+   'the finished state is declared after the start state');
+
 // Descenders must not be clipped by the overflow box.
 ok(/padding-bottom: 0\.12em/.test(css) && /margin-bottom: -0\.12em/.test(css),
    'descenders have room inside the clipping wrapper');

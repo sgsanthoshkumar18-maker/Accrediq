@@ -14,6 +14,8 @@
       desc: "Department-level audits against the assessor checklist" },
     { key: "incidents", href: "incidents.html", label: "Incidents",
       desc: "Report, analyse and close patient-safety events" },
+    { key: "calendar", href: "calendar.html", label: "Calendar",
+      desc: "Committee meetings and recurring NABH obligations" },
     { key: "capa", href: "capa.html", label: "NC & CAPA",
       desc: "Findings, corrective actions, verification" },
     { key: "documents", href: "documents.html", label: "Documents",

@@ -204,6 +204,34 @@ locked. **The department panel itself is free** — knowing who is accountable i
 understanding the standard, and only the bulk export is paid. As with `page-gate.js` this
 is presentation, not a security boundary: the standards data is already on the page.
 
+### Calendar (`calendar/`, `workspace/calendar.html`)
+Committee meetings and recurring NABH obligations, with a month grid, a committee
+register and a task register. Three new tables: `committees`, `committee_meetings`,
+`compliance_tasks` — all added to the generic RLS and org-stamping loops in `schema.sql`.
+
+**All date logic lives in `calendar/schedule.js`, and nothing else does date arithmetic.**
+Two things there are load-bearing:
+
+- **Dates are plain `YYYY-MM-DD` strings.** `new Date("2026-03-01")` is UTC midnight,
+  which is the *previous day* anywhere west of Greenwich. A due date is a calendar day,
+  not an instant, so it must never round-trip through `Date`. Tests forbid it.
+- **Month arithmetic clamps.** 31 Jan + 1 month is 28 Feb, not 3 March. The clamp then
+  carries forward (28 Feb + 1 month = 28 Mar) rather than springing back to 31 — a real
+  trade-off, pinned by test so it is not changed by accident.
+
+`next_due` is derived, never stored: two sources of truth for "are we overdue" is exactly
+the bug an assessor would find. **Never-met is its own state**, not "fine" — a committee
+that has never sat is the most overdue thing in the building. "Due soon" scales with the
+interval rather than a fixed 30 days, which would flag every yearly task for a month and
+never flag a weekly one. Removing a committee is a **soft delete**, because minutes
+recorded against it must survive it being stood down.
+
+### Command bar (`search/command.js`)
+Ctrl+K / Cmd+K, or `/` when not already typing. Indexes ~700 items — elements, standards,
+chapters, departments, committees, workspace pages — built **lazily on first open** from
+datasets the page already loaded, so there is no index to maintain and no cost on first
+paint. Inject with `node build/set-command.js`.
+
 ### Billing / access
 - `billing/billing-config.js` is the only file to edit for pricing, UPI and email lists.
 - UPI ID: check `upiVpa` — the config has a `-1` suffix the handover didn't; unverified.
@@ -238,13 +266,13 @@ Redirect URLs, or Supabase ignores the parameter and falls back to Site URL.
 
 ---
 
-## Tests — 269 assertions, plain Node, no install
+## Tests — 339 assertions, plain Node, no install
 
     node tests/activity.test.js    node tests/sync.test.js
     node tests/profile.test.js     node tests/palette.test.js
     node tests/framing.test.js     node tests/access.test.js
     node tests/auth-errors.test.js  node tests/standards-export.test.js
-    node tests/motion.test.js
+    node tests/motion.test.js  node tests/calendar.test.js
 
 `sync.test.js` is the important one: cross-device persistence against a fake Supabase, plus
 direct assertions on the RLS rules. `framing.test.js` locks the camera maths that was got
@@ -254,7 +282,7 @@ and both produce records a hospital may show an assessor.
 ## Deploy ritual
 
 After any schema change, re-run `workspace/schema.sql` in the Supabase SQL editor — it is
-fully idempotent and ~618 lines, starting `-- ====`. **Clear the editor with Ctrl+A then
+fully idempotent and ~690 lines, starting `-- ====`. **Clear the editor with Ctrl+A then
 Delete first**: a paste on top of existing content produced a "syntax error at line 3070"
 in a 618-line file. Open it with Notepad, not Word — smart quotes break it.
 

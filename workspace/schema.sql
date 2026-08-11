@@ -73,6 +73,67 @@ create table if not exists public.capa (
 );
 create index if not exists capa_org_idx on public.capa(org_id);
 
+-- ---------- committee calendar ----------
+-- A committee the hospital actually runs, with how often it must meet and when it last
+-- did. next_due is DERIVED, never stored: a stored date goes stale the moment a meeting
+-- is recorded, and two sources of truth for "are we overdue" is exactly the bug an
+-- assessor would find.
+create table if not exists public.committees (
+  id            text primary key,
+  org_id        uuid references public.orgs(id) on delete cascade,
+  name          text not null,
+  short_name    text,
+  frequency     text not null default 'monthly',  -- monthly | quarterly | half_yearly | yearly | fortnightly | weekly
+  chairperson   text,
+  secretary     text,
+  last_met_on   date,
+  active        boolean not null default true,
+  notes         text,
+  created_at    timestamptz not null default now(),
+  updated_at    timestamptz not null default now()
+);
+create index if not exists committees_org_idx on public.committees(org_id);
+
+-- One row per meeting, held or planned. Kept separate from the committee so the history
+-- survives when a committee's frequency changes — an assessor asks "did you meet as
+-- often as your own terms of reference say", which needs the record, not the current rule.
+create table if not exists public.committee_meetings (
+  id            text primary key,
+  org_id        uuid references public.orgs(id) on delete cascade,
+  committee_id  text references public.committees(id) on delete cascade,
+  scheduled_on  date not null,
+  held_on       date,
+  status        text not null default 'planned',   -- planned | held | missed | cancelled
+  attendance    integer,
+  quorum_met    boolean,
+  agenda        text,
+  minutes       text,
+  created_at    timestamptz not null default now(),
+  updated_at    timestamptz not null default now()
+);
+create index if not exists cm_org_idx on public.committee_meetings(org_id);
+create index if not exists cm_cmte_idx on public.committee_meetings(committee_id);
+
+-- ---------- compliance calendar ----------
+-- Recurring NABH obligations that are not committee meetings: drills, audits, calibration,
+-- surveillance, document review. Seeded from a standard list on first use, then owned by
+-- the hospital.
+create table if not exists public.compliance_tasks (
+  id            text primary key,
+  org_id        uuid references public.orgs(id) on delete cascade,
+  title         text not null,
+  category      text,            -- drill | audit | training | calibration | surveillance | review | statutory
+  element_code  text,            -- the NABH element it evidences, where there is one
+  department    text,
+  frequency     text not null default 'monthly',
+  owner         text,
+  last_done_on  date,
+  active        boolean not null default true,
+  created_at    timestamptz not null default now(),
+  updated_at    timestamptz not null default now()
+);
+create index if not exists ct_org_idx on public.compliance_tasks(org_id);
+
 -- ---------- document control (IMS.6.a) ----------
 create table if not exists public.documents (
   id            text primary key,
@@ -251,7 +312,8 @@ create policy members_write on public.members
 do $$
 declare t text;
 begin
-  foreach t in array array['elements','capa','documents','document_versions','audits','incidents'] loop
+  foreach t in array array['elements','capa','documents','document_versions','audits','incidents',
+                        'committees','committee_meetings','compliance_tasks'] loop
     execute format('drop policy if exists %I_read on public.%I', t, t);
     execute format(
       'create policy %I_read on public.%I for select using (org_id = public.my_org())', t, t);
@@ -277,7 +339,8 @@ end; $$;
 do $$
 declare t text;
 begin
-  foreach t in array array['elements','capa','documents','document_versions','members','audits','incidents'] loop
+  foreach t in array array['elements','capa','documents','document_versions','members','audits','incidents',
+                        'committees','committee_meetings','compliance_tasks'] loop
     execute format('drop trigger if exists set_org_%I on public.%I', t, t);
     execute format(
       'create trigger set_org_%I before insert on public.%I
