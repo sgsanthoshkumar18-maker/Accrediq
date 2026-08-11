@@ -110,5 +110,78 @@ const speeds = [...home.matchAll(/data-parallax="(-?[\d.]+)"/g)].map(m => Math.a
 ok(speeds.length > 0, 'the homepage uses parallax');
 ok(speeds.every(v => v <= 0.12), 'parallax speeds stay subtle (max ' + Math.max(...speeds) + ')');
 
+
+/* ------------------------------- split text -------------------------------
+   The split walks text nodes. The tempting shortcut — rebuilding innerHTML from a
+   word-joined string — would flatten the <br> and the <span class="em"> that colours
+   "assessor" in the hero headline. This runs the real function against a small DOM to
+   prove it does not. */
+{
+  const { Element, Text, makeDocument } = require('./helpers/mini-dom.js');
+
+  // Rebuild the hero headline: Know it before<br>the <span class="em">assessor</span> does.
+  const h1 = new Element('h1');
+  h1.appendChild(new Text('Know it before'));
+  h1.appendChild(new Element('br'));
+  h1.appendChild(new Text('the '));
+  const em = new Element('span'); em.className = 'em';
+  em.appendChild(new Text('assessor'));
+  h1.appendChild(em);
+  h1.appendChild(new Text(' does.'));
+
+  // Pull splitNode out of the source and run it against the shim.
+  const src = js.slice(js.indexOf('function splitNode'), js.indexOf('function init() {\n      var sel = "[data-split]"'));
+  const doc = makeDocument();
+  const splitNode = new Function('document', src + '; return splitNode;')(doc);
+
+  const before = h1.textContent;
+  const count = splitNode(h1);
+
+  eq(h1.textContent, before, 'the split does not change the text of the heading');
+  ok(before.length > 0, 'the harness built a heading with real text');
+  eq(count, 6, 'every word is wrapped (Know it before the assessor does.)');
+  ok(h1.querySelectorAll('.em').length === 1, 'the accent span survives the split');
+  eq(h1.querySelectorAll('.em')[0].textContent, 'assessor', 'and still holds its word');
+  ok(h1.querySelectorAll('br').length === 1, 'the line break survives the split');
+  eq(h1.getAttribute('aria-label'), 'Know it before the assessor does.',
+     'the whole sentence is restored for screen readers');
+  eq(h1.querySelectorAll('.aq-w').length, 6, 'each word has a clipping wrapper');
+  eq(h1.querySelectorAll('.aq-w-i').length, 6, 'and a moving inner span');
+
+  // Index drives the stagger; it must run 0..n-1 across the whole heading, including
+  // words inside the accent span, or the sequence jumps.
+  const idx = h1.querySelectorAll('.aq-w-i').map(e => e.style.props['--aq-i']);
+  eq(idx.join(','), '0,1,2,3,4,5', 'the stagger index is continuous across nested elements');
+
+  // Whitespace between words must be preserved as real text, or words run together.
+  ok(/<br>/.test(h1.outerHTML), 'the break is still in the serialised markup');
+  ok(/the <span class="em">/.test(h1.outerHTML.replace(/ aria-label="[^"]*"/g,'')) ||
+     h1.textContent.includes('the assessor'), 'spacing between words is intact');
+
+  // Running twice must not double-wrap — init() guards on the class.
+  ok(h1.classList.contains('aq-split'), 'the element is marked as split');
+}
+
+// Words, not letters: letter-by-letter makes a heading unreadable while it assembles.
+ok(/split\(\/\(\\s\+\)\//.test(js), 'the split is on whitespace, so words stay whole');
+ok(/aria-label/.test(js), 'the original sentence is preserved for assistive tech');
+ok(/tagName !== "BR"/.test(js), 'line breaks are stepped over rather than descended into');
+
+// The hero plays on load; anything already in view starts explicitly rather than waiting
+// for an observer callback that can land a frame late and flash the finished heading.
+ok(/innerHeight \* 0\.9/.test(js), 'headings already in view start immediately');
+ok(/aq-hero-in/.test(js) && /aq-hero-in/.test(css), 'the ring mark has its own entrance');
+ok(/stroke-dashoffset/.test(css), 'the logo arc draws itself');
+
+// The hero headline slides sideways, out from behind the mark, rather than rising.
+ok(/hero-headline h1\.aq-split \.aq-w-i \{[\s\S]*?translate3d\(-[\d.]+em, 0, 0\)/.test(css),
+   'the hero words travel horizontally from the mark');
+ok(/hero-headline h1\.aq-split \.aq-w-i \{[\s\S]*?1250ms/.test(css),
+   'and do so slowly enough to read as deliberate');
+
+// Descenders must not be clipped by the overflow box.
+ok(/padding-bottom: 0\.12em/.test(css) && /margin-bottom: -0\.12em/.test(css),
+   'descenders have room inside the clipping wrapper');
+
 console.log('\n' + pass + ' passed, ' + fail + ' failed');
 if (fail) process.exit(1);

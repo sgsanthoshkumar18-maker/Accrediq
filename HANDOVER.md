@@ -134,6 +134,20 @@ palette is untouched by construction. Reveals are applied by JS, never in markup
 no-JS visitor is not left with a blank page. Page navigation uses a hard timeout rather
 than `transitionend`: an interrupted fade would otherwise swallow the click entirely.
 
+**Split text** (`[data-split]`) lifts headings word by word. **Words, not letters** —
+letter-by-letter is the portfolio-site version and makes a heading unreadable while it
+assembles, which is wrong for a page someone is scanning. The split walks TEXT NODES and
+leaves element structure alone: rebuilding `innerHTML` from a word-joined string would
+flatten the `<br>` and the `<span class="em">` that colours "assessor" in the hero. A
+`<br>` contributes no characters to `textContent`, so the aria-label is built separately
+with breaks read as spaces, or it announces "beforethe". Tested against a small DOM shim
+in `tests/helpers/mini-dom.js` (no network here, so jsdom is not installable).
+
+The **hero headline slides sideways out from behind the ring mark** rather than rising —
+1250ms, long ease — while the mark scales in and its arc draws. Anything already in view
+starts explicitly rather than waiting for an observer callback, which can land a frame
+late and flash the finished heading.
+
 **Scroll-jacking was deliberately not built.** A quality manager is usually hunting one
 element inside a long chapter, and snap panels fight that — the one effect that would
 look modern and work worse.
@@ -224,7 +238,7 @@ Redirect URLs, or Supabase ignores the parameter and falls back to Site URL.
 
 ---
 
-## Tests — 247 assertions, plain Node, no install
+## Tests — 269 assertions, plain Node, no install
 
     node tests/activity.test.js    node tests/sync.test.js
     node tests/profile.test.js     node tests/palette.test.js

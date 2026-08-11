@@ -33,6 +33,76 @@
   will-change: transform;
 }
 
+/* ------------------------------- split text -------------------------------
+   Two nested spans per word: .aq-w clips, .aq-w-i moves. The outer keeps the word on
+   the baseline and inline, so line wrapping and justification behave exactly as they
+   did before the split. */
+.aq-split .aq-w {
+  display: inline-block;
+  overflow: hidden;
+  vertical-align: top;
+  /* Descenders in g, y, p sit below the baseline and would be clipped by an overflow
+     box sized to the line. The padding gives them room and the negative margin gives
+     the space back, so nothing shifts. */
+  padding-bottom: 0.12em;
+  margin-bottom: -0.12em;
+}
+.aq-split .aq-w-i {
+  display: inline-block;
+  transform: translate3d(0, 105%, 0);
+  opacity: 0;
+  transition:
+    transform 900ms cubic-bezier(.16, .84, .32, 1),
+    opacity 700ms ease;
+  transition-delay: calc(var(--aq-i, 0) * 85ms);
+  will-change: transform;
+}
+.aq-split.aq-split-in .aq-w-i {
+  transform: none;
+  opacity: 1;
+}
+
+/* The hero headline slides RIGHT out from behind the ring mark rather than rising.
+   Slower and longer-travelled than the section headings, because it plays once on
+   arrival and is the first thing anyone sees. */
+.hero-headline h1.aq-split .aq-w-i {
+  transform: translate3d(-0.7em, 0, 0);
+  transition:
+    transform 1250ms cubic-bezier(.19, 1, .22, 1),
+    opacity 900ms cubic-bezier(.19, 1, .22, 1);
+  transition-delay: calc(var(--aq-i, 0) * 110ms);
+}
+.hero-headline h1.aq-split .aq-w {
+  /* Clip sideways here: the words emerge from the left edge, in the direction of the
+     mark, instead of from below. */
+  overflow: hidden;
+  padding-left: 0.08em;
+  margin-left: -0.08em;
+}
+
+/* The mark itself settles in first, so the headline appears to come from it. The arc
+   draws around the ring; 100 is comfortably longer than the real path, and overshooting
+   a dash array simply completes the stroke. */
+.hero-logo {
+  opacity: 0;
+  transform: translate3d(0, 0, 0) scale(.86) rotate(-12deg);
+  transition:
+    opacity 900ms ease,
+    transform 1100ms cubic-bezier(.19, 1, .22, 1);
+}
+.hero-logo-arc {
+  stroke-dasharray: 100;
+  stroke-dashoffset: 100;
+  transition: stroke-dashoffset 1400ms cubic-bezier(.22, .61, .36, 1) 180ms;
+}
+html.aq-hero-in .hero-logo {
+  opacity: 1;
+  transform: none;
+}
+html.aq-hero-in .hero-logo-arc {
+  stroke-dashoffset: 0;
+}
+
 /* Page transition. Short and shallow on purpose — this is a working tool, and a long
    theatrical wipe between an audit page and a checklist becomes an obstacle by the
    twentieth navigation of the morning. */
@@ -60,16 +130,22 @@ html.aq-smooth {
    braces: the JS already refuses to animate, and this guarantees nothing is left
    hidden or mid-transform if a class was applied before the preference was read. */
 html.aq-motion-off .aq-reveal,
-html.aq-motion-off [data-parallax] {
+html.aq-motion-off [data-parallax],
+html.aq-motion-off .aq-split .aq-w-i,
+html.aq-motion-off .hero-logo {
   opacity: 1 !important;
   transform: none !important;
   transition: none !important;
 }
+html.aq-motion-off .hero-logo-arc { stroke-dashoffset: 0 !important; }
 
 @media (prefers-reduced-motion: reduce) {
+  .hero-logo-arc { stroke-dashoffset: 0 !important; transition: none !important; }
   .aq-reveal,
   .aq-reveal.aq-in,
   [data-parallax],
+  .aq-split .aq-w-i,
+  .hero-logo,
   html.aq-page-enter body,
   html.aq-page-leave body,
   body {
@@ -84,6 +160,8 @@ html.aq-motion-off [data-parallax] {
 @media print {
   .aq-reveal,
   [data-parallax],
+  .aq-split .aq-w-i,
+  .hero-logo,
   body {
     opacity: 1 !important;
     transform: none !important;

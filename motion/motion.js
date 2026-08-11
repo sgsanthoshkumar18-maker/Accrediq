@@ -247,7 +247,108 @@
     return { init: init };
   })();
 
-  /* ============================= 4. page transitions ============================= */
+  /* ============================== 4. split text ==============================
+   *
+   * Headings are split into words and lifted into place one after another. Words, not
+   * letters: letter-by-letter is the portfolio-site version and it makes a sentence
+   * unreadable while it assembles. On a page a quality manager is scanning for a specific
+   * heading, the text must be legible from the first frame of its own animation.
+   *
+   * The split walks TEXT NODES and leaves element structure alone, so <br> and the
+   * <span class="em"> inside the hero headline survive. Replacing innerHTML with a
+   * word-joined string — the usual shortcut — would flatten both and lose the accent
+   * colour on "assessor".
+   */
+  var Split = (function () {
+
+    function splitNode(el) {
+      /* Screen readers would otherwise announce each word as a separate item. The
+         original sentence is restored as a label and the pieces hidden from the tree. */
+      /* A <br> contributes no characters to textContent, so "Know it before<br>the"
+         would be announced as "beforethe". Line breaks are read as spaces. */
+      var whole = "";
+      (function readable(node) {
+        for (var i = 0; i < node.childNodes.length; i++) {
+          var c = node.childNodes[i];
+          if (c.nodeType === 3) whole += c.nodeValue;
+          else if (c.nodeType === 1) {
+            if (c.tagName === "BR") whole += " ";
+            else readable(c);
+          }
+        }
+      })(el);
+      whole = whole.replace(/\s+/g, " ").trim();
+      el.setAttribute("aria-label", whole);
+
+      var texts = [];
+      (function collect(node) {
+        for (var i = 0; i < node.childNodes.length; i++) {
+          var c = node.childNodes[i];
+          if (c.nodeType === 3) { if (c.nodeValue.trim()) texts.push(c); }
+          else if (c.nodeType === 1 && c.tagName !== "BR") collect(c);
+        }
+      })(el);
+
+      var n = 0;
+      texts.forEach(function (t) {
+        var frag = document.createDocumentFragment();
+        var parts = t.nodeValue.split(/(\s+)/);
+        parts.forEach(function (p) {
+          if (!p) return;
+          if (/^\s+$/.test(p)) { frag.appendChild(document.createTextNode(p)); return; }
+          /* Two nested spans: the outer clips, the inner moves. A single element cannot
+             both slide and be masked by its own edge, so this is what makes the word
+             rise out of nothing rather than fade in place. */
+          var outer = document.createElement("span");
+          outer.className = "aq-w";
+          var inner = document.createElement("span");
+          inner.className = "aq-w-i";
+          inner.textContent = p;
+          inner.style.setProperty("--aq-i", n++);
+          outer.appendChild(inner);
+          frag.appendChild(outer);
+        });
+        t.parentNode.replaceChild(frag, t);
+      });
+
+      el.setAttribute("role", "text");
+      el.classList.add("aq-split");
+      return n;
+    }
+
+    function init() {
+      var sel = "[data-split]";
+      var els = document.querySelectorAll(sel);
+      if (!els.length) return;
+
+      var io = ("IntersectionObserver" in window) ? new IntersectionObserver(function (ents) {
+        ents.forEach(function (en) {
+          if (!en.isIntersecting) return;
+          en.target.classList.add("aq-split-in");
+          io.unobserve(en.target);
+        });
+      }, { threshold: 0.25 }) : null;
+
+      [].forEach.call(els, function (el) {
+        if (el.classList.contains("aq-split")) return;
+        splitNode(el);
+        if (!io) { el.classList.add("aq-split-in"); return; }
+        /* The hero is above the fold on load, and an observer callback can land a frame
+           or two later — long enough to see the finished heading flash before it
+           animates. Anything already in view is started explicitly instead. */
+        var r = el.getBoundingClientRect();
+        if (r.top < window.innerHeight * 0.9) {
+          requestAnimationFrame(function () {
+            requestAnimationFrame(function () { el.classList.add("aq-split-in"); });
+          });
+        } else io.observe(el);
+      });
+    }
+
+    return { init: init };
+  })();
+
+  /* ============================= 5. page transitions ============================= */
 
   var Transition = (function () {
     function isInternal(a) {
@@ -306,6 +407,15 @@
       return;
     }
 
+    Split.init();
+    /* The ring mark settles, then the headline slides out from behind it. Two frames of
+       delay so the initial hidden state is painted before the class flips, otherwise the
+       browser coalesces both into one style recalculation and nothing animates. */
+    if (document.querySelector(".hero-logo")) {
+      requestAnimationFrame(function () {
+        requestAnimationFrame(function () { root.classList.add("aq-hero-in"); });
+      });
+    }
     Reveal.init();
     Transition.init();
     Parallax.init();
