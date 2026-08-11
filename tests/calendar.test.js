@@ -271,5 +271,23 @@ ok(/pref_dow/.test(read('workspace/schema.sql')), 'the preference is persisted')
 ok(/add column if not exists pref_dow/.test(read('workspace/schema.sql')),
    'and an existing project gains the column on re-run');
 
+
+/* --------------------- saving must land on the calendar ---------------------
+   The point of adding a committee is to see it appear on a date. Leaving the user on the
+   register after a save makes them hunt for evidence that anything happened. */
+ok(/function showOnCalendar/.test(cal), 'a save switches to the calendar view');
+ok(/view = \{ y: p\.y, m: p\.m, d: 1 \}/.test(cal),
+   'and jumps to the month the new date falls in');
+ok(/W\.toast\(/.test(cal), 'and confirms in words what the next date is');
+// Three save paths, all of which must reflect: committee, task, meeting logged.
+// Four call sites — committee, task, meeting logged, mark done — plus the definition.
+eq((cal.match(/showOnCalendar\(/g) || []).length, 5,
+   'every save path reflects on the calendar');
+
+// The seed option is gone; only Add remains.
+eq(/data-act="seed"/.test(cal), false, 'the standard-set button is removed');
+eq(/var SEED = \[/.test(cal), false, 'and its list with it');
+ok(/data-act="add-task">Add a task/.test(cal), 'the empty state offers Add only');
+
 console.log('\n' + pass + ' passed, ' + fail + ' failed');
 if (fail) process.exit(1);

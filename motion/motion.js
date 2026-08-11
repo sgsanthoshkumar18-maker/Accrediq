@@ -236,6 +236,9 @@
       }, { rootMargin: "0px 0px -8% 0px", threshold: 0.04 });
 
       [].forEach.call(els, function (el, i) {
+        // Idempotent: a re-scan after content is injected must not re-hide anything that
+        // has already been revealed, or the page blinks every time new markup arrives.
+        if (el.classList.contains("aq-reveal")) return;
         el.classList.add("aq-reveal");
         /* A small stagger within a row reads as considered; beyond a few items it reads
            as slow, so it is capped rather than multiplied by index indefinitely. */
@@ -441,9 +444,24 @@
     start();
   }
 
+  /* Pages that render their content from JS (the founder portfolio) finish long after
+     DOMContentLoaded, so the observers set up at start-up never saw their markup. Without
+     a re-scan those sections stay at opacity 0 forever — the reveal class is what hides
+     them. Both scans are idempotent, so calling this repeatedly is safe. */
+  function rescan() {
+    if (reduce) return;
+    Reveal.init();
+    Split.init();
+    Parallax.init();
+    Smooth.resync();
+  }
+
+  document.addEventListener("aq:content", rescan);
+
   window.AQMotion = {
     scrollTo: function (y) { Smooth.scrollToY(y); },
     refresh: function () { Parallax.measure(); Smooth.resync(); },
+    rescan: rescan,
     reduced: reduce
   };
 })();

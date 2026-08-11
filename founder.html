@@ -1,0 +1,147 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<script>(function(){try{var DEF="neon";if(localStorage.getItem("aq-palette-v")!=="2"){localStorage.removeItem("aq-palette");localStorage.setItem("aq-palette-v","2");}var p=new URLSearchParams(location.search);var own=localStorage.getItem("aq-is-owner")==="1";if(p.has("dark")){localStorage.setItem("aq-theme",p.get("dark")==="0"?"light":"dark");}if(own&&p.has("neon")){localStorage.setItem("aq-palette",p.get("neon")==="0"?"default":"neon");}var t=localStorage.getItem("aq-theme")||"dark";var q=localStorage.getItem("aq-palette")||DEF;if(q!=="default"){q="neon";}if(t!=="light"){document.documentElement.setAttribute("data-theme","dark");}if(q==="neon"&&t!=="light"){document.documentElement.setAttribute("data-palette","neon");}}catch(e){document.documentElement.setAttribute("data-theme","dark");document.documentElement.setAttribute("data-palette","neon");}})();</script>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Dr. Santhoshkumar SG — Founder, AQcredix</title>
+<meta name="description" content="Why AQcredix exists, who's behind it, and the roadmap from a learning forum to a community, a conference series, and a certifying body.">
+<link rel="icon" href="data:image/svg+xml,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 40 40'><circle cx='20' cy='20' r='16' fill='none' stroke='%23D8E0E6' stroke-width='3.4'/><path d='M20 4a16 16 0 1 1-11.31 4.69' fill='none' stroke='%2317A2B8' stroke-width='3.4' stroke-linecap='round'/><path d='M19.15 14.05H20.85L25.61 25.015H26.97V25.95H22.21V25.015H23.315L22 22H18L16.685 25.015H17.79V25.95H13.03V25.015H14.39ZM20 16.26L22.027 20.935H17.973Z' fill='%2317A2B8' fill-rule='evenodd'/></svg>">
+<link rel="stylesheet" href="styles.css">
+<script type="application/ld+json">{"@context":"https://schema.org","@type":"EducationalOrganization","name":"AQcredix","alternateName":"AQcredix \u2014 Accreditation & Quality Implementation Guidance Platform","url":"https://accrediq.vercel.app/","description":"An independent healthcare quality education and training forum covering NABH accreditation standards, department roles, KPIs, quality tools and mock assessment.","founder":{"@type":"Person","name":"Dr. Santhoshkumar SG","jobTitle":"Founder & Chief Quality Officer, AQcredix; Infectious Disease Clinical Pharmacologist","honorificSuffix":"FISQua, CPQIH (Basic) (CAHO)"},"knowsAbout":["NABH accreditation","Healthcare quality improvement","Hospital infection control","Patient safety","Standard operating procedures","Clinical audit"]}</script>
+<script type="application/ld+json">{"@context":"https://schema.org","@type":"WebSite","name":"AQcredix","url":"https://accrediq.vercel.app/","potentialAction":{"@type":"SearchAction","target":"https://accrediq.vercel.app/standards.html?q={search_term_string}","query-input":"required name=search_term_string"}}</script>
+<link rel="stylesheet" href="motion/motion.css">
+<link rel="stylesheet" href="search/command.css">
+<link rel="stylesheet" href="profile/founder.css">
+</head>
+<body data-page="about">
+<div id="site-header"></div>
+
+<main id="aq-main">
+
+  <!-- HERO -->
+  <section class="fp-hero">
+    <div class="wrap">
+      <div class="fp-hero-grid">
+        <div class="fp-photo" id="fPhoto" data-tilt></div>
+        <div class="fp-hero-text">
+          <span class="eyebrow">Founder &amp; Chief Quality Officer</span>
+          <h1 id="fName" data-split></h1>
+          <p class="fp-role" id="fRole"></p>
+          <p class="fp-loc" id="fLoc"></p>
+          <p class="fp-affil" id="fAffil"></p>
+          <div class="fp-tags" id="fTags"></div>
+          <div class="fp-links" id="fLinks"></div>
+        </div>
+      </div>
+      <div class="fp-statband" id="fStats"></div>
+    </div>
+  </section>
+
+  <!-- SCROLLYTELLING: floor -> evidence -> system -->
+  <section class="fp-lens" data-scrolly>
+    <div class="wrap">
+      <div class="scrolly">
+        <div class="scrolly-sticky" data-scrolly-sticky data-stage="0">
+          <div class="fp-card" id="fLensCard"></div>
+        </div>
+        <div class="scrolly-steps" id="fLensSteps"></div>
+      </div>
+    </div>
+  </section>
+
+  <!-- EXPERIENCE -->
+  <section class="section wrap">
+    <div class="section-head"><span class="eyebrow">The path</span>
+      <h2 data-split>Where the work has been done.</h2></div>
+    <div class="fp-timeline" id="fExp"></div>
+  </section>
+
+  <!-- EDUCATION -->
+  <section class="section wrap">
+    <div class="section-head"><span class="eyebrow">Training</span>
+      <h2 data-split>Education.</h2></div>
+    <div class="fp-timeline" id="fEdu"></div>
+  </section>
+
+  <!-- PEER REVIEW -->
+  <section class="fp-review">
+    <div class="wrap section">
+      <div class="section-head"><span class="eyebrow">Peer review</span>
+        <h2 data-split>Reviewer for two journals.</h2></div>
+      <div class="fp-review-grid">
+        <div class="fp-journal-card" data-reveal data-tilt>
+          <div class="fp-q">Q1</div>
+          <h3>Antimicrobial Resistance and Infection Control</h3>
+          <div class="fp-pub-by">Springer Nature</div>
+          <p>A first-quartile journal in infection prevention and antimicrobial resistance
+            — the evidence base that hospital infection-control policy is built on.</p>
+        </div>
+        <div class="fp-journal-card" data-reveal data-tilt>
+          <h3>International Journal of Infectious Diseases and Therapy</h3>
+          <div class="fp-pub-by">IJIDT</div>
+          <p>Clinical infectious disease research and therapeutic practice.</p>
+        </div>
+      </div>
+    </div>
+  </section>
+
+  <!-- PUBLICATIONS -->
+  <section class="section wrap">
+    <div class="section-head"><span class="eyebrow">Published research</span>
+      <h2 data-split>Peer-reviewed publications.</h2>
+      <p class="muted"><span id="fPubCount"></span> papers on medication safety, regulatory
+        compliance, and clinical case management.</p></div>
+    <div class="fp-pubs" id="fPubs"></div>
+    <div class="fp-project" data-reveal>
+      <span class="eyebrow">Research project</span>
+      <div id="fProject"></div>
+    </div>
+  </section>
+
+  <!-- CERTIFICATIONS -->
+  <section class="fp-certs-band">
+    <div class="wrap section">
+      <div class="section-head"><span class="eyebrow">Credentials</span>
+        <h2 data-split>Quality and patient safety.</h2></div>
+      <div class="fp-certs-top" id="fCertTop"></div>
+      <div class="fp-certs" id="fCertQ"></div>
+
+      <div class="section-head" style="margin-top:44px;"><span class="eyebrow">Credentials</span>
+        <h2 data-split>Clinical and public health.</h2></div>
+      <div class="fp-certs" id="fCertC"></div>
+    </div>
+  </section>
+
+  <!-- SKILLS -->
+  <section class="section wrap">
+    <div class="section-head"><span class="eyebrow">Skills</span>
+      <h2 data-split>What that adds up to.</h2></div>
+    <div class="fp-skills" id="fSkills"></div>
+  </section>
+
+  <!-- CTA -->
+  <section class="section wrap">
+    <div class="fp-cta" data-reveal>
+      <h2 data-split>AQcredix is this work, built once.</h2>
+      <p>Every standard on the platform was read first by someone who had to follow it on
+        a ward, then document it for an assessor.</p>
+      <a class="btn btn-accent" href="standards.html">Explore the standards →</a>
+      <a class="btn btn-ghost" href="about.html">About AQcredix</a>
+    </div>
+  </section>
+
+</main>
+
+<div id="site-footer"></div>
+<script src="dept-icons.js"></script>
+<script src="orbit.js"></script>
+<script src="app.js"></script>
+<script src="profile/founder-data.js"></script>
+<script src="profile/founder.js"></script>
+<script src="search/search.js"></script>
+<script src="motion/motion.js"></script>
+<script src="search/command.js"></script>
+<script src="motion/scrolly.js"></script>
+</body>
+</html>

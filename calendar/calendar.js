@@ -13,33 +13,10 @@
   var committees = [], meetings = [], tasks = [];
   var tab = "calendar";
   var view = K.today();          // the month currently shown in the grid
-  var seeded = false;
 
   var MONTHS = ["January", "February", "March", "April", "May", "June",
                 "July", "August", "September", "October", "November", "December"];
   var DOW = ["Mon", "Tue", "Wed", "Thu", "Fri", "Sat", "Sun"];
-
-  /* A starting set of recurring obligations, offered once. Every one is a real NABH
-     expectation with the element it evidences, so a hospital is not staring at an empty
-     page wondering what belongs here. They are suggestions the hospital then owns —
-     frequency and ownership differ between hospitals and only they can decide. */
-  var SEED = [
-    { title: "Fire drill / mock evacuation", category: "drill", frequency: "half_yearly", element_code: "FMS.5" },
-    { title: "Mock code blue drill", category: "drill", frequency: "quarterly", element_code: "COP.5" },
-    { title: "Disaster / mass casualty mock drill", category: "drill", frequency: "yearly", element_code: "FMS.6" },
-    { title: "Internal quality audit (all departments)", category: "audit", frequency: "half_yearly", element_code: "IMS.2" },
-    { title: "Medical record review", category: "audit", frequency: "monthly", element_code: "IMS.4" },
-    { title: "Hand hygiene compliance audit", category: "surveillance", frequency: "monthly", element_code: "HIC.4" },
-    { title: "HAI surveillance data review", category: "surveillance", frequency: "monthly", element_code: "HIC.7" },
-    { title: "Biomedical equipment calibration", category: "calibration", frequency: "yearly", element_code: "FMS.4" },
-    { title: "Crash cart and emergency drug check", category: "review", frequency: "monthly", element_code: "COP.5" },
-    { title: "Patient satisfaction survey analysis", category: "review", frequency: "quarterly", element_code: "PRE.7" },
-    { title: "Policy and SOP review cycle", category: "review", frequency: "yearly", element_code: "IMS.6" },
-    { title: "Staff induction and safety training", category: "training", frequency: "quarterly", element_code: "HRM.5" },
-    { title: "BMW handling training", category: "training", frequency: "half_yearly", element_code: "FMS.7" },
-    { title: "Fire NOC / statutory licence review", category: "statutory", frequency: "yearly", element_code: "FMS.1" },
-    { title: "Water and air quality testing", category: "surveillance", frequency: "quarterly", element_code: "HIC.9" }
-  ];
 
   /* ------------------------------- data ------------------------------- */
 
@@ -56,7 +33,6 @@
     committees = (res[0] || []).filter(function (c) { return c.active !== false; });
     meetings = res[1] || [];
     tasks = (res[2] || []).filter(function (t) { return t.active !== false; });
-    seeded = tasks.length > 0;
   }
 
   /* The last meeting actually held beats the stored last_met_on. The stored field is what
@@ -231,9 +207,7 @@
       return '<div class="cal-empty"><h3>No recurring tasks yet</h3>' +
         "<p>Drills, audits, calibration, surveillance and training all recur on a cycle an " +
         "assessor will ask about. Start from a standard NABH set and adjust it, or add your own.</p>" +
-        (ro ? "" :
-          '<button class="btn btn-accent" data-act="seed">Start from the standard set (' + SEED.length + ")</button> " +
-          '<button class="btn btn-ghost" data-act="add-task">Add one myself</button>') +
+        (ro ? "" : '<button class="btn btn-accent" data-act="add-task">Add a task</button>') +
         "</div>";
     }
     return '<div class="cal-bar"><h3>Recurring tasks</h3>' +
@@ -457,7 +431,14 @@
     };
     await S.adapter.upsert("committees", row);
     if (window.AQActivity) window.AQActivity.record("committee_saved", { name: name });
-    close(); await refresh();
+    close();
+    var nd = K.nextDates(row.last_met_on, row.frequency, row.pref_dow);
+    await load();
+    showOnCalendar(nd.preferred);
+    render();
+    W.toast(nd.preferred
+      ? name + " added \u2014 next sitting " + nd.preferred
+      : name + " added \u2014 record a meeting to start the schedule", "ok");
   }
 
   async function saveTask(existingId) {
@@ -475,7 +456,14 @@
       active: true,
       updated_at: new Date().toISOString()
     });
-    close(); await refresh();
+    close();
+    var nd = K.nextDates(val("fLast") || null, val("fFreq"), val("fDow"));
+    await load();
+    showOnCalendar(nd.preferred);
+    render();
+    W.toast(nd.preferred
+      ? title + " added \u2014 next due " + nd.preferred
+      : title + " added \u2014 record when it was last done to start the schedule", "ok");
   }
 
   async function saveLog(cid) {
@@ -502,7 +490,13 @@
       await S.adapter.upsert("committees", c);
     }
     if (window.AQActivity) window.AQActivity.record("committee_meeting_logged", { id: cid });
-    close(); await refresh();
+    close();
+    await load();
+    var cc = committees.filter(function (x) { return x.id === cid; })[0];
+    var nd2 = cc ? K.nextDates(lastMet(cc), cc.frequency, cc.pref_dow) : { preferred: held };
+    showOnCalendar(nd2.preferred || held);
+    render();
+    W.toast("Meeting recorded \u2014 next sitting " + (nd2.preferred || "\u2014"), "ok");
   }
 
   async function markDone(tid) {
@@ -511,19 +505,11 @@
     t.last_done_on = K.fmt(K.today());
     t.updated_at = new Date().toISOString();
     await S.adapter.upsert("compliance_tasks", t);
-    await refresh();
-  }
-
-  async function seed() {
-    for (var i = 0; i < SEED.length; i++) {
-      var s = SEED[i];
-      await S.adapter.upsert("compliance_tasks", {
-        id: id("task"),
-        title: s.title, category: s.category, frequency: s.frequency,
-        element_code: s.element_code, last_done_on: null, active: true
-      });
-    }
-    await refresh();
+    await load();
+    var nd = K.nextDates(t.last_done_on, t.frequency, t.pref_dow);
+    showOnCalendar(nd.preferred);
+    render();
+    W.toast("Marked done \u2014 next due " + (nd.preferred || "\u2014"), "ok");
   }
 
   async function removeRow(table, rid) {
@@ -539,6 +525,18 @@
   }
 
   async function refresh() { await load(); render(); }
+
+  /* After a save, switch to the calendar and show the month the new date falls in. The
+     whole point of adding a committee is to see it land on a date; leaving the user on
+     the register makes them hunt for confirmation that anything happened. */
+  function showOnCalendar(iso) {
+    var p = K.parse(iso);
+    if (p) view = { y: p.y, m: p.m, d: 1 };
+    tab = "calendar";
+    [].forEach.call(document.querySelectorAll(".cal-tab"), function (x) {
+      x.classList.toggle("is-on", x.dataset.tab === "calendar");
+    });
+  }
 
   /* ------------------------------- events ------------------------------- */
 
@@ -578,7 +576,6 @@
       else if (act === "save-task") saveTask(rid || null);
       else if (act === "del-task") removeRow("compliance_tasks", rid);
       else if (act === "done") markDone(rid);
-      else if (act === "seed") seed();
     });
 
     document.getElementById("calModal").addEventListener("click", function (e) {

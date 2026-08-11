@@ -37,9 +37,11 @@
     }
 
     [].forEach.call(sections, function (sec) {
+      if (sec.hasAttribute("data-scrolly-wired")) return;
       var steps = sec.querySelectorAll("[data-scrolly-step]");
       var sticky = sec.querySelector("[data-scrolly-sticky]");
       if (!steps.length || !sticky) return;
+      sec.setAttribute("data-scrolly-wired", "1");
 
       var current = -1;
 
@@ -88,6 +90,11 @@
       measure();
     });
   }
+
+  /* Same reason as the reveal re-scan: the founder page renders its steps from data, so
+     the observers must be built again once that markup exists. `wired` stops a second
+     pass from double-observing the same steps. */
+  document.addEventListener("aq:content", init);
 
   if (document.readyState === "loading") document.addEventListener("DOMContentLoaded", init);
   else init();

@@ -1018,3 +1018,12 @@ a:focus-visible,button:focus-visible,input:focus-visible,select:focus-visible,te
 /* About page: the orbit fills the panel it is given. */
 .about-orbit{display:flex;align-items:center;justify-content:center;padding:8px;}
 .about-orbit .aq-orbit{width:100%;max-width:380px;}
+
+/* Founder name link. Underline grows on hover so the name reads as a person worth
+   clicking rather than as ordinary body copy. */
+.fp-namelink{color:inherit;text-decoration:none;position:relative;display:inline-block;}
+.fp-namelink::after{content:"";position:absolute;left:0;right:0;bottom:-2px;height:2px;
+  background:var(--brand-2);transform:scaleX(0);transform-origin:left;
+  transition:transform 320ms cubic-bezier(.22,.61,.36,1);}
+.fp-namelink:hover{color:var(--brand-2);}
+.fp-namelink:hover::after{transform:scaleX(1);}

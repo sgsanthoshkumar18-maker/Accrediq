@@ -1,0 +1,366 @@
+/* AQcredix — founder portfolio.
+   Theme tokens throughout; no hardcoded colour inside any media query. */
+
+/* ---------------------------------- hero ---------------------------------- */
+
+.fp-hero {
+  background: var(--bg-deep-2);
+  color: #fff;
+  padding: 64px 0 48px;
+  position: relative;
+  overflow: hidden;
+}
+.fp-hero-grid {
+  display: grid;
+  grid-template-columns: 190px 1fr;
+  gap: 34px;
+  align-items: center;
+}
+
+.fp-photo {
+  width: 190px;
+  height: 190px;
+  border-radius: 50%;
+  overflow: hidden;
+  border: 3px solid var(--accent-bright);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  background: rgba(255, 255, 255, .05);
+  transition: transform 220ms ease;
+  will-change: transform;
+}
+.fp-photo img { width: 100%; height: 100%; object-fit: cover; display: block; }
+.fp-initials {
+  font-family: var(--font-display);
+  font-size: 58px;
+  font-weight: 700;
+  color: var(--accent-bright);
+  letter-spacing: .02em;
+}
+
+.fp-hero h1 {
+  font-size: clamp(28px, 4.4vw, 46px);
+  letter-spacing: -.03em;
+  margin: 10px 0 8px;
+  line-height: 1.08;
+}
+.fp-post {
+  font-size: .52em;
+  font-weight: 600;
+  color: var(--accent-bright);
+  letter-spacing: 0;
+  white-space: nowrap;
+}
+.fp-role { font-size: 16px; color: rgba(255, 255, 255, .86); margin-bottom: 4px; }
+.fp-loc { font-size: 13.5px; color: rgba(255, 255, 255, .58); margin-bottom: 16px; }
+
+.fp-tags { display: flex; flex-wrap: wrap; gap: 7px; margin-bottom: 20px; }
+.fp-tag {
+  font-size: 11.5px;
+  font-weight: 600;
+  padding: 5px 11px;
+  border-radius: 999px;
+  background: rgba(255, 255, 255, .08);
+  border: 1px solid rgba(255, 255, 255, .14);
+  color: rgba(255, 255, 255, .88);
+}
+.fp-links { display: flex; gap: 9px; flex-wrap: wrap; }
+
+/* Counters. Tabular figures so the width does not jitter while the number climbs. */
+.fp-statband {
+  display: grid;
+  grid-template-columns: repeat(4, 1fr);
+  gap: 14px;
+  margin-top: 42px;
+  padding-top: 28px;
+  border-top: 1px solid rgba(255, 255, 255, .12);
+}
+.fp-stat .n {
+  display: block;
+  font-family: var(--font-display);
+  font-size: clamp(30px, 4vw, 44px);
+  font-weight: 700;
+  color: var(--accent-bright);
+  font-variant-numeric: tabular-nums;
+  line-height: 1;
+}
+.fp-stat .l {
+  font-size: 11.5px;
+  text-transform: uppercase;
+  letter-spacing: .05em;
+  color: rgba(255, 255, 255, .6);
+  margin-top: 7px;
+  display: block;
+}
+
+/* ------------------------------ scrolly card ------------------------------ */
+
+.fp-lens { background: var(--bg-deep-1, var(--bg-deep-2)); color: #fff; padding: 70px 0; }
+.fp-card {
+  border: 1px solid rgba(255, 255, 255, .14);
+  border-radius: var(--r-lg);
+  background: rgba(255, 255, 255, .04);
+  padding: 28px;
+  position: relative;
+  min-height: 300px;
+}
+/* Faces share one box and cross-fade, so the pinned card never changes height. */
+.fp-face {
+  opacity: 0;
+  visibility: hidden;
+  position: absolute;
+  inset: auto 28px auto 28px;
+  transition: opacity 460ms ease;
+}
+[data-stage="0"] .fp-face[data-face="0"],
+[data-stage="1"] .fp-face[data-face="1"],
+[data-stage="2"] .fp-face[data-face="2"] {
+  opacity: 1;
+  visibility: visible;
+  position: relative;
+  inset: auto;
+}
+.fp-card h4 {
+  font-size: 12px;
+  text-transform: uppercase;
+  letter-spacing: .06em;
+  color: var(--accent-bright);
+  margin-bottom: 12px;
+}
+.fp-card p { font-size: 14.5px; line-height: 1.65; color: rgba(255, 255, 255, .82); }
+.fp-face-list { list-style: none; padding: 0; margin: 16px 0 0; display: grid; gap: 8px; }
+.fp-face-list li {
+  font-size: 13.5px;
+  padding-left: 18px;
+  position: relative;
+  color: rgba(255, 255, 255, .92);
+}
+.fp-face-list li::before {
+  content: "";
+  position: absolute;
+  left: 0;
+  top: 7px;
+  width: 7px;
+  height: 7px;
+  border-radius: 2px;
+  background: var(--accent-bright);
+}
+
+/* ------------------------------- timeline ------------------------------- */
+
+.fp-timeline { position: relative; padding-left: 26px; }
+.fp-timeline::before {
+  content: "";
+  position: absolute;
+  left: 5px;
+  top: 6px;
+  bottom: 6px;
+  width: 2px;
+  background: var(--border);
+}
+.fp-item { position: relative; padding-bottom: 26px; }
+.fp-dot {
+  position: absolute;
+  left: -26px;
+  top: 5px;
+  width: 12px;
+  height: 12px;
+  border-radius: 50%;
+  background: var(--bg);
+  border: 2px solid var(--border-strong, var(--border));
+}
+.fp-item.is-now .fp-dot { border-color: var(--brand-2); background: var(--brand-2); }
+.fp-when {
+  font-family: var(--font-mono);
+  font-size: 11.5px;
+  color: var(--fg-faint);
+  margin-bottom: 4px;
+}
+.fp-now {
+  font-size: 10px;
+  font-weight: 700;
+  padding: 2px 7px;
+  border-radius: 999px;
+  background: var(--brand-tint);
+  color: var(--brand-2);
+  margin-left: 5px;
+}
+.fp-item h4 { font-size: 16px; margin: 0 0 3px; }
+.fp-org { font-size: 14px; color: var(--brand-2); font-weight: 600; }
+.fp-type { font-size: 12.5px; color: var(--fg-faint); margin-top: 2px; }
+.fp-item p { font-size: 13.5px; color: var(--fg-muted); margin-top: 7px; line-height: 1.6; }
+
+/* ------------------------------ peer review ------------------------------ */
+
+.fp-review { background: var(--brand-tint); }
+.fp-review-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 18px; }
+.fp-journal-card {
+  padding: 26px;
+  border-radius: var(--r-lg);
+  background: var(--bg-elevated);
+  border: 1px solid var(--border);
+  position: relative;
+}
+.fp-q {
+  position: absolute;
+  top: 20px;
+  right: 20px;
+  font-family: var(--font-display);
+  font-weight: 700;
+  font-size: 13px;
+  padding: 4px 11px;
+  border-radius: 999px;
+  background: var(--ok-tint, var(--brand-tint));
+  color: var(--ok, var(--brand-2));
+}
+.fp-journal-card h3 { font-size: 18px; margin: 0 0 6px; padding-right: 54px; }
+.fp-pub-by { font-size: 13px; color: var(--brand-2); font-weight: 700; margin-bottom: 10px; }
+.fp-journal-card p { font-size: 14px; color: var(--fg-muted); line-height: 1.6; }
+
+/* ----------------------------- publications ----------------------------- */
+
+.fp-pubs { display: grid; grid-template-columns: 1fr 1fr; gap: 16px; }
+.fp-pub {
+  padding: 22px;
+  border: 1px solid var(--border);
+  border-radius: var(--r-lg);
+  background: var(--bg-elevated);
+  position: relative;
+}
+.fp-pub-n {
+  font-family: var(--font-mono);
+  font-size: 11px;
+  color: var(--fg-faint);
+  margin-bottom: 8px;
+}
+.fp-pub h4 { font-size: 15.5px; line-height: 1.4; margin: 0 0 8px; }
+.fp-journal { font-size: 13px; color: var(--brand-2); font-weight: 600; }
+.fp-date { color: var(--fg-faint); font-weight: 400; }
+.fp-pub p { font-size: 13.5px; color: var(--fg-muted); margin-top: 10px; line-height: 1.6; }
+
+.fp-project {
+  margin-top: 22px;
+  padding: 26px;
+  border-radius: var(--r-lg);
+  border: 1px solid var(--border);
+  background: var(--accent-bright-tint);
+}
+.fp-project h4 { font-size: 17px; margin: 10px 0 10px; }
+.fp-project p { font-size: 14px; line-height: 1.7; color: var(--fg-muted); }
+
+/* ---------------------------- certifications ---------------------------- */
+
+.fp-certs-band { background: var(--bg-elevated); }
+.fp-certs { display: grid; grid-template-columns: repeat(3, 1fr); gap: 14px; }
+.fp-cert {
+  padding: 18px;
+  border: 1px solid var(--border);
+  border-radius: var(--r-md);
+  background: var(--bg);
+}
+.fp-cert h5 { font-size: 14px; margin: 0 0 6px; line-height: 1.4; }
+.fp-issuer { font-size: 12.5px; color: var(--brand-2); font-weight: 600; }
+.fp-cert-meta { font-size: 11.5px; color: var(--fg-faint); margin-top: 5px; }
+
+.fp-affil { font-size: 12.5px; color: rgba(255, 255, 255, .5); margin-bottom: 14px; }
+
+/* The two flagged credentials, given room. */
+.fp-certs-top { display: grid; grid-template-columns: 1fr 1fr; gap: 16px; margin-bottom: 18px; }
+.fp-cert-top {
+  padding: 24px;
+  border-color: var(--brand-2);
+  background: var(--brand-tint);
+  position: relative;
+}
+.fp-cert-badge {
+  font-size: 10px;
+  font-weight: 700;
+  text-transform: uppercase;
+  letter-spacing: .07em;
+  color: var(--brand-2);
+  margin-bottom: 9px;
+}
+.fp-cert-top h5 { font-size: 16.5px; line-height: 1.35; }
+.fp-cert-top p { font-size: 13px; color: var(--fg-muted); margin: 9px 0 0; line-height: 1.6; }
+.fp-cert-note { font-size: 12px; color: var(--fg-muted); margin: 7px 0 0; line-height: 1.55; }
+
+.fp-skills { display: flex; flex-wrap: wrap; gap: 9px; }
+.fp-skill {
+  font-size: 13px;
+  font-weight: 600;
+  padding: 8px 15px;
+  border-radius: 999px;
+  border: 1px solid var(--border);
+  background: var(--bg-elevated);
+  color: var(--fg-muted);
+  transition: transform 180ms ease, border-color 180ms ease, color 180ms ease;
+}
+.fp-skill:hover {
+  border-color: var(--brand-2);
+  color: var(--brand-2);
+  transform: translateY(-2px);
+}
+
+.fp-cta {
+  text-align: center;
+  padding: 52px 26px;
+  border-radius: var(--r-xl);
+  background: var(--brand-tint);
+  border: 1px solid var(--border);
+}
+.fp-cta h2 { font-size: clamp(22px, 3vw, 32px); margin-bottom: 12px; }
+.fp-cta p {
+  color: var(--fg-muted);
+  max-width: 56ch;
+  margin: 0 auto 22px;
+  font-size: 15px;
+}
+
+/* -------------------------------- 3D tilt --------------------------------
+   Pointer-only; scrolly.js and founder.js both refuse to bind this on touch. The sheen
+   follows --mx/--my, written by JS once per frame. */
+html.fp-tilt-on [data-tilt] {
+  transition: transform 260ms cubic-bezier(.22, .61, .36, 1), box-shadow 260ms ease;
+  transform-style: preserve-3d;
+}
+html.fp-tilt-on [data-tilt].is-tilting {
+  transition: transform 60ms linear, box-shadow 260ms ease;
+  box-shadow: var(--shadow-2);
+  z-index: 2;
+}
+html.fp-tilt-on [data-tilt]::after {
+  content: "";
+  position: absolute;
+  inset: 0;
+  border-radius: inherit;
+  pointer-events: none;
+  opacity: 0;
+  transition: opacity 260ms ease;
+  background: radial-gradient(circle at var(--mx, 50%) var(--my, 50%),
+              rgba(255, 255, 255, .16), transparent 55%);
+}
+html.fp-tilt-on [data-tilt].is-tilting::after { opacity: 1; }
+
+/* --------------------------------- mobile ---------------------------------
+   Layout only. No colours here, so mobile keeps inheriting every palette fix. */
+@media (max-width: 900px) {
+  .fp-review-grid,
+  .fp-pubs { grid-template-columns: 1fr; }
+  .fp-certs { grid-template-columns: repeat(2, 1fr); }
+  .fp-certs-top { grid-template-columns: 1fr; }
+}
+@media (max-width: 760px) {
+  .fp-hero-grid { grid-template-columns: 1fr; text-align: center; gap: 20px; }
+  .fp-photo { width: 130px; height: 130px; margin: 0 auto; }
+  .fp-initials { font-size: 40px; }
+  .fp-tags, .fp-links { justify-content: center; }
+  /* Four counters on a phone give ~80px each, too narrow for a two-line label. */
+  .fp-statband { grid-template-columns: repeat(2, 1fr); gap: 22px 14px; }
+  .fp-certs { grid-template-columns: 1fr; }
+  .fp-post { display: block; white-space: normal; }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .fp-photo, .fp-skill, [data-tilt] { transition: none !important; transform: none !important; }
+}

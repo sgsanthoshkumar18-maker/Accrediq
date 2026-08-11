@@ -242,6 +242,29 @@ error. The real names are `.ws-modal.open`, `.ws-modal-in`, `.ws-form`, `.ws-f` 
 `<label>` child, not a span), `.ws-modal-actions`. A test now checks every class the page
 renders against the stylesheets that have to style it.
 
+### Founder portfolio (`founder.html`, `profile/founder-*.js|css`)
+Everything renders from `profile/founder-data.js` — adding a publication is one object,
+no markup. Transcribed from his LinkedIn and from the certificate PDFs he supplied; posts and
+reshares excluded at his instruction. Every credential number on a certificate is
+recorded — a claim without one cannot be verified.
+
+**He is a Fellow of ISQua (ID 1013000, 17 July 2026), not merely a member.** An earlier
+draft had this wrong. Fellowship and the CAHO CPQIH (Basic) qualification are flagged
+`top: true` and lead the credentials section at double width; nineteen certifications in
+one flat grid would bury the two a hospital actually looks for. His name links there from `about.html` and `contact.html`.
+
+**The page renders after DOMContentLoaded**, so the site-wide reveal/split/scrolly
+observers never saw its markup and every section would sit at opacity 0 forever. It
+dispatches `aq:content`; `motion.js` and `scrolly.js` both listen and re-scan. Both scans
+are idempotent — the reveal skips anything already carrying `.aq-reveal`, and scrolly
+marks wired sections with `data-scrolly-wired` — so a re-scan cannot blink the page or
+double-observe.
+
+3D tilt is pointer-only (no hover on touch), capped at 7°, and writes at most once per
+frame. The cached rect is invalidated on scroll and resize or the card tilts around a
+stale origin. A missing `assets/founder.jpg` falls back to an initials mark rather than a
+broken-image icon.
+
 ### Scrollytelling (`motion/scrolly.js`)
 `[data-scrolly]` pins `[data-scrolly-sticky]` while `[data-scrolly-step]` elements advance
 it; the sticky element gets `data-stage="N"` and the section publishes `--scrolly-p`.
@@ -295,13 +318,14 @@ Redirect URLs, or Supabase ignores the parameter and falls back to Site URL.
 
 ---
 
-## Tests — 394 assertions, plain Node, no install
+## Tests — 483 assertions, plain Node, no install
 
     node tests/activity.test.js    node tests/sync.test.js
     node tests/profile.test.js     node tests/palette.test.js
     node tests/framing.test.js     node tests/access.test.js
     node tests/auth-errors.test.js  node tests/standards-export.test.js
     node tests/motion.test.js  node tests/calendar.test.js
+    node tests/founder.test.js
 
 `sync.test.js` is the important one: cross-device persistence against a fake Supabase, plus
 direct assertions on the RLS rules. `framing.test.js` locks the camera maths that was got
