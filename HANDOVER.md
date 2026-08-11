@@ -144,9 +144,14 @@ is a fact, not a keyword guess. It rebuilds itself when the scope is regenerated
 the 188 asterisked elements resolve to a department; the other 8 are genuinely
 organisation-wide and say so rather than name a wrong team.
 
-The chapter filter row has a **Download Excel** control. On the SOP filter the workbook
-gains a Departments column plus By Department and Department Summary sheets; on other
-filters it is a plain two-sheet export. `standards/standards-excel.js` writes raw OOXML
+The chapter filter row has a **Download Excel** control. On the SOP filter the workbook is
+Cover / SOP Elements / Department Summary; on other filters, Cover / Elements.
+
+**SOP Elements reads element, wording, departments** — the order a quality manager reads
+in. All departments for an element sit in ONE comma-joined cell, so an element is always
+exactly one row. An earlier By Department pivot led with the department and repeated each
+element once per team, turning 188 SOPs into ~900 rows; Excel's filter on the Departments
+column recovers that view without the row explosion. `standards/standards-excel.js` writes raw OOXML
 through JSZip, matching `audit/audit-excel.js`.
 
 The store accessor is **`AQStore.currentUser()` and it is async** — there is no `user()`.
@@ -198,7 +203,7 @@ Redirect URLs, or Supabase ignores the parameter and falls back to Site URL.
 
 ---
 
-## Tests — 207 assertions, plain Node, no install
+## Tests — 213 assertions, plain Node, no install
 
     node tests/activity.test.js    node tests/sync.test.js
     node tests/profile.test.js     node tests/palette.test.js

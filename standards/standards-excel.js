@@ -171,7 +171,7 @@ window.AQStandardsExcel = (function () {
     ];
 
     if (filter === "sop") {
-      out.push([W("The Departments column names every area the NABH assessor checklist " +
+      out.push([W("One row per SOP. The Departments column names every area the NABH assessor checklist " +
                   "scopes that element to \u2014 the departments that must hold and follow " +
                   "the SOP. Where an element is not scoped to any single area it is marked " +
                   "hospital-wide, which usually means it belongs to governance or a " +
@@ -184,66 +184,44 @@ window.AQStandardsExcel = (function () {
     return sheetXml(out, { widths: [30, 86] });
   }
 
+  /* Element first, its wording second, the departments third — the order a quality
+     manager reads in: "this is the SOP, this is what it says, these are the teams that
+     must hold it." The earlier layout led with the department and repeated the same
+     element once per team, which turned 188 SOPs into ~900 rows and buried the elements.
+     Departments are joined into ONE cell so an element is always exactly one row. */
   function elementsSheet(chapterCode, filter, rows) {
     var withDepts = filter === "sop";
-    var head = [H("Element"), H("Standard"), H("Standard text"), H("Category"),
-                H("Objective Element"), H("SOP required")];
-    if (withDepts) head.push(H("Departments that must maintain this SOP"), H("No. of departments"));
+    var head = withDepts
+      ? [H("Element"), H("Objective Element \u2014 what the SOP must cover"),
+         H("Departments that must maintain this SOP"), H("Depts"),
+         H("Standard"), H("Category")]
+      : [H("Element"), H("Objective Element"), H("Standard"), H("Category"), H("SOP required")];
 
     var out = [head];
     rows.forEach(function (r) {
-      var line = [
-        r.code,
-        r.stdCode,
-        W(r.stdText),
-        { v: r.category, s: r.category === "CORE" ? XF.core : XF.plain },
-        W(r.text),
-        { v: r.sop ? "Yes" : "\u2014", s: r.sop ? XF.sop : XF.plain }
-      ];
+      var cat = { v: r.category, s: r.category === "CORE" ? XF.core : XF.plain };
       if (withDepts) {
         var d = window.AQSopDepts.forCode(r.code);
-        line.push(W(d.length ? d.join(", ") : window.AQSopDepts.UNSCOPED));
-        /* Count zero rather than blank for hospital-wide elements: a numeric column that
-           is sometimes text cannot be sorted or summed in Excel, and this column exists
-           to be sorted on. */
-        line.push({ v: d.length, n: true });
+        out.push([
+          { v: r.code, s: XF.sop },
+          W(r.text),
+          W(d.length ? d.join(", ") : window.AQSopDepts.UNSCOPED),
+          /* Numeric so the column sorts — "how many teams does this touch" is the first
+             question asked of a list this long. */
+          { v: d.length, n: true },
+          r.stdCode, cat
+        ]);
+      } else {
+        out.push([{ v: r.code, s: XF.plain }, W(r.text), r.stdCode, cat,
+                  { v: r.sop ? "Yes" : "\u2014", s: r.sop ? XF.sop : XF.plain }]);
       }
-      out.push(line);
     });
 
-    var widths = withDepts ? [14, 12, 46, 14, 68, 13, 60, 13] : [14, 12, 46, 14, 74, 13];
+    var widths = withDepts ? [13, 72, 62, 8, 12, 14] : [13, 78, 12, 14, 13];
     return sheetXml(out, {
       widths: widths, freeze: 1,
       autoFilter: "A1:" + colName(head.length) + out.length
     });
-  }
-
-  /* One row per department per element. A pivot of the same facts, so a department head
-     can filter to their own name and see only their SOPs — the sheet above is organised
-     for the quality manager, this one for the department. */
-  function byDepartmentSheet(rows) {
-    var out = [[H("Department"), H("Element"), H("Standard"), H("Category"), H("Objective Element")]];
-    var pairs = [];
-    rows.forEach(function (r) {
-      if (!r.sop) return;
-      var d = window.AQSopDepts.forCode(r.code);
-      if (!d.length) d = [window.AQSopDepts.UNSCOPED];
-      d.forEach(function (name) { pairs.push({ dept: name, r: r }); });
-    });
-    pairs.sort(function (a, b) {
-      if (a.dept !== b.dept) return a.dept < b.dept ? -1 : 1;
-      return a.r.code < b.r.code ? -1 : 1;
-    });
-    if (!pairs.length) {
-      out.push([W("No SOP-required elements in this selection.")]);
-    }
-    pairs.forEach(function (p) {
-      out.push([W(p.dept), p.r.code, p.r.stdCode,
-        { v: p.r.category, s: p.r.category === "CORE" ? XF.core : XF.plain },
-        W(p.r.text)]);
-    });
-    return sheetXml(out, { widths: [46, 14, 12, 14, 74], freeze: 1,
-                           autoFilter: "A1:E" + out.length });
   }
 
   /* How many SOPs each department is carrying — the number a quality manager wants when
@@ -266,9 +244,13 @@ window.AQStandardsExcel = (function () {
 
   /* -------------------------------- package -------------------------------- */
 
+  /* Three sheets, not four. The By Department pivot repeated every element once per
+     team and read as clutter; the Departments column on the elements sheet carries the
+     same fact in one row, and Excel's filter on that column recovers the per-department
+     view for anyone who wants it. */
   function sheetNames(filter) {
     return filter === "sop"
-      ? ["Cover", "SOP Elements", "By Department", "Department Summary"]
+      ? ["Cover", "SOP Elements", "Department Summary"]
       : ["Cover", "Elements"];
   }
 
@@ -324,10 +306,7 @@ window.AQStandardsExcel = (function () {
     var ws = xl.folder("worksheets");
     ws.file("sheet1.xml", coverSheet(chapterCode, filter, rows));
     ws.file("sheet2.xml", elementsSheet(chapterCode, filter, rows));
-    if (filter === "sop") {
-      ws.file("sheet3.xml", byDepartmentSheet(rows));
-      ws.file("sheet4.xml", summarySheet(rows));
-    }
+    if (filter === "sop") ws.file("sheet3.xml", summarySheet(rows));
 
     return zip.generateAsync({
       type: "blob",

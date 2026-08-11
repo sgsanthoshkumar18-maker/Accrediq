@@ -90,9 +90,11 @@ ok(allRows.length > sopRows.length, 'the all-elements export is larger than the 
 ok(coreRows.every(r => r.category === 'CORE'), 'a category filter exports only that category');
 
 // The sheet set differs by filter: department sheets only make sense for SOP rows.
-eq(E.sheetNames('sop').length, 4, 'the SOP export carries four sheets');
+eq(E.sheetNames('sop').length, 3, 'the SOP export carries three sheets');
 eq(E.sheetNames('all').length, 2, 'a non-SOP export carries two');
-ok(E.sheetNames('sop').indexOf('By Department') >= 0, 'the SOP export has a By Department sheet');
+// The By Department pivot was removed: it repeated each element once per team, so 188
+// SOPs became ~900 rows. The Departments column carries the same fact in one row.
+eq(E.sheetNames('sop').indexOf('By Department'), -1, 'no per-department pivot sheet');
 
 /* ------------------------------ the workbook itself ------------------------------ */
 
@@ -117,8 +119,25 @@ setTimeout(function () {
   eq(/&(?!amp;|lt;|gt;|quot;|apos;|#)/.test(sheet2), false,
      'no raw ampersand survives into the sheet XML');
 
-  const sheet4 = parts['xl/worksheets/sheet4.xml'];
-  ok(/SOPs per department/.test(sheet4), 'the summary sheet counts SOPs per department');
+  ok(/SOPs per department/.test(parts['xl/worksheets/sheet3.xml']),
+     'the summary sheet counts SOPs per department');
+  ok(!parts['xl/worksheets/sheet4.xml'], 'there is no fourth sheet');
+
+  /* Column order is the reading order he asked for: element, wording, departments. */
+  const hdr = (sheet2.match(/<row r="1">[\s\S]*?<\/row>/) || [''])[0];
+  const cols = [...hdr.matchAll(/<t[^>]*>([\s\S]*?)<\/t>/g)].map(m => m[1]);
+  eq(cols[0], 'Element', 'column A is the element code');
+  ok(/Objective Element/.test(cols[1]), 'column B is the element wording');
+  ok(/Departments/.test(cols[2]), 'column C is the departments');
+
+  /* One row per SOP, not one per department-element pair. */
+  const bodyRows = (sheet2.match(/<row r="\d+">/g) || []).length - 1;
+  eq(bodyRows, sopRows.length, 'exactly one row per SOP element');
+
+  // Departments share a single comma-joined cell rather than spilling across columns.
+  const multi = sopRows.find(r => D.countFor(r.code) > 1);
+  const joined = D.forCode(multi.code).join(', ').replace(/&/g, '&amp;');
+  ok(sheet2.indexOf(joined) >= 0, 'all departments for an element sit in one comma-joined cell');
 
   // A non-SOP export must not carry department sheets it has no data for.
   E.build('AAC', 'all').then(r2 => {
