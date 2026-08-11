@@ -328,13 +328,22 @@
 
   async function refreshEntitlement(){
     try {
-      const B = window.AQBilling;
-      if (!B) return null;
-      const user = window.AQStore && window.AQStore.user ? window.AQStore.user() : null;
+      const B = window.AQBilling, S = window.AQStore;
+      if (!B || !S) return null;
+      /* currentUser() — not user(). It is async, and awaiting it matters: an unresolved
+         promise is truthy, so isOwner() would read .email off a Promise, find undefined,
+         and deny the owner their own export. An earlier version called a user() that does
+         not exist at all, threw into the catch below, and sent every single press to the
+         plans page — including the owner's. */
+      const user = await S.currentUser();
       const st = await B.status(user);
       entitled = !!(st && st.active);
       return st;
-    } catch(e){ entitled = false; return null; }
+    } catch(e){
+      console.error('AQcredix: entitlement check failed', e);
+      entitled = false;
+      return null;
+    }
   }
 
   function paintDownload(){

@@ -132,6 +132,49 @@ setTimeout(function () {
     ok(/st && st\.active/.test(page), 'it uses the single active flag, so owner and complimentary pass');
     ok(/entitled !== true/.test(page), 'unknown entitlement is treated as locked, failing closed');
     ok(/await refreshEntitlement\(\)/.test(page), 'entitlement is re-checked on each press, not cached from load');
+
+    /* The accessor is currentUser(), and it is async. A call to a user() that does not
+       exist threw into the catch, set entitled=false, and sent EVERY press — the owner's
+       included — to the plans page instead of downloading. Both halves are asserted:
+       the right name, and the await. */
+    ok(/await S\.currentUser\(\)/.test(page), 'the real async currentUser accessor is awaited');
+    eq(/AQStore\.user\(\)/.test(page), false, 'no call to the non-existent user() accessor');
+
+    // The catch must be loud. A silent catch here is what made this look like a UI bug
+    // rather than a failing call.
+    ok(/console\.error\('AQcredix: entitlement check failed'/.test(page),
+       'a failed entitlement check reports itself to the console');
+
+    /* And the gate itself, run for real: the owner and the complimentary account must
+       both come back active, or the export is locked for the two people who own it. */
+    const vm2 = require('vm');
+    const sb = { window: {}, console: { log(){}, warn(){}, error(){} },
+                 fetch: async () => ({ ok: true, status: 200, json: async () => [] }) };
+    sb.window.location = { origin: 'https://accrediq.vercel.app', search: '' };
+    sb.window.localStorage = { getItem: () => null, setItem(){}, removeItem(){} };
+    sb.window.addEventListener = () => {};
+    vm2.createContext(sb);
+    vm2.runInContext(read('billing/billing-config.js'), sb);
+    sb.window.AQStore = { adapter: { list: async () => [] } };
+    vm2.runInContext(read('billing/billing.js'), sb);
+    const B = sb.window.AQBilling;
+    Promise.all([
+      B.status({ id: 'x', email: 's.g.santhoshkumar18@gmail.com' }),
+      B.status({ id: 'x', email: 'sgsanthoshkumar18@gmail.com' }),
+      B.status({ id: 'x', email: 'mavissneha@gmail.com' }),
+      B.status({ id: 'x', email: 'someone@hospital.com' }),
+      B.status(null)
+    ]).then(([owner, ownerDotless, comp, free, out]) => {
+      eq(owner.active, true, 'the owner is entitled to the export');
+      eq(ownerDotless.active, true, 'and still is with Gmail dots removed');
+      eq(comp.active, true, 'the complimentary account is entitled');
+      eq(comp.owner, false, 'but is not an owner');
+      eq(free.active, false, 'a free signed-in user is not entitled');
+      eq(out.active, false, 'a signed-out visitor is not entitled');
+
+      console.log('\n' + pass + ' passed, ' + fail + ' failed');
+      if (fail) process.exit(1);
+    });
     ok(/addEventListener\('load'/.test(page), 'the first check waits for the billing scripts to load');
     ok(/workspace\/workspace\.html/.test(page), 'a locked press routes to the real plans page');
     // The department panel is free: knowing who is accountable is part of the standard.
@@ -164,7 +207,5 @@ setTimeout(function () {
     ok(/max-width:760px\)\{[\s\S]*?\.dl-chip\{width:100%/.test(page),
        'the download control goes full width on a phone');
 
-    console.log('\n' + pass + ' passed, ' + fail + ' failed');
-    if (fail) process.exit(1);
   });
 }, 0);

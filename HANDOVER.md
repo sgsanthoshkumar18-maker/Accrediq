@@ -149,6 +149,12 @@ gains a Departments column plus By Department and Department Summary sheets; on 
 filters it is a plain two-sheet export. `standards/standards-excel.js` writes raw OOXML
 through JSZip, matching `audit/audit-excel.js`.
 
+The store accessor is **`AQStore.currentUser()` and it is async** — there is no `user()`.
+Calling the wrong name threw into the catch, set `entitled=false`, and sent every press
+including the owner's to the plans page, which looked like a UI bug rather than a failing
+call. The catch now logs. Tests assert the name, the `await`, and run the real gate for
+owner / dotless owner / complimentary / free / signed-out.
+
 **The export is gated on `AQBilling.status().active`** — one question, so owner and
 complimentary pass with no special case. Three things worth keeping: entitlement is
 re-checked on every press (a subscription approved in another tab would otherwise tell a
@@ -192,7 +198,7 @@ Redirect URLs, or Supabase ignores the parameter and falls back to Site URL.
 
 ---
 
-## Tests — 198 assertions, plain Node, no install
+## Tests — 207 assertions, plain Node, no install
 
     node tests/activity.test.js    node tests/sync.test.js
     node tests/profile.test.js     node tests/palette.test.js
