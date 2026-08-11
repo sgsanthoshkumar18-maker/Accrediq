@@ -136,6 +136,28 @@ the hub's own position — its outward normal — with the direction to the came
 0.62, roughly 40°). Names fade in and out as the globe turns. Hovered/selected keeps its
 label. Long names shortened by acronym, then head noun, then truncation.
 
+### Standards export + SOP departments (`standards/`)
+Each `✱ SOP required` element carries a **Which departments?** button showing every area
+answerable for that SOP. The map is `standards/sop-depts.js`, built by **inverting**
+`audit/scope-data.js` — the checklist publishes elements per department, so reversing it
+is a fact, not a keyword guess. It rebuilds itself when the scope is regenerated. 180 of
+the 188 asterisked elements resolve to a department; the other 8 are genuinely
+organisation-wide and say so rather than name a wrong team.
+
+The chapter filter row has a **Download Excel** control. On the SOP filter the workbook
+gains a Departments column plus By Department and Department Summary sheets; on other
+filters it is a plain two-sheet export. `standards/standards-excel.js` writes raw OOXML
+through JSZip, matching `audit/audit-excel.js`.
+
+**The export is gated on `AQBilling.status().active`** — one question, so owner and
+complimentary pass with no special case. Three things worth keeping: entitlement is
+re-checked on every press (a subscription approved in another tab would otherwise tell a
+paying customer they had not paid); the first check waits for `load`, because the billing
+scripts are below this block and a null answer painted as unlocked; and unknown counts as
+locked. **The department panel itself is free** — knowing who is accountable is part of
+understanding the standard, and only the bulk export is paid. As with `page-gate.js` this
+is presentation, not a security boundary: the standards data is already on the page.
+
 ### Billing / access
 - `billing/billing-config.js` is the only file to edit for pricing, UPI and email lists.
 - UPI ID: check `upiVpa` — the config has a `-1` suffix the handover didn't; unverified.
@@ -170,12 +192,12 @@ Redirect URLs, or Supabase ignores the parameter and falls back to Site URL.
 
 ---
 
-## Tests — 145 assertions, plain Node, no install
+## Tests — 198 assertions, plain Node, no install
 
     node tests/activity.test.js    node tests/sync.test.js
     node tests/profile.test.js     node tests/palette.test.js
     node tests/framing.test.js     node tests/access.test.js
-    node tests/auth-errors.test.js
+    node tests/auth-errors.test.js  node tests/standards-export.test.js
 
 `sync.test.js` is the important one: cross-device persistence against a fake Supabase, plus
 direct assertions on the RLS rules. `framing.test.js` locks the camera maths that was got
@@ -203,7 +225,8 @@ in a 618-line file. Open it with Notepad, not Word — smart quotes break it.
 2. **End-to-end paywall test from a second account** on a non-owner email.
 3. **Real pricing.** Both plans ₹1. Suggested ₹1,499/month or ₹14,999/year per hospital.
 4. **Tax/KYC** — business income to a personal UPI; Razorpay needs KYC.
-5. **No data export** for customers.
+5. **Data export** — the standards/SOP workbook is the first one. Audit, incident and
+   CAPA exports for customers still do not exist.
 6. **Repo cleanup** — ten abandoned hero experiments (`galaxy`, `galaxy2`, `brain`, `dna`,
    `helix`, `radar`, `globe`, `hglobe`, `qglobe`, `kpinet`). Only `face/` and `qglobe/`
    are live.

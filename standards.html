@@ -61,6 +61,41 @@
   .explain-btn{font-size:12px;font-weight:700;padding:7px 13px;border-radius:999px;border:1px solid var(--border);background:var(--bg);cursor:pointer;color:var(--brand-2);white-space:nowrap;}
   .explain-btn:hover{background:var(--brand-2);color:#fff;border-color:var(--brand-2);}
 
+  /* Download + department controls. All colours are tokens so light/dark/neon follow. */
+  .filter-actions{display:flex;gap:8px;flex-wrap:wrap;margin-left:auto;}
+  @media (max-width:760px){
+    /* No hardcoded colours in here — a test enforces that, so mobile always inherits
+       palette fixes. Layout only: the actions drop below the chips and go full width so
+       the download target is a comfortable tap size rather than a squeezed pill. */
+    .filter-actions{margin-left:0;width:100%;}
+    .dl-chip{width:100%;justify-content:center;}
+  }
+  .dl-chip{display:inline-flex;align-items:center;gap:7px;font-size:12.5px;font-weight:700;
+    padding:8px 15px;border-radius:999px;border:1px solid var(--brand-2);
+    background:var(--brand-tint);color:var(--brand-2);cursor:pointer;min-height:38px;}
+  .dl-chip:hover{background:var(--brand-2);color:#fff;}
+  .dl-chip[disabled]{opacity:.65;cursor:progress;}
+  .dl-chip.locked{border-color:var(--border);background:var(--bg-elevated);color:var(--fg-muted);}
+  .dl-chip.locked:hover{background:var(--bg-elevated);color:var(--fg-muted);}
+  .dl-note{font-size:12px;color:var(--fg-muted);margin:-8px 0 16px;}
+  .dl-note b{color:var(--warn);}
+
+  .dept-btn{font-size:11.5px;font-weight:700;padding:5px 11px;border-radius:999px;
+    border:1px solid var(--warn);background:var(--warn-tint);color:var(--warn);
+    cursor:pointer;white-space:nowrap;margin-left:8px;min-height:30px;}
+  .dept-btn:hover{background:var(--warn);color:#fff;}
+  @media (max-width:760px){
+    /* On a phone the element row is a single column, so the button sits on its own line
+       and is sized for a thumb rather than a mouse pointer. */
+    .dept-btn{margin-left:0;margin-top:6px;width:100%;min-height:40px;}
+  }
+  .dept-list{list-style:none;padding:0;margin:0;display:grid;gap:7px;}
+  .dept-list li{display:flex;gap:9px;align-items:flex-start;font-size:14px;
+    padding:9px 12px;background:var(--bg);border:1px solid var(--border-soft);
+    border-radius:var(--r-md);}
+  .dept-list li .n{font-family:var(--font-mono);font-size:11.5px;color:var(--fg-faint);
+    flex-shrink:0;padding-top:2px;}
+
   .modal-back{position:fixed;inset:0;background:rgba(10,13,30,.6);backdrop-filter:blur(3px);z-index:200;display:none;align-items:center;justify-content:center;padding:20px;}
   .modal-back.is-open{display:flex;}
   .modal{background:var(--bg-elevated);border-radius:var(--r-xl);max-width:640px;width:100%;max-height:86vh;overflow:auto;padding:30px;box-shadow:var(--shadow-2);position:relative;}
@@ -138,7 +173,11 @@
 
 </main>
 <div id="site-footer"></div>
+<script>(function(){var s=["https://cdn.jsdelivr.net/npm/jszip@3.10.1/dist/jszip.min.js","https://cdnjs.cloudflare.com/ajax/libs/jszip/3.10.1/jszip.min.js"];function t(i){if(i>=s.length)return;var e=document.createElement("script");e.src=s[i];e.onerror=function(){t(i+1)};document.head.appendChild(e)}t(0)})();</script>
 <script src="nabh-data.js"></script>
+<script src="audit/scope-data.js"></script>
+<script src="standards/sop-depts.js"></script>
+<script src="standards/standards-excel.js"></script>
 <script src="nabh-explain.js"></script>
 <script src="app.js"></script>
 <script src="search/search.js"></script>
@@ -202,14 +241,20 @@
     filterRow.innerHTML = ['all','CORE','Commitment','Achievement','Excellence','sop'].map(f => {
       const label = f==='all' ? 'All elements' : f==='sop' ? '✱ SOP required only' : f;
       return `<button class="fchip ${f==='all'?'active':''}" data-f="${f}">${label}</button>`;
-    }).join('');
+    }).join('') + `<span class="filter-actions">
+        <button class="dl-chip" id="dlChip" type="button">
+          <span aria-hidden="true">↓</span><span id="dlLabel">Download Excel</span>
+        </button></span>`;
     filterRow.querySelectorAll('.fchip').forEach(chip => {
       chip.addEventListener('click', () => {
         currentFilter = chip.dataset.f;
         filterRow.querySelectorAll('.fchip').forEach(c => c.classList.toggle('active', c === chip));
         renderStandards();
+        paintDownload();
       });
     });
+    document.getElementById('dlChip').addEventListener('click', onDownload);
+    paintDownload();
 
     renderStandards();
     explorer.classList.add('is-open');
@@ -230,7 +275,7 @@
           <div class="el-row">
             <span class="el-letter">${std.code}.${e.letter}</span>
             <span class="cat-badge cat-${e.category}">${e.category}</span>
-            <span class="el-text">${e.text}${e.sop ? '<span class="sop-flag">✱ SOP required</span>' : ''}</span>
+            <span class="el-text">${e.text}${e.sop ? `<span class="sop-flag">✱ SOP required</span><button class="dept-btn" data-code="${std.code}.${e.letter}">Which departments? (${window.AQSopDepts.countFor(std.code + '.' + e.letter) || '—'})</button>` : ''}</span>
             <button class="explain-btn" data-std="${std.code}" data-letter="${e.letter}">Explain this element</button>
           </div>`).join('')}
       </div>`;
@@ -239,7 +284,111 @@
     stdList.querySelectorAll('.explain-btn').forEach(btn => {
       btn.addEventListener('click', () => openModal(btn.dataset.std, btn.dataset.letter));
     });
+    stdList.querySelectorAll('.dept-btn').forEach(btn => {
+      btn.addEventListener('click', () => openDeptModal(btn.dataset.code));
+    });
   }
+
+  /* ---------------- which departments must hold this SOP ----------------
+     Answered from the assessor checklist scope, not from keyword matching: the
+     checklist publishes which elements are examined in which area, and inverting that
+     is a fact rather than an inference. Free to view — knowing who is accountable is
+     part of understanding the standard. Only the bulk export is paid. */
+  function openDeptModal(code){
+    const depts = window.AQSopDepts.forCode(code);
+    const body = document.getElementById('modalBox');
+    body.innerHTML = `
+      <button class="modal-close" id="deptCloseBtn" type="button" aria-label="Close">\u2715</button>\n      <span class="eyebrow">${code} · ✱ SOP required</span>
+      <h3>Departments that must maintain this SOP</h3>
+      <div class="modal-section">
+        ${depts.length
+          ? `<ul class="dept-list">${depts.map((d,i) =>
+              `<li><span class="n">${String(i+1).padStart(2,'0')}</span><span>${d}</span></li>`).join('')}</ul>`
+          : `<div class="sop-box"><b>Hospital-wide.</b> The assessor checklist does not scope
+              this element to any single department, which usually means it sits with
+              governance, management or a committee rather than a clinical area. Assign it
+              deliberately — an element with no named owner is one nobody writes.</div>`}
+      </div>
+      <div class="modal-section">
+        <p style="font-size:13px;color:var(--fg-muted);">Scoped from the NABH assessor
+        checklist. A department listed here is one where an assessor may ask to see this
+        SOP; the same written procedure can serve several departments.</p>
+      </div>`;
+    document.getElementById('deptCloseBtn').addEventListener('click', closeModal);
+    document.getElementById('modalBack').classList.add('is-open');
+  }
+
+  /* ------------------------------ Excel export ------------------------------
+     Gated on AQBilling.status(), the same single question the rest of the app asks, so
+     the owner and complimentary accounts pass without a special case here. This is a
+     presentation gate: it decides what the page offers, not what a determined person can
+     compute — the standards data is already public on this page. It is honest about that
+     rather than pretending to be a security boundary. */
+  var entitled = null;
+
+  async function refreshEntitlement(){
+    try {
+      const B = window.AQBilling;
+      if (!B) return null;
+      const user = window.AQStore && window.AQStore.user ? window.AQStore.user() : null;
+      const st = await B.status(user);
+      entitled = !!(st && st.active);
+      return st;
+    } catch(e){ entitled = false; return null; }
+  }
+
+  function paintDownload(){
+    const chip = document.getElementById('dlChip');
+    if (!chip) return;
+    const label = document.getElementById('dlLabel');
+    const isSop = currentFilter === 'sop';
+    /* Unknown counts as locked. Failing closed matters here: the alternative shows the
+       full export label to a free user and then bounces them, which reads as a bug. */
+    if (entitled !== true){
+      chip.classList.add('locked');
+      label.textContent = isSop ? 'Download SOP list — subscribers' : 'Download Excel — subscribers';
+    } else {
+      chip.classList.remove('locked');
+      label.textContent = isSop ? 'Download SOP list + departments' : 'Download Excel';
+    }
+  }
+
+  async function onDownload(){
+    const chip = document.getElementById('dlChip');
+    const label = document.getElementById('dlLabel');
+    /* Re-check on every press rather than trusting the value cached at page load: a
+       subscription can be approved in another tab while this page sits open, and a
+       stale "no" would tell a paying customer they have not paid. */
+    await refreshEntitlement();
+    paintDownload();
+    if (!entitled){
+      /* workspace.html is where page-gate.js already sends people to see plans; there is
+         no separate subscribe page, and inventing one would 404. */
+      window.location.href = 'workspace/workspace.html?from=standards';
+      return;
+    }
+    const before = label.textContent;
+    chip.disabled = true; label.textContent = 'Building…';
+    try {
+      await window.AQStandardsExcel.download(currentCode, currentFilter);
+      label.textContent = 'Downloaded ✓';
+      setTimeout(() => { paintDownload(); }, 2200);
+    } catch(e){
+      label.textContent = 'Could not build';
+      console.error(e);
+      setTimeout(() => { paintDownload(); }, 2600);
+    } finally {
+      chip.disabled = false;
+    }
+  }
+
+  /* The billing scripts are loaded at the end of the document, after this block, so
+     AQBilling does not exist yet at parse time. Waiting for load rather than calling
+     immediately avoids painting the control from a null answer — which would read as
+     "unlocked" and offer a subscriber-only export to everyone for a moment. */
+  window.addEventListener('load', function(){
+    refreshEntitlement().then(paintDownload);
+  });
 
   function findElement(stdCode, letter){
     const chapterCode = stdCode.split('.')[0];
