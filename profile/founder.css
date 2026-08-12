@@ -20,7 +20,29 @@
   text-align: center;
   gap: 22px;
 }
-.fp-hero-text { max-width: 62ch; }
+/* The text block must CENTRE ITSELF as well as centre its text. As a flex child it is
+   sized to content, so text-align alone left the block flush left and only centred the
+   lines within their own box — which is what the screenshot showed. width:100% plus auto
+   margins puts the box in the middle; text-align on the children does the rest.
+   Everything is forced because .eyebrow is inline-flex and .fp-role/.fp-loc carry their
+   own alignment from the shared stylesheet. */
+.fp-hero-text {
+  max-width: 62ch;
+  width: 100%;
+  margin-inline: auto;
+  text-align: center;
+}
+.fp-hero-text > *,
+.fp-hero-text h1,
+.fp-hero-text .fp-role,
+.fp-hero-text .fp-loc,
+.fp-hero-text .fp-affil { text-align: center; }
+
+/* The eyebrow is inline-flex with a leading dash rule, so it needs centring as a box. */
+.fp-hero-text .eyebrow { display: inline-flex; justify-content: center; }
+
+/* The post-nominals sit on their own centred line under the name rather than trailing it. */
+.fp-hero-text h1 .fp-post { display: block; white-space: normal; margin-top: 4px; }
 
 .fp-photo {
   width: 190px;

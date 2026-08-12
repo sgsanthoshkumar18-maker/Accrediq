@@ -227,7 +227,14 @@ ok(/\.fp-hero-grid \{[\s\S]{0,220}align-items: center/.test(css), 'the hero stac
 ok(/\.fp-hero-grid \{[\s\S]{0,220}text-align: center/.test(css), 'and its text is centred');
 eq(/\.fp-hero-grid \{[\s\S]{0,220}grid-template-columns: 190px/.test(css), false,
    'the old two-column split is gone');
-ok(/\.fp-hero-text \{ max-width: 62ch/.test(css), 'the measure is capped for readability');
+/* The block must centre ITSELF, not only its lines. As a flex child it is sized to
+   content, so text-align alone left the box flush left — the lines were centred inside a
+   left-hanging box, which is what the screenshot showed. */
+ok(/\.fp-hero-text \{[\s\S]{0,140}max-width: 62ch/.test(css), 'the measure is capped for readability');
+ok(/\.fp-hero-text \{[\s\S]{0,140}margin-inline: auto/.test(css), 'and the block centres itself');
+ok(/\.fp-hero-text \{[\s\S]{0,140}width: 100%/.test(css), 'stretching so the auto margins have room to work');
+ok(/\.fp-hero-text \.eyebrow \{[^}]*justify-content: center/.test(css),
+   'the inline-flex eyebrow is centred as a box, not just as text');
 ok(/\.fp-tags \{[^}]*justify-content: center/.test(css), 'the role chips centre');
 ok(/\.fp-links \{[^}]*justify-content: center/.test(css), 'and so do the buttons');
 
