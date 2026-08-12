@@ -182,20 +182,17 @@ ok(/fp-statband \{ grid-template-columns: repeat\(2, 1fr\)/.test(css),
 /* ===================== portfolio motion ===================== */
 {
   const mo = read('profile/founder-motion.js');
-  const wa = read('profile/founder-watch.js');
 
   /* All of this renders from data AFTER DOMContentLoaded, so binding on the DOM event
      would attach to an empty page. Both files wait for founder.js's signal. */
   ok(/aq:content/.test(mo), 'motion binds after the content is rendered');
 
-  // Cursor-watching mark. Tracked on the WINDOW: watching only its own box means it
-  // stares ahead until the cursor is already on it, which is the opposite of the effect.
-  ok(/id="fpWatch"/.test(html), 'the hero has a watching mark');
-  ok(/window\.addEventListener\("pointermove"/.test(wa), 'it tracks across the whole page');
-  ok(/fpw-iris/.test(wa) && /fpw-arc/.test(wa), 'iris and arc both respond');
-  // Three different amounts from one input is what sells it as one object looking.
-  ok(/x \* 13/.test(wa) && /x \* 26/.test(wa), 'the layers move by different amounts');
-  ok(/coarse && !reduce/.test(wa), 'a phone gets a time-driven drift instead of nothing');
+  /* The cursor-watching mark was removed at his request — it read as gimmicky against
+     the rest of the page. Nothing should remain of it. */
+  eq(/fpWatch|fpw-|fp-watch/.test(html), false, 'no watching-mark markup remains');
+  eq(/fpw-|fp-watch/.test(css), false, 'and no styles for it');
+  eq(fs.existsSync(path.join(ROOT, 'profile/founder-watch.js')), false, 'the file is gone');
+  eq(/founder-watch/.test(html), false, 'and it is not loaded');
 
   // Scroll-linked spine, measured at the reading line rather than the viewport top.
   ok(/fp-spine/.test(mo) && /fp-spine/.test(css), 'the timeline has a travelling light');
@@ -211,7 +208,7 @@ ok(/fp-statband \{ grid-template-columns: repeat\(2, 1fr\)/.test(css),
 
   // Throttling: pointermove and scroll fire far faster than the screen refreshes.
   ok(/function throttled/.test(mo), 'handlers are throttled to one frame');
-  ok(/requestAnimationFrame/.test(wa), 'and so is the watcher');
+  ok(/requestAnimationFrame/.test(mo), 'writes happen once per frame, not per event');
 
   // Gating.
   ok(/pointer: coarse/.test(mo) && /prefers-reduced-motion/.test(mo),
@@ -220,6 +217,44 @@ ok(/fp-statband \{ grid-template-columns: repeat\(2, 1fr\)/.test(css),
      'stagger still runs on a phone — it costs a CSS transition and nothing else');
   ok(/\.fp-reel \{ height: auto !important/.test(css),
      'the reel unpins on a phone and becomes a normal swipe');
+}
+
+
+/* ===================== centre alternating timeline ===================== */
+{
+  const mo = read('profile/founder-motion.js');
+  const fj = read('profile/founder.js');
+
+  /* Sides are assigned in JS, not by CSS :nth-child. The education list restarts the
+     sequence, so letting CSS count would put two entries on the same side across the
+     two lists — a bug that only shows up where the lists meet. */
+  ok(/i % 2 === 0 \? "is-right" : "is-left"/.test(fj), 'sides alternate from the index');
+  eq(/nth-child\([^)]*\)[^{]*\{[^}]*grid-column/.test(css), false,
+     'sides are not decided by CSS counting');
+  ok(/\.fp-item\.is-right \.fp-item-card \{ grid-column: 3/.test(css), 'odd entries sit right');
+  ok(/\.fp-item\.is-left  \.fp-item-card \{ grid-column: 1/.test(css), 'even entries sit left');
+
+  // Three columns: card, spine, card — so the section fills the width.
+  ok(/grid-template-columns: 1fr 64px 1fr/.test(css), 'the spine runs down a centre column');
+  ok(/\.fp-timeline::before \{[\s\S]{0,200}left: 50%/.test(css), 'the track is centred');
+  ok(/\.fp-spine \{ position: absolute; left: 50%/.test(css), 'and so is the travelling light');
+
+  /* Three states. Two would leave every earlier entry at full strength, so the one the
+     light is actually on would not stand out. */
+  ok(/is-seen/.test(mo) && /is-seen/.test(css), 'passed entries dim rather than staying bright');
+  ok(/Math\.abs\(mid - read\) < vh \* 0\.34/.test(mo), 'entries light in a band around the reading line');
+  ok(/\.fp-item\.is-lit \.fp-item-card/.test(css), 'the lit entry is emphasised');
+  ok(/\.fp-item\.is-lit \.fp-dot/.test(css), 'and its marker on the spine lights too');
+
+  // Cards slide in from their own side, which is what makes the alternation read.
+  ok(/\.fp-item\.is-right \.fp-item-card \{ transform: translate\(26px/.test(css),
+     'right-hand cards enter from the right');
+  ok(/\.fp-item\.is-left  \.fp-item-card \{ transform: translate\(-26px/.test(css),
+     'and left-hand ones from the left');
+
+  // Mobile collapses to one rail: alternating needs width to read as alternating.
+  ok(/max-width: 900px\)[\s\S]{0,400}\.fp-spine \{ left: 12px/.test(css),
+     'the spine moves to the edge on a narrow screen');
 }
 
 console.log('\n' + pass + ' passed, ' + fail + ' failed');

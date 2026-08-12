@@ -270,17 +270,22 @@ marks wired sections with `data-scrolly-wired` — so a re-scan cannot blink the
 double-observe.
 
 **Portfolio motion** (`founder-motion.js`, `founder-watch.js`), modelled on the
-reference portfolio he supplied: a cursor-watching ring mark (iris, arc and mark each
-move by a different amount from one input — that is what sells it as one object looking);
-a scroll-linked timeline spine whose glowing head travels as you read and lights each
-entry; publications as a pinned horizontal reel driven by scroll position; staggered card
+reference portfolio he supplied: a **centre alternating timeline** — three columns (card | spine | card) with entries
+alternating sides so the section fills the width, the glowing head travelling down the
+middle, and each entry sliding in from its own side. **Sides are assigned in JS, not by
+CSS `:nth-child`** — the education list restarts the sequence, so CSS counting would put
+two entries on the same side where the two lists meet. Entries have **three** states, not
+two: hidden, lit while in a band around the reading line, then dimmed to `is-seen` once
+the light has passed — with only two, every earlier entry stays at full strength and the
+one the light is on does not stand out. Below 900px it collapses to a single left rail,
+since alternation needs width to read as alternation; publications as a pinned horizontal reel driven by scroll position; staggered card
 entrances; magnetic buttons. **The reel measures its own overflow** rather than using a
 guessed height, so adding a publication lengthens the scroll instead of cutting the last
-card off. Nothing hijacks the wheel. The watcher tracks on the **window**, not its own
-box — watching only itself means it stares ahead until the cursor is already on it.
+card off. Nothing hijacks the wheel.
 
-He asked for the 3-D character from that site: that is a modelled Blender/Spline asset,
-not code, and was not attempted. The brand mark does the watching instead.
+A cursor-watching ring mark was built and then **removed at his request** — it read as
+gimmicky beside the rest of the page. A test forbids its return. The 3-D character from
+the reference site is a modelled Blender/Spline asset, not code, and was not attempted.
 
 3D tilt is pointer-only (no hover on touch), capped at 7°, and writes at most once per
 frame. The cached rect is invalidated on scroll and resize or the card tilts around a
@@ -383,7 +388,7 @@ Redirect URLs, or Supabase ignores the parameter and falls back to Site URL.
 
 ---
 
-## Tests — 546 assertions, plain Node, no install
+## Tests — 559 assertions, plain Node, no install
 
     node tests/activity.test.js    node tests/sync.test.js
     node tests/profile.test.js     node tests/palette.test.js

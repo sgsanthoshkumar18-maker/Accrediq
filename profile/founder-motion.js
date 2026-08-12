@@ -84,9 +84,17 @@
         var p = (read - r.top) / r.height;
         fill.style.transform = "scaleY(" + Math.max(0, Math.min(1, p)).toFixed(4) + ")";
 
+        /* Three states, not two. An entry lights while it sits in a band around the
+           reading line, dims to "seen" once the light has passed it, and stays hidden
+           until reached. Two states would leave every earlier entry at full strength,
+           so the one the light is actually on would not stand out at all. */
         [].forEach.call(items, function (it) {
           var ir = it.getBoundingClientRect();
-          it.classList.toggle("is-lit", ir.top < read && ir.bottom > 0);
+          var mid = ir.top + ir.height / 2;
+          var lit = Math.abs(mid - read) < vh * 0.34;
+          var seen = mid < read;
+          it.classList.toggle("is-lit", lit);
+          it.classList.toggle("is-seen", seen && !lit);
         });
       });
 

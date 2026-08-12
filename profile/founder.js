@@ -120,29 +120,40 @@
 
   /* ------------------------------- timeline ------------------------------- */
 
+  /* Alternating centre timeline. Odd entries sit right of the spine, even ones left, so
+     the section fills the full width instead of hugging one margin. The side is decided
+     here rather than in CSS :nth-child because the education list restarts the sequence —
+     letting CSS count would put two entries on the same side across the two lists. */
+  function timelineItem(e, i, opts) {
+    opts = opts || {};
+    var side = i % 2 === 0 ? "is-right" : "is-left";
+    return '<div class="fp-item ' + side + (e.current ? " is-now" : "") + '">' +
+      '<div class="fp-item-card">' +
+        '<div class="fp-when">' + esc(e.from) + " \u2014 " + esc(e.to) +
+          (e.current ? ' <span class="fp-now">Current</span>' : "") + "</div>" +
+        "<h4>" + esc(opts.title ? opts.title(e) : e.role) + "</h4>" +
+        '<div class="fp-org">' + esc(opts.org ? opts.org(e) : e.org) + "</div>" +
+        (e.type ? '<div class="fp-type">' + esc(e.type) + "</div>" : "") +
+        (e.note ? "<p>" + esc(e.note) + "</p>" : "") +
+      "</div>" +
+      /* The marker sits ON the spine, in the centre column, not beside the card. */
+      '<div class="fp-node"><span class="fp-dot"></span></div>' +
+      '<div class="fp-item-year"><span>' +
+        esc(e.current ? "NOW" : String(e.to || e.from).replace(/^\D+/, "")) +
+      "</span></div>" +
+    "</div>";
+  }
+
   function renderExperience() {
-    el("fExp").innerHTML = F.experience.map(function (e) {
-      return '<div class="fp-item' + (e.current ? " is-now" : "") + '" data-reveal>' +
-        '<div class="fp-dot"></div>' +
-        '<div class="fp-item-body">' +
-          '<div class="fp-when">' + esc(e.from) + " \u2014 " + esc(e.to) +
-            (e.current ? ' <span class="fp-now">Current</span>' : "") + "</div>" +
-          '<div class="fp-year">' + esc(e.current ? "NOW" : String(e.to).replace(/^\D+/, "")) + "</div>" +
-          "<h4>" + esc(e.role) + "</h4>" +
-          '<div class="fp-org">' + esc(e.org) + "</div>" +
-          (e.type ? '<div class="fp-type">' + esc(e.type) + "</div>" : "") +
-          (e.note ? "<p>" + esc(e.note) + "</p>" : "") +
-        "</div></div>";
+    el("fExp").innerHTML = F.experience.map(function (e, i) {
+      return timelineItem(e, i);
     }).join("");
 
-    el("fEdu").innerHTML = F.education.map(function (e) {
-      return '<div class="fp-item" data-reveal><div class="fp-dot"></div>' +
-        '<div class="fp-item-body">' +
-          '<div class="fp-when">' + esc(e.from) + " \u2014 " + esc(e.to) + "</div>" +
-          "<h4>" + esc(e.degree) + "</h4>" +
-          '<div class="fp-org">' + esc(e.school) + "</div>" +
-          (e.note ? "<p>" + esc(e.note) + "</p>" : "") +
-        "</div></div>";
+    el("fEdu").innerHTML = F.education.map(function (e, i) {
+      return timelineItem(e, i, {
+        title: function (x) { return x.degree; },
+        org: function (x) { return x.school; }
+      });
     }).join("");
   }
 

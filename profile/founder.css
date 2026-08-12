@@ -147,49 +147,103 @@
   background: var(--accent-bright);
 }
 
-/* ------------------------------- timeline ------------------------------- */
+/* ---------------------------- centre timeline ----------------------------
+   Three columns: card | spine | card. Entries alternate sides so the section fills the
+   full width rather than hugging one margin, and the travelling light runs up the middle.
+   The side is set by a class from JS, not :nth-child — the education list restarts the
+   sequence and CSS counting would put two entries on the same side across the two lists. */
 
-.fp-timeline { position: relative; padding-left: 26px; }
+.fp-timeline { position: relative; padding: 8px 0; }
+
+/* The unlit track. The lit portion is .fp-spine, drawn over it by founder-motion.js. */
 .fp-timeline::before {
   content: "";
   position: absolute;
-  left: 5px;
-  top: 6px;
-  bottom: 6px;
+  left: 50%;
+  top: 0;
+  bottom: 0;
   width: 2px;
+  margin-left: -1px;
   background: var(--border);
 }
-.fp-item { position: relative; padding-bottom: 26px; }
-.fp-dot {
-  position: absolute;
-  left: -26px;
-  top: 5px;
-  width: 12px;
-  height: 12px;
-  border-radius: 50%;
-  background: var(--bg);
-  border: 2px solid var(--border-strong, var(--border));
+
+.fp-item {
+  position: relative;
+  display: grid;
+  grid-template-columns: 1fr 64px 1fr;
+  align-items: center;
+  margin-bottom: 34px;
 }
-.fp-item.is-now .fp-dot { border-color: var(--brand-2); background: var(--brand-2); }
-.fp-when {
-  font-family: var(--font-mono);
-  font-size: 11.5px;
-  color: var(--fg-faint);
-  margin-bottom: 4px;
+
+/* Each entry occupies one side; the opposite cell stays empty so the spine is never
+   crowded and the eye can follow it straight down. */
+.fp-item.is-right .fp-item-card { grid-column: 3; text-align: left; }
+.fp-item.is-right .fp-item-year { grid-column: 1; text-align: right; }
+.fp-item.is-left  .fp-item-card { grid-column: 1; text-align: right; }
+.fp-item.is-left  .fp-item-year { grid-column: 3; text-align: left; }
+.fp-node { grid-column: 2; display: flex; justify-content: center; }
+
+.fp-item-card {
+  padding: 18px 20px;
+  border: 1px solid var(--border);
+  border-radius: var(--r-lg);
+  background: var(--bg-elevated);
+  /* Entries fade in as they reach the reading line and fade back as they leave, so the
+     eye is always drawn to the one the light is passing. */
+  opacity: 0;
+  transform: translateY(22px);
+  transition: opacity 620ms cubic-bezier(.22,.61,.36,1),
+              transform 620ms cubic-bezier(.22,.61,.36,1),
+              border-color 400ms ease;
 }
-.fp-now {
-  font-size: 10px;
-  font-weight: 700;
-  padding: 2px 7px;
-  border-radius: 999px;
-  background: var(--brand-tint);
-  color: var(--brand-2);
-  margin-left: 5px;
+.fp-item.is-right .fp-item-card { transform: translate(26px, 22px); }
+.fp-item.is-left  .fp-item-card { transform: translate(-26px, 22px); }
+.fp-item.is-lit .fp-item-card {
+  opacity: 1;
+  transform: none;
+  border-color: var(--brand-2);
 }
-.fp-item h4 { font-size: 16px; margin: 0 0 3px; }
+/* Seen but no longer at the reading line: still legible, no longer competing. */
+.fp-item.is-seen .fp-item-card { opacity: .55; transform: none; }
+
+.fp-item-card h4 { margin: 0 0 3px; font-size: 16px; }
+.fp-when { font-family: var(--font-mono); font-size: 11.5px; color: var(--fg-faint); margin-bottom: 5px; }
+.fp-now { font-size: 10px; font-weight: 700; padding: 2px 7px; border-radius: 999px;
+  background: var(--brand-tint); color: var(--brand-2); margin-left: 5px; }
 .fp-org { font-size: 14px; color: var(--brand-2); font-weight: 600; }
 .fp-type { font-size: 12.5px; color: var(--fg-faint); margin-top: 2px; }
-.fp-item p { font-size: 13.5px; color: var(--fg-muted); margin-top: 7px; line-height: 1.6; }
+.fp-item-card p { font-size: 13.5px; color: var(--fg-muted); margin-top: 8px; line-height: 1.6; }
+
+.fp-item-year {
+  font-family: var(--font-display);
+  font-size: clamp(26px, 4vw, 44px);
+  font-weight: 700;
+  letter-spacing: -.03em;
+  color: var(--border-strong, var(--border));
+  line-height: 1;
+  padding: 0 22px;
+  transition: color 420ms ease, opacity 420ms ease;
+  opacity: .5;
+}
+.fp-item.is-lit .fp-item-year { color: var(--brand-2); opacity: 1; }
+.fp-item.is-seen .fp-item-year { opacity: .45; }
+
+.fp-dot {
+  width: 13px;
+  height: 13px;
+  border-radius: 50%;
+  background: var(--bg);
+  border: 2px solid var(--border);
+  transition: background 320ms ease, border-color 320ms ease, box-shadow 320ms ease,
+              transform 320ms cubic-bezier(.34,1.56,.64,1);
+}
+.fp-item.is-lit .fp-dot {
+  background: var(--accent-bright);
+  border-color: var(--accent-bright);
+  box-shadow: 0 0 16px 3px var(--accent-bright);
+  transform: scale(1.35);
+}
+.fp-item.is-seen .fp-dot { background: var(--brand-2); border-color: var(--brand-2); }
 
 /* ------------------------------ peer review ------------------------------ */
 
@@ -345,6 +399,21 @@ html.fp-tilt-on [data-tilt].is-tilting::after { opacity: 1; }
 /* --------------------------------- mobile ---------------------------------
    Layout only. No colours here, so mobile keeps inheriting every palette fix. */
 @media (max-width: 900px) {
+  /* One column on a narrow screen. Alternating sides needs width to read as alternating;
+     below this it just looks like inconsistent indentation. The spine moves to the left
+     edge and every card sits to its right. Layout only — no colours in here. */
+  .fp-timeline::before, .fp-spine { left: 12px; margin-left: 0; }
+  .fp-item { grid-template-columns: 34px 1fr; gap: 8px; margin-bottom: 22px; }
+  .fp-item.is-right .fp-item-card,
+  .fp-item.is-left  .fp-item-card { grid-column: 2; grid-row: 2; text-align: left;
+    transform: translateY(18px); }
+  .fp-item.is-lit .fp-item-card,
+  .fp-item.is-seen .fp-item-card { transform: none; }
+  .fp-item.is-right .fp-item-year,
+  .fp-item.is-left  .fp-item-year { grid-column: 2; grid-row: 1; text-align: left;
+    padding: 0 0 4px; }
+  .fp-node { grid-column: 1; grid-row: 1 / span 2; align-items: flex-start; padding-top: 6px; }
+
   .fp-review-grid,
   .fp-pubs { grid-template-columns: 1fr; }
   .fp-certs { grid-template-columns: repeat(2, 1fr); }
@@ -365,37 +434,16 @@ html.fp-tilt-on [data-tilt].is-tilting::after { opacity: 1; }
   .fp-photo, .fp-skill, [data-tilt] { transition: none !important; transform: none !important; }
 }
 
-/* ===================== cursor-watching mark ===================== */
-.fp-watch { position: relative; width: 190px; height: 190px; }
-.fpw-mark { position: absolute; inset: 0; transform-style: preserve-3d;
-  transition: transform 260ms cubic-bezier(.22,.61,.36,1); }
-.fpw-svg { width: 100%; height: 100%; overflow: visible; }
-.fpw-ring { fill: none; stroke: rgba(255,255,255,.14); stroke-width: 2; }
-.fpw-arc path { fill: none; stroke: var(--accent-bright); stroke-width: 5;
-  stroke-linecap: round; transform-origin: 100px 100px;
-  transition: transform 300ms cubic-bezier(.22,.61,.36,1); }
-.fpw-eye { fill: rgba(255,255,255,.05); stroke: rgba(255,255,255,.12); stroke-width: 1.5; }
-.fpw-iris { fill: var(--accent-bright);
-  transition: transform 220ms cubic-bezier(.22,.61,.36,1); }
-/* The portrait sits inside the ring once a file exists; until then the mark is the hero. */
-.fp-watch .fp-photo { position: absolute; inset: 34px; width: auto; height: auto; border-width: 2px; }
-
 /* ===================== scroll-linked timeline spine ===================== */
-.fp-timeline { position: relative; }
-.fp-spine { position: absolute; left: 5px; top: 6px; bottom: 6px; width: 2px;
+/* The lit portion of the spine, drawn down the CENTRE over the track above. Scaled by
+   founder-motion.js from scroll position, so stopping halfway leaves it halfway. */
+.fp-spine { position: absolute; left: 50%; margin-left: -1px; top: 0; bottom: 0; width: 2px;
   background: linear-gradient(180deg, var(--brand-2), var(--accent-bright));
   transform-origin: top; transform: scaleY(0); }
-/* The travelling head: a glow that rides the end of the drawn line. */
-.fp-spine::after { content: ""; position: absolute; left: -4px; bottom: -5px;
-  width: 10px; height: 10px; border-radius: 50%; background: var(--accent-bright);
-  box-shadow: 0 0 14px 4px var(--accent-bright); }
-.fp-item.is-lit .fp-dot { border-color: var(--accent-bright);
-  background: var(--accent-bright); box-shadow: 0 0 12px 2px var(--accent-bright); }
-.fp-item .fp-dot { transition: background 320ms ease, border-color 320ms ease, box-shadow 320ms ease; }
-.fp-year { font-family: var(--font-display); font-size: 26px; font-weight: 700;
-  color: var(--fg-faint); line-height: 1; margin: 2px 0 6px; letter-spacing: -.02em;
-  transition: color 320ms ease; }
-.fp-item.is-lit .fp-year { color: var(--brand-2); }
+/* The travelling head: a glow riding the end of the drawn line. */
+.fp-spine::after { content: ""; position: absolute; left: -5px; bottom: -6px;
+  width: 12px; height: 12px; border-radius: 50%; background: var(--accent-bright);
+  box-shadow: 0 0 18px 5px var(--accent-bright); }
 
 /* ===================== horizontal reel ===================== */
 .fp-reel { height: var(--fp-reel-h, 200vh); position: relative; }
@@ -426,12 +474,10 @@ html.fp-tilt-on [data-tilt].is-tilting::after { opacity: 1; }
     -webkit-overflow-scrolling: touch; }
   .fp-reel-rail { transform: none !important; }
   .fp-reel-rail .fp-pub { flex-basis: 78vw; }
-  .fp-watch { width: 130px; height: 130px; margin: 0 auto; }
 }
 
 @media (prefers-reduced-motion: reduce) {
   .fp-pubs > *, .fp-certs > *, .fp-certs-top > *, .fp-skills > * {
     opacity: 1 !important; transform: none !important; transition: none !important; }
   .fp-spine { transform: scaleY(1) !important; }
-  .fpw-mark, .fpw-arc path, .fpw-iris { transform: none !important; transition: none !important; }
 }
