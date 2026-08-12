@@ -21,8 +21,16 @@
   var reduce = false;
   try { reduce = window.matchMedia("(prefers-reduced-motion: reduce)").matches; } catch (e) {}
 
+  /* Phones AND tablets. 1024px covers an iPad in portrait (768) and in landscape (1024),
+     plus every Android tablet in common use. Pinning on a touch device fights the address
+     bar resizing as you scroll, and a tablet held in portrait has too little height for a
+     pinned card and its text to share. Touch is checked as well as width, so a small
+     laptop window still gets the effect while a large tablet does not. */
   var narrow = false;
-  try { narrow = window.matchMedia("(max-width: 760px)").matches; } catch (e) {}
+  try {
+    narrow = window.matchMedia("(max-width: 1024px)").matches ||
+             window.matchMedia("(pointer: coarse)").matches;
+  } catch (e) {}
 
   function init() {
     var sections = document.querySelectorAll("[data-scrolly]");

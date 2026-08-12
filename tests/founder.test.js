@@ -170,6 +170,11 @@ for (let i = css.indexOf('@media'); i >= 0; i = css.indexOf('@media', i + 1)) {
 }
 eq(hard, 0, 'no hardcoded colour inside a media query');
 ok(/@media \(max-width: 760px\)/.test(css), 'there is a phone layout');
+
+// The wireframe network was removed at his request; no trace should remain.
+eq(/fp-net|fpNet/.test(css), false, 'no leftover network styles');
+eq(/fp-net|fpNet|network\.js/.test(html), false, 'no leftover network markup or script');
+eq(fs.existsSync(path.join(ROOT, 'profile/network.js')), false, 'the network file is gone');
 ok(/fp-statband \{ grid-template-columns: repeat\(2, 1fr\)/.test(css),
    'four counters become two columns on a phone');
 

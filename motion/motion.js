@@ -49,8 +49,11 @@
 
   var Smooth = (function () {
     var target = 0, current = 0, running = false, raf = null;
-    var EASE = 0.11;          // per-frame approach; higher is snappier, lower is looser
-    var SETTLE = 0.4;         // px below which we snap and stop, so we never idle-spin
+    /* Higher is snappier. 0.11 was too loose — the page kept gliding after the wheel
+       stopped, which reads as lag rather than smoothness when you are trying to reach a
+       specific element. 0.22 still glides but arrives about twice as fast. */
+    var EASE = 0.22;
+    var SETTLE = 0.5;         // px below which we snap and stop, so we never idle-spin
 
     function maxScroll() {
       return Math.max(0, document.documentElement.scrollHeight - window.innerHeight);
@@ -92,6 +95,10 @@
       var d = e.deltaY;
       if (e.deltaMode === 1) d *= 18;
       else if (e.deltaMode === 2) d *= window.innerHeight;
+      /* Each notch covers more ground. Combined with the faster easing this makes a
+         wheel turn move roughly the distance a native scroll would, rather than the
+         shorter, softer travel the smoothing was imposing. */
+      d *= 1.35;
 
       target = clamp(target + d, 0, maxScroll());
       start();

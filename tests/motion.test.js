@@ -45,6 +45,10 @@ ok(/e\.ctrlKey \|\| e\.metaKey/.test(js), 'browser zoom is left alone');
 ok(/closestScrollable/.test(js), 'a scrollable panel keeps its own wheel events');
 ok(/deltaMode === 1/.test(js), 'Firefox line-mode deltas are converted');
 ok(/passive: false/.test(js), 'the wheel listener can preventDefault');
+/* Scroll pace. 0.11 kept gliding after the wheel stopped, which reads as lag when you
+   are trying to reach a specific element rather than as smoothness. */
+ok(/var EASE = 0\.22/.test(js), 'the scroll eases fast enough to feel responsive');
+ok(/d \*= 1\.35/.test(js), 'and each wheel notch covers a native-feeling distance');
 ok(/function resync/.test(js), 'keyboard and scrollbar movement resync the engine');
 
 /* ------------------------------ page transitions ------------------------------ */
@@ -210,7 +214,10 @@ ok(/padding-bottom: 0\.12em/.test(css) && /margin-bottom: -0\.12em/.test(css),
   eq(/addEventListener\("wheel"/.test(sc), false, 'scrolly never intercepts the wheel');
   eq(/preventDefault/.test(sc), false, 'and never blocks a scroll');
 
-  ok(/max-width: 760px/.test(sc), 'phones are detected');
+  /* Phones AND tablets. Pinning on a touch device fights the address bar resizing on
+     scroll, and a tablet in portrait has too little height for a pinned card plus text. */
+  ok(/max-width: 1024px/.test(sc), 'tablets are excluded, not just phones');
+  ok(/pointer: coarse/.test(sc), 'and any touch device regardless of width');
   ok(/scrolly-off/.test(sc) && /scrolly-off/.test(css), 'there is an unpinned fallback');
   ok(/prefers-reduced-motion/.test(sc), 'reduced motion disables pinning');
   // The fallback must SHOW everything — the content is the point, the pin is decoration.

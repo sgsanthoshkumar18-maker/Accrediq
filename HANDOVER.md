@@ -148,6 +148,15 @@ The **hero headline slides sideways out from behind the ring mark** rather than 
 starts explicitly rather than waiting for an observer callback, which can land a frame
 late and flash the finished heading.
 
+**Scrollytelling is off below 1024px and on any coarse pointer** — phones and tablets
+both. Pinning on a touch device fights the address bar resizing as you scroll, and a
+tablet in portrait has too little height for a pinned card and its text. Touch is checked
+as well as width so a small laptop window keeps the effect.
+
+**Scroll pace:** `EASE = 0.22` and a 1.35 wheel multiplier in `motion.js`. The original
+0.11 kept gliding after the wheel stopped, which reads as lag rather than smoothness.
+These two values are the dial if it needs tuning again.
+
 **Scroll-jacking was deliberately not built.** A quality manager is usually hunting one
 element inside a long chapter, and snap panels fight that — the one effect that would
 look modern and work worse.
@@ -260,15 +269,6 @@ are idempotent — the reveal skips anything already carrying `.aq-reveal`, and 
 marks wired sections with `data-scrolly-wired` — so a re-scan cannot blink the page or
 double-observe.
 
-**Signal network** (`profile/network.js`) fills the empty column beside the experience
-timeline and sticks while it scrolls. A rotating wireframe lattice with pulses travelling
-edge to edge, draggable. **Canvas 2D, not a third WebGL context** — the homepage already
-runs two, and a third on a page also running tilt, reveals and scrollytelling competes for
-the same frame budget. Deliberately not the hero organ meshes, which would make the page
-look like a copy of the homepage. Colours come from theme tokens with a MutationObserver
-on `data-theme`/`data-palette`; it pauses off screen and in a hidden tab, caps DPR at 2,
-and draws one static frame under reduced motion.
-
 3D tilt is pointer-only (no hover on touch), capped at 7°, and writes at most once per
 frame. The cached rect is invalidated on scroll and resize or the card tilts around a
 stale origin. A missing `assets/founder.jpg` falls back to an initials mark rather than a
@@ -302,6 +302,19 @@ Note `nabh-data.js` is now **eager** on the homepage for this card; `loadFaceScr
 was refetching the same 124 KB for the hero and now reuses it via `loadFaceChain()`.
 **Deliberately not used on standards or workspace pages** — holding the scroll fights
 someone hunting for a specific element.
+
+### Globe and the WHO proxy
+**`vercel.json` must contain NO rewrites for `/api/*`.** Vercel maps `/api/who` to
+`api/who.js` by file convention; the rewrites that used to sit there pointed at the
+literal `/api/who.js` path, so Vercel served the **function source as a static file**
+with a 200. `res.json()` then failed to parse it, `health-data.js` caught the error, and
+every field rendered "No data" — which read as WHO having no figures rather than as the
+proxy never being invoked. Re-adding a rewrite there will silently break the globe again.
+
+**Opening rotation** is `START_ROT_Y = -1.2915`, `START_ROT_X = 0.30` in `hglobe.js`,
+chosen by scoring every 2° against the 74 capitals: 60 face the viewer versus 52 at the
+old `-0.3`, which opened on the Atlantic with nothing clickable. Recompute if the
+capitals list changes; a test asserts the chosen angle beats the old one.
 
 ### Command bar (`search/command.js`)
 Ctrl+K / Cmd+K, or `/` when not already typing. Indexes ~700 items — elements, standards,
@@ -343,7 +356,7 @@ Redirect URLs, or Supabase ignores the parameter and falls back to Site URL.
 
 ---
 
-## Tests — 539 assertions, plain Node, no install
+## Tests — 526 assertions, plain Node, no install
 
     node tests/activity.test.js    node tests/sync.test.js
     node tests/profile.test.js     node tests/palette.test.js

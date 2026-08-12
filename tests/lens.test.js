@@ -109,91 +109,58 @@ ok(/function loadFaceChain/.test(home), 'and the loader chain is entered directl
 // Escaping: element text contains quotes and ampersands.
 ok(/function esc/.test(rotJs), 'rendered text is escaped');
 
-/* ------------------------------ signal network ------------------------------ */
-
-const net = read('profile/network.js');
-const fcss = read('profile/founder.css');
-const fhtml = read('founder.html');
-
-ok(/id="fpNet"/.test(fhtml), 'the portfolio has a canvas for the network');
-ok(/fp-exp-grid/.test(fhtml) && /fp-exp-grid/.test(fcss),
-   'the timeline and network share a two-column grid');
-ok(/\.fp-net-col \{ position: sticky/.test(fcss),
-   'the network sticks while the timeline scrolls past');
-
-/* Canvas 2D, not a third WebGL context. The homepage already runs two; a third on a page
-   that also runs tilt, reveals and scrollytelling competes for the same frame budget. */
-ok(/getContext\("2d"\)/.test(net), 'the network is canvas 2D');
-eq(/THREE|WebGLRenderer/.test(code(net)), false, 'no third WebGL context is created');
-// And it must not reuse the hero organs, or the page looks like a copy of the homepage.
-eq(/organ|face\//.test(code(net)), false, 'the hero organ meshes are not reused');
-
-ok(/prefers-reduced-motion/.test(net), 'reduced motion is respected');
-ok(/draw\(0\);\n    return;/.test(net), 'and draws one static frame rather than nothing');
-ok(/IntersectionObserver/.test(net), 'it only animates while on screen');
-ok(/visibilitychange/.test(net), 'and pauses in a hidden tab');
-ok(/cancelAnimationFrame/.test(net), 'the loop is actually stopped, not just flagged');
-
-// Theme-aware: the palette can change under it.
-ok(/getPropertyValue\("--accent-bright"\)/.test(net), 'colours come from theme tokens');
-ok(/MutationObserver/.test(net), 'a palette change invalidates the cached colours');
-ok(/attributeFilter: \["data-theme", "data-palette"\]/.test(net), 'watching the right attributes');
-eq(/#[0-9a-fA-F]{6}["']\s*[,;)]/.test(net.replace(/\|\| "#5EEAD4"/g, '')), false,
-   'no hardcoded palette colour beyond the documented fallback');
-
-ok(/devicePixelRatio/.test(net), 'the canvas is drawn at device resolution');
-ok(/Math\.min\(2, window\.devicePixelRatio/.test(net),
-   'DPR is capped at 2, so a 3x phone does not render nine times the pixels');
-
-// Pointer interaction, and it must not swallow vertical scrolling on a phone.
-ok(/pointerdown/.test(net), 'the network can be dragged');
-ok(/touch-action: pan-y/.test(fcss), 'vertical scrolling still works over the canvas');
-
-// Mobile: no hardcoded colour in any media query.
-let hard = 0;
-for (let i = fcss.indexOf('@media'); i >= 0; i = fcss.indexOf('@media', i + 1)) {
-  const o = fcss.indexOf('{', i);
-  if (o < 0) break;
-  let depth = 0, j = o;
-  for (; j < fcss.length; j++) {
-    if (fcss[j] === '{') depth++;
-    else if (fcss[j] === '}') { depth--; if (!depth) break; }
-  }
-  if (/#[0-9a-fA-F]{3,8}\b|rgba?\(/.test(fcss.slice(o, j + 1))) hard++;
-}
-eq(hard, 0, 'no hardcoded colour inside a media query');
-ok(/\.fp-net-col \{ position: static/.test(fcss), 'the network unsticks on a narrow screen');
-
-/* Geometry, run for real. An orphan node or a duplicated edge shows up as a visual
-   glitch that is hard to spot by eye but trivial to assert. */
+/* ------------------------- the globe opens on data -------------------------
+   It used to open on the Atlantic: nothing clickable until you dragged. The start angle
+   is now chosen by scoring every 2 degrees against the capitals list. */
 {
-  const body = net.slice(net.indexOf('var OUTER'), net.indexOf('/* -------------------------------- pulses'));
-  const hexBody = net.slice(net.indexOf('function hexA'), net.indexOf('/* --------------------------------- loop'));
-  const g = new Function('var nodes=[],edges=[];' + body + hexBody +
-    ';buildNodes();buildEdges();return {nodes,edges,hexA};')();
+  const g = read('hglobe/hglobe.js');
+  ok(/START_ROT_Y = -1\.2915/.test(g), 'the opening rotation is the computed one');
+  ok(/START_ROT_X = 0\.30/.test(g), 'with the matching pitch');
+  eq(/rotY = -0\.3\b/.test(g), false, 'the old Atlantic-facing default is gone');
+  // Reset must return to the same view, not to the old empty one.
+  eq((g.match(/START_ROT_Y/g) || []).length, 3, 'reset uses the same constant');
 
-  ok(g.nodes.length >= 30, 'the lattice has enough nodes to read as a network');
-  ok(g.edges.length > g.nodes.length, 'and more edges than nodes');
+  const caps = {};
+  vm.runInContext(read('hglobe/capitals-data.js'), sb);
+  const C = sb.window.WORLD_CAPITALS;
+  ok(C.length > 50, 'the capitals list is populated');
 
-  const deg = {};
-  g.edges.forEach(e => { deg[e.a] = (deg[e.a] || 0) + 1; deg[e.b] = (deg[e.b] || 0) + 1; });
-  eq(g.nodes.map((_, i) => i).filter(i => !deg[i]).length, 0, 'no node is left unconnected');
+  // Score the chosen angle the same way the choice was made.
+  function visible(rotY, rotX) {
+    let n = 0;
+    C.forEach(c => {
+      const la = c.lat * Math.PI / 180, lo = c.lon * Math.PI / 180;
+      const x = Math.cos(la) * Math.sin(lo), y = Math.sin(la), z = Math.cos(la) * Math.cos(lo);
+      const cx = Math.cos(rotY), sx = Math.sin(rotY);
+      const x2 = x * cx + z * sx, z2 = -x * sx + z * cx;
+      const cy = Math.cos(rotX), sy = Math.sin(rotX);
+      const z3 = y * sy + z2 * cy;
+      if (z3 > 0.25) n++;
+    });
+    return n;
+  }
+  const chosen = visible(-1.2915, 0.30);
+  const old = visible(-0.3, 0.15);
+  ok(chosen > old, 'the new opening view shows more capitals than the old one (' +
+     chosen + ' vs ' + old + ')');
+  ok(chosen >= C.length * 0.75, 'and at least three quarters of them are facing the viewer');
+}
 
-  const seen = new Set();
-  let dup = 0;
-  g.edges.forEach(e => { const k = e.a + '-' + e.b; if (seen.has(k)) dup++; seen.add(k); });
-  eq(dup, 0, 'no edge is drawn twice');
-
-  // Golden-angle placement: the outer shell must actually sit on the unit sphere.
-  const off = g.nodes.filter(n => !n.ring)
-    .filter(n => Math.abs(Math.hypot(n.x, n.y, n.z) - 1) > 0.01);
-  eq(off.length, 0, 'outer nodes lie on the unit sphere');
-
-  // The hex parser must survive shorthand and rubbish rather than emitting "rgba(NaN...)".
-  eq(g.hexA('#5EEAD4', 0.5), 'rgba(94,234,212,0.5)', 'six-digit hex parses');
-  eq(g.hexA('#5ED', 0.5), 'rgba(85,238,221,0.5)', 'shorthand hex expands');
-  ok(!/NaN/.test(g.hexA('not-a-colour', 0.5)), 'an unreadable token falls back cleanly');
-  ok(!/NaN/.test(g.hexA('', 0.5)), 'and so does an empty one');
+/* --------------------------- the WHO proxy is reachable ---------------------------
+   Vercel maps /api/who to api/who.js by file convention. A rewrite pointing at the
+   literal /api/who.js path made Vercel serve the FUNCTION SOURCE as a static file with
+   a 200, so res.json() failed to parse it, health-data.js caught the error, and every
+   field showed "No data" — which read as WHO having no figures rather than as the proxy
+   never being invoked. */
+{
+  const vj = JSON.parse(read('vercel.json'));
+  const rw = vj.rewrites || [];
+  eq(rw.filter(r => /^\/api\//.test(r.source)).length, 0,
+     'no rewrite shadows the api directory');
+  eq(/api\/who\.js/.test(JSON.stringify(rw)), false,
+     'nothing points at the function source path');
+  ok(/api\/who/.test(read('hglobe/health-data.js')), 'the client still calls the proxy');
+  ok(vj.functions, 'the functions block is present so the runtime is explicit');
 }
 
 console.log('\n' + pass + ' passed, ' + fail + ' failed');
