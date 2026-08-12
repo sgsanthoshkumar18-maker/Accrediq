@@ -5,6 +5,24 @@
 
   var SEVERITY = ["observation", "minor", "major", "critical"];
   var STATUS = ["open", "in_progress", "completed", "verified", "closed"];
+
+  /* Segregation of duties. A CAPA verified or closed by the person who raised it defeats
+     the purpose of verification, and an assessor asks about exactly this. The database
+     refuses it outright (aq_guard_capa_closure in schema.sql) — this is the courtesy
+     layer, so a user is told before filling a form rather than after pressing save. */
+  var myUid = null;
+
+  function isMine(row) {
+    return !!(myUid && row && row.created_by && row.created_by === myUid);
+  }
+  /* Admins and owners may close their own: in a small hospital the quality manager who
+     raised the finding is sometimes the only person able to verify it, and a rule that
+     cannot be satisfied gets worked around rather than followed. The database agrees. */
+  function mayClose(row) {
+    return !isMine(row) || W.isAdmin();
+  }
+  var SOD_MSG = "A finding cannot be verified or closed by the person who raised it. " +
+                "Ask a colleague, or an admin, to verify it.";
   var SOURCE = ["Internal audit", "Mock survey", "Gap analysis", "Incident", "Patient complaint", "External assessment"];
   var LABEL = { in_progress: "In progress", nc: "Non-compliant" };
   var rows = [], filters = { status: "", severity: "", dept: "", q: "" };
@@ -74,8 +92,17 @@
         (ro ? "" : '<div class="capa-actions">' +
           '<button type="button" class="btn btn-sm" data-act="edit">Edit</button>' +
           (r.status !== "closed"
-            ? '<button type="button" class="btn btn-sm" data-act="advance">Move to ' +
-              esc(lbl(STATUS[Math.min(STATUS.indexOf(r.status) + 1, STATUS.length - 1)])) + "</button>"
+            ? (function () {
+                var nxt = STATUS[Math.min(STATUS.indexOf(r.status) + 1, STATUS.length - 1)];
+                /* Shown disabled with the reason in the tooltip rather than hidden: a
+                   missing button reads as a bug, whereas a disabled one with an
+                   explanation teaches the rule before the form is filled in. */
+                var blocked = (nxt === "verified" || nxt === "closed") && !mayClose(r);
+                return '<button type="button" class="btn btn-sm' + (blocked ? " is-off" : "") +
+                  '" data-act="advance"' +
+                  (blocked ? ' title="' + esc(SOD_MSG) + '"' : "") +
+                  ">Move to " + esc(lbl(nxt)) + "</button>";
+              })()
             : "") +
           '<button type="button" class="btn btn-sm btn-danger" data-act="del">Delete</button></div>') +
       "</div>";
@@ -97,6 +124,10 @@
           }
           if (a === "advance") {
             var i = Math.min(STATUS.indexOf(row.status) + 1, STATUS.length - 1);
+            if ((STATUS[i] === "verified" || STATUS[i] === "closed") && !mayClose(row)) {
+              W.toast(SOD_MSG, "bad");
+              return;
+            }
             // Verification is the point of CAPA — don't let it be skipped silently.
             if (STATUS[i] === "verified" && !row.verification) {
               openForm(row, "Record how effectiveness was verified before marking this verified.");
@@ -157,6 +188,12 @@
       if (!data.title) { W.toast("A title is needed", "bad"); return; }
       if (data.status === "verified" && !data.verification) {
         W.toast("Record the verification before marking it verified", "bad"); return;
+      }
+      /* Checked against the SAVED status, not the form's: re-saving an already-closed
+         record must not be refused, only the transition into a closing state. */
+      if ((data.status === "verified" || data.status === "closed") &&
+          row.status !== "verified" && row.status !== "closed" && !mayClose(row)) {
+        W.toast(SOD_MSG, "bad"); return;
       }
       var saved = await S.saveCapa(data);
       var i = rows.findIndex(function (r) { return r.id === saved.id; });
@@ -227,6 +264,12 @@
   async function init() {
     esc = W.esc;
     if (!(await W.gate())) return;
+    /* Who am I, for the segregation-of-duties check. Read once at start-up: the value
+       cannot change within a session, and asking per row would be a request per finding. */
+    try {
+      var me = await S.currentUser();
+      myUid = me && me.id ? me.id : null;
+    } catch (e) { myUid = null; }
     document.getElementById("wsGate").style.display = "none";
     document.getElementById("wsBody").style.display = "";
     W.renderNav("capa"); W.renderModeNotice();

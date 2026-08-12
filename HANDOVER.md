@@ -427,7 +427,7 @@ Redirect URLs, or Supabase ignores the parameter and falls back to Site URL.
 
 ---
 
-## Tests — 625 assertions, plain Node, no install
+## Tests — 652 assertions, plain Node, no install
 
     node tests/activity.test.js    node tests/sync.test.js
     node tests/profile.test.js     node tests/palette.test.js
@@ -435,7 +435,7 @@ Redirect URLs, or Supabase ignores the parameter and falls back to Site URL.
     node tests/auth-errors.test.js  node tests/standards-export.test.js
     node tests/motion.test.js  node tests/calendar.test.js
     node tests/founder.test.js  node tests/lens.test.js
-    node tests/home-flow.test.js
+    node tests/home-flow.test.js  node tests/sod.test.js
 
 `sync.test.js` is the important one: cross-device persistence against a fake Supabase, plus
 direct assertions on the RLS rules. `framing.test.js` locks the camera maths that was got
@@ -464,10 +464,28 @@ no version on it, while the rest of the site had carried `?v=20260805c` since la
 re-stamps on each run, so this cannot drift again. Run it after any CSS or JS change.
 A test in `palette.test.js` fails if any page ships an unversioned local asset.
 
+## Segregation of duties
+**A CAPA cannot be verified or closed by the person who raised it.** Enforced by
+`aq_guard_capa_closure` in the database, not in the browser — `page-gate.js` controls what
+a page displays, so a rule an assessor cares about cannot live there. Authorship is
+stamped by trigger from `auth.uid()` on `capa`, `incidents` and `audits`, never trusted
+from the client.
+
+Three decisions worth keeping:
+- **Only the transition INTO verified/closed is guarded.** Guarding every update would
+  make a closed CAPA uneditable by anyone, including to fix a typo.
+- **Admins and owners are exempt.** In a small hospital the quality manager who raised the
+  finding is sometimes the only person able to verify it, and a rule that cannot be
+  satisfied gets worked around rather than followed. The action is still attributed via
+  `verified_by` / `closed_by`.
+- **The UI shows the control disabled with the reason in its tooltip**, rather than hiding
+  it. A missing button reads as a bug; a disabled one teaches the rule before a form is
+  filled in. The page check must agree with the database or the user is refused on save.
+
 ## Deploy ritual
 
 After any schema change, re-run `workspace/schema.sql` in the Supabase SQL editor — it is
-fully idempotent and ~690 lines, starting `-- ====`. **Clear the editor with Ctrl+A then
+fully idempotent and ~780 lines, starting `-- ====`. **Clear the editor with Ctrl+A then
 Delete first**: a paste on top of existing content produced a "syntax error at line 3070"
 in a 618-line file. Open it with Notepad, not Word — smart quotes break it.
 
@@ -490,7 +508,7 @@ in a 618-line file. Open it with Notepad, not Word — smart quotes break it.
 6. **Repo cleanup** — ten abandoned hero experiments (`galaxy`, `galaxy2`, `brain`, `dna`,
    `helix`, `radar`, `globe`, `hglobe`, `qglobe`, `kpinet`). Only `face/` and `qglobe/`
    are live.
-7. **Role enforcement is thin** — a department head can currently close their own NC.
+7. ~~**Role enforcement is thin**~~ — **fixed.** See "Segregation of duties" below.
 8. **Videos have no player**; the count records videos *started*. When a player lands,
    move the `record()` call to its `ended` event.
 

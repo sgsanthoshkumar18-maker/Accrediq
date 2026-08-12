@@ -144,6 +144,86 @@ alter table public.committees        add column if not exists pref_dow smallint;
 alter table public.compliance_tasks  add column if not exists pref_dow smallint;
 alter table public.compliance_tasks  add column if not exists owner    text;
 
+-- =====================================================================
+-- Segregation of duties (ROM/PSQ expectation, and an assessor's first question)
+--
+-- A Non-Conformity closed by the person who raised it is a finding in itself: the whole
+-- point of verification is that a second pair of eyes confirms the corrective action
+-- worked. Until now `can_edit()` was the only gate, so any editor could raise a CAPA and
+-- then verify and close it in the same sitting, and nothing in the record showed that had
+-- happened.
+--
+-- Two changes make that impossible rather than merely discouraged:
+--   1. authorship is stamped by trigger from the JWT, never trusted from the client
+--   2. the transition into verified/closed is refused when the actor raised the row
+--
+-- Enforced in the DATABASE, not the browser. page-gate.js controls what a page displays;
+-- this controls what can be written, which is the only place a rule like this can live.
+-- =====================================================================
+
+alter table public.capa       add column if not exists created_by  uuid;
+alter table public.capa       add column if not exists verified_by uuid;
+alter table public.capa       add column if not exists closed_by   uuid;
+alter table public.incidents  add column if not exists created_by  uuid;
+alter table public.audits     add column if not exists created_by  uuid;
+
+-- Stamp the author from the JWT on insert. Taken from auth.uid() rather than a client
+-- field, so it cannot be forged by sending someone else's id.
+create or replace function public.aq_stamp_author()
+returns trigger language plpgsql security definer set search_path = public as $$
+begin
+  new.created_by := coalesce(new.created_by, auth.uid());
+  return new;
+end; $$;
+
+do $$
+declare t text;
+begin
+  foreach t in array array['capa','incidents','audits'] loop
+    execute format('drop trigger if exists %I_author_trg on public.%I', t, t);
+    execute format(
+      'create trigger %I_author_trg before insert on public.%I
+         for each row execute function public.aq_stamp_author()', t, t);
+  end loop;
+end $$;
+
+-- Refuse self-verification and self-closure.
+create or replace function public.aq_guard_capa_closure()
+returns trigger language plpgsql security definer set search_path = public as $$
+declare actor uuid := auth.uid();
+begin
+  -- Only the transition INTO a closing state is guarded. Editing an already-closed row,
+  -- or moving it back to open, is a different action and is left to can_edit().
+  if new.status in ('verified','closed') and coalesce(old.status,'') not in ('verified','closed') then
+
+    if actor is null then
+      raise exception 'AQ_SOD: sign-in required to verify or close a CAPA';
+    end if;
+
+    /* An admin or owner may always close: in a small hospital the quality manager who
+       raised a finding is sometimes genuinely the only person able to verify it, and a
+       rule that cannot be satisfied gets worked around instead of followed. The action is
+       still attributed, so the record shows who did it. */
+    if new.created_by is not null and new.created_by = actor and not public.is_admin() then
+      raise exception
+        'AQ_SOD: a CAPA cannot be verified or closed by the person who raised it';
+    end if;
+
+    if new.status = 'verified' then new.verified_by := coalesce(new.verified_by, actor); end if;
+    if new.status = 'closed'   then new.closed_by   := coalesce(new.closed_by, actor);   end if;
+  end if;
+  return new;
+end; $$;
+
+drop trigger if exists capa_sod_trg on public.capa;
+create trigger capa_sod_trg before update on public.capa
+  for each row execute function public.aq_guard_capa_closure();
+
+-- Who am I, for the UI. Lets the CAPA page disable a button it knows the database would
+-- refuse, so a user is told before they fill a form rather than after.
+create or replace function public.aq_my_uid()
+returns uuid language sql stable as $$ select auth.uid(); $$;
+
 -- ---------- document control (IMS.6.a) ----------
 create table if not exists public.documents (
   id            text primary key,

@@ -199,3 +199,8 @@
   font-weight:600;opacity:0;pointer-events:none;transition:all .25s ease;z-index:200;}
 .ws-toast.show{opacity:1;transform:translateX(-50%) translateY(0);}
 .ws-toast.bad{background:var(--nc);color:#fff;}
+
+/* A control the database would refuse. Shown disabled with the reason in the tooltip
+   rather than hidden — a missing button reads as a bug, a disabled one teaches the rule. */
+.btn.is-off,.btn-mini.is-off{opacity:.42;cursor:not-allowed;}
+.btn.is-off:hover,.btn-mini.is-off:hover{border-color:var(--border);color:var(--fg-muted);background:transparent;}
