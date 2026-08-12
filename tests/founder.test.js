@@ -220,6 +220,17 @@ ok(/fp-statband \{ grid-template-columns: repeat\(2, 1fr\)/.test(css),
 }
 
 
+/* The hero is centred, not a two-column split. A max-width on the text keeps the measure
+   readable — centred prose running the full page width is hard to track because the eye
+   loses the start of each line. */
+ok(/\.fp-hero-grid \{[\s\S]{0,220}align-items: center/.test(css), 'the hero stacks centred');
+ok(/\.fp-hero-grid \{[\s\S]{0,220}text-align: center/.test(css), 'and its text is centred');
+eq(/\.fp-hero-grid \{[\s\S]{0,220}grid-template-columns: 190px/.test(css), false,
+   'the old two-column split is gone');
+ok(/\.fp-hero-text \{ max-width: 62ch/.test(css), 'the measure is capped for readability');
+ok(/\.fp-tags \{[^}]*justify-content: center/.test(css), 'the role chips centre');
+ok(/\.fp-links \{[^}]*justify-content: center/.test(css), 'and so do the buttons');
+
 /* ===================== centre alternating timeline ===================== */
 {
   const mo = read('profile/founder-motion.js');

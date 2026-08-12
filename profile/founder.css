@@ -10,12 +10,17 @@
   position: relative;
   overflow: hidden;
 }
+/* Stacked and centred: portrait, then name, then the rest. A max-width on the text keeps
+   the measure readable — centred prose running the full page width is hard to track,
+   because the eye loses the start of each line. */
 .fp-hero-grid {
-  display: grid;
-  grid-template-columns: 190px 1fr;
-  gap: 34px;
+  display: flex;
+  flex-direction: column;
   align-items: center;
+  text-align: center;
+  gap: 22px;
 }
+.fp-hero-text { max-width: 62ch; }
 
 .fp-photo {
   width: 190px;
@@ -55,7 +60,7 @@
 .fp-role { font-size: 16px; color: rgba(255, 255, 255, .86); margin-bottom: 4px; }
 .fp-loc { font-size: 13.5px; color: rgba(255, 255, 255, .58); margin-bottom: 16px; }
 
-.fp-tags { display: flex; flex-wrap: wrap; gap: 7px; margin-bottom: 20px; }
+.fp-tags { display: flex; flex-wrap: wrap; gap: 7px; margin-bottom: 20px; justify-content: center; }
 .fp-tag {
   font-size: 11.5px;
   font-weight: 600;
@@ -65,10 +70,12 @@
   border: 1px solid rgba(255, 255, 255, .14);
   color: rgba(255, 255, 255, .88);
 }
-.fp-links { display: flex; gap: 9px; flex-wrap: wrap; }
+.fp-links { display: flex; gap: 9px; flex-wrap: wrap; justify-content: center; }
 
 /* Counters. Tabular figures so the width does not jitter while the number climbs. */
 .fp-statband {
+  width: 100%;
+  text-align: center;
   display: grid;
   grid-template-columns: repeat(4, 1fr);
   gap: 14px;
@@ -420,10 +427,9 @@ html.fp-tilt-on [data-tilt].is-tilting::after { opacity: 1; }
   .fp-certs-top { grid-template-columns: 1fr; }
 }
 @media (max-width: 760px) {
-  .fp-hero-grid { grid-template-columns: 1fr; text-align: center; gap: 20px; }
-  .fp-photo { width: 130px; height: 130px; margin: 0 auto; }
+  .fp-hero-grid { gap: 18px; }
+  .fp-photo { width: 130px; height: 130px; }
   .fp-initials { font-size: 40px; }
-  .fp-tags, .fp-links { justify-content: center; }
   /* Four counters on a phone give ~80px each, too narrow for a two-line label. */
   .fp-statband { grid-template-columns: repeat(2, 1fr); gap: 22px 14px; }
   .fp-certs { grid-template-columns: 1fr; }
