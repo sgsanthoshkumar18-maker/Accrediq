@@ -277,11 +277,20 @@ CSS `:nth-child`** — the education list restarts the sequence, so CSS counting
 two entries on the same side where the two lists meet. Entries have **three** states, not
 two: hidden, lit while in a band around the reading line, then dimmed to `is-seen` once
 the light has passed — with only two, every earlier entry stays at full strength and the
-one the light is on does not stand out. Below 900px it collapses to a single left rail,
-since alternation needs width to read as alternation; publications as a pinned horizontal reel driven by scroll position; staggered card
+one the light is on does not stand out. **Alternation is preserved on every screen**, at his explicit request. Rather than
+collapsing to a left rail below 900px, the year column is hidden on phones and folded
+into the card via `content: attr(data-year)` — the renderer stamps `data-year` on the
+card for exactly this. At 380px each card still gets ~165px, tight but legible with the
+reduced type scale; publications as a pinned horizontal reel driven by scroll position; staggered card
 entrances; magnetic buttons. **The reel measures its own overflow** rather than using a
 guessed height, so adding a publication lengthens the scroll instead of cutting the last
 card off. Nothing hijacks the wheel.
+
+**The scroll-linked effects run on touch too.** They need scroll, not a pointer, and
+gating them on pointer type meant a phone got a static list — the timeline light and the
+reel are the two effects that carry this page. Only the mouse-linked ones (hero parallax,
+magnetic buttons) still bail out on a coarse pointer. The reel's rail needs
+`touch-action: pan-y` or it swallows the vertical gesture and appears frozen on a phone.
 
 A cursor-watching ring mark was built and then **removed at his request** — it read as
 gimmicky beside the rest of the page. A test forbids its return. The 3-D character from
@@ -388,7 +397,7 @@ Redirect URLs, or Supabase ignores the parameter and falls back to Site URL.
 
 ---
 
-## Tests — 568 assertions, plain Node, no install
+## Tests — 576 assertions, plain Node, no install
 
     node tests/activity.test.js    node tests/sync.test.js
     node tests/profile.test.js     node tests/palette.test.js

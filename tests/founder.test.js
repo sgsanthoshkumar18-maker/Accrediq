@@ -169,7 +169,7 @@ for (let i = css.indexOf('@media'); i >= 0; i = css.indexOf('@media', i + 1)) {
   if (/#[0-9a-fA-F]{3,8}\b|rgba?\(/.test(css.slice(o, j + 1))) hard++;
 }
 eq(hard, 0, 'no hardcoded colour inside a media query');
-ok(/@media \(max-width: 760px\)/.test(css), 'there is a phone layout');
+ok(/@media \(max-width: 620px\)/.test(css), 'there is a phone layout');
 
 // The wireframe network was removed at his request; no trace should remain.
 eq(/fp-net|fpNet/.test(css), false, 'no leftover network styles');
@@ -213,10 +213,27 @@ ok(/fp-statband \{ grid-template-columns: repeat\(2, 1fr\)/.test(css),
   // Gating.
   ok(/pointer: coarse/.test(mo) && /prefers-reduced-motion/.test(mo),
      'pointer-linked effects are gated');
-  ok(/if \(!reduce\) stagger\(\)/.test(mo),
-     'stagger still runs on a phone — it costs a CSS transition and nothing else');
-  ok(/\.fp-reel \{ height: auto !important/.test(css),
-     'the reel unpins on a phone and becomes a normal swipe');
+  ok(mo.indexOf('stagger();') < mo.indexOf('if (coarse) return;'),
+     'stagger runs on a phone too');
+  /* Both scroll-linked effects run on touch too. They need SCROLL, not a pointer, and
+     they are the two effects that carry this page — gating them on pointer type meant a
+     phone got a static list. Only the mouse-linked ones still bail out. */
+  ok(/if \(coarse\) return;[\s\S]{0,120}heroParallax\(\)/.test(mo),
+     'only pointer-linked effects stop on touch');
+  ok(mo.indexOf('timelineSpine();') < mo.indexOf('if (coarse) return;'),
+     'the timeline light runs on touch');
+  ok(mo.indexOf('reel();') < mo.indexOf('if (coarse) return;'), 'and so does the reel');
+  eq(/\.fp-reel \{ height: auto !important/.test(css), false,
+     'the reel is no longer unpinned on a phone');
+  ok(/touch-action: pan-y/.test(css),
+     'the rail yields vertical gestures so page scroll still drives it');
+
+  // Alternation survives to the smallest breakpoint; the YEAR folds into the card
+  // instead, so cards keep their width without the effect being dropped.
+  ok(/max-width: 620px\)[\s\S]{0,900}grid-template-columns: 1fr 26px 1fr/.test(css),
+     'phones keep the three-column alternating grid');
+  ok(/content: attr\(data-year\)/.test(css), 'the year folds into the card on a phone');
+  ok(/data-year="/.test(read('profile/founder.js')), 'and the renderer stamps it');
 }
 
 
@@ -271,8 +288,12 @@ ok(/\.fp-links \{[^}]*justify-content: center/.test(css), 'and so do the buttons
      'and left-hand ones from the left');
 
   // Mobile collapses to one rail: alternating needs width to read as alternating.
-  ok(/max-width: 900px\)[\s\S]{0,400}\.fp-spine \{ left: 12px/.test(css),
-     'the spine moves to the edge on a narrow screen');
+  /* The spine STAYS centred on every screen now. He asked for the same effect on mobile,
+     so alternation is preserved down to the smallest breakpoint and the year folds into
+     the card rather than the layout collapsing to a left rail. */
+  eq(/\.fp-spine \{ left: 12px/.test(css), false, 'the spine is no longer moved to the edge');
+  ok(/max-width: 620px\)[\s\S]{0,900}\.fp-item-year \{ display: none/.test(css),
+     'the year column is hidden on a phone instead');
 }
 
 console.log('\n' + pass + ' passed, ' + fail + ' failed');

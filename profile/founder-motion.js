@@ -198,15 +198,22 @@
   }
 
   function init() {
-    /* Stagger is the one effect that still runs on a phone: it costs a CSS transition
-       and nothing else, and it is what makes a long list of certifications feel composed
-       rather than dumped. The three pointer-linked effects need a pointer. */
-    if (!reduce) stagger();
-    if (reduce || coarse) return;
-    heroParallax();
+    if (reduce) return;
+
+    /* SCROLL-linked effects run everywhere. They need scroll, not a pointer, and a phone
+       has plenty of that — the timeline light and the reel are the two effects that carry
+       this page, so gating them on pointer type was wrong. Both are throttled to one
+       frame and write only transforms, which is what keeps them affordable on a phone. */
+    stagger();
     timelineSpine();
-    magnetic();
     reel();
+
+    /* POINTER-linked effects still need a pointer. Hero parallax follows the mouse and
+       magnetic buttons lean toward it; neither has any meaning on a touch screen, and
+       binding them there would fight scrolling for no benefit. */
+    if (coarse) return;
+    heroParallax();
+    magnetic();
   }
 
   /* founder.js renders the timeline and card lists from data, so none of this markup

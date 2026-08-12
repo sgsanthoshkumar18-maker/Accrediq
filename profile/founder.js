@@ -127,8 +127,12 @@
   function timelineItem(e, i, opts) {
     opts = opts || {};
     var side = i % 2 === 0 ? "is-right" : "is-left";
+    var year = e.current ? "NOW" : String(e.to || e.from).replace(/^\D+/, "");
+    /* The year is stamped on the card as well as rendered in its own column. On a phone
+       the column is hidden and the card shows it via attr(data-year) — folding it in
+       rather than dropping the alternation, which is what he asked to keep. */
     return '<div class="fp-item ' + side + (e.current ? " is-now" : "") + '">' +
-      '<div class="fp-item-card">' +
+      '<div class="fp-item-card" data-year="' + esc(year) + '">' +
         '<div class="fp-when">' + esc(e.from) + " \u2014 " + esc(e.to) +
           (e.current ? ' <span class="fp-now">Current</span>' : "") + "</div>" +
         "<h4>" + esc(opts.title ? opts.title(e) : e.role) + "</h4>" +
@@ -138,9 +142,7 @@
       "</div>" +
       /* The marker sits ON the spine, in the centre column, not beside the card. */
       '<div class="fp-node"><span class="fp-dot"></span></div>' +
-      '<div class="fp-item-year"><span>' +
-        esc(e.current ? "NOW" : String(e.to || e.from).replace(/^\D+/, "")) +
-      "</span></div>" +
+      '<div class="fp-item-year"><span>' + esc(year) + "</span></div>" +
     "</div>";
   }
 
