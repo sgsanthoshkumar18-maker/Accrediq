@@ -425,6 +425,37 @@ Two things that are load-bearing:
 A stored value is validated against `^[a-z0-9-]+\.html$` before being followed, so a
 poisoned cache cannot redirect anyone off-site.
 
+### Rounds & checklists (`workspace/rounds.html`, `workspace/rounds.js`)
+The third department shape: a recurring check that produces a **score**. Hand hygiene,
+cleaning audits, record review, crash cart checks. Distinct from the compliance calendar,
+which only asks whether something was done — here the number is the point, because an
+assessor asks what the compliance rate is and whether it moved after you found it low.
+
+Scoring is one pure function (`window.AQRounds.score`) so the badge, the trend and the
+stored value cannot disagree. Two rules in it are load-bearing:
+- **N/A is excluded from the denominator, not counted as a pass.** A crash cart with no
+  paediatric drawer should not score 100% for having nothing to check, and should not be
+  punished for a drawer it is not required to have.
+- **A critical item failing fails the round outright**, whatever the percentage. You
+  cannot average away a missing resuscitation drug.
+
+Questions are rows, not a JSON blob, so a round references the exact item it scored and
+editing a checklist next quarter cannot rewrite what last quarter was measured against.
+Removing a checklist soft-deletes; removing a **question** really deletes, because a
+question is not evidence — the round is, and a round stores its own answers.
+
+### Homepage tour (`home-tour.js`)
+Eight frames covering every locked page, autoplaying with a progress bar. It exists
+because the workspace is behind the paywall and a visitor cannot see what they are being
+asked to pay for.
+
+**Sketches, not screenshots, and labelled as such.** Screenshots would show either invented
+hospital data as though it were real, or an empty demo account that makes the product look
+unused. Autoplay stops permanently once the visitor takes control — resuming after a
+manual choice yanks the frame away mid-read. Restarting the progress bar needs
+`void bar.offsetWidth` between removing and re-adding the animation; setting the same
+value again does nothing and the bar freezes on the second frame.
+
 ### Billing / access
 - `billing/billing-config.js` is the only file to edit for pricing, UPI and email lists.
 - UPI ID: check `upiVpa` — the config has a `-1` suffix the handover didn't; unverified.
@@ -459,7 +490,7 @@ Redirect URLs, or Supabase ignores the parameter and falls back to Site URL.
 
 ---
 
-## Tests — 707 assertions, plain Node, no install
+## Tests — 770 assertions, plain Node, no install
 
     node tests/activity.test.js    node tests/sync.test.js
     node tests/profile.test.js     node tests/palette.test.js
@@ -468,7 +499,7 @@ Redirect URLs, or Supabase ignores the parameter and falls back to Site URL.
     node tests/motion.test.js  node tests/calendar.test.js
     node tests/founder.test.js  node tests/lens.test.js
     node tests/home-flow.test.js  node tests/sod.test.js
-    node tests/register.test.js
+    node tests/register.test.js  node tests/rounds.test.js
 
 `sync.test.js` is the important one: cross-device persistence against a fake Supabase, plus
 direct assertions on the RLS rules. `framing.test.js` locks the camera maths that was got
@@ -529,7 +560,7 @@ against the position of its table, so this cannot recur silently.
 ## Deploy ritual
 
 After any schema change, re-run `workspace/schema.sql` in the Supabase SQL editor — it is
-fully idempotent and ~880 lines, starting `-- ====`. **Clear the editor with Ctrl+A then
+fully idempotent and ~950 lines, starting `-- ====`. **Clear the editor with Ctrl+A then
 Delete first**: a paste on top of existing content produced a "syntax error at line 3070"
 in a 618-line file. Open it with Notepad, not Word — smart quotes break it.
 

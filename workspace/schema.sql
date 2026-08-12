@@ -309,6 +309,72 @@ create policy user_prefs_rw on public.user_prefs for all
   using (user_id = auth.uid())
   with check (user_id = auth.uid());
 
+-- ---------- rounds and checklists (IPC.4, IMS.4, FMS.7, PSQ.4) ----------
+-- The third shape a department keeps: a recurring round or check that produces a SCORE.
+-- Hand hygiene rounds, cleaning audits, medical record review, crash cart checks, BMW
+-- segregation. Distinct from compliance_tasks (which asks only "was it done") because the
+-- number is the point — an assessor asks what your compliance rate is and whether it moved.
+create table if not exists public.checklists (
+  id            text primary key,
+  org_id        uuid references public.orgs(id) on delete cascade,
+  name          text not null,
+  department    text,
+  element_code  text,
+  frequency     text not null default 'monthly',
+  pref_dow      smallint,
+  owner         text,
+  -- The score a hospital holds itself to. An audit with no target cannot fail, and an
+  -- audit that cannot fail produces no corrective action for an assessor to look at.
+  target_pct    numeric default 90,
+  last_done_on  date,
+  active        boolean not null default true,
+  created_by    uuid,
+  created_at    timestamptz not null default now(),
+  updated_at    timestamptz not null default now()
+);
+create index if not exists chk_org_idx  on public.checklists(org_id);
+create index if not exists chk_dept_idx on public.checklists(department);
+
+-- The questions. Kept as rows rather than a JSON blob on the checklist so a round can
+-- reference the exact item it scored, and so editing a checklist next quarter does not
+-- silently rewrite what last quarter's round was measured against.
+create table if not exists public.checklist_items (
+  id            text primary key,
+  org_id        uuid references public.orgs(id) on delete cascade,
+  checklist_id  text references public.checklists(id) on delete cascade,
+  position      integer not null default 0,
+  text          text not null,
+  -- A critical item failing fails the whole round regardless of the percentage: you
+  -- cannot average away a missing crash-cart drug.
+  critical      boolean not null default false,
+  created_at    timestamptz not null default now()
+);
+create index if not exists cki_org_idx on public.checklist_items(org_id);
+create index if not exists cki_lst_idx on public.checklist_items(checklist_id);
+
+-- One completed round. `answers` holds {item_id: "yes"|"no"|"na"} — a jsonb map rather
+-- than a row per answer, because a round is always read and written whole and the map
+-- keeps it to one request either way.
+create table if not exists public.rounds (
+  id            text primary key,
+  org_id        uuid references public.orgs(id) on delete cascade,
+  checklist_id  text references public.checklists(id) on delete set null,
+  performed_on  date not null,
+  performed_by  text,
+  area          text,
+  answers       jsonb not null default '{}'::jsonb,
+  score_pct     numeric,
+  passed        boolean,
+  notes         text,
+  -- Set when a round fails, so the finding and its CAPA are traceable to the round that
+  -- raised it. An audit with no action recorded against it is the most common finding.
+  capa_id       text,
+  created_by    uuid,
+  created_at    timestamptz not null default now()
+);
+create index if not exists rnd_org_idx on public.rounds(org_id);
+create index if not exists rnd_lst_idx on public.rounds(checklist_id);
+
 -- ---------- document control (IMS.6.a) ----------
 create table if not exists public.documents (
   id            text primary key,
@@ -489,7 +555,8 @@ declare t text;
 begin
   foreach t in array array['elements','capa','documents','document_versions','audits','incidents',
                         'committees','committee_meetings','compliance_tasks',
-                        'assets','asset_schedules','asset_events'] loop
+                        'assets','asset_schedules','asset_events',
+                        'checklists','checklist_items','rounds'] loop
     execute format('drop policy if exists %I_read on public.%I', t, t);
     execute format(
       'create policy %I_read on public.%I for select using (org_id = public.my_org())', t, t);
@@ -517,7 +584,8 @@ declare t text;
 begin
   foreach t in array array['elements','capa','documents','document_versions','members','audits','incidents',
                         'committees','committee_meetings','compliance_tasks',
-                        'assets','asset_schedules','asset_events'] loop
+                        'assets','asset_schedules','asset_events',
+                        'checklists','checklist_items','rounds'] loop
     execute format('drop trigger if exists set_org_%I on public.%I', t, t);
     execute format(
       'create trigger set_org_%I before insert on public.%I
@@ -871,7 +939,7 @@ create trigger aq_claim_comp_trg after insert on auth.users
 do $$
 declare t text;
 begin
-  foreach t in array array['capa','incidents','audits','assets','asset_events'] loop
+  foreach t in array array['capa','incidents','audits','assets','asset_events','checklists','rounds'] loop
     execute format('drop trigger if exists %I_author_trg on public.%I', t, t);
     execute format(
       'create trigger %I_author_trg before insert on public.%I
