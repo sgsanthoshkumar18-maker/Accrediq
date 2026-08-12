@@ -3,17 +3,6 @@
   "framework": null,
   "buildCommand": null,
   "outputDirectory": ".",
-
-  "comment": [
-    "NO REWRITES FOR /api/*. Vercel already maps /api/who to api/who.js by file",
-    "convention. The rewrites that used to sit here pointed /api/who at the literal",
-    "path /api/who.js, which Vercel served as a STATIC FILE from the output directory",
-    "instead of invoking the function. The browser got JavaScript source with a 200,",
-    "res.json() failed to parse it, health-data.js caught the error, and every field",
-    "rendered 'No data' — which read as WHO having no figures rather than as the proxy",
-    "never being called. Adding a rewrite here again will silently break the globe."
-  ],
-
   "functions": {
     "api/*.js": {
       "maxDuration": 15
