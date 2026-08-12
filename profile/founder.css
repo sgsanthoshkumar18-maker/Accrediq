@@ -525,10 +525,26 @@ html.fp-tilt-on [data-tilt].is-tilting::after { opacity: 1; }
   /* The reel stays pinned and scroll-driven here too — position:sticky is supported on
      iOS and Android, and touch-action:pan-y keeps vertical scrolling native, so the page
      scrolls the reel sideways exactly as it does on desktop. */
-  .fp-reel-pin { top: 68px; height: 66vh; }
-  .fp-reel-rail { gap: 12px; }
-  .fp-reel-rail .fp-pub { flex: 0 0 74vw; }
-  .fp-reel-hint { font-size: 10.5px; }
+  /* NO REEL ON A PHONE. Nine papers pinned in a sideways rail means nine screens of
+     vertical scrolling to read a list, and a card at 74vw shows a title with almost no
+     abstract. Publications become plain stacked sections instead — each one full width,
+     readable, and skimmable by thumb. The rail's height override is the important part:
+     without it the section keeps its computed --fp-reel-h and leaves a long blank gap
+     where the pinned area used to be. */
+  .fp-reel { height: auto !important; }
+  .fp-reel-pin { position: static; height: auto; overflow: visible; display: block; }
+  .fp-reel-rail { display: block; transform: none !important; will-change: auto; }
+  .fp-reel-rail .fp-pub {
+    flex: none;
+    width: 100%;
+    margin-bottom: 12px;
+    /* A rule between entries reads as a list of sections rather than a stack of cards. */
+    border-radius: var(--r-md);
+  }
+  .fp-reel-rail .fp-pub:last-child { margin-bottom: 0; }
+  /* The progress bar and the swipe hint both describe an interaction that no longer
+     exists here, so they would only mislead. */
+  .fp-reel-bar, .fp-reel-hint { display: none; }
 }
 }
 

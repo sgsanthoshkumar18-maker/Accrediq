@@ -172,10 +172,25 @@
     var rail = sec.querySelector(".fp-reel-rail");
     if (!rail) return;
 
+    /* Phones show the publications as stacked sections instead — nine papers in a
+       sideways rail costs nine screens of scrolling to read a list. The JS must stand
+       down as well as the CSS: it writes an inline --fp-reel-h and a transform, and an
+       inline style beats a stylesheet rule, so leaving it running would re-impose the
+       tall section and the horizontal offset the media query just removed. */
+    var stacked = window.matchMedia("(max-width: 620px)");
+    function idle() {
+      sec.style.removeProperty("--fp-reel-h");
+      rail.style.removeProperty("transform");
+      var bar = sec.querySelector(".fp-reel-bar span");
+      if (bar) bar.style.removeProperty("transform");
+    }
+    if (stacked.matches) { idle(); }
+
     /* The section must be tall enough for the whole rail to pass. Computed from the
        actual overflow rather than a guessed height, so adding a publication lengthens the
        scroll automatically instead of cutting the last card off. */
     function measure() {
+      if (stacked.matches) return 0;
       var over = Math.max(0, rail.scrollWidth - sec.clientWidth);
       sec.style.setProperty("--fp-reel-h", (window.innerHeight + over) + "px");
       return over;
@@ -183,6 +198,7 @@
     var over = measure();
 
     var update = throttled(function () {
+      if (stacked.matches) return;
       var r = sec.getBoundingClientRect();
       var span = sec.offsetHeight - window.innerHeight;
       if (span <= 0) { rail.style.transform = ""; return; }
@@ -194,6 +210,16 @@
 
     window.addEventListener("scroll", update, { passive: true });
     window.addEventListener("resize", function () { over = measure(); update(); }, { passive: true });
+
+    /* Registered here, AFTER `over` and `update` exist. Declared any earlier and a
+       breakpoint change firing during setup would reach a `var` in its temporal dead
+       zone — the failure mode that has blanked a visual on this site twice before.
+       Rotating a phone crosses this breakpoint, so both modes must swap cleanly rather
+       than the layout only being decided once at load. */
+    stacked.addEventListener("change", function (e) {
+      if (e.matches) idle(); else { over = measure(); update(); }
+    });
+
     update();
   }
 

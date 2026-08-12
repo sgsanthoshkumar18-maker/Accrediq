@@ -223,8 +223,34 @@ ok(/fp-statband \{ grid-template-columns: repeat\(2, 1fr\)/.test(css),
   ok(mo.indexOf('timelineSpine();') < mo.indexOf('if (coarse) return;'),
      'the timeline light runs on touch');
   ok(mo.indexOf('reel();') < mo.indexOf('if (coarse) return;'), 'and so does the reel');
-  eq(/\.fp-reel \{ height: auto !important/.test(css), false,
-     'the reel is no longer unpinned on a phone');
+  /* The reel is a DESKTOP and TABLET effect. On a phone nine papers in a sideways rail
+     costs nine screens of scrolling to read a list, so they stack as sections instead. */
+  /* Extract the 620px block by brace matching. A fixed character window silently fails
+     as soon as the block grows, which is a test breaking rather than the code. */
+  const phoneBlock = (function () {
+    const i = css.indexOf('@media (max-width: 620px)');
+    if (i < 0) return '';
+    const o = css.indexOf('{', i);
+    let d = 0, j = o;
+    for (; j < css.length; j++) {
+      if (css[j] === '{') d++;
+      else if (css[j] === '}') { d--; if (!d) break; }
+    }
+    return css.slice(o, j + 1);
+  })();
+  ok(/\.fp-reel \{ height: auto !important/.test(phoneBlock), 'the reel unpins on a phone');
+  ok(/\.fp-reel-rail \{ display: block; transform: none !important/.test(css),
+     'and the rail stacks');
+  ok(/\.fp-reel-bar, \.fp-reel-hint \{ display: none/.test(css),
+     'the progress bar and swipe hint go, since they describe an interaction that is gone');
+  /* An inline style beats a stylesheet rule, so the JS must stand down as well as the
+     CSS — otherwise it re-imposes the tall section the media query just removed. */
+  ok(/function idle\(\)/.test(mo), 'the script stands down on a phone');
+  ok(/removeProperty\("--fp-reel-h"\)/.test(mo), 'clearing the inline height it wrote');
+  ok(/if \(stacked\.matches\) return;/.test(mo), 'and stops writing transforms');
+  ok(/stacked\.addEventListener\("change"/.test(mo), 'rotating a phone swaps modes cleanly');
+  ok(mo.indexOf('var over = measure()') < mo.indexOf('stacked.addEventListener("change"'),
+     'the change listener is registered after the values it closes over exist');
   ok(/touch-action: pan-y/.test(css),
      'the rail yields vertical gestures so page scroll still drives it');
 
