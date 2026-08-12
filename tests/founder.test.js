@@ -178,5 +178,49 @@ eq(fs.existsSync(path.join(ROOT, 'profile/network.js')), false, 'the network fil
 ok(/fp-statband \{ grid-template-columns: repeat\(2, 1fr\)/.test(css),
    'four counters become two columns on a phone');
 
+
+/* ===================== portfolio motion ===================== */
+{
+  const mo = read('profile/founder-motion.js');
+  const wa = read('profile/founder-watch.js');
+
+  /* All of this renders from data AFTER DOMContentLoaded, so binding on the DOM event
+     would attach to an empty page. Both files wait for founder.js's signal. */
+  ok(/aq:content/.test(mo), 'motion binds after the content is rendered');
+
+  // Cursor-watching mark. Tracked on the WINDOW: watching only its own box means it
+  // stares ahead until the cursor is already on it, which is the opposite of the effect.
+  ok(/id="fpWatch"/.test(html), 'the hero has a watching mark');
+  ok(/window\.addEventListener\("pointermove"/.test(wa), 'it tracks across the whole page');
+  ok(/fpw-iris/.test(wa) && /fpw-arc/.test(wa), 'iris and arc both respond');
+  // Three different amounts from one input is what sells it as one object looking.
+  ok(/x \* 13/.test(wa) && /x \* 26/.test(wa), 'the layers move by different amounts');
+  ok(/coarse && !reduce/.test(wa), 'a phone gets a time-driven drift instead of nothing');
+
+  // Scroll-linked spine, measured at the reading line rather than the viewport top.
+  ok(/fp-spine/.test(mo) && /fp-spine/.test(css), 'the timeline has a travelling light');
+  ok(/vh \* 0\.45/.test(mo), 'it fills at the reading line, not the top edge');
+  ok(/is-lit/.test(mo) && /is-lit/.test(css), 'entries light as the head passes them');
+
+  // Horizontal reel: scroll position drives translateX directly.
+  ok(/data-reel/.test(html), 'publications render as a reel');
+  ok(/rail\.scrollWidth - sec\.clientWidth/.test(mo),
+     'the scroll length is measured from real overflow, not guessed');
+  ok(/position: sticky/.test(css), 'the rail is pinned while it travels');
+  eq(/addEventListener\("wheel"/.test(mo), false, 'the reel never hijacks the wheel');
+
+  // Throttling: pointermove and scroll fire far faster than the screen refreshes.
+  ok(/function throttled/.test(mo), 'handlers are throttled to one frame');
+  ok(/requestAnimationFrame/.test(wa), 'and so is the watcher');
+
+  // Gating.
+  ok(/pointer: coarse/.test(mo) && /prefers-reduced-motion/.test(mo),
+     'pointer-linked effects are gated');
+  ok(/if \(!reduce\) stagger\(\)/.test(mo),
+     'stagger still runs on a phone — it costs a CSS transition and nothing else');
+  ok(/\.fp-reel \{ height: auto !important/.test(css),
+     'the reel unpins on a phone and becomes a normal swipe');
+}
+
 console.log('\n' + pass + ' passed, ' + fail + ' failed');
 if (fail) process.exit(1);

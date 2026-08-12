@@ -364,3 +364,74 @@ html.fp-tilt-on [data-tilt].is-tilting::after { opacity: 1; }
 @media (prefers-reduced-motion: reduce) {
   .fp-photo, .fp-skill, [data-tilt] { transition: none !important; transform: none !important; }
 }
+
+/* ===================== cursor-watching mark ===================== */
+.fp-watch { position: relative; width: 190px; height: 190px; }
+.fpw-mark { position: absolute; inset: 0; transform-style: preserve-3d;
+  transition: transform 260ms cubic-bezier(.22,.61,.36,1); }
+.fpw-svg { width: 100%; height: 100%; overflow: visible; }
+.fpw-ring { fill: none; stroke: rgba(255,255,255,.14); stroke-width: 2; }
+.fpw-arc path { fill: none; stroke: var(--accent-bright); stroke-width: 5;
+  stroke-linecap: round; transform-origin: 100px 100px;
+  transition: transform 300ms cubic-bezier(.22,.61,.36,1); }
+.fpw-eye { fill: rgba(255,255,255,.05); stroke: rgba(255,255,255,.12); stroke-width: 1.5; }
+.fpw-iris { fill: var(--accent-bright);
+  transition: transform 220ms cubic-bezier(.22,.61,.36,1); }
+/* The portrait sits inside the ring once a file exists; until then the mark is the hero. */
+.fp-watch .fp-photo { position: absolute; inset: 34px; width: auto; height: auto; border-width: 2px; }
+
+/* ===================== scroll-linked timeline spine ===================== */
+.fp-timeline { position: relative; }
+.fp-spine { position: absolute; left: 5px; top: 6px; bottom: 6px; width: 2px;
+  background: linear-gradient(180deg, var(--brand-2), var(--accent-bright));
+  transform-origin: top; transform: scaleY(0); }
+/* The travelling head: a glow that rides the end of the drawn line. */
+.fp-spine::after { content: ""; position: absolute; left: -4px; bottom: -5px;
+  width: 10px; height: 10px; border-radius: 50%; background: var(--accent-bright);
+  box-shadow: 0 0 14px 4px var(--accent-bright); }
+.fp-item.is-lit .fp-dot { border-color: var(--accent-bright);
+  background: var(--accent-bright); box-shadow: 0 0 12px 2px var(--accent-bright); }
+.fp-item .fp-dot { transition: background 320ms ease, border-color 320ms ease, box-shadow 320ms ease; }
+.fp-year { font-family: var(--font-display); font-size: 26px; font-weight: 700;
+  color: var(--fg-faint); line-height: 1; margin: 2px 0 6px; letter-spacing: -.02em;
+  transition: color 320ms ease; }
+.fp-item.is-lit .fp-year { color: var(--brand-2); }
+
+/* ===================== horizontal reel ===================== */
+.fp-reel { height: var(--fp-reel-h, 200vh); position: relative; }
+.fp-reel-pin { position: sticky; top: 96px; height: 76vh; overflow: hidden;
+  display: flex; flex-direction: column; justify-content: center; }
+.fp-reel-rail { display: flex; gap: 18px; will-change: transform; }
+.fp-reel-rail .fp-pub { flex: 0 0 340px; }
+.fp-reel-bar { height: 3px; background: var(--border); border-radius: 2px; margin-top: 20px; }
+.fp-reel-bar span { display: block; height: 100%; border-radius: 2px;
+  background: var(--brand-2); transform-origin: left; transform: scaleX(0); }
+.fp-reel-hint { font-size: 11.5px; color: var(--fg-faint); margin-top: 9px;
+  text-transform: uppercase; letter-spacing: .07em; }
+
+/* ===================== staggered entrance ===================== */
+.fp-pubs > *, .fp-certs > *, .fp-certs-top > *, .fp-skills > * {
+  opacity: 0; transform: translateY(16px);
+  transition: opacity 560ms ease var(--fp-stagger, 0ms),
+              transform 560ms cubic-bezier(.22,.61,.36,1) var(--fp-stagger, 0ms); }
+.fp-stagger-in > * { opacity: 1; transform: none; }
+
+.is-magnetic { transition: transform 90ms linear !important; }
+
+@media (max-width: 900px) {
+  /* No pinning on a phone: the reel becomes a normal swipeable row, which is the
+     native gesture there anyway. Layout only — no colours in here. */
+  .fp-reel { height: auto !important; }
+  .fp-reel-pin { position: static; height: auto; overflow-x: auto;
+    -webkit-overflow-scrolling: touch; }
+  .fp-reel-rail { transform: none !important; }
+  .fp-reel-rail .fp-pub { flex-basis: 78vw; }
+  .fp-watch { width: 130px; height: 130px; margin: 0 auto; }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .fp-pubs > *, .fp-certs > *, .fp-certs-top > *, .fp-skills > * {
+    opacity: 1 !important; transform: none !important; transition: none !important; }
+  .fp-spine { transform: scaleY(1) !important; }
+  .fpw-mark, .fpw-arc path, .fpw-iris { transform: none !important; transition: none !important; }
+}

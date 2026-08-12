@@ -127,6 +127,7 @@
         '<div class="fp-item-body">' +
           '<div class="fp-when">' + esc(e.from) + " \u2014 " + esc(e.to) +
             (e.current ? ' <span class="fp-now">Current</span>' : "") + "</div>" +
+          '<div class="fp-year">' + esc(e.current ? "NOW" : String(e.to).replace(/^\D+/, "")) + "</div>" +
           "<h4>" + esc(e.role) + "</h4>" +
           '<div class="fp-org">' + esc(e.org) + "</div>" +
           (e.type ? '<div class="fp-type">' + esc(e.type) + "</div>" : "") +
@@ -150,7 +151,7 @@
   function renderPublications() {
     el("fPubCount").textContent = F.publications.length;
     el("fPubs").innerHTML = F.publications.map(function (p, i) {
-      return '<article class="fp-pub" data-reveal data-tilt>' +
+      return '<article class="fp-pub" data-tilt>' +
         '<div class="fp-pub-n">' + String(i + 1).padStart(2, "0") + "</div>" +
         "<h4>" + esc(p.title) + "</h4>" +
         '<div class="fp-journal">' + esc(p.journal) + '<span class="fp-date"> \u00b7 ' +

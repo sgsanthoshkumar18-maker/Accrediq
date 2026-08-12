@@ -23,7 +23,17 @@
   <section class="fp-hero">
     <div class="wrap">
       <div class="fp-hero-grid">
-        <div class="fp-photo" id="fPhoto" data-tilt></div>
+        <div class="fp-watch" id="fpWatch">
+          <div class="fpw-mark">
+            <svg viewBox="0 0 200 200" class="fpw-svg" aria-hidden="true">
+              <circle class="fpw-ring" cx="100" cy="100" r="78"/>
+              <g class="fpw-arc"><path d="M100 22 A78 78 0 1 1 38 148" /></g>
+              <circle class="fpw-eye" cx="100" cy="100" r="26"/>
+              <circle class="fpw-iris" cx="100" cy="100" r="11"/>
+            </svg>
+          </div>
+          <div class="fp-photo" id="fPhoto" data-tilt></div>
+        </div>
         <div class="fp-hero-text">
           <span class="eyebrow">Founder &amp; Chief Quality Officer</span>
           <h1 id="fName" data-split></h1>
@@ -92,7 +102,13 @@
       <h2 data-split>Peer-reviewed publications.</h2>
       <p class="muted"><span id="fPubCount"></span> papers on medication safety, regulatory
         compliance, and clinical case management.</p></div>
-    <div class="fp-pubs" id="fPubs"></div>
+    <div class="fp-reel" data-reel>
+      <div class="fp-reel-pin">
+        <div class="fp-reel-rail fp-pubs" id="fPubs"></div>
+        <div class="fp-reel-bar"><span></span></div>
+        <div class="fp-reel-hint">keep scrolling →</div>
+      </div>
+    </div>
     <div class="fp-project" data-reveal>
       <span class="eyebrow">Research project</span>
       <div id="fProject"></div>
@@ -139,6 +155,8 @@
 <script src="app.js"></script>
 <script src="profile/founder-data.js"></script>
 <script src="profile/founder.js"></script>
+<script src="profile/founder-motion.js"></script>
+<script src="profile/founder-watch.js"></script>
 <script src="search/search.js"></script>
 <script src="motion/motion.js"></script>
 <script src="search/command.js"></script>

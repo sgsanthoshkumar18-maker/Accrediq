@@ -269,6 +269,19 @@ are idempotent — the reveal skips anything already carrying `.aq-reveal`, and 
 marks wired sections with `data-scrolly-wired` — so a re-scan cannot blink the page or
 double-observe.
 
+**Portfolio motion** (`founder-motion.js`, `founder-watch.js`), modelled on the
+reference portfolio he supplied: a cursor-watching ring mark (iris, arc and mark each
+move by a different amount from one input — that is what sells it as one object looking);
+a scroll-linked timeline spine whose glowing head travels as you read and lights each
+entry; publications as a pinned horizontal reel driven by scroll position; staggered card
+entrances; magnetic buttons. **The reel measures its own overflow** rather than using a
+guessed height, so adding a publication lengthens the scroll instead of cutting the last
+card off. Nothing hijacks the wheel. The watcher tracks on the **window**, not its own
+box — watching only itself means it stares ahead until the cursor is already on it.
+
+He asked for the 3-D character from that site: that is a modelled Blender/Spline asset,
+not code, and was not attempted. The brand mark does the watching instead.
+
 3D tilt is pointer-only (no hover on touch), capped at 7°, and writes at most once per
 frame. The cached rect is invalidated on scroll and resize or the card tilts around a
 stale origin. A missing `assets/founder.jpg` falls back to an initials mark rather than a
@@ -370,7 +383,7 @@ Redirect URLs, or Supabase ignores the parameter and falls back to Site URL.
 
 ---
 
-## Tests — 526 assertions, plain Node, no install
+## Tests — 546 assertions, plain Node, no install
 
     node tests/activity.test.js    node tests/sync.test.js
     node tests/profile.test.js     node tests/palette.test.js
