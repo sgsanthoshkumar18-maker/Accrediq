@@ -126,7 +126,7 @@
         '<div class="ws-f ws-f-wide"><label>Notes</label><textarea data-k="notes" rows="2">' + esc(row.notes || "") + "</textarea></div>" +
       "</div>" +
       '<p class="ws-auth-msg">Changing the version or status writes a row to the version history, which is what document control (IMS.6.a) expects.</p>' +
-      '<div class="ws-modal-actions"><button type="button" class="btn" id="dmCancel">Cancel</button>' +
+      '<div class="ws-modal-actions"><button type="button" class="btn btn-ghost" id="dmCancel">Cancel</button>' +
       '<button type="button" class="btn btn-accent" id="dmSave">Save</button></div></div>';
     m.classList.add("open");
     m.querySelector("#dmCancel").addEventListener("click", function () { m.classList.remove("open"); });
@@ -153,7 +153,7 @@
           W.DEPARTMENTS.map(function (d) { return '<option value="' + esc(d) + '">' + esc(d) + "</option>"; }).join("") + "</select>" +
         '<label class="ws-check"><input type="checkbox" id="ddue"> Review overdue only</label>' +
         (W.canEdit() ? '<button type="button" class="btn btn-accent" id="dNew">Add document</button>' : "") +
-        '<button type="button" class="btn" id="dExport">Export (.docx)</button>' +
+        '<button type="button" class="btn btn-ghost" id="dExport">Export (.docx)</button>' +
       "</div>";
     var b = function (id, k, chk) {
       var e = document.getElementById(id);

@@ -135,7 +135,7 @@
       "</div>" +
       '<div class="fw-actions">' +
         '<button type="button" class="btn btn-accent" id="fwDownload">Download as Word (.docx)</button>' +
-        '<button type="button" class="btn" id="fwClear">Clear</button>' +
+        '<button type="button" class="btn btn-ghost" id="fwClear">Clear</button>' +
         '<span class="fw-msg" id="fwMsg"></span>' +
       "</div>";
 

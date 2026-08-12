@@ -370,6 +370,23 @@ three.js's **XYZ Euler order** (X before Y); composing the axes the other way su
 `"comment"` key added to explain the removed rewrites failed two deployments outright.
 Reasoning about that file belongs here, not in it.
 
+### Homepage "how it runs" (`home-flow.js`)
+Four pinned screens showing the platform OPERATING — setup, what is due, evidence being
+recorded, the assessment export — on the same scrollytelling engine as the lens strip.
+It exists to close a positioning gap: the site explained standards beautifully and then
+asked for a subscription, so a visitor concluded it was a book. Content can be
+screenshotted; an overdue calendar and accumulated evidence cannot.
+
+**The screens are labelled "Illustrative screens" and must stay labelled.** A homepage
+cannot read a visitor's hospital, and figures that look real without saying they are
+illustrative would be the kind of quiet dishonesty an accreditation product least affords.
+Tests verify every element code shown exists in `nabh-data.js`, and that the dates on the
+setup screen match what `calendar/schedule.js` actually computes — otherwise the homepage
+would teach a rule the product does not follow.
+
+The hero lead now names the system as well as the explanation. The headline is unchanged;
+it is his brand line and it is strong.
+
 ### Command bar (`search/command.js`)
 Ctrl+K / Cmd+K, or `/` when not already typing. Indexes ~700 items — elements, standards,
 chapters, departments, committees, workspace pages — built **lazily on first open** from
@@ -410,7 +427,7 @@ Redirect URLs, or Supabase ignores the parameter and falls back to Site URL.
 
 ---
 
-## Tests — 592 assertions, plain Node, no install
+## Tests — 625 assertions, plain Node, no install
 
     node tests/activity.test.js    node tests/sync.test.js
     node tests/profile.test.js     node tests/palette.test.js
@@ -418,11 +435,22 @@ Redirect URLs, or Supabase ignores the parameter and falls back to Site URL.
     node tests/auth-errors.test.js  node tests/standards-export.test.js
     node tests/motion.test.js  node tests/calendar.test.js
     node tests/founder.test.js  node tests/lens.test.js
+    node tests/home-flow.test.js
 
 `sync.test.js` is the important one: cross-device persistence against a fake Supabase, plus
 direct assertions on the RLS rules. `framing.test.js` locks the camera maths that was got
 wrong twice by guessing. The scoring maths and the scope generator still have **no tests**,
 and both produce records a hospital may show an assessor.
+
+## Buttons
+`.btn` on its own is a complete, themed button — it carries `background:var(--bg-elevated)`
+and `color:var(--fg)`. It previously set **no background at all**, so a button written
+without a variant rendered as the browser's default white pill: unreadable on a dark
+panel, which is what shipped on the 5 Why analyser's Clear button and on eight more across
+the workspace. Variants (`btn-accent`, `btn-primary`, `btn-ghost`, `btn-ghost-dark`)
+override it. A test fails on any `class="btn"` with no variant.
+
+Convention: `btn-accent` for the primary action, `btn-ghost` for the secondary beside it.
 
 ## Cache busting — `node build/set-version.js`
 **Every local CSS and JS reference must carry `?v=...`.** Mobile browsers cache these far

@@ -7,16 +7,16 @@
 <title>AQcredix — Know it before the assessor does</title>
 <meta name="description" content="AQcredix teaches healthcare teams to understand NABH accreditation the way an assessor does — so the Non-Conformity never happens. Standards, department roles, KPIs, quality tools and assessor videos.">
 <link rel="icon" href="data:image/svg+xml,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 40 40'><circle cx='20' cy='20' r='16' fill='none' stroke='%23D8E0E6' stroke-width='3.4'/><path d='M20 4a16 16 0 1 1-11.31 4.69' fill='none' stroke='%2317A2B8' stroke-width='3.4' stroke-linecap='round'/><path d='M19.15 14.05H20.85L25.61 25.015H26.97V25.95H22.21V25.015H23.315L22 22H18L16.685 25.015H17.79V25.95H13.03V25.015H14.39ZM20 16.26L22.027 20.935H17.973Z' fill='%2317A2B8' fill-rule='evenodd'/></svg>">
-<link rel="stylesheet" href="styles.css?v=20260812b">
-<link rel="stylesheet" href="face/face.css?v=20260812b">
-<link rel="stylesheet" href="news/news.css?v=20260812b">
-<link rel="stylesheet" href="quote/quote.css?v=20260812b">
-<link rel="stylesheet" href="icd/icd.css?v=20260812b">
-<link rel="stylesheet" href="hglobe/hglobe.css?v=20260812b">
+<link rel="stylesheet" href="styles.css?v=20260812d">
+<link rel="stylesheet" href="face/face.css?v=20260812d">
+<link rel="stylesheet" href="news/news.css?v=20260812d">
+<link rel="stylesheet" href="quote/quote.css?v=20260812d">
+<link rel="stylesheet" href="icd/icd.css?v=20260812d">
+<link rel="stylesheet" href="hglobe/hglobe.css?v=20260812d">
 <script type="application/ld+json">{"@context":"https://schema.org","@type":"EducationalOrganization","name":"AQcredix","alternateName":"AQcredix \u2014 Accreditation & Quality Implementation Guidance Platform","url":"https://accrediq.vercel.app/","description":"An independent healthcare quality education and training forum covering NABH accreditation standards, department roles, KPIs, quality tools and mock assessment.","founder":{"@type":"Person","name":"Dr. Santhoshkumar SG","jobTitle":"Founder & Chief Quality Officer, AQcredix; Infectious Disease Clinical Pharmacologist","honorificSuffix":"FISQua, CPQIH (Basic) (CAHO)"},"knowsAbout":["NABH accreditation","Healthcare quality improvement","Hospital infection control","Patient safety","Standard operating procedures","Clinical audit"]}</script>
 <script type="application/ld+json">{"@context":"https://schema.org","@type":"WebSite","name":"AQcredix","url":"https://accrediq.vercel.app/","potentialAction":{"@type":"SearchAction","target":"https://accrediq.vercel.app/standards.html?q={search_term_string}","query-input":"required name=search_term_string"}}</script>
-<link rel="stylesheet" href="motion/motion.css?v=20260812b">
-<link rel="stylesheet" href="search/command.css?v=20260812b">
+<link rel="stylesheet" href="motion/motion.css?v=20260812d">
+<link rel="stylesheet" href="search/command.css?v=20260812d">
 </head>
 <body data-page="home" data-access="free">
 <div id="site-header"></div>
@@ -51,7 +51,7 @@
           </svg>
           <h1 data-split>Know it before<br>the <span class="em">assessor</span> does.</h1>
         </div>
-        <p class="lead">Every standard, explained the way an assessor reads it — so your team closes the gap before it ever becomes a Non-Conformity.</p>
+        <p class="lead">Every standard explained the way an assessor reads it — then the system that runs it: committee calendars, recurring obligations, and evidence filed against the element it proves.</p>
         <div class="hero-cta">
           <a class="btn btn-accent" href="standards.html">Explore the standards
             <svg width="17" height="17" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round"><path d="M5 12h14M13 6l6 6-6 6"/></svg></a>
@@ -159,6 +159,35 @@
         <p>Click any glowing node on the globe for that capital's profile.</p>
       </div>
       <div class="hg-panel" id="hgPanel"></div>
+    </div>
+  </div>
+</section>
+
+<!-- HOW IT RUNS — the platform doing the work, not explaining it -->
+<section class="flow-strip" data-scrolly>
+  <div class="wrap">
+    <div class="section-head">
+      <span class="eyebrow">How it runs</span>
+      <h2 data-split>Not a book about NABH. The system that runs it.</h2>
+      <p>Set it up once, and every department knows what is due, evidence files itself
+        against the standard, and assessment day is a report rather than a scramble.</p>
+    </div>
+    <div class="scrolly">
+      <div class="scrolly-sticky" data-scrolly-sticky data-stage="0">
+        <div class="flow-frame">
+          <div class="flow-chrome"><span></span><span></span><span></span>
+            <em>AQcredix workspace</em></div>
+          <div id="flowScreen"></div>
+          <!-- Said plainly: a homepage cannot read a visitor's hospital, and figures that
+               look real without saying they are illustrative would be dishonest here. -->
+          <div class="flow-mock">Illustrative screens</div>
+        </div>
+      </div>
+      <div class="scrolly-steps" id="flowSteps"></div>
+    </div>
+    <div class="flow-cta">
+      <a class="btn btn-accent" href="workspace/workspace.html">Open the workspace</a>
+      <a class="btn btn-ghost" href="standards.html">Browse the standards</a>
     </div>
   </div>
 </section>
@@ -271,14 +300,15 @@
 </section>
 
 <div id="site-footer"></div>
-<script src="app.js?v=20260812b"></script>
-<script src="nabh-data.js?v=20260812b"></script>
-<script src="lens-rotation.js?v=20260812b"></script>
-<script src="lens-rotate.js?v=20260812b"></script>
-<script src="search/search.js?v=20260812b"></script>
-<script src="news/news.js?v=20260812b"></script>
-<script src="quote/quote-data.js?v=20260812b"></script>
-<script src="quote/quote.js?v=20260812b"></script>
+<script src="app.js?v=20260812d"></script>
+<script src="nabh-data.js?v=20260812d"></script>
+<script src="lens-rotation.js?v=20260812d"></script>
+<script src="home-flow.js?v=20260812d"></script>
+<script src="lens-rotate.js?v=20260812d"></script>
+<script src="search/search.js?v=20260812d"></script>
+<script src="news/news.js?v=20260812d"></script>
+<script src="quote/quote-data.js?v=20260812d"></script>
+<script src="quote/quote.js?v=20260812d"></script>
 <script>
 (function loadThreeThenFace() {
   var sources = [
@@ -371,8 +401,8 @@
   tryLoad(0);
 })();
 </script>
-<script src="motion/motion.js?v=20260812b"></script>
-<script src="search/command.js?v=20260812b"></script>
-<script src="motion/scrolly.js?v=20260812b"></script>
+<script src="motion/motion.js?v=20260812d"></script>
+<script src="search/command.js?v=20260812d"></script>
+<script src="motion/scrolly.js?v=20260812d"></script>
 </body>
 </html>

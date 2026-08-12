@@ -317,10 +317,16 @@ p{margin:0 0 0;}
   display:inline-flex;align-items:center;gap:9px;
   font-family:var(--font-body);font-weight:600;font-size:14.5px;
   padding:13px 22px;border-radius:999px;
-  border:1px solid transparent;cursor:pointer;
+  border:1px solid var(--border);cursor:pointer;
+  /* The base carries a real background and colour, so a button written without a variant
+     still looks like it belongs to this site. Previously it set no background at all and
+     the browser's default white pill showed through — which is what appeared on the 5 Why
+     analyser, unreadable on the dark panel. Variants below override all three. */
+  background:var(--bg-elevated);color:var(--fg);
   transition:transform .18s ease, box-shadow .18s ease, background .18s ease, color .18s ease, border-color .18s ease;
   white-space:nowrap;
 }
+.btn:hover{border-color:var(--brand-2);color:var(--brand-2);}
 .btn:hover{transform:translateY(-1px);}
 .btn-accent{background:var(--accent-bright);color:#04241F;box-shadow:0 10px 24px -10px rgba(14,165,160,.55);}
 .btn-accent:hover{background:#0c9691;}
@@ -1035,3 +1041,68 @@ a:focus-visible,button:focus-visible,input:focus-visible,select:focus-visible,te
   transition:transform 320ms cubic-bezier(.22,.61,.36,1);}
 .fp-namelink:hover{color:var(--brand-2);}
 .fp-namelink:hover::after{transform:scaleX(1);}
+
+/* ---------- Homepage "how it runs" flow ---------- */
+.flow-strip{background:var(--bg-deep-2);color:#fff;padding:70px 0;}
+.flow-strip .section-head h2{color:#fff;}
+.flow-strip .section-head p{color:rgba(255,255,255,.72);max-width:60ch;}
+.flow-frame{border:1px solid rgba(255,255,255,.14);border-radius:var(--r-lg);
+  background:rgba(255,255,255,.04);overflow:hidden;position:relative;min-height:330px;}
+.flow-chrome{display:flex;align-items:center;gap:6px;padding:11px 14px;
+  border-bottom:1px solid rgba(255,255,255,.10);background:rgba(255,255,255,.03);}
+.flow-chrome span{width:9px;height:9px;border-radius:50%;background:rgba(255,255,255,.18);}
+.flow-chrome em{margin-left:8px;font-style:normal;font-size:11.5px;
+  font-family:var(--font-mono);color:rgba(255,255,255,.45);}
+/* Faces share one box and cross-fade, so the pinned frame never changes height. */
+.fl-face{opacity:0;visibility:hidden;position:absolute;inset:46px 18px auto 18px;
+  transition:opacity 420ms ease;}
+[data-stage="0"] .fl-face[data-face="0"],
+[data-stage="1"] .fl-face[data-face="1"],
+[data-stage="2"] .fl-face[data-face="2"],
+[data-stage="3"] .fl-face[data-face="3"]{opacity:1;visibility:visible;position:relative;
+  inset:auto;margin:18px;}
+.fl-bar{display:flex;align-items:center;gap:8px;font-size:11.5px;font-weight:700;
+  text-transform:uppercase;letter-spacing:.06em;color:rgba(255,255,255,.55);margin-bottom:14px;}
+.fl-dot{width:7px;height:7px;border-radius:50%;background:var(--accent-bright);}
+.fl-form{display:grid;gap:10px;margin-bottom:14px;}
+.fl-f label{display:block;font-size:10.5px;text-transform:uppercase;letter-spacing:.05em;
+  color:rgba(255,255,255,.42);margin-bottom:4px;}
+.fl-in{padding:9px 12px;border:1px solid rgba(255,255,255,.14);border-radius:var(--r-md);
+  font-size:13.5px;background:rgba(255,255,255,.04);}
+.fl-note{font-size:12.5px;color:rgba(255,255,255,.68);line-height:1.6;}
+.fl-note b{color:var(--accent-bright);}
+.fl-rows{display:grid;gap:8px;}
+.fl-rows.fl-tight{margin-top:12px;}
+.fl-row{display:flex;align-items:center;gap:12px;justify-content:space-between;
+  padding:11px 13px;border:1px solid rgba(255,255,255,.12);border-left-width:3px;
+  border-radius:var(--r-md);background:rgba(255,255,255,.03);}
+.fl-row b{display:block;font-size:13.5px;}
+.fl-row span{font-size:11.5px;color:rgba(255,255,255,.5);}
+.fl-row.is-bad{border-left-color:var(--nc);}
+.fl-row.is-warn{border-left-color:var(--warn);}
+.fl-row.is-ok{border-left-color:var(--accent-bright);}
+.fl-pill{font-size:10.5px;font-weight:700;padding:4px 10px;border-radius:999px;
+  white-space:nowrap;background:rgba(255,255,255,.08);color:rgba(255,255,255,.7);}
+.fl-pill.bad{background:var(--nc-tint);color:var(--nc);}
+.fl-pill.warn{background:var(--warn-tint);color:var(--warn);}
+.fl-pill.ok{background:var(--accent-bright-tint);color:var(--accent-bright);}
+.fl-toast{font-size:12.5px;font-weight:600;padding:9px 12px;border-radius:var(--r-md);
+  background:var(--accent-bright-tint);color:var(--accent-bright);}
+.fl-sheet{border:1px solid rgba(255,255,255,.12);border-radius:var(--r-md);overflow:hidden;}
+.fl-sh-row{display:grid;grid-template-columns:70px 1fr 110px;gap:10px;padding:8px 11px;
+  font-size:11.5px;border-bottom:1px solid rgba(255,255,255,.08);}
+.fl-sh-row:last-child{border-bottom:none;}
+.fl-sh-head{font-weight:700;text-transform:uppercase;letter-spacing:.05em;font-size:10px;
+  color:rgba(255,255,255,.45);background:rgba(255,255,255,.04);}
+.fl-sh-row span:first-child{font-family:var(--font-mono);color:var(--accent-bright);}
+.flow-mock{position:absolute;right:12px;bottom:10px;font-size:10px;
+  color:rgba(255,255,255,.32);font-family:var(--font-mono);}
+.flow-cta{display:flex;gap:10px;flex-wrap:wrap;margin-top:34px;}
+
+@media (max-width:900px){
+  /* Layout only. The flow frame keeps its sketch on a phone but drops the fixed height,
+     since the pinned column becomes a stacked one below this width. */
+  .fl-sh-row{grid-template-columns:56px 1fr;}
+  .fl-sh-row span:last-child{display:none;}
+  .flow-cta .btn{flex:1;justify-content:center;}
+}

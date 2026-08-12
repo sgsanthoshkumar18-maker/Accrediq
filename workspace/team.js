@@ -86,7 +86,7 @@
       (S.mode === "supabase"
         ? '<p class="ws-auth-msg">This records the seat. The person still needs to create an account with the same email address — sending the invitation email itself needs a server-side function, which is noted in the setup guide.</p>'
         : "") +
-      '<div class="ws-modal-actions"><button type="button" class="btn" id="tmCancel">Cancel</button>' +
+      '<div class="ws-modal-actions"><button type="button" class="btn btn-ghost" id="tmCancel">Cancel</button>' +
       '<button type="button" class="btn btn-accent" id="tmSave">Save</button></div></div>';
     m.classList.add("open");
     m.querySelector("#tmCancel").addEventListener("click", function () { m.classList.remove("open"); });

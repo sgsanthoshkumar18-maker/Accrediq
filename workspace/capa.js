@@ -131,7 +131,7 @@
         ta("Verification of effectiveness", "verification", row.verification) +
       "</div>" +
       '<div class="ws-modal-actions">' +
-        '<button type="button" class="btn" id="cmCancel">Cancel</button>' +
+        '<button type="button" class="btn btn-ghost" id="cmCancel">Cancel</button>' +
         '<button type="button" class="btn btn-accent" id="cmSave">Save</button></div></div>';
     m.classList.add("open");
 
@@ -183,7 +183,7 @@
         '<select id="cd"><option value="">Any department</option>' +
           W.DEPARTMENTS.map(function (d) { return '<option value="' + esc(d) + '">' + esc(d) + "</option>"; }).join("") + "</select>" +
         (W.canEdit() ? '<button type="button" class="btn btn-accent" id="cNew">New finding</button>' : "") +
-        '<button type="button" class="btn" id="cExport">Export (.docx)</button>' +
+        '<button type="button" class="btn btn-ghost" id="cExport">Export (.docx)</button>' +
       "</div>";
     var b = function (id, k) {
       var e = document.getElementById(id);

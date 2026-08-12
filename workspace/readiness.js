@@ -124,7 +124,7 @@
         '<select id="fDept"><option value="">Any department</option>' +
           W.DEPARTMENTS.map(function (d) { return '<option value="' + esc(d) + '">' + esc(d) + "</option>"; }).join("") + "</select>" +
         '<label class="ws-check"><input type="checkbox" id="fSop"> SOP required only</label>' +
-        '<button type="button" class="btn" id="fReset">Reset</button>' +
+        '<button type="button" class="btn btn-ghost" id="fReset">Reset</button>' +
       "</div>";
 
     function bind(id, key, isCheck) {
@@ -245,8 +245,8 @@
   function renderActions() {
     var host = document.getElementById("wsActions");
     host.innerHTML =
-      '<button type="button" class="btn" id="wsExport">Export data (JSON)</button>' +
-      '<button type="button" class="btn" id="wsImportBtn">Import</button>' +
+      '<button type="button" class="btn btn-ghost" id="wsExport">Export data (JSON)</button>' +
+      '<button type="button" class="btn btn-ghost" id="wsImportBtn">Import</button>' +
       '<input type="file" id="wsImport" accept="application/json" hidden>' +
       '<button type="button" class="btn btn-accent" id="wsReport">Download readiness report (.docx)</button>';
 
