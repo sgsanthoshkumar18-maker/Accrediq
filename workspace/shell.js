@@ -8,6 +8,8 @@
   var CFG = window.AQ_CONFIG || {};
 
   var PAGES = [
+    { key: "dashboard", href: "dashboard.html", label: "My department",
+      desc: "Everything one department is answerable for, in one place" },
     /* ?stay=1 so this link is reachable when the user has pinned another page. Without
        it the pin redirect fires the moment they click Readiness and throws them straight
        back to the pinned page, making the landing page impossible to open. */

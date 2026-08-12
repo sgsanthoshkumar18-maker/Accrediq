@@ -456,6 +456,44 @@ manual choice yanks the frame away mid-read. Restarting the progress bar needs
 `void bar.offsetWidth` between removing and re-adding the animation; setting the same
 value again does nothing and the bar freezes on the second frame.
 
+### Customer data export (`workspace/data-export.js`)
+Every org-scoped table in one workbook, plus a JSON copy — Excel is what a quality manager
+opens, JSON is what another system imports, and an "export" that only produces a
+spreadsheet is not a real answer to a migration question.
+
+A hospital that cannot get its own compliance records out is a hospital that cannot leave,
+and an IT review asks this before it asks about features.
+
+Three details worth keeping:
+- **The sheet list is data (`SHEETS`), not eight near-identical functions.** A new table is
+  one entry and appears automatically instead of being silently left out.
+- **One failing table becomes an empty sheet with a note, not an error.** A hospital
+  exporting because it is unhappy, or because IT asked, is when a half-failure is least
+  forgivable.
+- **Ids are resolved to names.** An export full of `chk_m8x2p1` is technically complete and
+  practically useless.
+
+Values are written as inline **strings**, including numbers: a reference like `2026-001`
+is not a number, and letting Excel decide turns some into dates and others into scientific
+notation, silently and differently per locale. Sheet names are trimmed to 31 characters
+and stripped of `: \ / ? * [ ]` or the file will not open.
+
+### Department dashboard (`workspace/dashboard.html`)
+Everything already in the platform, filtered to ONE department: overdue items from all
+three engines merged into one list sorted by lateness, open findings, recent incidents,
+and the SOPs that department must hold (scoped from the assessor checklist, not guessed).
+
+**No new tables — this is a view, not a feature**, which is why it was worth building
+first. Every other page answers the quality manager's question, "how is the hospital
+doing". A department head asks a different one: "what do I have to do". Until they can
+answer it in one screen, the quality manager forwards PDFs and the platform has one user
+instead of twenty.
+
+Committees appear only in the whole-hospital view — showing every committee to the
+pharmacy would bury the four things the pharmacy owns. The chosen department is remembered
+per person in `user_prefs`, and a department that no longer exists (a renamed unit) falls
+back to the whole hospital rather than showing an empty page that looks broken.
+
 ### Billing / access
 - `billing/billing-config.js` is the only file to edit for pricing, UPI and email lists.
 - UPI ID: check `upiVpa` — the config has a `-1` suffix the handover didn't; unverified.
@@ -490,7 +528,7 @@ Redirect URLs, or Supabase ignores the parameter and falls back to Site URL.
 
 ---
 
-## Tests — 770 assertions, plain Node, no install
+## Tests — 835 assertions, plain Node, no install
 
     node tests/activity.test.js    node tests/sync.test.js
     node tests/profile.test.js     node tests/palette.test.js
@@ -500,6 +538,7 @@ Redirect URLs, or Supabase ignores the parameter and falls back to Site URL.
     node tests/founder.test.js  node tests/lens.test.js
     node tests/home-flow.test.js  node tests/sod.test.js
     node tests/register.test.js  node tests/rounds.test.js
+    node tests/export-dash.test.js
 
 `sync.test.js` is the important one: cross-device persistence against a fake Supabase, plus
 direct assertions on the RLS rules. `framing.test.js` locks the camera maths that was got
@@ -578,8 +617,8 @@ in a 618-line file. Open it with Notepad, not Word — smart quotes break it.
 2. **End-to-end paywall test from a second account** on a non-owner email.
 3. **Real pricing.** Both plans ₹1. Suggested ₹1,499/month or ₹14,999/year per hospital.
 4. **Tax/KYC** — business income to a personal UPI; Razorpay needs KYC.
-5. **Data export** — the standards/SOP workbook is the first one. Audit, incident and
-   CAPA exports for customers still do not exist.
+5. ~~**No data export**~~ — **done.** `workspace/data-export.js` exports every
+   org-scoped table to one workbook, plus a JSON copy.
 6. **Repo cleanup** — ten abandoned hero experiments (`galaxy`, `galaxy2`, `brain`, `dna`,
    `helix`, `radar`, `globe`, `hglobe`, `qglobe`, `kpinet`). Only `face/` and `qglobe/`
    are live.

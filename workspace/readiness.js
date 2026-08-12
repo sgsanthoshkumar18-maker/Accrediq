@@ -245,10 +245,34 @@
   function renderActions() {
     var host = document.getElementById("wsActions");
     host.innerHTML =
+      '<button type="button" class="btn btn-accent" id="wsExportAll">Export everything (Excel)</button>' +
       '<button type="button" class="btn btn-ghost" id="wsExport">Export data (JSON)</button>' +
       '<button type="button" class="btn btn-ghost" id="wsImportBtn">Import</button>' +
       '<input type="file" id="wsImport" accept="application/json" hidden>' +
       '<button type="button" class="btn btn-accent" id="wsReport">Download readiness report (.docx)</button>';
+
+    /* The full workbook. A hospital that cannot get its own compliance records out is a
+       hospital that cannot leave, and an IT review asks this before it asks about
+       features. The JSON button below stays: Excel is what a quality manager opens, JSON
+       is what another system imports. */
+    var all = document.getElementById("wsExportAll");
+    if (all) all.addEventListener("click", async function () {
+      var label = all.textContent;
+      all.disabled = true; all.textContent = "Building\u2026";
+      try {
+        /* W.user carries the signed-in member row; org_name is what a hospital calls
+           itself. There is no W.org() — calling one would have thrown inside the try and
+           reported "Could not build" for a working export. */
+        var org = (W.user && (W.user.org_name || W.user.orgName)) || "";
+        await window.AQDataExport.download(org);
+        all.textContent = "Downloaded \u2713";
+        setTimeout(function () { all.textContent = label; all.disabled = false; }, 2200);
+      } catch (e) {
+        console.error(e);
+        all.textContent = "Could not build";
+        setTimeout(function () { all.textContent = label; all.disabled = false; }, 2600);
+      }
+    });
 
     document.getElementById("wsExport").addEventListener("click", async function () {
       var data = await S.exportAll();
