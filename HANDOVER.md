@@ -311,10 +311,24 @@ with a 200. `res.json()` then failed to parse it, `health-data.js` caught the er
 every field rendered "No data" — which read as WHO having no figures rather than as the
 proxy never being invoked. Re-adding a rewrite there will silently break the globe again.
 
-**Opening rotation** is `START_ROT_Y = -1.2915`, `START_ROT_X = 0.30` in `hglobe.js`,
-chosen by scoring every 2° against the 74 capitals: 60 face the viewer versus 52 at the
-old `-0.3`, which opened on the Atlantic with nothing clickable. Recompute if the
-capitals list changes; a test asserts the chosen angle beats the old one.
+**Opening rotation** is `START_ROT_Y = -0.611`, `START_ROT_X = 0.262`, applied with
+`rig.rotation.set(...)` immediately after the rig is created — and that placement is the
+whole point. `rotX`/`rotY` only drive the camera on the **manual fallback path**, taken
+when OrbitControls fails to load. OrbitControls does load, so it owns the camera and the
+render loop never calls `rig.rotation.set()`: setting those variables was correct-looking
+code that could not possibly have an effect, and the globe kept opening on the Atlantic
+after the "fix" shipped. Rotating the rig works on both paths. Reset must turn the rig
+back too, or reset lands somewhere different from load.
+
+The angle was scored against the 74 capitals counting how many land near the **centre**
+of the disc (dot > 0.6), not merely on the near hemisphere — a capital on the limb is
+visible but not invitingly clickable, which was the actual complaint. Scoring must use
+three.js's **XYZ Euler order** (X before Y); composing the axes the other way suggested
+-74°, a completely different view.
+
+**`vercel.json` must be valid against Vercel's schema — it has no comment syntax.** A
+`"comment"` key added to explain the removed rewrites failed two deployments outright.
+Reasoning about that file belongs here, not in it.
 
 ### Command bar (`search/command.js`)
 Ctrl+K / Cmd+K, or `/` when not already typing. Indexes ~700 items — elements, standards,

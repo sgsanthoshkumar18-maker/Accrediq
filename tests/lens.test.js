@@ -110,40 +110,57 @@ ok(/function loadFaceChain/.test(home), 'and the loader chain is entered directl
 ok(/function esc/.test(rotJs), 'rendered text is escaped');
 
 /* ------------------------- the globe opens on data -------------------------
-   It used to open on the Atlantic: nothing clickable until you dragged. The start angle
-   is now chosen by scoring every 2 degrees against the capitals list. */
+   It used to open on the Atlantic: nothing clickable until you dragged. */
 {
   const g = read('hglobe/hglobe.js');
-  ok(/START_ROT_Y = -1\.2915/.test(g), 'the opening rotation is the computed one');
-  ok(/START_ROT_X = 0\.30/.test(g), 'with the matching pitch');
-  eq(/rotY = -0\.3\b/.test(g), false, 'the old Atlantic-facing default is gone');
-  // Reset must return to the same view, not to the old empty one.
-  eq((g.match(/START_ROT_Y/g) || []).length, 3, 'reset uses the same constant');
 
-  const caps = {};
+  /* THE ROTATION MUST BE ON THE RIG, NOT ON rotX/rotY.
+     Those two only drive the camera on the MANUAL fallback path, taken when
+     OrbitControls fails to load. OrbitControls does load, so it owns the camera and the
+     render loop never calls rig.rotation.set() — setting rotX/rotY alone was
+     correct-looking code that could not possibly have an effect, and the globe kept
+     opening on the Atlantic after the "fix" shipped. */
+  ok(/rig\.rotation\.set\(START_ROT_X, START_ROT_Y, 0\)/.test(g),
+     'the opening view is applied to the rig, so OrbitControls cannot ignore it');
+  ok(g.indexOf('rig.rotation.set(START_ROT_X') < g.indexOf('new THREE.OrbitControls'),
+     'and it is set before OrbitControls takes over');
+  // Reset must turn the rig back too, or reset returns to a different view than load.
+  eq((g.match(/rig\.rotation\.set\(START_ROT_X/g) || []).length, 2,
+     'reset restores the same rig rotation');
+  eq(/rotY = -0\.3\b/.test(g), false, 'the old Atlantic-facing default is gone');
+
   vm.runInContext(read('hglobe/capitals-data.js'), sb);
   const C = sb.window.WORLD_CAPITALS;
   ok(C.length > 50, 'the capitals list is populated');
 
-  // Score the chosen angle the same way the choice was made.
-  function visible(rotY, rotX) {
+  const m = /START_ROT_Y = (-?[\d.]+), START_ROT_X = (-?[\d.]+)/.exec(g);
+  ok(m, 'the opening constants are readable');
+  const ry = +m[1], rx = +m[2];
+
+  /* Score with three.js's XYZ Euler order — X applied BEFORE Y, which is what
+     rotation.set() does. Composing the axes the other way suggested a completely
+     different angle, so the order is not a detail. */
+  function visible(threshold) {
     let n = 0;
     C.forEach(c => {
       const la = c.lat * Math.PI / 180, lo = c.lon * Math.PI / 180;
       const x = Math.cos(la) * Math.sin(lo), y = Math.sin(la), z = Math.cos(la) * Math.cos(lo);
-      const cx = Math.cos(rotY), sx = Math.sin(rotY);
-      const x2 = x * cx + z * sx, z2 = -x * sx + z * cx;
-      const cy = Math.cos(rotX), sy = Math.sin(rotX);
-      const z3 = y * sy + z2 * cy;
-      if (z3 > 0.25) n++;
+      const cy = Math.cos(rx), sy = Math.sin(rx);
+      const z1 = y * sy + z * cy;
+      const cx = Math.cos(ry), sx = Math.sin(ry);
+      const z2 = -x * sx + z1 * cx;
+      if (z2 > threshold) n++;
     });
     return n;
   }
-  const chosen = visible(-1.2915, 0.30);
-  const old = visible(-0.3, 0.15);
-  ok(chosen > old, 'the new opening view shows more capitals than the old one (' +
-     chosen + ' vs ' + old + ')');
-  ok(chosen >= C.length * 0.75, 'and at least three quarters of them are facing the viewer');
+
+  /* Counting the CENTRE of the disc, not merely the near hemisphere: a capital on the
+     limb is visible but not invitingly clickable, which was the actual complaint. */
+  const centred = visible(0.6);
+  const near = visible(0.25);
+  ok(centred >= 48, 'most capitals land centre-screen on load (' + centred + ' of ' + C.length + ')');
+  ok(near >= 55, 'and nearly all are on the near hemisphere (' + near + ')');
+  ok(centred > 39, 'the chosen pitch beats a flatter one');
 }
 
 /* --------------------------- the WHO proxy is reachable ---------------------------

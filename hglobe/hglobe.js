@@ -55,6 +55,28 @@
   const rig = new THREE.Group();
   scene.add(rig);
 
+  /* OPENING VIEW — applied to the rig, not to the camera.
+   *
+   * Chosen by scoring every degree of rotation against the 74 capitals, counting how many
+   * land near the CENTRE of the disc (dot > 0.6) rather than merely on the near
+   * hemisphere — a capital on the limb is visible but not invitingly clickable.
+   * -0.611 rad (-35 degrees) with a 0.262 pitch (15 degrees) puts 51 capitals centre
+   * screen: London, Paris, Berlin, Rome, Madrid, Lisbon, New Delhi and the African and
+   * Middle Eastern group. The old default opened on the Atlantic.
+   *
+   * The scoring must use three.js\'s XYZ Euler order (X applied before Y), which is what
+   * rotation.set() uses. Scoring with the axes composed the other way suggested -74
+   * degrees, which is a different view entirely — the order is not a detail.
+   *
+   * WHY HERE AND NOT ON rotX/rotY. Those two variables only drive the camera on the
+   * MANUAL fallback path, taken when OrbitControls fails to load. OrbitControls does
+   * load, so it owns the camera and the render loop never calls rig.rotation.set() —
+   * setting them was correct-looking code that could not possibly have an effect.
+   * Rotating the rig itself works on both paths, because the fallback composes its own
+   * rotation on top of a rig that is already turned to face the right way. */
+  const START_ROT_Y = -0.611, START_ROT_X = 0.262;
+  rig.rotation.set(START_ROT_X, START_ROT_Y, 0);
+
   // ---------- Globe sphere + atmosphere glow ----------
   const RADIUS = 1;
   const sphere = new THREE.Mesh(
@@ -258,13 +280,8 @@
   let cursorOverGlobe = false;
   let dragging_ = false;
   let controls = null;
-  /* Opening view. Not a guess: these values were chosen by scoring every 2° of rotation
-     against the 74 capitals and taking the orientation that puts the most on the near
-     hemisphere. -1.2915 rad (-74°) with a 0.3 pitch shows 60 of 74 — Europe, Africa, the
-     Middle East and South Asia all facing the viewer. The previous -0.3 opened on the
-     Atlantic and showed 52, so the globe appeared to start on empty ocean and had to be
-     dragged before anything was clickable. Recompute if the capitals list changes. */
-  const START_ROT_Y = -1.2915, START_ROT_X = 0.30;
+  /* Seeded from the same constants as the rig above, so the manual fallback path starts
+     from the identical view rather than snapping elsewhere on the first frame. */
   let rotX = START_ROT_X, rotY = START_ROT_Y, velX = 0, velY = 0, manualDragging = false;
 
   if (typeof THREE.OrbitControls !== "undefined") {
@@ -381,6 +398,8 @@
       controls.target.set(0, 0, 0);
     } else {
       rotX = START_ROT_X; rotY = START_ROT_Y; camDistance = 2.6;
+      // The rig carries the view under OrbitControls, so reset has to turn it back too.
+      rig.rotation.set(START_ROT_X, START_ROT_Y, 0);
     }
   }
 
