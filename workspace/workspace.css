@@ -204,3 +204,24 @@
    rather than hidden — a missing button reads as a bug, a disabled one teaches the rule. */
 .btn.is-off,.btn-mini.is-off{opacity:.42;cursor:not-allowed;}
 .btn.is-off:hover,.btn-mini.is-off:hover{border-color:var(--border);color:var(--fg-muted);background:transparent;}
+
+/* Register filters. Tokens only; nothing colour-bearing inside a media query. */
+.reg-filters{display:flex;gap:9px;flex-wrap:wrap;margin-bottom:18px;}
+.ws-select{padding:9px 13px;border:1px solid var(--border);border-radius:999px;
+  background:var(--bg-elevated);color:var(--fg);font-size:13px;font-weight:600;
+  min-height:40px;cursor:pointer;font-family:inherit;}
+.ws-select:focus{outline:none;border-color:var(--brand-2);}
+@media (max-width:760px){.reg-filters{width:100%;}.ws-select{flex:1;}}
+
+/* Pin control. Sits beside the mode notice at the top of each workspace page. */
+.ws-topbar{display:flex;align-items:flex-start;gap:14px;justify-content:space-between;
+  flex-wrap:wrap;margin-bottom:8px;}
+.ws-topbar > #wsNotice{flex:1;min-width:0;}
+.ws-pin{display:inline-flex;align-items:center;gap:7px;font-size:12.5px;font-weight:600;
+  padding:8px 14px;border-radius:999px;border:1px solid var(--border);
+  background:var(--bg-elevated);color:var(--fg-muted);cursor:pointer;min-height:38px;
+  white-space:nowrap;}
+.ws-pin:hover{border-color:var(--brand-2);color:var(--brand-2);}
+.ws-pin.is-on{border-color:var(--accent-bright);color:var(--accent-bright);
+  background:var(--accent-bright-tint);}
+@media (max-width:760px){.ws-topbar{gap:10px;}.ws-pin{width:100%;justify-content:center;}}

@@ -4,15 +4,15 @@
 <script>(function(){try{var DEF="neon";if(localStorage.getItem("aq-palette-v")!=="2"){localStorage.removeItem("aq-palette");localStorage.setItem("aq-palette-v","2");}var p=new URLSearchParams(location.search);var own=localStorage.getItem("aq-is-owner")==="1";if(p.has("dark")){localStorage.setItem("aq-theme",p.get("dark")==="0"?"light":"dark");}if(own&&p.has("neon")){localStorage.setItem("aq-palette",p.get("neon")==="0"?"default":"neon");}var t=localStorage.getItem("aq-theme")||"dark";var q=localStorage.getItem("aq-palette")||DEF;if(q!=="default"){q="neon";}if(t!=="light"){document.documentElement.setAttribute("data-theme","dark");}if(q==="neon"&&t!=="light"){document.documentElement.setAttribute("data-palette","neon");}}catch(e){document.documentElement.setAttribute("data-theme","dark");document.documentElement.setAttribute("data-palette","neon");}})();</script>
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width, initial-scale=1">
-<title>Incident Reporting — AQcredix Workspace</title>
+<title>Equipment & Licence Register — AQcredix Workspace</title>
 <meta name="robots" content="noindex">
 <link rel="icon" href="data:image/svg+xml,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 40 40'><circle cx='20' cy='20' r='16' fill='none' stroke='%23D8E0E6' stroke-width='3.4'/><path d='M20 4a16 16 0 1 1-11.31 4.69' fill='none' stroke='%2317A2B8' stroke-width='3.4' stroke-linecap='round'/><path d='M19.15 14.05H20.85L25.61 25.015H26.97V25.95H22.21V25.015H23.315L22 22H18L16.685 25.015H17.79V25.95H13.03V25.015H14.39ZM20 16.26L22.027 20.935H17.973Z' fill='%2317A2B8' fill-rule='evenodd'/></svg>">
 <link rel="stylesheet" href="../styles.css?v=20260812f">
 <link rel="stylesheet" href="workspace.css?v=20260812f">
 <link rel="stylesheet" href="auth-gate.css?v=20260812f">
 <link rel="stylesheet" href="../billing/billing.css?v=20260812f">
-<link rel="stylesheet" href="../incident/incident.css?v=20260812f">
 <link rel="stylesheet" href="../motion/motion.css?v=20260812f">
+<link rel="stylesheet" href="../calendar/calendar.css?v=20260812f">
 <link rel="stylesheet" href="../search/command.css?v=20260812f">
 </head>
 <body data-page="workspace" data-base="../">
@@ -23,51 +23,34 @@
   <div id="wsGate"></div>
 
   <div id="wsBody" style="display:none">
+    <section class="page-head"><div class="wrap">
+      <h1>Equipment &amp; licence register</h1>
+      <p class="lead">Every item with a renewal date — equipment, licences, AMCs, credentials — with its calibration and maintenance cycle. An assessor asks for the calibration history of a named machine; this is the answer.</p>
+    </div></section>
 
-    <!-- REGISTER -->
-    <div id="incHome" style="display:none">
-      <section class="page-head"><div class="wrap">
-        <h1>Incident reporting</h1>
-        <p class="lead">Near miss to sentinel event, on the standard patient-safety ladder —
-          reported in minutes, analysed properly, and closed through CAPA. Reporting here is
-          meant to be non-punitive: the question is how the system allowed it, not who to blame.</p>
-      </div></section>
+    <section class="section wrap">
+      <div class="ws-topbar"><div id="wsNotice"></div><div id="wsPin"></div></div>
+      <div id="regStats" style="margin-bottom:20px"></div>
 
-      <section class="section wrap">
-        <div class="inc-head">
-          <div id="incStats" style="flex:1 1 100%"></div>
-        </div>
-        <div class="inc-head">
-          <div>
-            <h2 style="margin:0">Incident register</h2>
-            <p class="inc-sub">Every report is kept here with its analysis and sign-offs.</p>
-          </div>
-          <div>
-            <button type="button" class="btn btn-ghost" id="incBlank">Blank form (.docx)</button>
-            <button type="button" class="btn btn-accent" id="incNew">Report an incident</button>
-          </div>
-        </div>
-        <div id="incFilters"></div>
-        <div id="incList"></div>
-      </section>
-    </div>
+      <div class="cal-tabs" id="regTabs">
+        <button class="cal-tab is-on" data-tab="due">What is due</button>
+        <button class="cal-tab" data-tab="register">Register</button>
+        <button class="cal-tab" data-tab="history">History</button>
+      </div>
+      <div class="reg-filters" id="regFilters"></div>
 
-    <!-- FORM -->
-    <div id="incForm" style="display:none">
-      <section class="section wrap"><div id="incFormBody"></div></section>
-    </div>
-
-    <!-- DETAIL -->
-    <div id="incDetail" style="display:none">
-      <section class="section wrap"><div id="incDetailBody"></div></section>
-    </div>
-
+      <div id="regPanel"></div>
+      <div class="ws-modal" id="regModal"></div>
+    </section>
   </div>
 </main>
 
 <div id="site-footer"></div>
 <script src="config.js?v=20260812f"></script>
 <script src="../app.js?v=20260812f"></script>
+<script src="../nabh-data.js?v=20260812f"></script>
+<script src="../department-data.js?v=20260812f"></script>
+<script src="../sop/sop-docx.js?v=20260812f"></script>
 <script src="auth-gate.js?v=20260812f"></script>
 <script src="store.js?v=20260812f"></script>
 <script src="../profile/activity.js?v=20260812f"></script>
@@ -76,9 +59,8 @@
 <script src="../billing/paywall.js?v=20260812f"></script>
 <script src="pin.js?v=20260812f"></script>
 <script src="shell.js?v=20260812f"></script>
-<script src="../incident/incident-engine.js?v=20260812f"></script>
-<script src="../incident/incident-docx.js?v=20260812f"></script>
-<script src="../incident/incident-ui.js?v=20260812f"></script>
+<script src="../calendar/schedule.js?v=20260812f"></script>
+<script src="../workspace/register.js?v=20260812f"></script>
 <script>(function(){var s=["https://cdn.jsdelivr.net/npm/jszip@3.10.1/dist/jszip.min.js","https://cdnjs.cloudflare.com/ajax/libs/jszip/3.10.1/jszip.min.js"];function t(i){if(i>=s.length)return;var e=document.createElement("script");e.src=s[i];e.onerror=function(){t(i+1)};document.head.appendChild(e)}t(0)})();</script>
 <script src="../motion/motion.js?v=20260812f"></script>
 <script src="../search/command.js?v=20260812f"></script>

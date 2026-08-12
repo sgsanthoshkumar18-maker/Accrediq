@@ -393,6 +393,38 @@ chapters, departments, committees, workspace pages — built **lazily on first o
 datasets the page already loaded, so there is no index to maintain and no cost on first
 paint. Inject with `node build/set-command.js`.
 
+### Asset register (`workspace/register.html`, `workspace/register.js`)
+**One engine, not ten department modules.** `assets` carries a `kind` — equipment,
+licence, contract, credential, reagent, software — so biomedical, facilities, IT, HR,
+pharmacy and the lab are all served by one table. Ten department tables would be ten
+things to maintain and ten chances to get a hospital's local practice wrong.
+
+Three tables: `assets` (the thing), `asset_schedules` (its calibration / PM / AMC /
+renewal cycle), `asset_events` (each time one was performed, with the certificate number
+and downtime). **Schedules hang off the asset, not off `compliance_tasks`** — an assessor
+asks for the calibration history of a named machine, not of the lab in general.
+
+All due-date maths comes from `calendar/schedule.js`; nothing here does date arithmetic,
+so "overdue" is decided in exactly one place platform-wide. Removing an item is a soft
+delete (`status='condemned'`) because records logged against a machine taken out of
+service must still be produceable. Filters by department and cycle type, which is what
+makes it usable by a department head rather than only the quality manager.
+
+### Pinned landing page (`workspace/pin.js`)
+Stored in `user_prefs`, **keyed on `auth.uid()` only, never on org** — a landing page is a
+personal choice and a colleague has no business reading it. localStorage is a cache, not
+the record: the redirect has to fire before the network answers or sign-in feels broken.
+
+Two things that are load-bearing:
+- **The redirect runs on `workspace.html` only.** Anywhere else it would fight the
+  person's own navigation — clicking Audit and being thrown to the register feels possessed.
+- **`?stay=1` defeats it, and the Readiness nav link carries it.** Without an escape hatch
+  a pinned page makes the landing page unreachable, because clicking Readiness bounces
+  straight back to the pin.
+
+A stored value is validated against `^[a-z0-9-]+\.html$` before being followed, so a
+poisoned cache cannot redirect anyone off-site.
+
 ### Billing / access
 - `billing/billing-config.js` is the only file to edit for pricing, UPI and email lists.
 - UPI ID: check `upiVpa` — the config has a `-1` suffix the handover didn't; unverified.
@@ -427,7 +459,7 @@ Redirect URLs, or Supabase ignores the parameter and falls back to Site URL.
 
 ---
 
-## Tests — 652 assertions, plain Node, no install
+## Tests — 704 assertions, plain Node, no install
 
     node tests/activity.test.js    node tests/sync.test.js
     node tests/profile.test.js     node tests/palette.test.js
@@ -436,6 +468,7 @@ Redirect URLs, or Supabase ignores the parameter and falls back to Site URL.
     node tests/motion.test.js  node tests/calendar.test.js
     node tests/founder.test.js  node tests/lens.test.js
     node tests/home-flow.test.js  node tests/sod.test.js
+    node tests/register.test.js
 
 `sync.test.js` is the important one: cross-device persistence against a fake Supabase, plus
 direct assertions on the RLS rules. `framing.test.js` locks the camera maths that was got
@@ -485,7 +518,7 @@ Three decisions worth keeping:
 ## Deploy ritual
 
 After any schema change, re-run `workspace/schema.sql` in the Supabase SQL editor — it is
-fully idempotent and ~780 lines, starting `-- ====`. **Clear the editor with Ctrl+A then
+fully idempotent and ~870 lines, starting `-- ====`. **Clear the editor with Ctrl+A then
 Delete first**: a paste on top of existing content produced a "syntax error at line 3070"
 in a 618-line file. Open it with Notepad, not Word — smart quotes break it.
 

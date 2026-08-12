@@ -179,7 +179,7 @@ end; $$;
 do $$
 declare t text;
 begin
-  foreach t in array array['capa','incidents','audits'] loop
+  foreach t in array array['capa','incidents','audits','assets','asset_events'] loop
     execute format('drop trigger if exists %I_author_trg on public.%I', t, t);
     execute format(
       'create trigger %I_author_trg before insert on public.%I
@@ -223,6 +223,96 @@ create trigger capa_sod_trg before update on public.capa
 -- refuse, so a user is told before they fill a form rather than after.
 create or replace function public.aq_my_uid()
 returns uuid language sql stable as $$ select auth.uid(); $$;
+
+-- ---------- asset register (FMS.4, FMS.1, HRM.3, MOM.3) ----------
+-- One shape for every "thing with an expiry date" a department has to keep: equipment,
+-- licences, contracts, credentials, reagents. Ten department-specific tables would be ten
+-- things to maintain and ten chances to get a hospital's local practice wrong; one table
+-- with a `kind` covers biomedical, facilities, IT, HR, pharmacy and the lab at once.
+create table if not exists public.assets (
+  id             text primary key,
+  org_id         uuid references public.orgs(id) on delete cascade,
+  kind           text not null default 'equipment',
+    -- equipment | licence | contract | credential | reagent | software
+  name           text not null,
+  identifier     text,          -- serial, licence number, certificate number
+  department     text,
+  location       text,
+  manufacturer   text,
+  model          text,
+  owner          text,
+  element_code   text,          -- the NABH element it evidences, where there is one
+  status         text not null default 'active',  -- active | under_repair | condemned
+  commissioned_on date,
+  notes          text,
+  created_by     uuid,
+  created_at     timestamptz not null default now(),
+  updated_at     timestamptz not null default now()
+);
+create index if not exists assets_org_idx  on public.assets(org_id);
+create index if not exists assets_dept_idx on public.assets(department);
+
+-- Recurring obligations ATTACHED to an asset: calibration, preventive maintenance, AMC
+-- renewal, licence renewal. Separate from compliance_tasks because these belong to a
+-- specific machine or licence and must survive it being moved between departments — an
+-- assessor asks for the calibration history of THAT analyser, not of the lab in general.
+create table if not exists public.asset_schedules (
+  id             text primary key,
+  org_id         uuid references public.orgs(id) on delete cascade,
+  asset_id       text references public.assets(id) on delete cascade,
+  kind           text not null default 'calibration',
+    -- calibration | preventive | amc | renewal | inspection
+  frequency      text not null default 'yearly',
+  last_done_on   date,
+  pref_dow       smallint,
+  owner          text,
+  vendor         text,
+  cost_paise     integer,
+  active         boolean not null default true,
+  created_at     timestamptz not null default now(),
+  updated_at     timestamptz not null default now()
+);
+create index if not exists asch_org_idx   on public.asset_schedules(org_id);
+create index if not exists asch_asset_idx on public.asset_schedules(asset_id);
+
+-- Each time one is actually performed. The schedule says when it is due; this is the
+-- evidence that it happened, with the certificate reference an assessor will ask for.
+create table if not exists public.asset_events (
+  id             text primary key,
+  org_id         uuid references public.orgs(id) on delete cascade,
+  asset_id       text references public.assets(id) on delete cascade,
+  schedule_id    text references public.asset_schedules(id) on delete set null,
+  kind           text not null default 'calibration',
+  performed_on   date not null,
+  performed_by   text,
+  vendor         text,
+  certificate_no text,
+  result         text default 'pass',   -- pass | pass_with_observation | fail
+  downtime_hours numeric,
+  notes          text,
+  created_by     uuid,
+  created_at     timestamptz not null default now()
+);
+create index if not exists aev_org_idx   on public.asset_events(org_id);
+create index if not exists aev_asset_idx on public.asset_events(asset_id);
+
+-- ---------- per-user preferences ----------
+-- Keyed on auth.uid() ONLY, never on org: a pinned landing page is a personal choice and
+-- a colleague has no business reading or changing it. This is the same reasoning as the
+-- activity ledger.
+create table if not exists public.user_prefs (
+  user_id     uuid primary key references auth.users(id) on delete cascade,
+  pinned_page text,
+  prefs       jsonb not null default '{}'::jsonb,
+  updated_at  timestamptz not null default now()
+);
+
+alter table public.user_prefs enable row level security;
+
+drop policy if exists user_prefs_rw on public.user_prefs;
+create policy user_prefs_rw on public.user_prefs for all
+  using (user_id = auth.uid())
+  with check (user_id = auth.uid());
 
 -- ---------- document control (IMS.6.a) ----------
 create table if not exists public.documents (
@@ -403,7 +493,8 @@ do $$
 declare t text;
 begin
   foreach t in array array['elements','capa','documents','document_versions','audits','incidents',
-                        'committees','committee_meetings','compliance_tasks'] loop
+                        'committees','committee_meetings','compliance_tasks',
+                        'assets','asset_schedules','asset_events'] loop
     execute format('drop policy if exists %I_read on public.%I', t, t);
     execute format(
       'create policy %I_read on public.%I for select using (org_id = public.my_org())', t, t);
@@ -430,7 +521,8 @@ do $$
 declare t text;
 begin
   foreach t in array array['elements','capa','documents','document_versions','members','audits','incidents',
-                        'committees','committee_meetings','compliance_tasks'] loop
+                        'committees','committee_meetings','compliance_tasks',
+                        'assets','asset_schedules','asset_events'] loop
     execute format('drop trigger if exists set_org_%I on public.%I', t, t);
     execute format(
       'create trigger set_org_%I before insert on public.%I

@@ -8,7 +8,10 @@
   var CFG = window.AQ_CONFIG || {};
 
   var PAGES = [
-    { key: "readiness", href: "workspace.html", label: "Readiness",
+    /* ?stay=1 so this link is reachable when the user has pinned another page. Without
+       it the pin redirect fires the moment they click Readiness and throws them straight
+       back to the pinned page, making the landing page impossible to open. */
+    { key: "readiness", href: "workspace.html?stay=1", label: "Readiness",
       desc: "Element-by-element accreditation status" },
     { key: "audits", href: "audit.html", label: "Internal Audit",
       desc: "Department-level audits against the assessor checklist" },
@@ -16,6 +19,8 @@
       desc: "Report, analyse and close patient-safety events" },
     { key: "calendar", href: "calendar.html", label: "Calendar",
       desc: "Committee meetings and recurring NABH obligations" },
+    { key: "register", href: "register.html", label: "Register",
+      desc: "Equipment, licences and contracts with their renewal cycles" },
     { key: "capa", href: "capa.html", label: "NC & CAPA",
       desc: "Findings, corrective actions, verification" },
     { key: "documents", href: "documents.html", label: "Documents",
