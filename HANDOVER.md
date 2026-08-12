@@ -459,7 +459,7 @@ Redirect URLs, or Supabase ignores the parameter and falls back to Site URL.
 
 ---
 
-## Tests — 704 assertions, plain Node, no install
+## Tests — 707 assertions, plain Node, no install
 
     node tests/activity.test.js    node tests/sync.test.js
     node tests/profile.test.js     node tests/palette.test.js
@@ -515,10 +515,21 @@ Three decisions worth keeping:
   it. A missing button reads as a bug; a disabled one teaches the rule before a form is
   filled in. The page check must agree with the database or the user is refused on save.
 
+## Schema ORDER matters
+`schema.sql` runs top to bottom in one pass. **Attaching a trigger requires the table to
+exist; defining the function does not.** Adding `assets` to the authorship loop while
+creating that table further down failed the entire script with
+`ERROR: relation "public.assets" does not exist` — and because the file is idempotent and
+re-run every session, that breaks *every* migration, not just the new part.
+
+The authorship trigger loop therefore lives at the **end of the file**, after all tables.
+A test in `register.test.js` checks every `do`-block loop and every `create trigger`
+against the position of its table, so this cannot recur silently.
+
 ## Deploy ritual
 
 After any schema change, re-run `workspace/schema.sql` in the Supabase SQL editor — it is
-fully idempotent and ~870 lines, starting `-- ====`. **Clear the editor with Ctrl+A then
+fully idempotent and ~880 lines, starting `-- ====`. **Clear the editor with Ctrl+A then
 Delete first**: a paste on top of existing content produced a "syntax error at line 3070"
 in a 618-line file. Open it with Notepad, not Word — smart quotes break it.
 

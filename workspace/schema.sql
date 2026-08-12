@@ -169,6 +169,11 @@ alter table public.audits     add column if not exists created_by  uuid;
 
 -- Stamp the author from the JWT on insert. Taken from auth.uid() rather than a client
 -- field, so it cannot be forged by sending someone else's id.
+-- The trigger LOOP that attaches this lives at the END of this file, not here. It names
+-- assets and asset_events, which are created further down, and a loop that references a
+-- table before it exists fails the whole script with
+--   ERROR: relation "public.assets" does not exist
+-- Function definitions are order-independent; trigger attachment is not.
 create or replace function public.aq_stamp_author()
 returns trigger language plpgsql security definer set search_path = public as $$
 begin
@@ -176,16 +181,6 @@ begin
   return new;
 end; $$;
 
-do $$
-declare t text;
-begin
-  foreach t in array array['capa','incidents','audits','assets','asset_events'] loop
-    execute format('drop trigger if exists %I_author_trg on public.%I', t, t);
-    execute format(
-      'create trigger %I_author_trg before insert on public.%I
-         for each row execute function public.aq_stamp_author()', t, t);
-  end loop;
-end $$;
 
 -- Refuse self-verification and self-closure.
 create or replace function public.aq_guard_capa_closure()
@@ -868,3 +863,18 @@ end; $$;
 drop trigger if exists aq_claim_comp_trg on auth.users;
 create trigger aq_claim_comp_trg after insert on auth.users
   for each row execute function public.aq_claim_comp_subscription();
+
+-- =====================================================================
+-- Authorship triggers — LAST, because every table named here must already exist.
+-- Attaching a trigger requires the table; defining the function above does not.
+-- =====================================================================
+do $$
+declare t text;
+begin
+  foreach t in array array['capa','incidents','audits','assets','asset_events'] loop
+    execute format('drop trigger if exists %I_author_trg on public.%I', t, t);
+    execute format(
+      'create trigger %I_author_trg before insert on public.%I
+         for each row execute function public.aq_stamp_author()', t, t);
+  end loop;
+end $$;

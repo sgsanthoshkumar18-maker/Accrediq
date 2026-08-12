@@ -134,5 +134,42 @@ ok(/workspace\.html\?stay=1/.test(read('workspace/shell.js')),
 ok(/aria-pressed/.test(pin), 'the toggle announces its state');
 ok(/\.ws-pin\.is-on/.test(read('workspace/workspace.css')), 'and pinned looks different');
 
+/* ---------------------- schema ORDER, not just content ----------------------
+   schema.sql runs top to bottom in one pass. Attaching a trigger requires the table to
+   exist; defining the function does not. Adding `assets` to the authorship loop while
+   creating the table further down failed the entire script with
+     ERROR: relation "public.assets" does not exist
+   and, because the file is idempotent and re-run every session, that breaks EVERY
+   migration rather than just the new part. */
+{
+  const created = {};
+  [...sql.matchAll(/create table if not exists public\.(\w+)/g)].forEach(m => {
+    if (!(m[1] in created)) created[m[1]] = m.index;
+  });
+
+  let bad = 0;
+  [...sql.matchAll(/foreach t in array array\[([^\]]+)\]/g)].forEach(m => {
+    m[1].split(',').map(x => x.trim().replace(/'/g, '')).filter(Boolean).forEach(t => {
+      if (!(t in created)) { bad++; console.log('  loop names unknown table: ' + t); }
+      else if (created[t] > m.index) {
+        bad++; console.log('  loop uses ' + t + ' before it is created');
+      }
+    });
+  });
+  eq(bad, 0, 'every do-block loop references tables already created above it');
+
+  let badTrig = 0;
+  [...sql.matchAll(/create trigger \w+ (?:before|after) \w+ on public\.(\w+)/g)].forEach(m => {
+    if (created[m[1]] !== undefined && created[m[1]] > m.index) {
+      badTrig++; console.log('  trigger on ' + m[1] + ' precedes its table');
+    }
+  });
+  eq(badTrig, 0, 'every trigger is attached after its table exists');
+
+  // The authorship loop specifically must be at the end, after the register tables.
+  ok(sql.lastIndexOf("'assets','asset_events'") > sql.indexOf('create table if not exists public.assets'),
+     'the authorship loop runs after the register tables are created');
+}
+
 console.log('\n' + pass + ' passed, ' + fail + ' failed');
 if (fail) process.exit(1);
