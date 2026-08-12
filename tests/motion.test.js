@@ -229,7 +229,11 @@ ok(/padding-bottom: 0\.12em/.test(css) && /margin-bottom: -0\.12em/.test(css),
   ok(/data-scrolly\b/.test(home), 'the homepage has a scrolly section');
   eq((home.match(/data-scrolly-step/g) || []).length, 3, 'with three steps');
   ok(/data-scrolly-sticky/.test(home), 'and a pinned element');
-  eq((home.match(/data-face="\d"/g) || []).length, 3, 'the card has three faces');
+  /* The three faces moved out of index.html and into lens-rotate.js when the card became
+     a rotating one — the markup is now generated per standard. Assert where they live. */
+  const rot = read('lens-rotate.js');
+  eq((rot.match(/data-face="\d"/g) || []).length, 3, 'the card has three faces');
+  ok(/id="lensCard"/.test(home), 'and the homepage still has the slot they render into');
   ok(/motion\/scrolly\.js/.test(home), 'the script is loaded');
 
   /* The faces must be absolutely positioned when inactive so the card keeps one height.

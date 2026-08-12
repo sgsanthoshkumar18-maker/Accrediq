@@ -76,45 +76,22 @@
   </div>
 </section>
 
-<!-- LENS STRIP — scrollytelling -->
+<!-- LENS STRIP — scrollytelling, rotating standard -->
 <section class="lens-strip" data-scrolly>
   <div class="wrap">
     <div class="scrolly">
 
-      <!-- The pinned card. One real Objective Element, shown three ways. -->
+      <!-- The pinned card. One real Objective Element, shown three ways.
+           Which element is chosen rotates — see lens-rotate.js. -->
       <div class="scrolly-sticky" data-scrolly-sticky data-stage="0">
         <div class="lens-card">
           <div class="lens-card-top">
-            <span class="lens-code">HIC.4.a</span>
-            <span class="lens-badge">✱ SOP required</span>
+            <span class="lens-code" id="lensCode"></span>
+            <span class="lens-cat" id="lensCat"></span>
+            <span class="lens-badge" id="lensBadge"></span>
           </div>
-
-          <div class="lens-face" data-face="0">
-            <h4>The standard</h4>
-            <p class="lens-verbatim">"Hand-hygiene facilities and practices are appropriate
-              and adequate throughout the organisation."</p>
-            <p class="lens-note">One line in the book. Every hospital reads it. Far fewer
-              can show what it means on their own floor.</p>
-          </div>
-
-          <div class="lens-face" data-face="1">
-            <h4>What the assessor looks for</h4>
-            <ul class="lens-list">
-              <li>Sinks, soap and rub within reach at the point of care</li>
-              <li>Your own compliance audit — data, not an assertion</li>
-              <li>Staff who can name the five moments, asked at random</li>
-              <li>Training records that match the roster</li>
-            </ul>
-          </div>
-
-          <div class="lens-face" data-face="2">
-            <h4>The gap, before it's an NC</h4>
-            <p class="lens-gap">The audit exists but stops at 60% compliance with no action
-              recorded against it.</p>
-            <p class="lens-fix"><b>The fix:</b> raise it as a finding, assign a department
-              owner, re-audit, and file the second set of numbers beside the first. That
-              second audit is the evidence — the first one on its own is the finding.</p>
-          </div>
+          <div id="lensCard"></div>
+          <a class="lens-open" id="lensLink" href="standards.html">Open this element →</a>
         </div>
       </div>
 
@@ -124,7 +101,8 @@
           <div class="step">01 — READ</div>
           <h3>The standard, in plain English</h3>
           <p>The official requirement and its intent, written so anyone on the floor can
-            follow it — not just the quality team.</p>
+            follow it — not just the quality team. Today's element covers
+            <b id="lensTopic"></b>.</p>
         </div>
         <div data-scrolly-step>
           <div class="step">02 — SEE</div>
@@ -294,6 +272,9 @@
 
 <div id="site-footer"></div>
 <script src="app.js?v=20260805c"></script>
+<script src="nabh-data.js"></script>
+<script src="lens-rotation.js"></script>
+<script src="lens-rotate.js"></script>
 <script src="search/search.js"></script>
 <script src="news/news.js"></script>
 <script src="quote/quote-data.js?v=20260805c"></script>
@@ -343,9 +324,9 @@
     });
   }
 
-  function loadFaceScript() {
-    var d = document.createElement("script"); d.src = "nabh-data.js";
-    d.onload = function () {
+  /* Everything after nabh-data.js. Split out so it can be entered directly when the data
+     is already on the page. */
+  function loadFaceChain() {
       var o = document.createElement("script"); o.src = "face/organs.js";
       o.onload = o.onerror = function () {
         // Real scanned organ meshes. If either file fails, organs-mesh.js is a no-op
@@ -363,9 +344,18 @@
         document.body.appendChild(m);
       };
       document.body.appendChild(o);
-    };
+  }
+
+  function loadFaceScript() {
+    /* nabh-data.js is now loaded eagerly at the top of this page for the rotating lens
+       card, so fetching it here would pull a 124 KB file a second time. Reuse it when it
+       is already parsed; still fetch it if something upstream failed. */
+    if (window.NABH_DATA) { loadFaceChain(); return; }
+    var d = document.createElement("script"); d.src = "nabh-data.js";
+    d.onload = loadFaceChain;
     document.body.appendChild(d);
   }
+
   function tryLoad(i) {
     if (i >= sources.length) {
       // all CDNs failed — load face.js anyway; it detects missing THREE and shows the fallback graphic.

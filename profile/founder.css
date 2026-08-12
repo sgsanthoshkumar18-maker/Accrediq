@@ -191,6 +191,47 @@
 .fp-type { font-size: 12.5px; color: var(--fg-faint); margin-top: 2px; }
 .fp-item p { font-size: 13.5px; color: var(--fg-muted); margin-top: 7px; line-height: 1.6; }
 
+/* ------------------- experience column + signal network -------------------
+   The timeline never filled the page width, leaving the right half empty. The network
+   occupies it and sticks while the timeline scrolls past, so it stays in view for the
+   whole section instead of scrolling away in the first screen. */
+.fp-exp-grid { display: grid; grid-template-columns: 1fr 0.82fr; gap: 40px; align-items: start; }
+.fp-net-col { position: sticky; top: 110px; }
+.fp-net-wrap {
+  position: relative;
+  height: 420px;
+  border: 1px solid var(--border);
+  border-radius: var(--r-lg);
+  background: var(--bg-elevated);
+  overflow: hidden;
+}
+#fpNet { display: block; width: 100%; height: 100%; cursor: grab; touch-action: pan-y; }
+#fpNet:active { cursor: grabbing; }
+.fp-net-cap {
+  position: absolute;
+  left: 16px;
+  bottom: 14px;
+  right: 16px;
+  font-size: 11.5px;
+  color: var(--fg-faint);
+  display: flex;
+  align-items: center;
+  gap: 7px;
+  pointer-events: none;
+}
+.fp-net-dot {
+  width: 7px;
+  height: 7px;
+  border-radius: 50%;
+  background: var(--accent-bright);
+  flex-shrink: 0;
+  animation: fpPulse 2.4s ease-in-out infinite;
+}
+@keyframes fpPulse {
+  0%, 100% { opacity: .35; transform: scale(1); }
+  50%      { opacity: 1;   transform: scale(1.35); }
+}
+
 /* ------------------------------ peer review ------------------------------ */
 
 .fp-review { background: var(--brand-tint); }
@@ -345,6 +386,11 @@ html.fp-tilt-on [data-tilt].is-tilting::after { opacity: 1; }
 /* --------------------------------- mobile ---------------------------------
    Layout only. No colours here, so mobile keeps inheriting every palette fix. */
 @media (max-width: 900px) {
+  /* The network drops below the timeline and shortens; a sticky panel on a narrow screen
+     eats most of the viewport for decoration. */
+  .fp-exp-grid { grid-template-columns: 1fr; gap: 26px; }
+  .fp-net-col { position: static; }
+  .fp-net-wrap { height: 300px; }
   .fp-review-grid,
   .fp-pubs { grid-template-columns: 1fr; }
   .fp-certs { grid-template-columns: repeat(2, 1fr); }
@@ -363,4 +409,6 @@ html.fp-tilt-on [data-tilt].is-tilting::after { opacity: 1; }
 
 @media (prefers-reduced-motion: reduce) {
   .fp-photo, .fp-skill, [data-tilt] { transition: none !important; transform: none !important; }
+  /* network.js already draws a single static frame; this stops the caption dot too. */
+  .fp-net-dot { animation: none !important; opacity: 1 !important; }
 }

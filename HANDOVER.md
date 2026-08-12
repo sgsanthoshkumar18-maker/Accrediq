@@ -260,6 +260,15 @@ are idempotent — the reveal skips anything already carrying `.aq-reveal`, and 
 marks wired sections with `data-scrolly-wired` — so a re-scan cannot blink the page or
 double-observe.
 
+**Signal network** (`profile/network.js`) fills the empty column beside the experience
+timeline and sticks while it scrolls. A rotating wireframe lattice with pulses travelling
+edge to edge, draggable. **Canvas 2D, not a third WebGL context** — the homepage already
+runs two, and a third on a page also running tilt, reveals and scrollytelling competes for
+the same frame budget. Deliberately not the hero organ meshes, which would make the page
+look like a copy of the homepage. Colours come from theme tokens with a MutationObserver
+on `data-theme`/`data-palette`; it pauses off screen and in a hidden tab, caps DPR at 2,
+and draws one static frame under reduced motion.
+
 3D tilt is pointer-only (no hover on touch), capped at 7°, and writes at most once per
 frame. The cached rect is invalidated on scroll and resize or the card tilts around a
 stale origin. A missing `assets/founder.jpg` falls back to an initials mark rather than a
@@ -274,7 +283,23 @@ the **middle** of the viewport, not the top, so the paragraph being read drives 
 visual. Phones and reduced-motion get `scrolly-off`: every stage stacked and fully
 readable, since the content is the point and the pin is decoration.
 
-Live on the homepage lens strip (READ / SEE / CLOSE against one real element, HIC.4.a).
+Live on the homepage lens strip (READ / SEE / CLOSE), which now **rotates through 15
+standards** across 8 chapters — `lens-rotation.js` holds the curated set,
+`lens-rotate.js` picks one.
+
+**Why curated and not all 640 elements.** Only the verbatim standard can be generated;
+it is pulled from `nabh-data.js` at render time so it can never drift from the book. The
+assessor-lens and the gap/fix are professional judgement, and inventing them for 640
+elements would put confident unverified guidance in front of hospitals preparing for
+assessment. Add entries when there is something true to say.
+
+Selection is a **15-minute time bucket, not `Math.random()`** — random gives every
+visitor a different card and a new one on every refresh, which reads as instability. A
+full cycle is 3.75 hours. `?lens=CODE` forces one, for demos. Codes that no longer
+resolve are dropped rather than rendered under an empty quotation.
+
+Note `nabh-data.js` is now **eager** on the homepage for this card; `loadFaceScript()`
+was refetching the same 124 KB for the hero and now reuses it via `loadFaceChain()`.
 **Deliberately not used on standards or workspace pages** — holding the scroll fights
 someone hunting for a specific element.
 
@@ -318,14 +343,14 @@ Redirect URLs, or Supabase ignores the parameter and falls back to Site URL.
 
 ---
 
-## Tests — 483 assertions, plain Node, no install
+## Tests — 539 assertions, plain Node, no install
 
     node tests/activity.test.js    node tests/sync.test.js
     node tests/profile.test.js     node tests/palette.test.js
     node tests/framing.test.js     node tests/access.test.js
     node tests/auth-errors.test.js  node tests/standards-export.test.js
     node tests/motion.test.js  node tests/calendar.test.js
-    node tests/founder.test.js
+    node tests/founder.test.js  node tests/lens.test.js
 
 `sync.test.js` is the important one: cross-device persistence against a fake Supabase, plus
 direct assertions on the RLS rules. `framing.test.js` locks the camera maths that was got
