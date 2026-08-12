@@ -286,13 +286,18 @@ entrances; magnetic buttons. **The reel measures its own overflow** rather than 
 guessed height, so adding a publication lengthens the scroll instead of cutting the last
 card off. Nothing hijacks the wheel.
 
-**The reel is desktop and tablet only.** On a phone nine papers pinned in a sideways rail
-costs nine screens of vertical scrolling to read a list, and a 74vw card shows a title
-with almost no abstract — so below 620px they stack as plain full-width sections and the
-progress bar and swipe hint are hidden, since they describe an interaction that no longer
-exists. **The JS must stand down as well as the CSS**: it writes an inline `--fp-reel-h`
-and a transform, and an inline style beats a stylesheet rule, so leaving it running
-re-imposes the tall section the media query just removed.
+**The reel is gated on `(hover: hover) and (pointer: fine) and (min-width: 901px)`, not
+on width.** Chrome's "Desktop site" toggle makes an Android phone report a ~1024px
+viewport, so a `max-width` query sees a laptop and the reel returned on a phone that had
+been told to stack. Width describes the window; hover and pointer describe what is holding
+the device, and a touchscreen still reports coarse in desktop mode. **Stacked is the
+default and the reel is opt-in**, so a browser reporting neither capability gets the
+readable layout rather than a rail it cannot drive.
+
+**The JS query must be the exact inverse of the CSS one** (`not all and (hover: hover)
+and (pointer: fine) and (min-width: 901px)`). The script writes an inline `--fp-reel-h`
+and a transform, and inline styles beat stylesheet rules — if the two drift, the section
+grows tall and the rail sits offset over what CSS is rendering as a plain stack.
 
 **The timeline light runs on touch.** They need scroll, not a pointer, and
 gating them on pointer type meant a phone got a static list — the timeline light and the
@@ -405,7 +410,7 @@ Redirect URLs, or Supabase ignores the parameter and falls back to Site URL.
 
 ---
 
-## Tests — 586 assertions, plain Node, no install
+## Tests — 592 assertions, plain Node, no install
 
     node tests/activity.test.js    node tests/sync.test.js
     node tests/profile.test.js     node tests/palette.test.js

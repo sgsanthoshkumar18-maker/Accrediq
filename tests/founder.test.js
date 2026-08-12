@@ -235,36 +235,44 @@ ok(/fp-statband \{ grid-template-columns: repeat\(2, 1fr\)/.test(css),
   ok(mo.indexOf('timelineSpine();') < mo.indexOf('if (coarse) return;'),
      'the timeline light runs on touch');
   ok(mo.indexOf('reel();') < mo.indexOf('if (coarse) return;'), 'and so does the reel');
-  /* The reel is a DESKTOP and TABLET effect. On a phone nine papers in a sideways rail
-     costs nine screens of scrolling to read a list, so they stack as sections instead. */
-  /* Extract the 620px block by brace matching. A fixed character window silently fails
-     as soon as the block grows, which is a test breaking rather than the code. */
-  const phoneBlock = (function () {
-    const i = css.indexOf('@media (max-width: 620px)');
-    if (i < 0) return '';
-    const o = css.indexOf('{', i);
-    let d = 0, j = o;
-    for (; j < css.length; j++) {
-      if (css[j] === '{') d++;
-      else if (css[j] === '}') { d--; if (!d) break; }
-    }
-    return css.slice(o, j + 1);
-  })();
-  ok(/\.fp-reel \{ height: auto !important/.test(phoneBlock), 'the reel unpins on a phone');
-  ok(/\.fp-reel-rail \{ display: block; transform: none !important/.test(css),
-     'and the rail stacks');
-  ok(/\.fp-reel-bar, \.fp-reel-hint \{ display: none/.test(css),
-     'the progress bar and swipe hint go, since they describe an interaction that is gone');
-  /* An inline style beats a stylesheet rule, so the JS must stand down as well as the
-     CSS — otherwise it re-imposes the tall section the media query just removed. */
-  ok(/function idle\(\)/.test(mo), 'the script stands down on a phone');
+  /* THE REEL IS A POINTER-DEVICE EFFECT, NOT A WIDTH ONE.
+     Chrome's "Desktop site" toggle makes an Android phone report a ~1024px viewport, so
+     every max-width query saw a laptop and the reel came back on a phone that had been
+     told to stack. Width describes the window; hover/pointer describe what is holding the
+     device, and a touchscreen still reports coarse in desktop mode. */
+  ok(/@media \(hover: hover\) and \(pointer: fine\) and \(min-width: 901px\)/.test(css),
+     'the reel is gated on a real pointer, not on width alone');
+  ok(/not all and \(hover: hover\) and \(pointer: fine\) and \(min-width: 901px\)/.test(mo),
+     'and the script uses the exact inverse of that query');
+
+  /* Stacked is the DEFAULT, reel is opt-in. Any browser reporting neither capability then
+     gets the readable layout rather than a pinned rail it cannot drive. */
+  ok(/\.fp-reel \{ height: auto; position: relative; \}/.test(css),
+     'publications stack by default');
+  ok(/\.fp-reel-pin \{ position: static/.test(css), 'and are not pinned by default');
+  ok(css.indexOf('.fp-reel { height: auto') < css.indexOf('@media (hover: hover)'),
+     'the stacked rules come first, so the reel query overrides them');
+
+  /* The two must not drift: the script writes an inline --fp-reel-h and a transform, and
+     an inline style beats a stylesheet rule. If JS thought "reel" while CSS rendered a
+     stack, the section would grow tall and the rail would sit offset. */
+  ok(/function idle\(\)/.test(mo), 'the script stands down when stacked');
   ok(/removeProperty\("--fp-reel-h"\)/.test(mo), 'clearing the inline height it wrote');
   ok(/if \(stacked\.matches\) return;/.test(mo), 'and stops writing transforms');
-  ok(/stacked\.addEventListener\("change"/.test(mo), 'rotating a phone swaps modes cleanly');
+  ok(/stacked\.addEventListener\("change"/.test(mo), 'switching modes swaps cleanly');
   ok(mo.indexOf('var over = measure()') < mo.indexOf('stacked.addEventListener("change"'),
      'the change listener is registered after the values it closes over exist');
-  ok(/touch-action: pan-y/.test(css),
-     'the rail yields vertical gestures so page scroll still drives it');
+
+  /* Resolve the gate for real devices. The desktop-site case is the one that regressed. */
+  [['laptop', true, true, 1440, true],
+   ['S21 FE portrait', false, false, 360, false],
+   ['S21 FE desktop-site', false, false, 1024, false],
+   ['iPad', false, false, 768, false],
+   ['narrow laptop window', true, true, 800, false]
+  ].forEach(function (c) {
+    var wantReel = c[1] && c[2] && c[3] >= 901;
+    eq(wantReel, c[4], c[0] + ' gets ' + (c[4] ? 'the reel' : 'stacked sections'));
+  });
 
   // Alternation survives to the smallest breakpoint; the YEAR folds into the card
   // instead, so cards keep their width without the effect being dropped.

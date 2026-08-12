@@ -172,12 +172,14 @@
     var rail = sec.querySelector(".fp-reel-rail");
     if (!rail) return;
 
-    /* Phones show the publications as stacked sections instead — nine papers in a
-       sideways rail costs nine screens of scrolling to read a list. The JS must stand
-       down as well as the CSS: it writes an inline --fp-reel-h and a transform, and an
-       inline style beats a stylesheet rule, so leaving it running would re-impose the
-       tall section and the horizontal offset the media query just removed. */
-    var stacked = window.matchMedia("(max-width: 620px)");
+    /* The JS must agree with the CSS EXACTLY, and for the same reason: a width test is
+       defeated by Chrome's "Desktop site" toggle, which makes a phone report ~1024px.
+       This query is the inverse of the one that enables the reel in founder.css — a real
+       pointer, hover support, and room to show it. Keep the two in step; if they diverge,
+       the script writes an inline --fp-reel-h and a transform onto a section the CSS is
+       rendering as a plain stack, and inline styles win. */
+    var stacked = window.matchMedia(
+      "not all and (hover: hover) and (pointer: fine) and (min-width: 901px)");
     function idle() {
       sec.style.removeProperty("--fp-reel-h");
       rail.style.removeProperty("transform");
