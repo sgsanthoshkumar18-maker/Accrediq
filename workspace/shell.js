@@ -169,7 +169,14 @@
         // Signed in is not the same as entitled. The paywall is a second gate, and it
         // fails closed: if entitlement cannot be established, access is held rather
         // than granted.
-        return await W.entitled();
+        var okEnt = await W.entitled();
+        /* Announced once the user AND their entitlement are known. The notification bell
+           listens for this rather than DOMContentLoaded: before sign-in there is no org to
+           read, and firing early would produce an empty bell that never refills. */
+        if (okEnt) {
+          try { document.dispatchEvent(new Event("aq:ready")); } catch (e) {}
+        }
+        return okEnt;
       }
 
       var host = document.getElementById("wsGate");

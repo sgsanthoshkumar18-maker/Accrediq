@@ -375,6 +375,71 @@ create table if not exists public.rounds (
 create index if not exists rnd_org_idx on public.rounds(org_id);
 create index if not exists rnd_lst_idx on public.rounds(checklist_id);
 
+-- ---------- notifications ----------
+-- What a person is told, and how. Notification preferences are PER USER, not per org: a
+-- biomedical engineer wants their own equipment, and a quality manager wants everything.
+-- Keyed on auth.uid() only, like user_prefs.
+create table if not exists public.notify_prefs (
+  user_id        uuid primary key references auth.users(id) on delete cascade,
+  email_digest   boolean not null default true,
+  digest_dow     smallint not null default 1,   -- 0=Sun..6=Sat; Monday by default
+  department     text,                          -- null means the whole hospital
+  overdue_only   boolean not null default false,
+  last_sent_on   date,
+  updated_at     timestamptz not null default now()
+);
+alter table public.notify_prefs enable row level security;
+drop policy if exists notify_prefs_rw on public.notify_prefs;
+create policy notify_prefs_rw on public.notify_prefs for all
+  using (user_id = auth.uid()) with check (user_id = auth.uid());
+
+-- The in-app notification centre. Org-scoped because a finding raised in ICU is the
+-- hospital's business, not one person's — but `for_user` narrows it when it is personal.
+create table if not exists public.notifications (
+  id           text primary key,
+  org_id       uuid references public.orgs(id) on delete cascade,
+  for_user     uuid,            -- null = everyone in the org
+  kind         text not null default 'due',   -- due | overdue | finding | round | system
+  title        text not null,
+  body         text,
+  href         text,
+  department   text,
+  seen_by      jsonb not null default '[]'::jsonb,
+  created_at   timestamptz not null default now()
+);
+create index if not exists ntf_org_idx on public.notifications(org_id);
+
+-- ---------- onboarding ----------
+-- What a hospital has finished setting up. One row per org, so the checklist survives the
+-- person who started it leaving — onboarding half-done by someone who has moved on is a
+-- common way a platform quietly stops being used.
+create table if not exists public.onboarding (
+  org_id       uuid primary key references public.orgs(id) on delete cascade,
+  steps        jsonb not null default '{}'::jsonb,
+  dismissed    boolean not null default false,
+  updated_at   timestamptz not null default now()
+);
+
+-- ---------- file attachments ----------
+-- Metadata only. The file itself lives in Supabase Storage; this row is what makes it
+-- findable from the record it evidences. A certificate in someone's inbox is not evidence
+-- an assessor can be shown.
+create table if not exists public.attachments (
+  id           text primary key,
+  org_id       uuid references public.orgs(id) on delete cascade,
+  entity_table text not null,   -- asset_events | capa | incidents | rounds | committee_meetings
+  entity_id    text not null,
+  bucket       text not null default 'evidence',
+  path         text not null,
+  filename     text not null,
+  mime         text,
+  size_bytes   integer,
+  created_by   uuid,
+  created_at   timestamptz not null default now()
+);
+create index if not exists att_org_idx on public.attachments(org_id);
+create index if not exists att_ent_idx on public.attachments(entity_table, entity_id);
+
 -- ---------- document control (IMS.6.a) ----------
 create table if not exists public.documents (
   id            text primary key,
@@ -556,7 +621,8 @@ begin
   foreach t in array array['elements','capa','documents','document_versions','audits','incidents',
                         'committees','committee_meetings','compliance_tasks',
                         'assets','asset_schedules','asset_events',
-                        'checklists','checklist_items','rounds'] loop
+                        'checklists','checklist_items','rounds',
+                        'notifications','onboarding','attachments'] loop
     execute format('drop policy if exists %I_read on public.%I', t, t);
     execute format(
       'create policy %I_read on public.%I for select using (org_id = public.my_org())', t, t);
@@ -585,7 +651,8 @@ begin
   foreach t in array array['elements','capa','documents','document_versions','members','audits','incidents',
                         'committees','committee_meetings','compliance_tasks',
                         'assets','asset_schedules','asset_events',
-                        'checklists','checklist_items','rounds'] loop
+                        'checklists','checklist_items','rounds',
+                        'notifications','onboarding','attachments'] loop
     execute format('drop trigger if exists set_org_%I on public.%I', t, t);
     execute format(
       'create trigger set_org_%I before insert on public.%I
@@ -939,7 +1006,7 @@ create trigger aq_claim_comp_trg after insert on auth.users
 do $$
 declare t text;
 begin
-  foreach t in array array['capa','incidents','audits','assets','asset_events','checklists','rounds'] loop
+  foreach t in array array['capa','incidents','audits','assets','asset_events','checklists','rounds','attachments'] loop
     execute format('drop trigger if exists %I_author_trg on public.%I', t, t);
     execute format(
       'create trigger %I_author_trg before insert on public.%I

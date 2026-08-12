@@ -10,7 +10,15 @@
  * day and not an instant, the string is the correct representation and Date is only used
  * for arithmetic, constructed from explicit parts.
  */
-window.AQSchedule = (function () {
+/* Dual-mode. The browser gets window.AQSchedule as before; a Vercel function can
+   require() the same file, so the weekly email computes due dates with exactly the code
+   the app uses. A second implementation server-side would eventually disagree with the
+   first, and the hospital would act on whichever it happened to open. */
+(function (root, factory) {
+  var api = factory();
+  if (root) root.AQSchedule = api;
+  if (typeof module !== "undefined" && module.exports) module.exports = api;
+})(typeof window !== "undefined" ? window : null, function () {
   "use strict";
 
   /* Frequencies a hospital actually uses. `months` drives the arithmetic; `days` is only
@@ -211,4 +219,4 @@ window.AQSchedule = (function () {
     advance: advance, nextDue: nextDue, status: status,
     occurrences: occurrences, missedCount: missedCount, inMonth: inMonth
   };
-})();
+});

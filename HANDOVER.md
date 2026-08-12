@@ -494,6 +494,45 @@ pharmacy would bury the four things the pharmacy owns. The chosen department is 
 per person in `user_prefs`, and a department that no longer exists (a renamed unit) falls
 back to the whole hospital rather than showing an empty page that looks broken.
 
+### Notifications (`workspace/bell.js`, `workspace/digest.js`, `api/digest.js`)
+Everything else in the workspace waits for someone to open it. The bell is the one piece
+that tells them, and it is the difference between owning a calendar and using one.
+
+**`digest.js` is the single source of "what is overdue"**, shared by the bell, the weekly
+email and the dashboard. Three implementations would eventually give three answers and the
+hospital would act on whichever they opened. `calendar/schedule.js` is now **dual-mode**
+(browser global *and* `require`-able) so the serverless function computes dates with the
+app's own code.
+
+**The bell works with no mail provider configured** — deliberate: a feature inert until an
+API key is added is one nobody sees. The email needs `SUPABASE_URL`,
+`SUPABASE_SERVICE_KEY`, `RESEND_API_KEY`, optionally `CRON_SECRET`, and the cron entry
+already in `vercel.json` (Mondays 03:00). Until then `/api/digest` reports
+`configured:false` rather than failing obscurely.
+
+Two rules that keep it from being switched off: **nobody is emailed to be told nothing is
+wrong** (`digest.empty` skips), and `last_sent_on` caps it at one per day — without that
+an hourly cron sends twenty-four identical emails. The unseen dot is keyed on *what is
+outstanding*, not a timestamp, so dismissing means "seen this" and a new overdue item
+brings it back on its own.
+
+### Onboarding (`workspace/onboard.js`)
+Six steps on the workspace landing page. **Steps complete by detecting real data**, never
+by ticking a box — a checklist completable without doing the work teaches people the
+checklist *is* the work, which is the habit this platform argues against. Stored per **org**
+so it survives the person who started setup leaving. Disappears once finished or dismissed.
+
+### Attachments (`workspace/attach.js`)
+`AQAttach.mount(el, table, id)` on register, CAPA, incidents and rounds. Files live in a
+**private** Supabase Storage bucket called `evidence` — **create it manually and keep it
+private**. A public bucket would make every hospital's incident photographs and credential
+scans readable by anyone who guessed a path.
+
+Links are signed and expire in 120 seconds, requested only on click. The filename is never
+the path (two "certificate.pdf" uploads would collide, and a name with a slash would escape
+the folder); the original name is kept in the row for display. Accepts PDF, images and
+Office documents only, 10 MB — executables and archives are excluded outright.
+
 ### Billing / access
 - `billing/billing-config.js` is the only file to edit for pricing, UPI and email lists.
 - UPI ID: check `upiVpa` — the config has a `-1` suffix the handover didn't; unverified.
@@ -528,7 +567,7 @@ Redirect URLs, or Supabase ignores the parameter and falls back to Site URL.
 
 ---
 
-## Tests — 835 assertions, plain Node, no install
+## Tests — 896 assertions, plain Node, no install
 
     node tests/activity.test.js    node tests/sync.test.js
     node tests/profile.test.js     node tests/palette.test.js
@@ -538,7 +577,7 @@ Redirect URLs, or Supabase ignores the parameter and falls back to Site URL.
     node tests/founder.test.js  node tests/lens.test.js
     node tests/home-flow.test.js  node tests/sod.test.js
     node tests/register.test.js  node tests/rounds.test.js
-    node tests/export-dash.test.js
+    node tests/export-dash.test.js  node tests/notify.test.js
 
 `sync.test.js` is the important one: cross-device persistence against a fake Supabase, plus
 direct assertions on the RLS rules. `framing.test.js` locks the camera maths that was got
@@ -599,7 +638,7 @@ against the position of its table, so this cannot recur silently.
 ## Deploy ritual
 
 After any schema change, re-run `workspace/schema.sql` in the Supabase SQL editor — it is
-fully idempotent and ~950 lines, starting `-- ====`. **Clear the editor with Ctrl+A then
+fully idempotent and ~1015 lines, starting `-- ====`. **Clear the editor with Ctrl+A then
 Delete first**: a paste on top of existing content produced a "syntax error at line 3070"
 in a 618-line file. Open it with Notepad, not Word — smart quotes break it.
 
