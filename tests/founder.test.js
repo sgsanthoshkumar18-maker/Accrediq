@@ -103,6 +103,18 @@ ok(F.certifications.some(c => /Lean Six Sigma/.test(c.name)), 'Lean Six Sigma is
   .forEach(id => ok(new RegExp('id="' + id + '"').test(html), 'the page has a #' + id + ' slot'));
 ok(/founder-data\.js/.test(html) && /founder\.js/.test(html), 'both scripts are loaded');
 ok(/profile\/founder\.css/.test(html), 'and the stylesheet');
+
+/* CACHE BUSTING. Mobile browsers hold on to CSS far longer than desktop, so a returning
+   visitor keeps the old stylesheet and a CSS-only fix looks like it never deployed —
+   which is exactly what happened when the reel would not stack on a phone. Every local
+   asset must carry a version query. */
+{
+  const unversioned = [...html.matchAll(/(?:href|src)="((?!https?:|\/\/|data:|mailto:)[^"]+\.(?:css|js))"/g)]
+    .map(m => m[1]);
+  eq(unversioned.join(', '), '', 'every local asset on this page carries a version query');
+  ok(/founder\.css\?v=/.test(html), 'including the portfolio stylesheet');
+  ok(/founder-motion\.js\?v=/.test(html), 'and its motion script');
+}
 eq((html.match(/<body/g) || []).length, 1, 'the page has one body tag');
 eq((html.match(/<\/head>/g) || []).length, 1, 'and one head');
 

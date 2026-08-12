@@ -405,7 +405,7 @@ Redirect URLs, or Supabase ignores the parameter and falls back to Site URL.
 
 ---
 
-## Tests — 583 assertions, plain Node, no install
+## Tests — 586 assertions, plain Node, no install
 
     node tests/activity.test.js    node tests/sync.test.js
     node tests/profile.test.js     node tests/palette.test.js
@@ -418,6 +418,18 @@ Redirect URLs, or Supabase ignores the parameter and falls back to Site URL.
 direct assertions on the RLS rules. `framing.test.js` locks the camera maths that was got
 wrong twice by guessing. The scoring maths and the scope generator still have **no tests**,
 and both produce records a hospital may show an assessor.
+
+## Cache busting — `node build/set-version.js`
+**Every local CSS and JS reference must carry `?v=...`.** Mobile browsers cache these far
+longer than desktop, so a returning visitor keeps the old file and a CSS-only fix looks
+like it never deployed: the HTML is new, the stylesheet is hours old, the page is
+unchanged. That is exactly what happened when the publication reel would not stack on a
+phone — `founder.css` was the only file that needed to change and was the one file with
+no version on it, while the rest of the site had carried `?v=20260805c` since launch.
+
+`build/set-version.js` stamps every reference in place (803 across 49 pages) and
+re-stamps on each run, so this cannot drift again. Run it after any CSS or JS change.
+A test in `palette.test.js` fails if any page ships an unversioned local asset.
 
 ## Deploy ritual
 

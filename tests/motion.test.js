@@ -101,8 +101,12 @@ pages.forEach(f => {
   if (!/motion\/motion\.css/.test(h) || !/motion\/motion\.js/.test(h)) { missing++; return; }
   // Nested pages need ../ or the asset 404s and the page silently loses all motion.
   const depth = path.relative(ROOT, path.dirname(f)).split(path.sep).filter(Boolean).length;
+  /* The version query (?v=...) is appended by build/set-version.js, so match the path
+     up to the quote-or-query rather than requiring an exact string. */
   const want = '../'.repeat(depth) + 'motion/motion.js';
-  if (h.indexOf('src="' + want + '"') < 0) { badPath++; console.log('  bad path: ' + f); }
+  if (!new RegExp('src="' + want.replace(/[./]/g, '\\$&') + '(\\?[^"]*)?"').test(h)) {
+    badPath++; console.log('  bad path: ' + f);
+  }
 });
 eq(missing, 0, 'every page loads the motion layer');
 eq(badPath, 0, 'every page uses a correct relative path for its depth');
