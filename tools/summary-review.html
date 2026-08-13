@@ -1,0 +1,232 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<script>(function(){try{var DEF="neon";if(localStorage.getItem("aq-palette-v")!=="2"){localStorage.removeItem("aq-palette");localStorage.setItem("aq-palette-v","2");}var p=new URLSearchParams(location.search);var own=localStorage.getItem("aq-is-owner")==="1";if(p.has("dark")){localStorage.setItem("aq-theme",p.get("dark")==="0"?"light":"dark");}if(own&&p.has("neon")){localStorage.setItem("aq-palette",p.get("neon")==="0"?"default":"neon");}var t=localStorage.getItem("aq-theme")||"dark";var q=localStorage.getItem("aq-palette")||DEF;if(q!=="default"){q="neon";}if(t!=="light"){document.documentElement.setAttribute("data-theme","dark");}if(q==="neon"&&t!=="light"){document.documentElement.setAttribute("data-palette","neon");}}catch(e){document.documentElement.setAttribute("data-theme","dark");document.documentElement.setAttribute("data-palette","neon");}})();</script>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Element wording review — AQcredix</title>
+<meta name="description" content="Internal tool: rewrite each Objective Element in our own words.">
+<link rel="icon" href="data:image/svg+xml,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 40 40'><circle cx='20' cy='20' r='16' fill='none' stroke='%23D8E0E6' stroke-width='3.4'/><path d='M20 4a16 16 0 1 1-11.31 4.69' fill='none' stroke='%2317A2B8' stroke-width='3.4' stroke-linecap='round'/><path d='M19.15 14.05H20.85L25.61 25.015H26.97V25.95H22.21V25.015H23.315L22 22H18L16.685 25.015H17.79V25.95H13.03V25.015H14.39ZM20 16.26L22.027 20.935H17.973Z' fill='%2317A2B8' fill-rule='evenodd'/></svg>">
+<link rel="stylesheet" href="../styles.css?v=20260813d">
+<script type="application/ld+json">{"@context":"https://schema.org","@type":"EducationalOrganization","name":"AQcredix","alternateName":"AQcredix \u2014 Accreditation & Quality Implementation Guidance Platform","url":"https://accrediq.vercel.app/","description":"An independent healthcare quality education and training forum covering NABH accreditation standards, department roles, KPIs, quality tools and mock assessment.","founder":{"@type":"Person","name":"Dr. Santhoshkumar SG","jobTitle":"Founder & Chief Quality Officer, AQcredix; Infectious Disease Clinical Pharmacologist","honorificSuffix":"FISQua, CPQIH (Basic) (CAHO)"},"knowsAbout":["NABH accreditation","Healthcare quality improvement","Hospital infection control","Patient safety","Standard operating procedures","Clinical audit"]}</script>
+<script type="application/ld+json">{"@context":"https://schema.org","@type":"WebSite","name":"AQcredix","url":"https://accrediq.vercel.app/","potentialAction":{"@type":"SearchAction","target":"https://accrediq.vercel.app/standards.html?q={search_term_string}","query-input":"required name=search_term_string"}}</script>
+<link rel="stylesheet" href="../motion/motion.css?v=20260813d">
+<link rel="stylesheet" href="../search/command.css?v=20260813d">
+</head>
+<body data-page="about" data-access="free">
+<div id="site-header"></div>
+
+<main id="aq-main">
+<section class="page-head"><div class="wrap">
+  <span class="eyebrow">Internal tool — not linked from the site</span>
+  <h1>Element wording review</h1>
+  <p class="lead">Rewrite each Objective Element in your own words, then mark it reviewed. The site shows only reviewed summaries; anything unreviewed falls back to the code and chapter alone.</p>
+</div></section>
+
+<section class="section wrap">
+  <div class="rv-note">
+    <b>Write from the requirement, not from the sentence.</b> Read the element, look away,
+    and write what a hospital actually has to do. A reworded copy is still a copy, and it
+    reads worse. Check each against the published standard you have legitimate access to
+    before ticking <em>reviewed</em> — the wording currently stored may not be exact.
+  </div>
+
+  <div id="rvStats" class="rv-stats"></div>
+
+  <div class="rv-bar">
+    <select id="rvChapter" class="ws-select"></select>
+    <select id="rvFilter" class="ws-select">
+      <option value="todo">Needs writing</option>
+      <option value="draft">Written, not reviewed</option>
+      <option value="done">Reviewed</option>
+      <option value="all">All</option>
+    </select>
+    <button class="btn btn-accent btn-sm" id="rvExport">Download nabh-summary.js</button>
+  </div>
+
+  <div id="rvList"></div>
+</section>
+</main>
+
+<style>
+  .rv-note{border:1px solid var(--warn);background:var(--warn-tint);color:var(--warn);
+    padding:14px 16px;border-radius:var(--r-md);font-size:14px;line-height:1.6;margin-bottom:20px;}
+  .rv-stats{display:grid;grid-template-columns:repeat(4,1fr);gap:12px;margin-bottom:18px;}
+  .rv-stat{padding:14px 16px;border:1px solid var(--border);border-radius:var(--r-md);
+    background:var(--bg-elevated);}
+  .rv-stat b{display:block;font-family:var(--font-display);font-size:26px;}
+  .rv-stat span{font-size:11.5px;text-transform:uppercase;letter-spacing:.05em;color:var(--fg-faint);}
+  .rv-bar{display:flex;gap:10px;flex-wrap:wrap;margin-bottom:18px;}
+  .rv-row{border:1px solid var(--border);border-radius:var(--r-md);padding:14px 16px;
+    margin-bottom:10px;background:var(--bg-elevated);}
+  .rv-row.is-done{border-color:var(--brand-2);}
+  .rv-code{font-family:var(--font-mono);font-weight:700;color:var(--brand-2);font-size:13px;}
+  .rv-cat{font-size:10px;font-weight:700;padding:2px 8px;border-radius:999px;
+    background:var(--bg);color:var(--fg-muted);margin-left:7px;}
+  .rv-orig{font-size:13px;color:var(--fg-faint);margin:8px 0;line-height:1.55;
+    padding-left:11px;border-left:2px solid var(--border);}
+  .rv-row textarea{width:100%;padding:10px 12px;border:1px solid var(--border);
+    border-radius:var(--r-md);background:var(--bg);color:var(--fg);font-family:inherit;
+    font-size:14px;line-height:1.55;resize:vertical;}
+  .rv-foot{display:flex;align-items:center;gap:14px;margin-top:9px;flex-wrap:wrap;}
+  .rv-chk{display:flex;align-items:center;gap:7px;font-size:12.5px;color:var(--fg-muted);cursor:pointer;}
+  .rv-chk input{width:auto;margin:0;}
+  .rv-warn{font-size:12px;color:var(--nc);}
+  @media (max-width:760px){.rv-stats{grid-template-columns:repeat(2,1fr);}}
+</style>
+
+<script src="../nabh-data.js?v=20260813d"></script>
+<script src="../nabh-summary.js?v=20260813d"></script>
+<script>
+(function () {
+  "use strict";
+  var D = window.NABH_DATA, S = window.NABH_SUMMARY || {};
+  var LS = "aq-summary-draft";
+
+  /* Drafts are kept in this browser until exported. Deliberately not sent to Supabase:
+     this is authoring, not hospital data, and it should not touch a customer database. */
+  try { S = Object.assign({}, S, JSON.parse(localStorage.getItem(LS) || "{}")); } catch (e) {}
+
+  var all = [];
+  Object.keys(D.chapters).forEach(function (ch) {
+    (D.chapters[ch].standards || []).forEach(function (std) {
+      (std.elements || []).forEach(function (e) {
+        all.push({ ch: ch, code: std.code + "." + e.letter, cat: e.category,
+                   orig: e.text, sop: !!e.sop });
+      });
+    });
+  });
+
+  function esc(s) {
+    return String(s == null ? "" : s).replace(/[&<>"']/g, function (c) {
+      return { "&": "&amp;", "<": "&lt;", ">": "&gt;", '"': "&quot;", "'": "&#39;" }[c];
+    });
+  }
+
+  function save() {
+    try { localStorage.setItem(LS, JSON.stringify(S)); } catch (e) {}
+    stats();
+  }
+
+  /* A summary that shares long runs of words with the original has not been rewritten,
+     it has been shuffled. Flagging it is more useful than trusting the author to notice. */
+  function tooClose(a, b) {
+    if (!a || !b) return false;
+    var wa = a.toLowerCase().split(/\W+/).filter(Boolean);
+    var wb = b.toLowerCase().split(/\W+/).filter(Boolean);
+    var run = 0, worst = 0;
+    for (var i = 0; i < wa.length; i++) {
+      var j = wb.indexOf(wa[i]);
+      if (j >= 0 && i > 0 && wb.indexOf(wa[i - 1]) === j - 1) { run++; worst = Math.max(worst, run); }
+      else run = 0;
+    }
+    return worst >= 6;
+  }
+
+  function stats() {
+    var done = 0, draft = 0;
+    all.forEach(function (x) {
+      var s = S[x.code];
+      if (s && s.summary && s.reviewed) done++;
+      else if (s && s.summary) draft++;
+    });
+    document.getElementById("rvStats").innerHTML =
+      '<div class="rv-stat"><b>' + all.length + "</b><span>Elements</span></div>" +
+      '<div class="rv-stat"><b>' + done + "</b><span>Reviewed</span></div>" +
+      '<div class="rv-stat"><b>' + draft + "</b><span>Written, unreviewed</span></div>" +
+      '<div class="rv-stat"><b>' + (all.length - done - draft) + "</b><span>Not started</span></div>";
+  }
+
+  function render() {
+    var ch = document.getElementById("rvChapter").value;
+    var f = document.getElementById("rvFilter").value;
+
+    var rows = all.filter(function (x) {
+      if (ch && x.ch !== ch) return false;
+      var s = S[x.code];
+      var has = !!(s && s.summary), rev = !!(s && s.reviewed);
+      if (f === "todo") return !has;
+      if (f === "draft") return has && !rev;
+      if (f === "done") return rev;
+      return true;
+    });
+
+    document.getElementById("rvList").innerHTML = rows.length
+      ? rows.map(function (x) {
+          var s = S[x.code] || {};
+          var close = tooClose(s.summary, x.orig);
+          return '<div class="rv-row' + (s.reviewed ? " is-done" : "") + '" data-code="' + esc(x.code) + '">' +
+            '<div><span class="rv-code">' + esc(x.code) + "</span>" +
+              '<span class="rv-cat">' + esc(x.cat) + "</span>" +
+              (x.sop ? '<span class="rv-cat">\u2726 SOP</span>' : "") + "</div>" +
+            '<div class="rv-orig">Currently stored: ' + esc(x.orig) + "</div>" +
+            '<textarea rows="3" placeholder="What must a hospital actually do?">' +
+              esc(s.summary || "") + "</textarea>" +
+            '<div class="rv-foot">' +
+              '<label class="rv-chk"><input type="checkbox"' + (s.reviewed ? " checked" : "") +
+                "><span>Checked against the published standard</span></label>" +
+              (close ? '<span class="rv-warn">Too close to the stored wording \u2014 rewrite it</span>' : "") +
+            "</div></div>";
+        }).join("")
+      : '<p class="muted">Nothing in this view.</p>';
+
+    document.getElementById("rvList").querySelectorAll(".rv-row").forEach(function (row) {
+      var code = row.dataset.code;
+      var ta = row.querySelector("textarea");
+      var cb = row.querySelector('input[type="checkbox"]');
+      ta.addEventListener("input", function () {
+        S[code] = S[code] || {};
+        S[code].summary = ta.value.trim();
+        save();
+      });
+      cb.addEventListener("change", function () {
+        S[code] = S[code] || {};
+        S[code].reviewed = cb.checked;
+        save();
+      });
+    });
+    stats();
+  }
+
+  document.getElementById("rvChapter").innerHTML =
+    '<option value="">All chapters</option>' +
+    Object.keys(D.chapters).map(function (c) {
+      return '<option value="' + c + '">' + c + " \u2014 " + esc(D.chapters[c].name) + "</option>";
+    }).join("");
+
+  document.getElementById("rvChapter").addEventListener("change", render);
+  document.getElementById("rvFilter").addEventListener("change", render);
+
+  document.getElementById("rvExport").addEventListener("click", function () {
+    var keys = Object.keys(S).filter(function (k) { return S[k] && S[k].summary; }).sort();
+    var out = "/* AQcredix \u2014 our own summary of each Objective Element.\n" +
+      " * Generated by tools/summary-review.html. See nabh-summary.js for why this exists.\n" +
+      " */\nwindow.NABH_SUMMARY = {\n" +
+      keys.map(function (k) {
+        return '  "' + k + '": {\n    summary: ' + JSON.stringify(S[k].summary) +
+               ",\n    reviewed: " + (S[k].reviewed ? "true" : "false") + "\n  }";
+      }).join(",\n") +
+      "\n};\n\nwindow.NABH_SUMMARY_GET = function (code) {\n" +
+      "  var s = window.NABH_SUMMARY && window.NABH_SUMMARY[code];\n" +
+      "  if (!s || !s.reviewed || !s.summary) return null;\n  return s.summary;\n};\n";
+    var b = new Blob([out], { type: "text/javascript" });
+    var u = URL.createObjectURL(b);
+    var a = document.createElement("a");
+    a.href = u; a.download = "nabh-summary.js";
+    document.body.appendChild(a); a.click(); document.body.removeChild(a);
+    setTimeout(function () { URL.revokeObjectURL(u); }, 3000);
+  });
+
+  render();
+})();
+</script>
+<div id="site-footer"></div>
+<script src="../dept-icons.js?v=20260813d"></script>
+<script src="../orbit.js?v=20260813d"></script>
+<script src="../app.js?v=20260813d"></script>
+<script src="../search/search.js?v=20260813d"></script>
+<script src="../motion/motion.js?v=20260813d"></script>
+<script src="../search/command.js?v=20260813d"></script>
+<script src="../motion/scrolly.js?v=20260813d"></script>
+</body>
+</html>

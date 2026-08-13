@@ -586,7 +586,7 @@ Redirect URLs, or Supabase ignores the parameter and falls back to Site URL.
 
 ---
 
-## Tests — 933 assertions, plain Node, no install
+## Tests — 1029 assertions, plain Node, no install
 
     node tests/activity.test.js    node tests/sync.test.js
     node tests/profile.test.js     node tests/palette.test.js
@@ -597,6 +597,7 @@ Redirect URLs, or Supabase ignores the parameter and falls back to Site URL.
     node tests/home-flow.test.js  node tests/sod.test.js
     node tests/register.test.js  node tests/rounds.test.js
     node tests/export-dash.test.js  node tests/notify.test.js
+    node tests/summary.test.js
 
 `sync.test.js` is the important one: cross-device persistence against a fake Supabase, plus
 direct assertions on the RLS rules. `framing.test.js` locks the camera maths that was got
@@ -653,6 +654,45 @@ re-run every session, that breaks *every* migration, not just the new part.
 The authorship trigger loop therefore lives at the **end of the file**, after all tables.
 A test in `register.test.js` checks every `do`-block loop and every `create trigger`
 against the position of its table, so this cannot recur silently.
+
+## Element wording — copyright and accuracy
+`nabh-data.js` holds wording close to the published NABH standard. Two problems, and the
+second matters more:
+
+1. **Copyright.** It was free to READ on nabh.co, which was never permission to reproduce
+   it commercially. NABH has since moved the Hospital, SHCO and Digital Health standards
+   behind a paywall (₹6,000 / ₹3,000 / ₹1,000), so the exposure is larger and more likely
+   to be enforced. Emails to NABH went unanswered — **silence is not consent.**
+2. **Accuracy.** Where that text came from is uncertain. Wording reproduced from memory can
+   be subtly wrong — a "shall" for a "should", a dropped clause — and in a product
+   hospitals prepare with, wrong standard text is worse than copied standard text.
+
+**A concrete accuracy defect already found.** The published 6th-Edition foreword states
+**639** Objective Elements (105 Core, 457 Commitment, 60 Achievement, 17 Excellence). The
+stored data has **640** — one extra Commitment element, and the chapter totals place it in
+**IPC** (stored 50, published 49). Core, Achievement and Excellence all match exactly.
+That single wrong element is precisely the failure mode this section is about: a hospital
+could prepare against something that is not in the book. `summary.test.js` records the
+discrepancy on every run until IPC is checked against a legitimate copy.
+
+**The fix.** `nabh-summary.js` holds our own plain-English summary per element, and
+`window.AQText.element(code, fallback)` returns it **only when `reviewed: true`**,
+otherwise the stored wording. That lets migration proceed element by element without the
+site breaking, and means an unreviewed draft can never reach a hospital.
+
+**Nothing ships marked reviewed.** That flag is Dr Santhoshkumar's professional judgement
+against a copy of the standard he has legitimate access to — a test enforces that the repo
+contains no reviewed entries it did not get from him.
+
+`tools/summary-review.html` is the authoring tool: filter by chapter and status, write,
+tick reviewed, export a new `nabh-summary.js`. It flags any summary sharing a six-word run
+with the stored wording, because a shuffled sentence keeps the exposure and loses the
+readability gain. **It is deliberately not linked from any public page** — it shows the
+stored wording side by side, which is what we are trying to stop publishing.
+
+Element **codes** (`IPC.2.c`), chapter names and the ten-chapter structure are references
+and facts, not protected expression. The assessor-lens, gap and fix content is original
+work and unaffected.
 
 ## Deploy ritual
 

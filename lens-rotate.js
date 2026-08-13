@@ -94,9 +94,18 @@
     host.innerHTML =
       '<div class="lens-face" data-face="0">' +
         "<h4>The standard</h4>" +
-        '<p class="lens-verbatim">\u201c' + esc(e.text) + "\u201d</p>" +
+        /* Our own summary once reviewed, the stored wording until then. Quotation marks
+           only when it is genuinely a quotation — presenting our paraphrase inside quotes
+           would misrepresent it as the standard's own words. */
+        (window.AQText && window.AQText.isOwn(r.code)
+          ? '<p class="lens-verbatim">' + esc(window.AQText.element(r.code, e.text)) + "</p>"
+          : '<p class="lens-verbatim">\u201c' + esc(e.text) + "\u201d</p>") +
         '<p class="lens-note">' + esc(e.chapter) + " \u00b7 " + esc(e.chapterName) +
-          " \u2014 " + esc(e.stdCode) + ". " + esc(e.stdText) + "</p>" +
+          " \u2014 " + esc(e.stdCode) + "</p>" +
+        '<p class="lens-src">' +
+          esc(window.AQText ? window.AQText.note(r.code)
+                            : "Refer to the published NABH standard for the exact wording.") +
+        "</p>" +
       "</div>" +
 
       '<div class="lens-face" data-face="1">' +
