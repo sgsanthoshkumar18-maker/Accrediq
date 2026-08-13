@@ -82,7 +82,10 @@ eq(/#[0-9a-fA-F]{3,8}\b|rgba?\(/.test(css), false, 'the motion stylesheet declar
 
 function walk(dir, out) {
   out = out || [];
-  const skip = new Set(['node_modules', '.git', 'build', 'tests',
+  /* `docs` holds a rendered sample of the digest EMAIL, not a site page. Email HTML is
+     deliberately standalone with inline styles — Outlook ignores external stylesheets —
+     so it must never carry the site's motion layer. */
+  const skip = new Set(['node_modules', '.git', 'build', 'tests', 'docs',
     'galaxy', 'galaxy2', 'brain', 'dna', 'helix', 'radar', 'globe', 'hglobe', 'kpinet']);
   for (const n of fs.readdirSync(dir)) {
     if (skip.has(n)) continue;
