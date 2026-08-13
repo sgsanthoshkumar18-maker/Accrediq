@@ -24,6 +24,18 @@
 
   var FRAMES = [
     {
+      key: "dashboard",
+      label: "My department",
+      caption: "Each department opens one screen and sees only what it owns.",
+      html:
+        '<div class="tr-head"><b>Biomedical</b><span class="tr-chip">1 overdue \u00b7 1 finding</span></div>' +
+        row("Defibrillator \u2014 ICU bed 4", "Calibration \u00b7 yearly", "59 days overdue", "bad") +
+        row("Autoclave \u2014 CSSD 1", "Preventive \u00b7 quarterly", "Due 10 Nov", "") +
+        row("Ventilator AMC", "Renewal \u00b7 yearly", "Due 20 Jan", "") +
+        '<div class="tr-note">Committees and other departments are hidden here on purpose \u2014 ' +
+          "showing everything would bury the four things this department actually owns.</div>"
+    },
+    {
       key: "readiness",
       label: "Readiness",
       caption: "Every Objective Element, scored. Where you stand today, chapter by chapter.",
@@ -109,6 +121,47 @@
         row("Crash cart drug expired", "COP.5.a \u00b7 ICU", "Corrective action", "bad") +
         '<div class="tr-note">A finding cannot be verified or closed by the person who ' +
           "raised it. The database refuses it.</div>"
+    },
+    {
+      key: "bell",
+      label: "Notifications",
+      caption: "It tells people, rather than waiting for them to look.",
+      html:
+        '<div class="tr-head"><b>\u2691 1 overdue \u00b7 1 open finding in Biomedical</b></div>' +
+        '<div class="tr-sub">Overdue</div>' +
+        row("Defibrillator \u2014 ICU bed 4", "Equipment \u00b7 59 days overdue", "", "bad") +
+        '<div class="tr-sub">Weekly email</div>' +
+        '<div class="tr-run"><span>Email me a weekly summary</span><em class="ok">On</em></div>' +
+        '<div class="tr-run"><span>Overdue only</span><em>Off</em></div>' +
+        '<div class="tr-note">Nobody is ever emailed to be told nothing is wrong.</div>'
+    },
+    {
+      key: "onboarding",
+      label: "Guided setup",
+      caption: "A new hospital is walked through setup in about ten minutes.",
+      html:
+        '<div class="tr-head"><b>Getting set up</b><span class="tr-chip">1 of 6 \u00b7 10 min left</span></div>' +
+        '<div class="tr-bars"><div class="tr-bar"><span></span><i><b style="width:17%"></b></i><em>17%</em></div></div>' +
+        '<div class="tr-run"><span>\u2713 Add your departments and people</span><em class="ok">4 on the team</em></div>' +
+        '<div class="tr-run"><span>Enter your committees</span><em>Next</em></div>' +
+        '<div class="tr-run"><span>Build the equipment register</span><em></em></div>' +
+        '<div class="tr-run"><span>Set up your rounds</span><em></em></div>' +
+        '<div class="tr-note">Each step marks itself done by detecting real records \u2014 never ' +
+          "by ticking a box.</div>"
+    },
+    {
+      key: "evidence",
+      label: "Evidence files",
+      caption: "The certificate itself, attached to the record it proves.",
+      html:
+        '<div class="tr-head"><b>Defibrillator \u2014 ICU bed 4</b>' +
+          '<span class="tr-chip">Calibration \u00b7 13 Aug 2026</span></div>' +
+        '<div class="tr-run"><span>Certificate ZL/CAL/2026/4471 \u00b7 Pass</span><em class="ok">Recorded</em></div>' +
+        '<div class="tr-sub">Evidence</div>' +
+        '<div class="tr-run"><span>ZOLL-calibration-2026.pdf</span><em>412 KB</em></div>' +
+        '<div class="tr-run"><span>crash-cart-photo.jpg</span><em>1.2 MB</em></div>' +
+        '<div class="tr-note">Private storage, links expire in two minutes, and each ' +
+          "hospital can reach only its own files.</div>"
     },
     {
       key: "export",

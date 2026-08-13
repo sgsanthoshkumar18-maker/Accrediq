@@ -113,5 +113,55 @@ ok(/committee calendars/.test(home), 'naming what that means concretely');
   eq(hard, 0, 'no hardcoded colour inside a media query');
 }
 
+/* ------------------ the tour must cover EVERY locked page ------------------
+   A feature missing from the tour is a feature the visitor is being asked to pay for
+   without being shown. */
+{
+  const tour = read('home-tour.js');
+  ['dashboard', 'readiness', 'standards', 'departments', 'calendar', 'register',
+   'rounds', 'capa', 'bell', 'onboarding', 'evidence', 'export'].forEach(k => {
+    ok(new RegExp('key: "' + k + '"').test(tour), 'the tour covers ' + k);
+  });
+  const n = (tour.match(/key: "/g) || []).length;
+  ok(n >= 12, 'every workspace page is represented (' + n + ' frames)');
+
+  /* The department dashboard leads: it is what a department head opens, and the tour is
+     aimed at the person who has to be convinced to use this, not only at the buyer. */
+  ok(tour.indexOf('key: "dashboard"') < tour.indexOf('key: "readiness"'),
+     'the department view is shown first');
+}
+
+/* ------------------------------ legal pages ------------------------------ */
+{
+  const terms = read('terms.html');
+  const priv = read('privacy.html');
+
+  eq((terms.match(/<body/g) || []).length, 1, 'terms.html is a single well-formed page');
+  eq((priv.match(/<body/g) || []).length, 1, 'privacy.html too');
+
+  // The footer already links to both; before this they were 404s.
+  ok(/privacy\.html/.test(read('app.js')) && /terms\.html/.test(read('app.js')),
+     'both are linked from the site footer');
+
+  /* The claims must match what the software actually does, or the policy is a liability
+     rather than a protection. */
+  /* Whitespace-normalised: the source wraps mid-sentence, so a literal match on the
+     phrase fails for formatting reasons rather than missing content. */
+  const privFlat = priv.replace(/\s+/g, ' ');
+  ok(/no field for a patient name, number or identifier/.test(privFlat),
+     'the privacy policy states the patient-identifier exclusion');
+  ok(/row security|row-level|database-level row security/.test(priv),
+     'and that isolation is enforced at the database');
+  ok(/signed and expire/.test(priv), 'and that file links expire');
+  ok(/not an accrediting body/.test(terms), 'the terms disclaim accreditation authority');
+  ok(/export/i.test(terms) && /belongs to your hospital/.test(terms),
+     'and confirm the hospital owns and can export its data');
+
+  /* Placeholders must be visibly marked, not quietly left as plausible-looking text. A
+     policy published with an invented address is worse than one obviously unfinished. */
+  ok(/tofill/.test(terms) && /tofill/.test(priv), 'unfilled fields are visibly marked');
+  ok(/legal-note/.test(terms), 'and the page says plainly that it needs review');
+}
+
 console.log('\n' + pass + ' passed, ' + fail + ' failed');
 if (fail) process.exit(1);

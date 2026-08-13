@@ -540,6 +540,18 @@ the path (two "certificate.pdf" uploads would collide, and a name with a slash w
 the folder); the original name is kept in the row for display. Accepts PDF, images and
 Office documents only, 10 MB — executables and archives are excluded outright.
 
+### Legal pages (`terms.html`, `privacy.html`)
+Both already linked from the site footer — they were 404s until now. Drafted to describe
+**what the software actually does**, so the claims are checkable: the patient-identifier
+exclusion, database-level org isolation, signed short-lived file links, the hospital owning
+and being able to export its own data, and the plain statement that AQcredix is not an
+accrediting body.
+
+**Unfilled fields are marked `.tofill` and rendered in warning colours**, and each page
+carries a visible banner saying it needs review. A policy published with an invented
+address is worse than one obviously unfinished. Both need a lawyer familiar with Indian
+contract law and the DPDP Act 2023 before they are relied on.
+
 ### Billing / access
 - `billing/billing-config.js` is the only file to edit for pricing, UPI and email lists.
 - UPI ID: check `upiVpa` — the config has a `-1` suffix the handover didn't; unverified.
@@ -574,7 +586,7 @@ Redirect URLs, or Supabase ignores the parameter and falls back to Site URL.
 
 ---
 
-## Tests — 909 assertions, plain Node, no install
+## Tests — 933 assertions, plain Node, no install
 
     node tests/activity.test.js    node tests/sync.test.js
     node tests/profile.test.js     node tests/palette.test.js
