@@ -1013,3 +1013,84 @@ begin
          for each row execute function public.aq_stamp_author()', t, t);
   end loop;
 end $$;
+
+-- =====================================================================
+-- Storage isolation for the 'evidence' bucket
+--
+-- Creating a private bucket stops the anonymous public reading it. It does NOT stop one
+-- signed-in hospital reading another's objects: storage.objects has its own RLS, entirely
+-- separate from the table policies above, and a policy of "any authenticated user" would
+-- mean a determined subscriber who knew another hospital's path could fetch its incident
+-- photographs and credential scans.
+--
+-- So the ORG IS THE FIRST PATH SEGMENT and these policies check it:
+--     {org_id}/{entity_table}/{entity_id}/{random}.{ext}
+-- storage.foldername(name) splits the path; element 1 is that leading folder. A user may
+-- only touch objects whose leading folder is their own org, which is the same boundary
+-- my_org() enforces on every table.
+--
+-- The path is also stamped server-side into public.attachments by the trigger below, so a
+-- client that lied about the path in the metadata row would still be refused by Storage,
+-- and a row whose path does not match the org is rejected outright.
+-- =====================================================================
+
+do $$
+begin
+  -- Nothing to do on a project where Storage has never been initialised.
+  if not exists (select 1 from information_schema.tables
+                 where table_schema = 'storage' and table_name = 'objects') then
+    raise notice 'storage.objects not present; skipping evidence bucket policies';
+    return;
+  end if;
+
+  execute $p$drop policy if exists evidence_read on storage.objects$p$;
+  execute $p$create policy evidence_read on storage.objects for select to authenticated
+    using (
+      bucket_id = 'evidence'
+      and (storage.foldername(name))[1] = public.my_org()::text
+    )$p$;
+
+  execute $p$drop policy if exists evidence_write on storage.objects$p$;
+  execute $p$create policy evidence_write on storage.objects for insert to authenticated
+    with check (
+      bucket_id = 'evidence'
+      and (storage.foldername(name))[1] = public.my_org()::text
+      and public.can_edit()
+    )$p$;
+
+  execute $p$drop policy if exists evidence_update on storage.objects$p$;
+  execute $p$create policy evidence_update on storage.objects for update to authenticated
+    using (
+      bucket_id = 'evidence'
+      and (storage.foldername(name))[1] = public.my_org()::text
+    )$p$;
+
+  execute $p$drop policy if exists evidence_delete on storage.objects$p$;
+  execute $p$create policy evidence_delete on storage.objects for delete to authenticated
+    using (
+      bucket_id = 'evidence'
+      and (storage.foldername(name))[1] = public.my_org()::text
+      and public.can_edit()
+    )$p$;
+end $$;
+
+-- A metadata row must describe an object inside the writer's own org folder. Without this
+-- a client could upload legitimately and then record a path pointing at another hospital's
+-- object, and the app would render a link to it — Storage would refuse the fetch, but the
+-- filename alone leaks more than it should.
+create or replace function public.aq_guard_attachment_path()
+returns trigger language plpgsql security definer set search_path = public as $$
+declare want text := public.my_org()::text;
+begin
+  if want is null then
+    raise exception 'AQ_ATT: no organisation for this user';
+  end if;
+  if split_part(new.path, '/', 1) <> want then
+    raise exception 'AQ_ATT: attachment path must begin with the organisation id';
+  end if;
+  return new;
+end; $$;
+
+drop trigger if exists attachments_path_trg on public.attachments;
+create trigger attachments_path_trg before insert or update on public.attachments
+  for each row execute function public.aq_guard_attachment_path();

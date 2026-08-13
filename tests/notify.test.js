@@ -152,12 +152,20 @@ ok(/function pathFor/.test(att), 'a safe storage path is generated');
   vm.createContext(sb);
   vm.runInContext(att, sb);
   const A = sb.window.AQAttach;
-  const p1 = A.pathFor('asset_events', 'e1', 'certificate.pdf');
-  const p2 = A.pathFor('asset_events', 'e1', 'certificate.pdf');
+  const ORG = '6f1c2d3e-1111-2222-3333-444455556666';
+  const p1 = A.pathFor('asset_events', 'e1', 'certificate.pdf', ORG);
+  const p2 = A.pathFor('asset_events', 'e1', 'certificate.pdf', ORG);
   ok(p1 !== p2, 'two identical filenames do not collide');
   ok(/\.pdf$/.test(p1), 'the extension is preserved');
-  eq(/\.\./.test(A.pathFor('x', '../../etc', 'a.pdf')), false, 'a traversal attempt is stripped');
-  eq(A.pathFor('a/b', 'c d', 'x.PDF').includes(' '), false, 'and so is whitespace');
+  eq(/\.\./.test(A.pathFor('x', '../../etc', 'a.pdf', ORG)), false, 'a traversal attempt is stripped');
+  eq(A.pathFor('a/b', 'c d', 'x.PDF', ORG).includes(' '), false, 'and so is whitespace');
+
+  /* THE ORG IS THE FIRST PATH SEGMENT. That leading folder is what the Storage policies
+     check; without it a private bucket still lets any signed-in subscriber fetch any
+     other hospital's incident photographs, knowing the path. */
+  eq(p1.split('/')[0], ORG, 'the path begins with the org id');
+  eq(A.pathFor('x', 'y', 'a.pdf', '../../other').indexOf('..'), -1,
+     'and a forged org cannot climb out of the folder');
 
   // Narrow by design: executables and archives have no business in a compliance record.
   ok(A.ALLOWED['application/pdf'], 'PDFs are accepted');
@@ -170,6 +178,28 @@ ok(/function pathFor/.test(att), 'a safe storage path is generated');
 /* A row pointing at a file that is not there shows a broken link in an evidence list,
    which is worse than an orphaned object nobody can reach. */
 ok(/adapter\.remove\("attachments"/.test(att), 'the row is removed even if the object delete failed');
+
+/* Storage has its own RLS, entirely separate from the table policies. A private bucket
+   stops the anonymous public; it does NOT stop one hospital reading another's objects. */
+ok(/storage\.foldername\(name\)\)\[1\] = public\.my_org\(\)::text/.test(sql),
+   'storage policies scope objects to the org folder');
+['evidence_read', 'evidence_write', 'evidence_update', 'evidence_delete'].forEach(pol => {
+  ok(new RegExp(pol).test(sql), pol + ' policy exists');
+});
+ok(/for insert to authenticated[\s\S]{0,200}public\.can_edit\(\)/.test(sql),
+   'a viewer cannot upload');
+ok(/information_schema\.tables[\s\S]{0,200}'storage'/.test(sql),
+   'the block is skipped where Storage was never initialised, rather than failing the script');
+
+/* And the metadata row is guarded too: a client could upload legitimately and then record
+   a path pointing at another hospital's object. Storage would refuse the fetch, but the
+   filename alone leaks more than it should. */
+ok(/aq_guard_attachment_path/.test(sql), 'attachment paths are verified server-side');
+ok(/split_part\(new\.path, '\/', 1\) <> want/.test(sql), 'against the writer\'s own org');
+ok(/orgId\(\)/.test(att) && /W\.user\.org_id/.test(att),
+   'the client reads the org from the signed-in member row, not from anything it can set');
+ok(/not linked to a hospital yet/.test(att),
+   'and refuses early with a message that says what is wrong');
 
 ['register.html', 'capa.html', 'incidents.html', 'rounds.html'].forEach(p => {
   ok(/attach\.js/.test(read('workspace/' + p)), p + ' can attach evidence');

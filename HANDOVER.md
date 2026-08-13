@@ -528,6 +528,13 @@ so it survives the person who started setup leaving. Disappears once finished or
 private**. A public bucket would make every hospital's incident photographs and credential
 scans readable by anyone who guessed a path.
 
+**Storage RLS is separate from table RLS.** A private bucket stops the anonymous public;
+it does NOT stop one signed-in hospital reading another's objects. So the path is
+`{org_id}/{table}/{id}/{random}.{ext}` and the `evidence_*` policies in `schema.sql` check
+`(storage.foldername(name))[1] = my_org()::text`. `aq_guard_attachment_path` refuses a
+metadata row whose path is not in the writer's own org, so a client cannot upload
+legitimately and then record a path pointing at another hospital's object.
+
 Links are signed and expire in 120 seconds, requested only on click. The filename is never
 the path (two "certificate.pdf" uploads would collide, and a name with a slash would escape
 the folder); the original name is kept in the row for display. Accepts PDF, images and
@@ -567,7 +574,7 @@ Redirect URLs, or Supabase ignores the parameter and falls back to Site URL.
 
 ---
 
-## Tests — 896 assertions, plain Node, no install
+## Tests — 909 assertions, plain Node, no install
 
     node tests/activity.test.js    node tests/sync.test.js
     node tests/profile.test.js     node tests/palette.test.js
@@ -638,7 +645,7 @@ against the position of its table, so this cannot recur silently.
 ## Deploy ritual
 
 After any schema change, re-run `workspace/schema.sql` in the Supabase SQL editor — it is
-fully idempotent and ~1015 lines, starting `-- ====`. **Clear the editor with Ctrl+A then
+fully idempotent and ~1096 lines, starting `-- ====`. **Clear the editor with Ctrl+A then
 Delete first**: a paste on top of existing content produced a "syntax error at line 3070"
 in a 618-line file. Open it with Notepad, not Word — smart quotes break it.
 

@@ -60,14 +60,30 @@ window.AQAttach = (function () {
     } catch (e) { return ""; }
   }
 
-  /* A safe storage path. The filename is NOT used as the path: two people uploading
-     "certificate.pdf" would collide, and a name containing a slash would escape the
-     folder. The original name is kept in the row for display. */
-  function pathFor(table, entityId, filename) {
+  /* A safe storage path, with THE ORG AS THE FIRST SEGMENT:
+         {org_id}/{entity_table}/{entity_id}/{random}.{ext}
+     That leading folder is what the Storage RLS policies check, so one hospital cannot
+     read another's objects even knowing the exact path. Creating a private bucket only
+     stops the anonymous public; storage.objects has its own RLS and a policy of "any
+     authenticated user" would leave every subscriber able to fetch every other
+     subscriber's incident photographs.
+
+     The filename is NOT used as the path: two people uploading "certificate.pdf" would
+     collide, and a name containing a slash would escape the folder. The original name is
+     kept in the row for display. Every segment is stripped of anything but a safe
+     alphabet, so a traversal attempt cannot climb out of the org folder. */
+  function pathFor(table, entityId, filename, orgId) {
     var ext = (String(filename).match(/\.([a-z0-9]{1,6})$/i) || [, "bin"])[1].toLowerCase();
     var stamp = Date.now().toString(36) + Math.random().toString(36).slice(2, 7);
-    return table.replace(/[^a-z_]/gi, "") + "/" +
-           String(entityId).replace(/[^a-z0-9_-]/gi, "") + "/" + stamp + "." + ext;
+    var safe = function (v) { return String(v == null ? "" : v).replace(/[^a-z0-9_-]/gi, ""); };
+    return safe(orgId) + "/" + safe(table) + "/" + safe(entityId) + "/" + stamp + "." + ext;
+  }
+
+  /* The org the signed-in person belongs to. Read from the workspace shell, which got it
+     from the members row at sign-in — never from a URL or anything the client could set,
+     since it is the whole basis of the isolation. */
+  function orgId() {
+    return (W && W.user && (W.user.org_id || W.user.orgId)) || null;
   }
 
   async function list(table, entityId) {
@@ -91,7 +107,16 @@ window.AQAttach = (function () {
     var url = base();
     if (!url) throw new Error("Storage is not configured on this deployment.");
 
-    var path = pathFor(table, entityId, file.name);
+    var org = orgId();
+    /* Refused here rather than attempted. Without an org the path cannot be scoped, and
+       Storage would reject it anyway — failing early gives a message that says what is
+       wrong instead of a bare 403. */
+    if (!org) {
+      throw new Error("Your account is not linked to a hospital yet, so there is nowhere " +
+                      "to file this. Ask an administrator to add you to the team.");
+    }
+
+    var path = pathFor(table, entityId, file.name, org);
     var r = await fetch(url + "/storage/v1/object/" + BUCKET + "/" + path, {
       method: "POST",
       headers: {
@@ -108,6 +133,13 @@ window.AQAttach = (function () {
       if (r.status === 404 || /bucket/i.test(t)) {
         throw new Error("The 'evidence' storage bucket does not exist yet. Create it in " +
                         "Supabase \u2192 Storage, and keep it private.");
+      }
+      /* A 403 here almost always means the storage policies have not been applied — the
+         bucket exists but nothing grants access to it. Naming that is the difference
+         between a five-minute fix and an afternoon. */
+      if (r.status === 403 || r.status === 401) {
+        throw new Error("Storage refused the upload. Re-run workspace/schema.sql \u2014 it " +
+                        "creates the policies that let your hospital write to its own folder.");
       }
       throw new Error("Upload failed (" + r.status + ").");
     }
