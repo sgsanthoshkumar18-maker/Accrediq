@@ -440,6 +440,52 @@ create table if not exists public.attachments (
 create index if not exists att_org_idx on public.attachments(org_id);
 create index if not exists att_ent_idx on public.attachments(entity_table, entity_id);
 
+-- ---------- material gate pass (security department) ----------
+-- Returnable and non-returnable material movement, the way the security desk already
+-- runs it on paper (VHS Material Gate Pass, Form VHS/QRF/MAT/01): what left, why, whether
+-- it comes back, and whether it did. Returnable passes are exactly the kind of thing that
+-- gets lost track of on paper — this makes "what is still out" a query instead of a
+-- search through a register book.
+create table if not exists public.gate_passes (
+  id               text primary key,
+  org_id           uuid references public.orgs(id) on delete cascade,
+  pass_no          text,
+  department       text,
+  particulars      text not null,       -- what is going out, with asset code if applicable
+  asset_code       text,
+  reason           text,
+  returnable       boolean not null default true,
+  quantity_sent    integer,
+  quantity_returned integer,
+  expected_return_on date,               -- required when returnable
+  returned_on      date,
+  mode_of_transport text,
+  vehicle_no       text,
+  prepared_by      text,
+  dept_incharge    text,
+  taken_by         text,
+  security_out_by  text,
+  received_by      text,
+  security_in_by   text,
+  notes            text,
+  created_by       uuid,
+  created_at       timestamptz not null default now(),
+  updated_at       timestamptz not null default now()
+);
+create index if not exists gp_org_idx  on public.gate_passes(org_id);
+create index if not exists gp_dept_idx on public.gate_passes(department);
+
+-- ---------- apex manual ----------
+-- One row per org. The manual is authored once and revised, not created fresh each time,
+-- so this is a single upserted document rather than a list of entries like everything
+-- else on the platform.
+create table if not exists public.apex_manual (
+  org_id       uuid primary key references public.orgs(id) on delete cascade,
+  answers      jsonb not null default '{}'::jsonb,
+  generated_at timestamptz,
+  updated_at   timestamptz not null default now()
+);
+
 -- ---------- document control (IMS.6.a) ----------
 create table if not exists public.documents (
   id            text primary key,
@@ -622,7 +668,8 @@ begin
                         'committees','committee_meetings','compliance_tasks',
                         'assets','asset_schedules','asset_events',
                         'checklists','checklist_items','rounds',
-                        'notifications','onboarding','attachments'] loop
+                        'notifications','onboarding','attachments',
+                        'gate_passes','apex_manual'] loop
     execute format('drop policy if exists %I_read on public.%I', t, t);
     execute format(
       'create policy %I_read on public.%I for select using (org_id = public.my_org())', t, t);
@@ -652,7 +699,8 @@ begin
                         'committees','committee_meetings','compliance_tasks',
                         'assets','asset_schedules','asset_events',
                         'checklists','checklist_items','rounds',
-                        'notifications','onboarding','attachments'] loop
+                        'notifications','onboarding','attachments',
+                        'gate_passes','apex_manual'] loop
     execute format('drop trigger if exists set_org_%I on public.%I', t, t);
     execute format(
       'create trigger set_org_%I before insert on public.%I
@@ -1006,7 +1054,7 @@ create trigger aq_claim_comp_trg after insert on auth.users
 do $$
 declare t text;
 begin
-  foreach t in array array['capa','incidents','audits','assets','asset_events','checklists','rounds','attachments'] loop
+  foreach t in array array['capa','incidents','audits','assets','asset_events','checklists','rounds','attachments','gate_passes'] loop
     execute format('drop trigger if exists %I_author_trg on public.%I', t, t);
     execute format(
       'create trigger %I_author_trg before insert on public.%I

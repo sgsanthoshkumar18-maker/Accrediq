@@ -123,7 +123,7 @@ ok(/committee calendars/.test(home), 'naming what that means concretely');
     ok(new RegExp('key: "' + k + '"').test(tour), 'the tour covers ' + k);
   });
   const n = (tour.match(/key: "/g) || []).length;
-  ok(n >= 12, 'every workspace page is represented (' + n + ' frames)');
+  ok(n >= 15, 'every workspace page is represented (' + n + ' frames)');
 
   /* The department dashboard leads: it is what a department head opens, and the tour is
      aimed at the person who has to be convinced to use this, not only at the buyer. */

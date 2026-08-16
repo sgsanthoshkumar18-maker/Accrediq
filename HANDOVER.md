@@ -552,6 +552,50 @@ carries a visible banner saying it needs review. A policy published with an inve
 address is worse than one obviously unfinished. Both need a lawyer familiar with Indian
 contract law and the DPDP Act 2023 before they are relied on.
 
+### Material gate pass (`workspace/gatepass.html`, `workspace/gatepass.js`)
+Security's own tracking mechanism, modelled directly on the VHS Material Gate Pass form
+(VHS/QRF/MAT/01) from the uploaded photograph. Returnable and non-returnable are the two
+real states: a non-returnable pass closes the moment it's issued, a returnable one stays
+open until someone records it coming back. **No recurrence here** — unlike the calendar
+and register, a gate pass is a single event, so status is a plain date comparison, not the
+schedule engine.
+
+Pass numbers are sequential and assigned once; `delete row.pass_no` on every edit path
+guards against a save silently nulling it out, since a gate pass losing its number defeats
+the one thing the paper register was good at. A returnable pass cannot be saved without an
+expected return date.
+
+### Document library (`workspace/library.html`, `workspace/library-data.js`)
+114 real items — 26 checklists, 63 forms/consents, 25 registers — pulled from the
+hospital's own uploaded inventory (`All_Forms_checklist_Registers.xlsx`) and tagged to a
+department by keyword heuristics. Browsable by category, then filtered by department;
+click through to what each document must contain, why it matters, and a downloadable blank
+template.
+
+**Field lists are written from general clinical documentation practice, not transcribed
+from any NABH publication** — the same reasoning as `nabh-summary.js`. 10 items carry a
+full specification (`detailed:true`); the rest use a generic template for their category
+until someone writes the specific one — the same reviewed/unreviewed pattern as the
+element summaries.
+
+Downloads are `.xlsx`, generated client-side with the same raw-OOXML approach as
+`data-export.js` — no new dependency. A stray header row from the source workbook ("Forms",
+"Registers" as literal item names) was caught and stripped during build; a test guards
+against it recurring.
+
+### Apex (quality) manual (`workspace/apex.html`, `workspace/apex.js`, `workspace/simple-docx.js`)
+Nine guided sections rather than a blank page. **Committees are pulled automatically from
+the compliance calendar**, not retyped — typing the same thing twice is how a manual and
+a calendar quietly drift apart. Answers autosave (debounced 900ms) to a single row per org
+in `apex_manual`.
+
+`simple-docx.js` is a minimal raw-OOXML `.docx` writer (headings, paragraphs, bullets,
+2-column tables) built the same way as the xlsx writers — JSZip, no new dependency, and a
+genuinely editable Word document rather than a flattened PDF. The download is built from
+answers already in memory, never a fresh fetch, so it can never be older than what's on
+screen. A multi-line textarea answer becomes a real line break in the document, not a
+collapsed run of text.
+
 ### Billing / access
 - `billing/billing-config.js` is the only file to edit for pricing, UPI and email lists.
 - UPI ID: check `upiVpa` — the config has a `-1` suffix the handover didn't; unverified.
@@ -586,7 +630,7 @@ Redirect URLs, or Supabase ignores the parameter and falls back to Site URL.
 
 ---
 
-## Tests — 1029 assertions, plain Node, no install
+## Tests — 1460 assertions, plain Node, no install
 
     node tests/activity.test.js    node tests/sync.test.js
     node tests/profile.test.js     node tests/palette.test.js
@@ -598,6 +642,7 @@ Redirect URLs, or Supabase ignores the parameter and falls back to Site URL.
     node tests/register.test.js  node tests/rounds.test.js
     node tests/export-dash.test.js  node tests/notify.test.js
     node tests/summary.test.js
+    node tests/gatepass-library-apex.test.js
 
 `sync.test.js` is the important one: cross-device persistence against a fake Supabase, plus
 direct assertions on the RLS rules. `framing.test.js` locks the camera maths that was got
@@ -697,7 +742,7 @@ work and unaffected.
 ## Deploy ritual
 
 After any schema change, re-run `workspace/schema.sql` in the Supabase SQL editor — it is
-fully idempotent and ~1096 lines, starting `-- ====`. **Clear the editor with Ctrl+A then
+fully idempotent and ~1144 lines, starting `-- ====`. **Clear the editor with Ctrl+A then
 Delete first**: a paste on top of existing content produced a "syntax error at line 3070"
 in a 618-line file. Open it with Notepad, not Word — smart quotes break it.
 

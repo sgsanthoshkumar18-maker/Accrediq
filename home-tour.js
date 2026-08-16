@@ -164,6 +164,41 @@
           "hospital can reach only its own files.</div>"
     },
     {
+      key: "library",
+      label: "Forms & registers",
+      caption: "Every checklist, form and register a department must maintain, in one place.",
+      html:
+        '<div class="tr-head"><b>Biomedical</b><span class="tr-chip">16 documents</span></div>' +
+        row("Planned Preventive Maintenance", "Register \u00b7 detailed", "Downloadable", "") +
+        row("Material Gate Pass", "Checklist \u00b7 detailed", "Downloadable", "") +
+        row("Work Permit", "Register \u00b7 detailed", "Downloadable", "") +
+        '<div class="tr-note">What each document must contain, why it matters, and a blank ' +
+          "template \u2014 segregated by department.</div>"
+    },
+    {
+      key: "gatepass",
+      label: "Gate pass",
+      caption: "What left the building, why, and whether it comes back.",
+      html:
+        '<div class="tr-head"><b>Security</b><span class="tr-chip warn">1 overdue return</span></div>' +
+        row("Pass #050 \u2014 Dell Optiplex 3020 MT", "Service \u00b7 IT", "Due back \u2013 12 days overdue", "bad") +
+        row("Pass #049 \u2014 UPS battery", "Disposal \u00b7 Facilities", "Non-returnable", "") +
+        '<div class="tr-note">Returnable and non-returnable, the way security already runs ' +
+          "it \u2014 with what is still outstanding answered in one screen.</div>"
+    },
+    {
+      key: "apex",
+      label: "Apex manual",
+      caption: "Nine guided sections, and a Word document your hospital owns.",
+      html:
+        '<div class="tr-head"><b>Quality Manual</b><span class="tr-chip">62% complete</span></div>' +
+        '<div class="tr-bars"><div class="tr-bar"><span></span><i><b style="width:62%"></b></i><em>62%</em></div></div>' +
+        '<div class="tr-run"><span>Committees</span><em class="ok">Pulled from your calendar</em></div>' +
+        '<div class="tr-run"><span>Chapter-by-chapter coverage</span><em>7 of 10</em></div>' +
+        '<div class="tr-note">Answers save as you type; the download can never be older than ' +
+          "what is on screen.</div>"
+    },
+    {
       key: "export",
       label: "Assessment day",
       caption: "Every SOP, committee and cycle with its record. Exported in one press.",

@@ -335,6 +335,56 @@ across eight chapters, changing every fifteen minutes.
 
 ---
 
+## 11. Material gate pass — *Workspace → Gate Pass*
+
+Modelled directly on your VHS Material Gate Pass form (VHS/QRF/MAT/01).
+
+**Sample**
+
+> Pass #050 — Dell Optiplex 3020 MT (SMPS, CPU fan, board, processor), S/N: C0N HY9V3
+> IT · Service · Returnable
+> Taken by Ratna J · TN 09 CX 5913
+> **12 days overdue**
+
+Press **Record return** and it moves to *Returned*. Non-returnable passes (disposal, gift,
+scrap) close the moment they're issued — no return date to chase.
+
+## 12. Forms, checklists & registers library — *Workspace → Forms & Registers*
+
+114 real documents from your own inventory, tagged to department, browsable by category.
+
+**Sample**
+
+> **Biomedical** — Planned Preventive Maintenance *(Register)*
+>
+> *Why:* The PM log biomedical maintains alongside the AQcredix register.
+>
+> **What it must contain:** Equipment name and asset code · Location · PM frequency ·
+> Scheduled date · Date performed · Checklist items verified · Result · Engineer/vendor ·
+> Next due date · Downtime
+>
+> [ Download blank template (Excel) ]
+
+10 documents carry this full detail; the rest use a standard template for their category
+until written specifically — marked plainly, same as the element summaries.
+
+## 13. Apex (quality) manual — *Workspace → Apex Manual*
+
+Nine guided sections. Committees pull in automatically from your calendar — nothing typed
+twice.
+
+**Sample — section 4, Committees**
+
+> **Infection Control Committee**
+> Quarterly · Chair: Dr Rao · Convener: Sister Lakshmi
+>
+> *(pulled from your calendar, not retyped)*
+
+Press **Download manual (Word)** and get a real `.docx` — real Word headings, a real table
+for the committee list, built from what's on screen so it's never stale.
+
+---
+
 ## What still needs you
 
 1. **Pricing is ₹1** on both plans.
