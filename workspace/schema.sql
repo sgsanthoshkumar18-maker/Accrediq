@@ -486,6 +486,39 @@ create table if not exists public.apex_manual (
   updated_at   timestamptz not null default now()
 );
 
+-- ---------- device sessions (account sharing) ----------
+-- WHY DEVICES AND NOT IP ADDRESSES.
+-- IP locking was considered and rejected. An Indian mobile carrier puts thousands of
+-- subscribers behind one CGNAT address and rotates a handset's address several times an
+-- hour; hospital Wi-Fi hands out a new lease most mornings. Locking to an IP would throw
+-- out a nurse who walked from the ward to the car park, while two people sharing one
+-- hospital's Wi-Fi would look like a single user. It fails in both directions at once.
+--
+-- A device is stable, survives a network change, and is what the customer actually
+-- understands: "you are signed in on three devices" is a sentence a person can act on.
+create table if not exists public.device_sessions (
+  id           text primary key,          -- the device id, generated once and stored locally
+  user_id      uuid not null references auth.users(id) on delete cascade,
+  org_id       uuid references public.orgs(id) on delete cascade,
+  label        text,                      -- "Windows · Chrome", shown when revoking
+  kind         text not null default 'desktop',   -- desktop | mobile
+  first_seen   timestamptz not null default now(),
+  last_seen    timestamptz not null default now(),
+  revoked      boolean not null default false,
+  created_at   timestamptz not null default now()
+);
+create index if not exists dev_user_idx on public.device_sessions(user_id);
+
+alter table public.device_sessions enable row level security;
+
+-- A person may see and revoke their OWN devices and nobody else's. Deliberately not
+-- org-scoped: which devices a colleague signs in from is not their employer's business,
+-- and making it visible would turn a licence control into surveillance.
+drop policy if exists device_sessions_rw on public.device_sessions;
+create policy device_sessions_rw on public.device_sessions for all
+  using (user_id = auth.uid())
+  with check (user_id = auth.uid());
+
 -- ---------- document control (IMS.6.a) ----------
 create table if not exists public.documents (
   id            text primary key,

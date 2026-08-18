@@ -15,7 +15,9 @@ const eq=(g,w,m)=>{ if(String(g)===String(w))pass++; else {fail++;console.log('F
 
 // amount_paise as stored by the ₹1 test plan and by real pricing
 eq(fmtRupees(100), '₹1', '₹1 test plan renders as whole rupees');
-eq(fmtRupees(149900), '₹1,499', '₹1,499 monthly plan');
+eq(fmtRupees(149900), '₹1,499', 'a four-figure monthly plan');
+eq(fmtRupees(399900), '₹3,999', 'the live monthly price');
+eq(fmtRupees(3999000), '₹39,990', 'the live yearly price');
 eq(fmtRupees(1499900), '₹14,999', '₹14,999 annual plan');
 eq(fmtRupees(25000000), '₹2,50,000', 'Indian lakh grouping');
 eq(fmtRupees(150), '₹1.50', 'paise shown only when non-zero');

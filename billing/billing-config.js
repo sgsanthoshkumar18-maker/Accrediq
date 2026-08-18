@@ -48,12 +48,39 @@ window.AQ_BILLING = {
      Prices, in PAISE (100 paise = ₹1).
      Integers only — money should never touch a floating-point number.
 
-     Both are set to 100 (₹1) so you can test the whole flow end to end
-     with a real payment for one rupee. Put the real prices in when the
-     flow is proven; suggested figures are in BILLING-SETUP.md.
+     ONE PRICE, NOT TIERS. Tiering by bed count was considered and dropped:
+     a hospital declares its own bed count, nothing here can verify it, so a
+     300-bed hospital could simply select the small tier. A tier that cannot
+     be enforced does not price by size — it just charges the honest ones
+     more, which is the wrong incentive to build into a compliance product.
+
+     If segmentation is wanted later, tier on something the platform can
+     actually see (departments configured, accounts in use), never on
+     something the customer asserts about itself.
+
+     INTRODUCTORY PRICING: ₹500/month, ₹5,000/year (the year at ten months).
+
+     Deliberately below what the platform is worth, to find out whether
+     hospitals use it before finding out what they will pay. That is a
+     reasonable trade, but it has one real cost: raising a price on someone
+     who signed up early feels like a betrayal unless they were told at the
+     time. So the paywall states plainly that this is an introductory rate
+     and that early subscribers keep it — which makes a later increase a
+     plan that was announced, not a change of mind.
+
+     `introductory: true` is what drives that wording. Set it to false when
+     the price moves to the standard rate below, and the notice disappears
+     on its own rather than becoming a lie left on the page.
      --------------------------------------------------------------- */
-  monthlyInr: 100,
-  yearlyInr: 100,
+  monthlyInr: 50000,
+  yearlyInr: 500000,
+
+  introductory: true,
+
+  /* What the price is expected to become. Shown next to the current price so
+     the discount is concrete rather than a claim, and so nobody can say they
+     were not told. */
+  standardMonthlyInr: 399900,
 
   /* ---------------------------------------------------------------
      UPI — manual verification path.

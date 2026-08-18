@@ -241,6 +241,42 @@ window.AQPaywall = (function () {
   /* ------------------------------ paywall ------------------------------ */
 
   var selected = "yearly";
+  var showingJustify = false;
+
+  /* Written to be forwarded, not to be read here. Names the cost against what it displaces
+     rather than listing features — the person approving it has never seen the product and
+     does not care what modules exist. */
+  function justifyText(plan) {
+    var yearly = B.planOf("yearly");
+    return "Subject: NABH accreditation software \u2014 approval request\n\n" +
+      "I would like approval to subscribe to AQcredix, a platform for managing our NABH " +
+      "accreditation work.\n\n" +
+      "What it does\n" +
+      "\u2022 Tracks every recurring obligation \u2014 committee meetings, drills, audits, " +
+      "calibration, licence renewals \u2014 and shows what is overdue, by department.\n" +
+      "\u2022 Holds our equipment and licence register with calibration certificates " +
+      "attached to each item.\n" +
+      "\u2022 Records rounds and audits with scores, and tracks findings through to " +
+      "verified closure.\n" +
+      "\u2022 Produces the evidence exports an assessor asks for, in one press.\n\n" +
+      "Cost\n" +
+      B.rupees(plan.inr) + " " + (plan.months > 1 ? "per year" : "per month") +
+      " for the whole hospital \u2014 every department, unlimited accounts, no per-user " +
+      "charge.\n" +
+      (B.CFG.introductory
+        ? "This is an introductory rate. The standard price will be " +
+          B.rupees(B.CFG.standardMonthlyInr || 399900) +
+          " a month; subscribing now holds the current rate for as long as the " +
+          "subscription runs without a break.\n"
+        : "") + "\n" +
+      "For comparison, a NABH consulting engagement typically runs into several lakhs, and " +
+      "the standards guidebook alone is ₹6,000. This does not replace a consultant, but it " +
+      "does replace the spreadsheets and reminders we currently maintain by hand, and it " +
+      "keeps the evidence in one place between surveillance visits.\n\n" +
+      "The main risk it addresses is a non-conformity raised for something that lapsed " +
+      "because nobody was reminded \u2014 which is the most common category of finding.\n\n" +
+      "Happy to walk you through it.\n";
+  }
 
   function planCards() {
     return '<div class="pw-plans">' + B.PLANS.map(function (p) {
@@ -284,7 +320,31 @@ window.AQPaywall = (function () {
         '<p class="pw-tech">' + esc(st.error || "") + "</p></div>";
     }
 
+    /* Stated BEFORE the plans, not in small print under them. The whole point is that a
+       later price rise should be something the subscriber was told about while deciding,
+       and a notice they had to scroll past does not achieve that. */
+    if (B.CFG.introductory) {
+      h += '<div class="pw-intro">' +
+        "<b>Introductory pricing</b>" +
+        "<p>AQcredix is new. This is an introductory rate while we learn how hospitals " +
+        "actually use it \u2014 the standard price will be " +
+        B.rupees(B.CFG.standardMonthlyInr || 399900) + " a month. " +
+        "<b>Subscribe now and you keep this rate for as long as your subscription runs " +
+        "without a break.</b></p></div>";
+    }
+
     h += planCards();
+
+    /* THE PERSON READING THIS IS USUALLY NOT THE PERSON WHO PAYS.
+       A quality manager will not put ₹3,999 a month on a personal card, and should not be
+       asked to. What they need is something to forward to whoever signs off spending —
+       so the paywall offers that instead of assuming the reader holds the budget. */
+    h += '<div class="pw-justify">' +
+      "<b>Not the person who approves spending?</b>" +
+      "<p>Most quality managers are not. Send this to whoever signs off \u2014 it sets out " +
+      "what the subscription covers and what it replaces.</p>" +
+      '<button type="button" class="btn btn-ghost btn-sm" data-pw="justify">' +
+      "Draft an email I can forward</button></div>";
 
     /* UPI block */
     h += '<div class="pw-pay"><div class="pw-qrwrap">' +
@@ -322,6 +382,37 @@ window.AQPaywall = (function () {
       esc(B.CFG.supportEmail || "") + "</a></p></div>";
 
     host.innerHTML = h;
+
+    var jb = host.querySelector('[data-pw="justify"]');
+    if (jb) jb.addEventListener("click", function () {
+      var box = host.querySelector(".pw-justify");
+      if (!box) return;
+      if (box.querySelector("textarea")) { showingJustify = false; render(); return; }
+      showingJustify = true;
+      var ta = document.createElement("textarea");
+      ta.className = "pw-justify-text";
+      ta.rows = 14;
+      ta.readOnly = true;
+      ta.value = justifyText(B.planOf(selected));
+      box.appendChild(ta);
+
+      var copy = document.createElement("button");
+      copy.type = "button";
+      copy.className = "btn btn-accent btn-sm";
+      copy.textContent = "Copy to clipboard";
+      copy.addEventListener("click", function () {
+        ta.select();
+        /* execCommand rather than the clipboard API: this runs inside a modal on hospital
+           desktops that are often old, and a copy button that silently fails is worse than
+           one that uses a deprecated call which still works everywhere. */
+        try { document.execCommand("copy"); copy.textContent = "Copied \u2713"; }
+        catch (e) { copy.textContent = "Select the text and copy it"; }
+        setTimeout(function () { copy.textContent = "Copy to clipboard"; }, 2200);
+      });
+      box.appendChild(copy);
+      jb.textContent = "Hide";
+      ta.focus();
+    });
 
     host.querySelectorAll("[data-plan]").forEach(function (b) {
       b.addEventListener("click", function () {

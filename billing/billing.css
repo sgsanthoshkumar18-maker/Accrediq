@@ -69,3 +69,20 @@
 .pw-badge.bad{background:var(--nc-tint);color:var(--nc);}
 .btn-sm{padding:4px 10px !important;font-size:.78rem !important;}
 @media (max-width:640px){.btn{min-height:44px;}}
+
+/* The reader of the paywall is usually not the person who signs off spending. */
+.pw-justify{margin:18px 0;padding:15px 17px;border:1px solid var(--border);
+  border-radius:var(--r-md);background:var(--bg-elevated);}
+.pw-justify b{font-size:14px;}
+.pw-justify p{margin:5px 0 10px;font-size:13px;color:var(--fg-muted);line-height:1.55;}
+.pw-justify-text{width:100%;margin:12px 0 10px;padding:12px 14px;border:1px solid var(--border);
+  border-radius:var(--r-md);background:var(--bg);color:var(--fg);font-family:inherit;
+  font-size:12.5px;line-height:1.6;resize:vertical;}
+
+/* Introductory pricing notice — above the plans, never in small print. A later increase
+   should be something the subscriber was told while deciding. */
+.pw-intro{margin:0 0 16px;padding:14px 16px;border-radius:var(--r-md);
+  border:1px solid var(--accent-bright);background:var(--accent-bright-tint);}
+.pw-intro b{font-size:13.5px;color:var(--accent-bright);}
+.pw-intro p{margin:5px 0 0;font-size:13px;line-height:1.6;color:var(--fg-muted);}
+.pw-intro p b{color:var(--fg);font-size:13px;}

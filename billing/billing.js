@@ -31,14 +31,17 @@ window.AQBilling = (function () {
       key: "monthly",
       label: "Monthly",
       months: 1,
-      inr: CFG.monthlyInr != null ? CFG.monthlyInr : 100,   // paise -> ₹1 while testing
+      /* Falls back to the real price, not to ₹1. A missing config should never
+         quietly sell a year's access for a rupee — if the fallback is ever reached
+         something is wrong, and charging correctly is the safer failure. */
+      inr: CFG.monthlyInr != null ? CFG.monthlyInr : 50000,
       note: "Billed each month. Cancel any time."
     },
     {
       key: "yearly",
       label: "Annual",
       months: 12,
-      inr: CFG.yearlyInr != null ? CFG.yearlyInr : 100,
+      inr: CFG.yearlyInr != null ? CFG.yearlyInr : 500000,
       note: "Two months free against the monthly rate."
     }
   ];

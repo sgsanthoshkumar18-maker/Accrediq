@@ -631,6 +631,65 @@ finding nobody owns, and an auto-generated CAPA queue is the fastest way to teac
 hospital to ignore its own findings. A failed round with no finding against it says so on
 the row, since that is exactly what an assessor looks for.
 
+### Pricing — ₹500/month, ₹5,000/year (introductory)
+**One price, no tiers.** Tiering by bed count was considered and dropped: a hospital
+declares its own bed count and nothing in the platform can verify it, so a 300-bed hospital
+could simply select the small tier. A tier that cannot be enforced does not price by size —
+it charges the honest ones more, which is the wrong incentive to build into a compliance
+product. If segmentation is wanted later, tier on something the platform can see
+(departments configured, accounts in use), never on something the customer asserts.
+
+Launched **deliberately below what the platform is worth**, to find out whether hospitals
+use it before finding out what they will pay. That trade has one real cost: raising a price
+on someone who signed up early feels like a betrayal unless they were told at the time.
+
+So `introductory: true` drives a notice **above the plans, not under them** — a notice
+someone had to scroll past does not count as having been told while deciding. It states the
+standard rate (`standardMonthlyInr`, ₹3,999) and that early subscribers keep the current
+rate while their subscription runs unbroken. The forwardable approval email carries the
+same fact, since that reader holds the budget. **Set `introductory: false` when the price
+moves** and the notice disappears on its own rather than becoming a lie left on the page.
+
+The year is priced at exactly ten months. Amounts are in **paise, integers only** — a
+float here becomes a rounding error on an invoice. The fallback in `billing.js` matches the
+live price, not ₹1: a missing config should never quietly sell a year for a rupee.
+
+**The reader of the paywall is usually not the buyer.** A quality manager will not put
+₹3,999/month on a personal card and should not be asked to. The paywall therefore offers a
+drafted approval email to forward to whoever signs off spending — written around cost
+against what it displaces, not a feature list, because the approver has never seen the
+product. Uses `execCommand("copy")` deliberately: this runs on old hospital desktops, and a
+copy button that silently fails is worse than a deprecated call that works everywhere.
+
+### Account sharing — devices, not IP addresses
+**IP locking was asked for and rejected, and the reason is recorded in `device.js` so it
+is not re-attempted.** An Indian mobile carrier puts thousands of subscribers behind one
+CGNAT address and rotates a handset's address several times an hour; hospital Wi-Fi
+re-leases most mornings. Locking to an IP would throw out a nurse who walked from the ward
+to the car park, while two people on the same hospital Wi-Fi would look like one user — it
+fails in both directions at once. "PC" also cannot be told from "phone" by IP; that comes
+from the user-agent string, which anyone can change in seconds.
+
+`device_sessions` instead: **two active devices per person**, which is a computer and a
+phone — the normal working pattern, so it does not obstruct real use. Second device warns
+once; third is held with a screen that lists the existing devices and lets one be signed
+out. Devices unused for 30 days stop counting, so a replaced laptop does not hold a slot
+forever and force a support request.
+
+Three decisions worth keeping:
+- **It fails OPEN.** A failed lookup or blocked browser storage lets the customer in. That
+  is correct for a licence control and wrong for a security boundary, which is why the file
+  says plainly that this **protects revenue, not data**. RLS protects data.
+- **A stored random id, not a fingerprint.** Fingerprinting is covert, brittle across
+  browser updates, and collects more than a licence check needs.
+- **`device_sessions` is keyed on `auth.uid()` only, never org-scoped.** Which devices a
+  colleague signs in from is not their employer's business; exposing it would turn a
+  licence control into surveillance.
+
+The block screen leads with a remedy, not an accusation — the likeliest person to hit it is
+an honest customer who changed laptops — and points at Team, since more accounts is the
+real answer.
+
 ### Billing / access
 - `billing/billing-config.js` is the only file to edit for pricing, UPI and email lists.
 - UPI ID: check `upiVpa` — the config has a `-1` suffix the handover didn't; unverified.
@@ -665,7 +724,7 @@ Redirect URLs, or Supabase ignores the parameter and falls back to Site URL.
 
 ---
 
-## Tests — 1528 assertions, plain Node, no install
+## Tests — 1558 assertions, plain Node, no install
 
     node tests/activity.test.js    node tests/sync.test.js
     node tests/profile.test.js     node tests/palette.test.js
