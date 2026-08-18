@@ -189,6 +189,90 @@ window.AQPreview = (function () {
           stat(31, "Recurring obligations") + "</div>" +
         rows(SAMPLE.due);
     },
+    quiz: function () {
+      return "<h1>Today\u2019s quiz</h1>" +
+        '<p class="lead">A fresh set every day, drawn from the standards, with your score ' +
+        "history and a certificate in your name.</p>" +
+        '<div class="pv-q">' +
+          "<div class=\"pv-q-n\">Question 3 of 10 \u00b7 IPC</div>" +
+          "<b>Hand-hygiene facilities must be accessible where care is delivered. Which of " +
+          "these best evidences compliance?</b>" +
+          '<div class="pv-q-opt">A written hand-hygiene policy signed by the ICN</div>' +
+          '<div class="pv-q-opt is-on">Your own observed compliance audit data, by unit</div>' +
+          '<div class="pv-q-opt">A training attendance register</div>' +
+          '<div class="pv-q-opt">Alcohol rub purchase invoices</div>' +
+        "</div>" +
+        '<div class="pv-note-inline">The quiz is <b>free with an account</b> \u2014 you do ' +
+        "not need a subscription for this page.</div>";
+    },
+    kpi: function () {
+      return "<h1>KPI library</h1>" +
+        '<p class="lead">The indicators an assessor expects, with how each is calculated.</p>' +
+        '<div class="pv-kpi">' +
+          '<div><b>Hand hygiene compliance rate</b><span>Opportunities taken \u00f7 ' +
+            "opportunities observed \u00d7 100 \u00b7 monthly \u00b7 IPC</span></div>" +
+          '<div><b>Medication error rate</b><span>Errors \u00f7 patient days \u00d7 1000 ' +
+            "\u00b7 monthly \u00b7 Pharmacy</span></div>" +
+          '<div><b>Return to ICU within 48 hours</b><span>Unplanned returns \u00f7 ICU ' +
+            "discharges \u00d7 100 \u00b7 monthly \u00b7 ICU</span></div>" +
+        "</div>";
+    },
+    sop: function () {
+      return "<h1>SOPs by department</h1>" +
+        '<p class="lead">188 SOP-required elements, each with the departments answerable ' +
+        "for it.</p>" +
+        '<div class="tr-sheet">' +
+          '<div class="tr-sh tr-sh-h"><span>Element</span><span>Departments</span></div>' +
+          '<div class="tr-sh"><span>IPC.2.c</span><span>All clinical areas</span></div>' +
+          '<div class="tr-sh"><span>COP.5.a</span><span>ICU, Wards, Emergency</span></div>' +
+          '<div class="tr-sh"><span>MOM.6.a</span><span>Pharmacy</span></div>' +
+          '<div class="tr-sh"><span>FMS.5.a</span><span>Facilities, Security</span></div>' +
+        "</div>";
+    },
+    tools: function () {
+      return "<h1>Quality tools</h1>" +
+        '<p class="lead">Five Why, fishbone, PDCA and the rest \u2014 working tools, not ' +
+        "diagrams to look at.</p>" +
+        '<div class="pv-tool">' +
+          "<b>5 Why \u2014 hand hygiene compliance fell to 67%</b>" +
+          '<div class="pv-why"><span>1</span>Why? Alcohol rub was empty in three of six bays.</div>' +
+          '<div class="pv-why"><span>2</span>Why? Nobody was named to check levels each shift.</div>' +
+          '<div class="pv-why is-dim"><span>3</span>Continue in the full tool\u2026</div>' +
+        "</div>";
+    },
+    videos: function () {
+      return "<h1>Video library</h1>" +
+        '<p class="lead">Short explainers on the elements teams find hardest.</p>' +
+        '<div class="pv-vids">' +
+          '<div class="pv-vid"><b>Medication reconciliation at transitions</b>' +
+            "<span>MOM.4.e \u00b7 6 min</span></div>" +
+          '<div class="pv-vid"><b>What an assessor actually asks about hand hygiene</b>' +
+            "<span>IPC.2.c \u00b7 8 min</span></div>" +
+          '<div class="pv-vid"><b>Writing a CAPA that closes</b><span>PSQ \u00b7 5 min</span></div>' +
+        "</div>";
+    },
+    standards: function () {
+      return "<h1>The standards, explained</h1>" +
+        '<p class="lead">Every element with what it requires in plain terms.</p>' +
+        '<div class="tr-head"><b>MOM.4.e</b><span class="tr-chip">Core</span></div>' +
+        '<div class="pv-explain">Reconcile medicines at every transition in care. The ' +
+        "purpose is to confirm that what the patient is taking still matches the current " +
+        "clinical picture and care plan, and that nothing carried over from before is now " +
+        "working against it.</div>" +
+        '<div class="pv-note-inline">Browsing the standards is <b>free with an account</b>.</div>';
+    },
+    committees: function () {
+      return "<h1>Committees</h1>" +
+        '<p class="lead">Which committees a hospital must run, how often, and who sits on them.</p>' +
+        rows([
+          { name: "Infection Control Committee", meta: "Quarterly \u00b7 chaired by the Microbiologist",
+            state: "ok", text: "4 sittings/yr" },
+          { name: "Pharmacy & Therapeutics Committee", meta: "Quarterly \u00b7 chaired by the Medical Superintendent",
+            state: "ok", text: "4 sittings/yr" },
+          { name: "Quality Assurance Committee", meta: "Monthly \u00b7 chaired by the Quality Manager",
+            state: "ok", text: "12 sittings/yr" }
+        ]);
+    },
     generic: function () {
       return "<h1>Part of the workspace</h1>" +
         '<p class="lead">This page is included in the subscription.</p>' +

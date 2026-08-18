@@ -1253,3 +1253,38 @@ a:focus-visible,button:focus-visible,input:focus-visible,select:focus-visible,te
   .pv-stats{grid-template-columns:repeat(2,1fr);}
   .pv-grid{grid-template-columns:1fr;}
 }
+
+/* Preview blocks for the tools and content pages. */
+.pv-q{padding:18px 20px;border:1px solid var(--border);border-radius:var(--r-md);
+  background:var(--bg-elevated);margin:18px 0;}
+.pv-q-n{font-size:11px;text-transform:uppercase;letter-spacing:.05em;color:var(--fg-faint);
+  margin-bottom:8px;}
+.pv-q b{display:block;font-size:15px;line-height:1.5;margin-bottom:14px;}
+.pv-q-opt{padding:11px 14px;border:1px solid var(--border);border-radius:var(--r-md);
+  margin-bottom:7px;font-size:13.5px;}
+.pv-q-opt.is-on{border-color:var(--accent-bright);background:var(--accent-bright-tint);
+  color:var(--accent-bright);font-weight:600;}
+.pv-note-inline{margin-top:14px;padding:11px 14px;border-radius:var(--r-md);
+  background:var(--brand-tint);color:var(--brand-2);font-size:13px;}
+.pv-kpi{display:grid;gap:9px;margin:16px 0;}
+.pv-kpi div{padding:13px 15px;border:1px solid var(--border);border-radius:var(--r-md);
+  background:var(--bg-elevated);}
+.pv-kpi b{display:block;font-size:14px;}
+.pv-kpi span{font-size:12px;color:var(--fg-muted);font-family:var(--font-mono);}
+.pv-tool{padding:18px 20px;border:1px solid var(--border);border-radius:var(--r-md);
+  background:var(--bg-elevated);margin:16px 0;}
+.pv-tool b{display:block;font-size:14.5px;margin-bottom:12px;}
+.pv-why{display:flex;gap:11px;align-items:flex-start;padding:9px 0;font-size:13.5px;
+  color:var(--fg-muted);}
+.pv-why span{width:22px;height:22px;border-radius:50%;background:var(--brand-tint);
+  color:var(--brand-2);display:grid;place-items:center;font-size:11px;font-weight:700;
+  flex-shrink:0;}
+.pv-why.is-dim{opacity:.5;}
+.pv-vids{display:grid;gap:9px;margin:16px 0;}
+.pv-vid{padding:13px 15px;border:1px solid var(--border);border-radius:var(--r-md);
+  background:var(--bg-elevated);}
+.pv-vid b{display:block;font-size:14px;}
+.pv-vid span{font-size:12px;color:var(--fg-faint);}
+.pv-explain{padding:15px 17px;border-left:3px solid var(--accent-bright);
+  background:var(--bg-elevated);border-radius:var(--r-md);font-size:14.5px;line-height:1.65;
+  margin:14px 0;}

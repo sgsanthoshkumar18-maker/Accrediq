@@ -24,6 +24,23 @@ window.NABH_EXPLAIN = (function () {
     [/\bappropriate(ly)?\b/gi, "suitable"],
   ];
 
+  /* Where a chapter has been written out properly, that text wins.
+     `simplify()` below is a mechanical rewrite OF the NABH wording, so it still derives
+     from it — useful as a stopgap, but not a substitute for a professional's own account.
+     MOM has been written out in full (see mom-explain.js), so MOM elements take the
+     authored version and the mechanical path is never reached for them. */
+  function authored(code) {
+    return (window.MOM_EXPLAIN_GET && window.MOM_EXPLAIN_GET(code)) || null;
+  }
+
+  function explainFor(code, text) {
+    const own = authored(code);
+    if (own) return own;
+    return simplify(text);
+  }
+
+  function isAuthored(code) { return !!authored(code); }
+
   function simplify(text) {
     let t = text;
     WORD_SWAPS.forEach(([re, rep]) => { t = t.replace(re, rep); });
@@ -90,5 +107,5 @@ window.NABH_EXPLAIN = (function () {
     return GENERIC_ANALOGY;
   }
 
-  return { simplify, analogyFor };
+  return { simplify, analogyFor, explainFor, isAuthored };
 })();

@@ -724,6 +724,32 @@ Expiry warnings ride along with the weekly digest (3 days ahead) rather than get
 own job, so they reach someone who never opens the site. An expiry counts against
 `empty`, or a hospital with nothing overdue would never be told its access is ending.
 
+### MOM chapter — authored explanations (`mom-explain.js`)
+All **68 MOM elements** now carry an explanation written from Dr Santhoshkumar's own
+working notes as an ID clinical pharmacist, edited here for grammar and register. This is
+original commentary that happens to describe the same requirements — commentary on a
+standard is his to write; the standard's own sentences are not.
+
+`NABH_EXPLAIN.explainFor(code, text)` returns the authored version where one exists and
+falls back to `simplify()` otherwise. **That fallback is a mechanical rewrite OF the NABH
+wording, so it still derives from it** — a stopgap for the other nine chapters, not a
+substitute for a professional's own account.
+
+**The plagiarism check is automated** (`tests/mom-explain.test.js`): the build fails if any
+explanation shares a seven-word run with the stored NABH text, or if two explanations are
+near-copies of each other. Currently the longest overlap anywhere is 6 words. It is a test
+rather than a careful read because a careful read is exactly what gets skipped under time
+pressure.
+
+### Preview everywhere, not just the workspace
+All **paid-gated pages** now declare `data-preview="..."` and render sample content before
+asking for money — quiz, KPI library, SOP-by-department, quality tools, videos, standards,
+committees, plus the workspace pages. A test fails if any `data-access="paid"` page lacks a
+preview, or if a declared preview has no renderer.
+
+**The quiz is now `data-access="login"`** — free with an account, no subscription. That is
+the free tier: create an account, take the daily quiz, earn the certificate.
+
 ### Billing / access
 - `billing/billing-config.js` is the only file to edit for pricing, UPI and email lists.
 - UPI ID: check `upiVpa` — the config has a `-1` suffix the handover didn't; unverified.
@@ -758,7 +784,7 @@ Redirect URLs, or Supabase ignores the parameter and falls back to Site URL.
 
 ---
 
-## Tests — 1603 assertions, plain Node, no install
+## Tests — 2070 assertions, plain Node, no install
 
     node tests/activity.test.js    node tests/sync.test.js
     node tests/profile.test.js     node tests/palette.test.js
@@ -772,6 +798,7 @@ Redirect URLs, or Supabase ignores the parameter and falls back to Site URL.
     node tests/summary.test.js
     node tests/gatepass-library-apex.test.js
     node tests/import-search.test.js
+    node tests/mom-explain.test.js
 
 `sync.test.js` is the important one: cross-device persistence against a fake Supabase, plus
 direct assertions on the RLS rules. `framing.test.js` locks the camera maths that was got
