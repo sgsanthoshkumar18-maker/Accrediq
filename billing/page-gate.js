@@ -99,6 +99,19 @@
       "</p>");
   }
 
+  /* A locked page that shows nothing cannot sell itself. Someone weighing ₹500 a month
+     needs to see what they would get, and a paragraph about "readiness scoring" is not the
+     same as seeing a readiness score.
+
+     This leaks nothing: a person who has not subscribed has no data, so there is nothing
+     of theirs — or anyone's — to expose. What they see is sample data from a fictional
+     hospital, labelled as such on screen and continuously, because a preview that stops
+     saying it is a preview becomes a lie by omission. */
+  function previewFor() {
+    var v = (document.body && document.body.getAttribute("data-preview")) || "";
+    return String(v).toLowerCase();
+  }
+
   function subscribePrompt(st) {
     var b = base();
     var extra = "";
@@ -114,6 +127,14 @@
         "rather than opened. If you have an active subscription nothing has been lost \u2014 " +
         "please reload in a moment.</p>";
     }
+    /* Preview where the page declares one, prompt where it does not. The prompt is still
+       right for pages whose value is the person's own data with no meaningful sample —
+       showing an invented version of those would mislead rather than inform. */
+    var pv = previewFor();
+    if (pv && window.AQPreview && !(st && st.reason === "pending")) {
+      return window.AQPreview.render(pv, base());
+    }
+
     return shell("Subscription required",
       "<p>This page is part of the AQcredix workspace subscription.</p>" + extra +
       '<p class="ag-actions">' +

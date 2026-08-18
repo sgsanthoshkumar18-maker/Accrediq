@@ -137,8 +137,22 @@
 
       var host = document.getElementById("wsGate");
       if (!host) return false;
-      if (window.AQPaywall) window.AQPaywall.render(host, W.user, st);
-      else host.innerHTML = '<div class="ws-auth"><h2>Subscription required</h2></div>';
+
+      /* Preview first, paywall beneath it. A locked page that shows nothing cannot sell
+         itself: someone weighing ₹500 a month needs to see what they would be paying for.
+         Nothing is leaked — an unsubscribed person has no data, so the preview is sample
+         data from a fictional hospital, labelled as such on screen throughout. */
+      var pv = document.body.getAttribute("data-preview");
+      if (pv && window.AQPreview) {
+        host.innerHTML = window.AQPreview.render(pv, "../");
+        var pw = document.createElement("div");
+        host.appendChild(pw);
+        if (window.AQPaywall) window.AQPaywall.render(pw, W.user, st);
+      } else if (window.AQPaywall) {
+        window.AQPaywall.render(host, W.user, st);
+      } else {
+        host.innerHTML = '<div class="ws-auth"><h2>Subscription required</h2></div>';
+      }
       return false;
     },
 

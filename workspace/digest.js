@@ -80,6 +80,19 @@
       return c.status !== "closed" && (!dept || c.department === dept);
     });
 
+    /* Subscription expiry rides along with the digest rather than getting its own job.
+       Three days' notice is enough to renew without it feeling like a nag, and putting it
+       in the weekly email means it reaches someone who never opens the site. */
+    var expiry = null;
+    if (opts.expiresAt) {
+      var days = Math.ceil(
+        (new Date(opts.expiresAt).getTime() - new Date(ref || Date.now()).getTime()) / 86400000);
+      if (days <= 3) {
+        expiry = { days: days, on: String(opts.expiresAt).slice(0, 10),
+                   expired: days < 0 };
+      }
+    }
+
     var rank = { overdue: 0, never: 1, due: 2, soon: 3, ok: 4 };
     items.sort(function (a, b) {
       return (rank[a.state] - rank[b.state]) ||
@@ -91,6 +104,7 @@
     var soon = items.filter(function (i) { return i.state === "due" || i.state === "soon"; });
 
     return {
+      expiry: expiry,
       department: dept || null,
       overdue: overdue,
       never: never,
@@ -98,7 +112,9 @@
       findings: findings,
       /* Nothing to say is a real answer. Sending "you have 0 overdue items" every Monday
          is how a digest teaches people to filter it into a folder they never open. */
-      empty: !overdue.length && !never.length && !soon.length && !findings.length,
+      /* An expiry notice is worth an email on its own, so it counts against emptiness —
+         otherwise a hospital with nothing overdue would never be told its access ends. */
+      empty: !overdue.length && !never.length && !soon.length && !findings.length && !expiry,
       total: (overdueOnly ? overdue.length : items.length),
       counts: { overdue: overdue.length, never: never.length,
                 soon: soon.length, findings: findings.length }

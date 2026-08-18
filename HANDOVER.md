@@ -690,6 +690,40 @@ The block screen leads with a remedy, not an accusation — the likeliest person
 an honest customer who changed laptops — and points at Team, since more accounts is the
 real answer.
 
+### Preview instead of a blank wall (`billing/preview.js`)
+A locked page that shows nothing cannot sell itself. Gated workspace pages now render with
+**sample data from a fictional hospital**, labelled continuously, with a CTA explaining
+what changes on subscribing.
+
+**This leaks nothing.** Someone who has not subscribed has no data — their workspace would
+be empty even if opened. So the preview cannot expose a hospital's records; there are none.
+RLS still protects real data; this changes only what an unsubscribed visitor *sees*.
+
+Pages opt in with `data-preview="dashboard"` etc. on `<body>`. Both gates honour it —
+`page-gate.js` for standalone pages, `shell.js` for the workspace, which renders the
+preview *above* the paywall. **A pending payment gets no preview**: that person has paid
+and is waiting, and a sales page would read as the payment having failed.
+
+One sample hospital is used across every preview so the same defibrillator appears overdue
+on the register, in the dashboard and in the finding. A preview where each page invents
+unrelated numbers reads as a mock-up.
+
+### `plans.html` — free vs subscription
+Free: standards, assessor lens, SOP-by-department, **daily quiz and certificate**, globe,
+KPI library. Paid: the whole workspace, unlimited accounts. The annual saving is **computed
+from `billing-config.js`**, never typed — a hardcoded figure goes stale the moment a price
+changes and then quietly misleads.
+
+### Subscription dates must be exact
+`setMonth()` rolls past the end of a short month: **31 January + 1 month landed on 3 March**,
+giving free days and displaying a date the subscriber was never charged for. `addMonths()`
+in `api/verify-payment.js` clamps to the last valid day (31 Jan → 28 Feb, 31 Aug → 30 Sep).
+A test pins all four cases.
+
+Expiry warnings ride along with the weekly digest (3 days ahead) rather than getting their
+own job, so they reach someone who never opens the site. An expiry counts against
+`empty`, or a hospital with nothing overdue would never be told its access is ending.
+
 ### Billing / access
 - `billing/billing-config.js` is the only file to edit for pricing, UPI and email lists.
 - UPI ID: check `upiVpa` — the config has a `-1` suffix the handover didn't; unverified.
@@ -724,7 +758,7 @@ Redirect URLs, or Supabase ignores the parameter and falls back to Site URL.
 
 ---
 
-## Tests — 1558 assertions, plain Node, no install
+## Tests — 1603 assertions, plain Node, no install
 
     node tests/activity.test.js    node tests/sync.test.js
     node tests/profile.test.js     node tests/palette.test.js

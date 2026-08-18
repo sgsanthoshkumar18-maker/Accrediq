@@ -148,5 +148,91 @@ eq(/localStorage.setItem\("aq-palette", "default"\)/.test(gate), false,
      'a person sees only their own devices, never a colleague\'s');
 }
 
+/* ======================= PREVIEW INSTEAD OF A BLANK WALL =======================
+   A locked page that shows nothing cannot sell itself. This leaks nothing: someone who has
+   not subscribed has no data, so the preview is sample data from a fictional hospital. */
+{
+  const pv = R('billing/preview.js');
+  const sbx = { window: {}, console };
+  vm.createContext(sbx);
+  vm.runInContext(pv, sbx);
+  const P = sbx.window.AQPreview;
+
+  ['readiness', 'dashboard', 'register', 'rounds', 'capa', 'calendar', 'generic']
+    .forEach(function (k) {
+      const h = P.render(k, '../');
+      eq(/pv-banner/.test(h), true, k + ' preview carries the banner');
+      eq(/pv-cta/.test(h), true, k + ' preview ends with what subscribing changes');
+      eq(h.length > 1200, true, k + ' preview shows enough to judge the product by');
+    });
+
+  /* A preview that stops saying it is a preview is a lie by omission — someone could
+     otherwise believe those are their own hospital's numbers. */
+  const h = P.render('dashboard', '../');
+  eq(/sample data/.test(h), true, 'the banner says the data is a sample');
+  eq(/fictional hospital/.test(h), true, 'and that the hospital is not real');
+  eq(/plans\.html/.test(h), true, 'and it routes to the plans page');
+
+  const gate = R('billing/page-gate.js');
+  eq(/function previewFor/.test(gate), true, 'the page gate can render a preview');
+  eq(/window\.AQPreview\.render/.test(gate), true, 'and calls it');
+  /* A pending payment must NOT get a preview — that person has paid and is waiting, and
+     showing them a sales page would read as the payment having failed. */
+  eq(/!\(st && st\.reason === "pending"\)/.test(gate), true,
+     'someone awaiting confirmation sees their status, not a sales pitch');
+
+  const shell = R('workspace/shell.js');
+  eq(/data-preview/.test(shell), true, 'the workspace gate honours the preview attribute');
+  eq(/AQPreview\.render/.test(shell), true, 'and renders it above the paywall');
+}
+
+/* =========================== FREE vs PAID, STATED ===========================
+   Someone deciding cannot decide without knowing what each tier includes. */
+{
+  const plans = R('plans.html');
+  eq((plans.match(/<body/g) || []).length, 1, 'the plans page is a single well-formed page');
+  eq(/Today&rsquo;s quiz/.test(plans) || /Today\u2019s quiz/.test(plans) || /quiz/.test(plans), true,
+     'the free tier names the quiz');
+  eq(/certificate/i.test(plans), true, 'and the certificate');
+  eq(/Unlimited accounts/.test(plans), true, 'the paid tier states it is not per-user');
+  eq(/not affiliated with NABH/i.test(plans), true,
+     'and the page repeats that AQcredix is not an accrediting body');
+  /* The annual saving is computed from the config, never typed — a hardcoded figure goes
+     stale the moment a price changes and then quietly misleads. */
+  eq(/rupees\(saved\)/.test(plans), true, 'the annual saving is computed, not hardcoded');
+  eq(/plans\.html/.test(R('app.js')), true, 'and the site links to it');
+}
+
+/* ==================== SUBSCRIPTION DATES MUST BE EXACT ====================
+   setMonth() rolls past the end of a short month: 31 January plus one month lands on
+   3 March. A subscriber would get free days and be shown a date they were not charged for. */
+{
+  const vp = R('api/verify-payment.js');
+  eq(/function addMonths/.test(vp), true, 'expiry is computed by a clamping helper');
+  eq(/expires\.setMonth/.test(vp), false, 'and never by raw setMonth, which rolls over');
+
+  const i = vp.indexOf('function addMonths'), j = vp.indexOf('module.exports');
+  const addMonths = new Function(vp.slice(i, j) + '; return addMonths;')();
+  const iso = (d) => d.toISOString().slice(0, 10);
+  eq(iso(addMonths(new Date('2026-01-31T10:00:00Z'), 1)), '2026-02-28',
+     '31 January plus a month is the last day of February, not 3 March');
+  eq(iso(addMonths(new Date('2026-08-31T10:00:00Z'), 1)), '2026-09-30',
+     '31 August plus a month is 30 September');
+  eq(iso(addMonths(new Date('2026-08-19T10:00:00Z'), 12)), '2027-08-19',
+     'a year is exactly a year');
+  eq(iso(addMonths(new Date('2026-01-15T10:00:00Z'), 1)), '2026-02-15',
+     'an ordinary date is unaffected');
+}
+
+/* Expiry warning rides along with the weekly digest rather than getting its own job, so it
+   reaches someone who never opens the site. */
+{
+  const dg = R('workspace/digest.js');
+  eq(/opts\.expiresAt/.test(dg), true, 'the digest knows when the subscription ends');
+  eq(/days <= 3/.test(dg), true, 'and warns three days ahead');
+  eq(/&& !expiry/.test(dg), true,
+     'an expiry notice counts against emptiness, so it is never silently skipped');
+}
+
 console.log(`\n${pass} passed, ${fail} failed`);
 process.exit(fail ? 1 : 0);

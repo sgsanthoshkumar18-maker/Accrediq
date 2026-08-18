@@ -116,7 +116,7 @@
             <p>NABH accreditation, actually understood — every standard explained the way an assessor reads it.</p>
           </div>
           <div class="footer-col"><h4>Learn</h4>
-            <a href="${base}standards.html">Standards</a>
+            <a href="${base}plans.html">Plans &amp; pricing</a><a href="${base}standards.html">Standards</a>
             <a href="${base}departments.html">Departments</a>
             <a href="${base}workspace/workspace.html">Workspace</a>
             <a href="${base}clinical-areas.html">Clinical Areas</a>

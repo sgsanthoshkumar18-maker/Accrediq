@@ -15,6 +15,21 @@ const crypto = require("crypto");
 
 const MONTHS = { monthly: 1, yearly: 12 };
 
+/* setMonth() rolls over past the end of a short month: 31 January plus one month lands on
+   3 March, and 31 August plus one lands on 1 October. A subscriber would be given several
+   free days and, worse, shown an expiry date that is not the one they were charged for.
+   Clamping to the last day of the target month is what "exactly one month" has to mean
+   when the start date has no counterpart in it. */
+function addMonths(date, months) {
+  const d = new Date(date.getTime());
+  const day = d.getDate();
+  d.setDate(1);                       // shift the month without triggering the rollover
+  d.setMonth(d.getMonth() + months);
+  const lastDay = new Date(d.getFullYear(), d.getMonth() + 1, 0).getDate();
+  d.setDate(Math.min(day, lastDay));
+  return d;
+}
+
 module.exports = async (req, res) => {
   if (req.method !== "POST") { res.status(405).json({ error: "Method not allowed" }); return; }
 
@@ -48,8 +63,7 @@ module.exports = async (req, res) => {
 
   const months = MONTHS[plan] || 1;
   const now = new Date();
-  const expires = new Date(now.getTime());
-  expires.setMonth(expires.getMonth() + months);
+  const expires = addMonths(now, months);
 
   try {
     const r = await fetch(SB_URL + "/rest/v1/subscriptions", {
