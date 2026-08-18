@@ -519,6 +519,29 @@ create policy device_sessions_rw on public.device_sessions for all
   using (user_id = auth.uid())
   with check (user_id = auth.uid());
 
+-- ---------- free trial ----------
+-- Seven days, not twelve hours.
+--
+-- A twelve-hour trial ending in an automatic debit cannot legally be built in India. The
+-- RBI's Digital Payments E-mandate Framework, 2026 requires a pre-transaction notification
+-- to the customer at least 24 hours before any charge, with an opt-out — so a trial
+-- shorter than 24 hours would require warning the customer before the trial had begun.
+--
+-- Seven days is also the shortest period in which a hospital can actually judge this: a
+-- quality manager has to enter committees, see the calendar compute dates, and walk one
+-- round before the product means anything. A trial too short to evaluate produces
+-- cancellations, refund arguments and chargebacks, which cost more than the trial saves.
+create table if not exists public.trials (
+  org_id        uuid primary key references public.orgs(id) on delete cascade,
+  started_at    timestamptz not null default now(),
+  ends_at       timestamptz not null,
+  notified_at   timestamptz,          -- when the 24-hour pre-debit notice was sent
+  cancelled_at  timestamptz,
+  converted_at  timestamptz,
+  created_by    uuid,
+  updated_at    timestamptz not null default now()
+);
+
 -- ---------- document control (IMS.6.a) ----------
 create table if not exists public.documents (
   id            text primary key,
@@ -702,7 +725,7 @@ begin
                         'assets','asset_schedules','asset_events',
                         'checklists','checklist_items','rounds',
                         'notifications','onboarding','attachments',
-                        'gate_passes','apex_manual'] loop
+                        'gate_passes','apex_manual','trials'] loop
     execute format('drop policy if exists %I_read on public.%I', t, t);
     execute format(
       'create policy %I_read on public.%I for select using (org_id = public.my_org())', t, t);
@@ -733,7 +756,7 @@ begin
                         'assets','asset_schedules','asset_events',
                         'checklists','checklist_items','rounds',
                         'notifications','onboarding','attachments',
-                        'gate_passes','apex_manual'] loop
+                        'gate_passes','apex_manual','trials'] loop
     execute format('drop trigger if exists set_org_%I on public.%I', t, t);
     execute format(
       'create trigger set_org_%I before insert on public.%I

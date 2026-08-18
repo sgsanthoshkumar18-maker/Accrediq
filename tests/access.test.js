@@ -234,5 +234,90 @@ eq(/localStorage.setItem\("aq-palette", "default"\)/.test(gate), false,
      'an expiry notice counts against emptiness, so it is never silently skipped');
 }
 
+/* ==================== FREE TRIAL: 7 DAYS, NOT 12 HOURS ====================
+   A twelve-hour trial ending in an automatic debit cannot legally be built in India. The
+   RBI's Digital Payments E-mandate Framework, 2026 requires a pre-transaction notification
+   at least 24 hours before any charge, with an opt-out — so a sub-24-hour trial would mean
+   warning the customer before the trial had started. */
+{
+  const tSb = { window: {}, console };
+  vm.createContext(tSb);
+  vm.runInContext(R('billing/trial.js'), tSb);
+  const T = tSb.window.AQTrial;
+
+  /* Length is a config value so it is one edit, and the terms page cannot drift from what
+     the code does. But it has a hard floor: the RBI notice goes 48 hours ahead, so on a
+     3-day trial the payment warning lands on day one — worse than offering no trial. */
+  eq(T.DAYS >= 5, true, 'the trial is long enough that the pre-debit notice is not immediate');
+  eq(T.DAYS - (T.NOTICE_HOURS / 24) >= 2, true,
+     'leaving at least two clear days of use before payment is mentioned');
+  eq(T.NOTICE_HOURS >= 24, true, 'the pre-debit notice meets the RBI 24-hour minimum');
+  eq(T.NOTICE_HOURS, 48, 'and is sent early enough to survive a weekend or a failed send');
+
+  const start = new Date('2026-08-19T10:00:00Z');
+  const ends = T.addDays(start, 7).toISOString();
+  eq(ends.slice(0, 10), '2026-08-26', 'seven days from 19 August is 26 August');
+
+  eq(T.status({ ends_at: ends }, '2026-08-19T11:00:00Z').state, 'active', 'day one is active');
+  eq(T.status({ ends_at: ends }, '2026-08-27T10:00:00Z').state, 'ended', 'after the end it has ended');
+  eq(T.status({ ends_at: ends, cancelled_at: 'x' }, '2026-08-20T10:00:00Z').state, 'cancelled',
+     'a cancelled trial reports cancelled, not active');
+
+  /* The notice must fire before the debit, never on the day. */
+  eq(T.status({ ends_at: ends }, '2026-08-20T10:00:00Z').noticeDue, false,
+     'no notice while the trial has days to run');
+  eq(T.status({ ends_at: ends }, '2026-08-25T10:00:00Z').noticeDue, true,
+     'the notice becomes due inside the window');
+  eq(T.status({ ends_at: ends, notified_at: 'x' }, '2026-08-25T10:00:00Z').noticeDue, false,
+     'and is not sent twice');
+
+  /* Nobody should ever be surprised by a debit from this platform. */
+  const late = T.noticeText(T.status({ ends_at: ends }, '2026-08-25T10:00:00Z'), '₹500');
+  eq(/will be charged/.test(late), true, 'the late notice says money will be taken');
+  eq(/Cancel before that and nothing is taken/.test(late), true, 'and how to avoid it');
+  const early = T.noticeText(T.status({ ends_at: ends }, '2026-08-20T10:00:00Z'), '₹500');
+  eq(/we will remind you before anything is charged/.test(early), true,
+     'the early banner promises a reminder');
+
+  eq(/E-mandate Framework, 2026/.test(R('billing/trial.js')), true,
+     'the file records the regulation it is built around, so it is not "simplified" later');
+  eq(/trialDays/.test(R('billing/billing-config.js')), true,
+     'the length lives in the config, not buried in the logic');
+  eq(/AQ_BILLING && window\.AQ_BILLING\.trialDays/.test(R('billing/trial.js')), true,
+     'and the logic reads it from there');
+
+  /* The terms page must state the same number the code uses. A policy promising seven days
+     while the code grants three is the kind of discrepancy that ends in a chargeback. */
+  const termsDays = /(\d+)-day free trial/.exec(R('terms.html'));
+  eq(termsDays && Number(termsDays[1]), T.DAYS, 'the terms state the same trial length as the code');
+}
+
+/* ==================== LEGAL PAGES ARE ACTUALLY FILLED ==================== */
+{
+  const terms = R('terms.html'), priv = R('privacy.html');
+  /* A published policy with [LEGAL ENTITY NAME] still in it is worse than none — Razorpay
+     will bounce it and a hospital will not trust it. */
+  eq(/<span class="tofill">/.test(terms), false, 'terms.html has no unfilled placeholders');
+  eq(/<span class="tofill">\[/.test(priv), false, 'privacy.html has no bracketed placeholders');
+
+  eq(/sole proprietorship/.test(terms), true, 'the entity type is stated');
+  eq(/Thoraipakkam/.test(terms), true, 'and the address');
+  eq(/Chennai/.test(terms), true, 'and the jurisdiction');
+
+  eq(/7-day free trial/.test(terms), true, 'the trial is documented in the terms');
+  eq(/at least 24 hours before any\s*\n?\s*debit/.test(terms.replace(/<[^>]+>/g, '')), true,
+     'and so is the pre-debit notice');
+  eq(/not refundable once taken/.test(terms), true, 'the refund position is stated plainly');
+  /* A blanket refusal that ignores our own failures would not be fair, and would not
+     stand — so the fault case is carved out explicitly. */
+  eq(/Where the fault is ours/.test(terms), true,
+     'with an exception where the platform itself is at fault');
+  eq(/90 days/.test(terms), true, 'and the retention period after a lapse');
+
+  eq(/All rights reserved/.test(R('app.js')), true, 'the footer asserts copyright');
+  eq(/original work/.test(R('app.js')), true,
+     'and distinguishes our commentary from the standards themselves');
+}
+
 console.log(`\n${pass} passed, ${fail} failed`);
 process.exit(fail ? 1 : 0);

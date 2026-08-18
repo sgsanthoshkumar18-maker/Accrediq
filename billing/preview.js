@@ -87,19 +87,24 @@ window.AQPreview = (function () {
       "</div></div>";
   }
 
+  /* Self-contained classes, deliberately.
+     The first version reused `cal-row` and friends from calendar.css — which the workspace
+     loads and almost no other gated page does, so every preview outside the workspace
+     rendered as a stack of unstyled text. Preview markup must depend only on styles.css,
+     because it appears on pages that share nothing else. */
   function pill(state, text) {
-    return '<span class="cal-pill st-' + esc(state) + '">' + esc(text) + "</span>";
+    return '<span class="pv-pill pv-' + esc(state) + '">' + esc(text) + "</span>";
   }
 
   function rows(list) {
-    return '<div class="cal-rows">' + list.map(function (d) {
-      return '<div class="cal-row st-' + esc(d.state) + '">' +
-        '<div class="cal-row-main">' +
-          (d.kind ? '<span class="dash-kind">' + esc(d.kind) + "</span>" : "") +
-          "<h4>" + esc(d.name || d.title) + "</h4>" +
-          '<div class="cal-meta">' + esc(d.meta) + "</div>" +
+    return '<div class="pv-rows">' + list.map(function (d) {
+      return '<div class="pv-row pv-' + esc(d.state) + '">' +
+        '<div class="pv-row-main">' +
+          (d.kind ? '<span class="pv-kind">' + esc(d.kind) + "</span>" : "") +
+          "<b>" + esc(d.name || d.title) + "</b>" +
+          '<span class="pv-meta">' + esc(d.meta) + "</span>" +
         "</div>" +
-        '<div class="cal-row-side">' + pill(d.state, d.text || "") + "</div>" +
+        (d.text ? '<div class="pv-row-side">' + pill(d.state, d.text) + "</div>" : "") +
       "</div>";
     }).join("") + "</div>";
   }
@@ -160,13 +165,13 @@ window.AQPreview = (function () {
         '<div class="pv-stats">' + stat(1, "Rounds overdue", "ws-stat-bad") +
           stat(1, "Below target", "ws-stat-warn") + stat(9, "Checklists") +
           stat(187, "Rounds recorded") + "</div>" +
-        '<div class="cal-rows">' + SAMPLE.rounds.map(function (r) {
-          return '<div class="cal-row st-' + (r.passed ? "ok" : "overdue") + '">' +
-            '<div class="cal-row-main"><h4>' + esc(r.name) + "</h4>" +
-            '<div class="cal-meta">' + esc(r.meta) + "</div>" +
-            (!r.passed ? '<div class="cal-next rd-flag">Below target \u2014 ' +
-              "record an action</div>" : "") + "</div>" +
-            '<div class="cal-row-side"><span class="cal-pill st-' +
+        '<div class="pv-rows">' + SAMPLE.rounds.map(function (r) {
+          return '<div class="pv-row pv-' + (r.passed ? "ok" : "overdue") + '">' +
+            '<div class="pv-row-main"><b>' + esc(r.name) + "</b>" +
+            '<span class="pv-meta">' + esc(r.meta) + "</span>" +
+            (!r.passed ? '<span class="pv-flag">Below target \u2014 record an action</span>' : "") +
+            "</div>" +
+            '<div class="pv-row-side"><span class="pv-pill pv-' +
               (r.passed ? "ok" : "overdue") + '">' + r.score + "%</span></div></div>";
         }).join("") + "</div>";
     },
@@ -273,6 +278,80 @@ window.AQPreview = (function () {
             state: "ok", text: "12 sittings/yr" }
         ]);
     },
+    codealerts: function () {
+      return "<h1>Code alerts</h1>" +
+        '<p class="lead">The colour codes your hospital must define, publish and drill \u2014 ' +
+        "with who responds and what they do.</p>" +
+        rows([
+          { kind: "Code Blue", name: "Cardiopulmonary arrest",
+            meta: "Response team \u00b7 all clinical areas \u00b7 drill half-yearly",
+            state: "ok", text: "Defined" },
+          { kind: "Code Red", name: "Fire",
+            meta: "Fire marshal and security \u00b7 hospital-wide \u00b7 drill half-yearly",
+            state: "ok", text: "Defined" },
+          { kind: "Code Pink", name: "Infant or child abduction",
+            meta: "Security \u00b7 maternity, paediatrics \u00b7 drill yearly",
+            state: "warn", text: "Not drilled" }
+        ]) +
+        '<div class="pv-note-inline">The full page carries every code, the response ' +
+        "protocol for each, and the drill record an assessor asks to see.</div>";
+    },
+    icd: function () {
+      return "<h1>ICD-11 lookup</h1>" +
+        '<p class="lead">Search the classification by term or code, without leaving the ' +
+        "platform.</p>" +
+        rows([
+          { kind: "5A11", name: "Type 2 diabetes mellitus",
+            meta: "Endocrine, nutritional or metabolic diseases", state: "ok", text: "ICD-11" },
+          { kind: "BA00", name: "Essential hypertension",
+            meta: "Diseases of the circulatory system", state: "ok", text: "ICD-11" },
+          { kind: "CA40", name: "Pneumonia",
+            meta: "Diseases of the respiratory system", state: "ok", text: "ICD-11" }
+        ]);
+    },
+    audit: function () {
+      return "<h1>Internal audit</h1>" +
+        '<p class="lead">Department-scoped audit built from the assessor checklist, timed, ' +
+        "with findings pushed straight to CAPA.</p>" +
+        '<div class="pv-stats">' + stat(45, "Departments in scope") + stat(12, "Audits this year") +
+          stat(3, "Open findings", "ws-stat-bad") + stat("68%", "Average score") + "</div>" +
+        rows([
+          { name: "Pharmacy", meta: "Audited 4 Aug \u00b7 Dr Menon \u00b7 34 elements",
+            state: "ok", text: "82%" },
+          { name: "Intensive Care Unit", meta: "Audited 28 Jul \u00b7 41 elements",
+            state: "overdue", text: "61%" },
+          { name: "Central Sterile Supply", meta: "Not yet audited this cycle",
+            state: "warn", text: "Due" }
+        ]);
+    },
+    incidents: function () {
+      return "<h1>Incident reporting</h1>" +
+        '<p class="lead">Four-level classification, a one-hour reporting window, and root ' +
+        "cause analysis built in.</p>" +
+        '<div class="pv-stats">' + stat(42, "Reported this year") + stat(2, "Open", "ws-stat-bad") +
+          stat(6, "Near misses this month") + stat("94%", "Reported within the hour") + "</div>" +
+        rows([
+          { kind: "Level 3", name: "Patient fall \u2014 no injury",
+            meta: "ICU \u00b7 1 Aug \u00b7 RCA complete", state: "ok", text: "Closed" },
+          { kind: "Level 2", name: "Wrong-strength medicine dispensed, intercepted",
+            meta: "Pharmacy \u00b7 9 Aug \u00b7 near miss", state: "warn", text: "In review" }
+        ]) +
+        '<div class="pv-note-inline">Patient identifiers are <b>deliberately not stored</b> ' +
+        "\u2014 the printed form carries them in pen, and the hospital keeps that.</div>";
+    },
+    gap: function () {
+      return "<h1>Gap analysis</h1>" +
+        '<p class="lead">Where you stand against every element, and what closing each gap ' +
+        "takes.</p>" +
+        rows([
+          { kind: "IPC.2.c", name: "Hand-hygiene facilities at the point of care",
+            meta: "Partially met \u00b7 audit data missing", state: "warn", text: "Gap" },
+          { kind: "MOM.4.e", name: "Medication reconciliation at transitions",
+            meta: "Not met \u00b7 no defined process", state: "overdue", text: "Gap" },
+          { kind: "FMS.5.a", name: "Fire and emergency plans",
+            meta: "Met \u00b7 drill records current", state: "ok", text: "Met" }
+        ]);
+    },
     generic: function () {
       return "<h1>Part of the workspace</h1>" +
         '<p class="lead">This page is included in the subscription.</p>' +
@@ -295,7 +374,7 @@ window.AQPreview = (function () {
         '<div><b>Evidence an assessor accepts</b><p>Certificates attached to records, ' +
           "and one-press exports.</p></div>" +
       "</div>" +
-      '<p class="ag-actions">' +
+      '<p class="pv-actions">' +
         '<a class="btn btn-accent" href="' + b + 'plans.html">See plans and pricing</a> ' +
         '<a class="btn btn-ghost" href="' + b + 'workspace/workspace.html">Sign in</a>' +
       "</p></div>";
@@ -304,11 +383,26 @@ window.AQPreview = (function () {
   function render(key, baseHref) {
     var b = baseHref || "";
     var fn = PAGES[key] || PAGES.generic;
+
+    /* The reel goes FIRST. A visitor deciding whether to read on gives this a couple of
+       seconds, and motion showing the page working earns that attention in a way a table
+       of sample rows does not. The sample data still follows, for the reader who wants
+       detail rather than a pitch. */
+    var reel = (window.AQReel && window.AQReel.render(key, b)) || "";
+
     return banner(b) +
+      (reel ? '<section class="section wrap rl-wrap">' + reel + "</section>" : "") +
       '<section class="section wrap pv-body" aria-label="Preview with sample data">' +
+        (reel ? '<h2 class="pv-detail-h">And in detail</h2>' : "") +
         fn() + cta(b) +
       "</section>";
   }
 
-  return { render: render, PAGES: PAGES, SAMPLE: SAMPLE, HOSPITAL: HOSPITAL };
+  /* Called after the markup is in the DOM. Kept separate from render() so the markup can
+     be produced and tested without a document. */
+  function mount() {
+    if (window.AQReel) window.AQReel.attach(document);
+  }
+
+  return { render: render, mount: mount, PAGES: PAGES, SAMPLE: SAMPLE, HOSPITAL: HOSPITAL };
 })();

@@ -132,7 +132,11 @@
        showing an invented version of those would mislead rather than inform. */
     var pv = previewFor();
     if (pv && window.AQPreview && !(st && st.reason === "pending")) {
-      return window.AQPreview.render(pv, base());
+      var html = window.AQPreview.render(pv, base());
+      /* The player needs the markup in the document first, so mounting is deferred to the
+         next frame rather than called here. */
+      setTimeout(function () { window.AQPreview.mount(); }, 0);
+      return html;
     }
 
     return shell("Subscription required",

@@ -77,6 +77,24 @@ window.AQ_BILLING = {
 
   introductory: true,
 
+  /* ---------------------------------------------------------------
+     FREE TRIAL LENGTH, in days. Change this one number to adjust it.
+
+     Set to 7. The worry that a longer trial lets people "use it and not
+     subscribe" is understandable but points the wrong way: nobody runs a
+     hospital's compliance calendar for a week and then rebuilds it in a
+     spreadsheet. The risk is the opposite one — a trial too short to reach
+     the moment the product becomes useful, which for this product is
+     entering committees and seeing the calendar compute real dates.
+
+     There is also a hard floor. RBI requires a pre-debit notice at least
+     24 hours before any charge, and we send at 48. On a 3-day trial that
+     notice lands on day one, so the customer is warned about payment
+     before they have done anything — which reads worse than no trial.
+     5 days is the practical minimum; 7 gives a working week.
+     --------------------------------------------------------------- */
+  trialDays: 7,
+
   /* What the price is expected to become. Shown next to the current price so
      the discount is concrete rather than a claim, and so nobody can say they
      were not told. */

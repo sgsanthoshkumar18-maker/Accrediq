@@ -747,8 +747,67 @@ asking for money — quiz, KPI library, SOP-by-department, quality tools, videos
 committees, plus the workspace pages. A test fails if any `data-access="paid"` page lacks a
 preview, or if a declared preview has no renderer.
 
+**Two bugs found by looking at a real screenshot** rather than trusting the tests:
+Code Alerts showed a defibrillator calibration, because it had no preview of its own and
+inherited the generic workspace sample — a preview describing a different page is worse
+than none. And every preview outside the workspace rendered as bare unstyled text, because
+preview markup borrowed `cal-row` from `calendar.css`, which only the workspace loads.
+**Preview markup now depends on `styles.css` alone**, and tests enforce both: no gated page
+may use the `generic` preview, and every class a preview renders must exist in `styles.css`.
+
 **The quiz is now `data-access="login"`** — free with an account, no subscription. That is
 the free tier: create an account, take the daily quiz, earn the certificate.
+
+### The animated reel (`billing/reel.js`)
+Each gated page opens with a short auto-playing presentation — three or four scenes with
+real motion, showing the problem, the product working on it, and the outcome. It sits
+**above** the sample data, because a visitor spends attention in the first seconds and
+motion earns it where a table does not.
+
+**Animated SVG and CSS, not video.** Eighteen video files would be a hundred megabytes to
+host, unreadable on a slow hospital connection, impossible to correct without re-recording,
+and unable to adapt to a phone. This is a few kilobytes, stays sharp at any size, and the
+words can be changed in a text editor. The visitor cannot tell; you can, every time you
+want to edit one.
+
+Every reel ends on the payoff rather than the mechanism — the last scene is what a visitor
+carries into the pricing decision, and a test enforces it. Autoplay stops permanently once
+someone takes control, never runs under reduced motion, and pauses off-screen and in
+background tabs.
+
+### Free trial — 7 days, and why not 12 hours
+A twelve-hour trial ending in an automatic debit **cannot legally be built in India**. The
+RBI's *Digital Payments E-mandate Framework, 2026* requires a pre-transaction notification
+at least 24 hours before any charge, with an opt-out. A sub-24-hour trial would mean warning
+the customer before the trial had begun.
+
+Seven days is also the shortest period in which a hospital can judge this product — a
+quality manager has to enter committees, watch the calendar compute dates, and walk one
+round before any of it means anything. A trial too short to evaluate does not raise
+conversion; it produces cancellations, refund arguments and chargebacks.
+
+**Length lives in `billing-config.js` as `trialDays`** — one edit, and a test asserts the
+terms page states the same number the code uses. It has a hard floor: with the notice at
+48 hours, a 3-day trial warns about payment on day one, which reads worse than no trial.
+Five days is the practical minimum.
+
+`billing/trial.js` sends the notice at **48 hours**, not 24: the legal minimum is a floor,
+and 48 survives a weekend or a failed send. `noticeText()` is shared by the banner and the
+email so the two cannot disagree about what the customer was told.
+
+### Legal pages — filled
+Sole proprietorship, Thoraipakkam Chennai, Chennai jurisdiction, 90-day retention,
+**Tokyo region — stated honestly as a cross-border transfer.** Supabase cannot change a
+project's region in place; it requires creating a new project and migrating. With two
+accounts and almost no data this is the cheapest it will ever be, so it should happen
+before any hospital signs up. `privacy.html` says plainly that data is currently outside
+India and that migration is planned — updating that sentence is part of the migration, not
+something to do in advance. **No refunds once taken**, with an explicit carve-out where
+the fault is ours — a blanket refusal that ignores our own failures would not be fair and
+would not stand. A test fails if any placeholder returns.
+
+Footer now asserts `© 2026 AQcredix. All rights reserved.` and distinguishes our
+commentary from the standards themselves.
 
 ### Billing / access
 - `billing/billing-config.js` is the only file to edit for pricing, UPI and email lists.
@@ -784,7 +843,7 @@ Redirect URLs, or Supabase ignores the parameter and falls back to Site URL.
 
 ---
 
-## Tests — 2070 assertions, plain Node, no install
+## Tests — 2322 assertions, plain Node, no install
 
     node tests/activity.test.js    node tests/sync.test.js
     node tests/profile.test.js     node tests/palette.test.js

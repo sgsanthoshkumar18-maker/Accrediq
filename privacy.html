@@ -7,11 +7,11 @@
 <title>Privacy Policy — AQcredix</title>
 <meta name="description" content="What AQcredix stores, where it lives, who can read it, and how to export or delete it.">
 <link rel="icon" href="data:image/svg+xml,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 40 40'><circle cx='20' cy='20' r='16' fill='none' stroke='%23D8E0E6' stroke-width='3.4'/><path d='M20 4a16 16 0 1 1-11.31 4.69' fill='none' stroke='%2317A2B8' stroke-width='3.4' stroke-linecap='round'/><path d='M19.15 14.05H20.85L25.61 25.015H26.97V25.95H22.21V25.015H23.315L22 22H18L16.685 25.015H17.79V25.95H13.03V25.015H14.39ZM20 16.26L22.027 20.935H17.973Z' fill='%2317A2B8' fill-rule='evenodd'/></svg>">
-<link rel="stylesheet" href="styles.css?v=20260818e">
+<link rel="stylesheet" href="styles.css?v=20260819b">
 <script type="application/ld+json">{"@context":"https://schema.org","@type":"EducationalOrganization","name":"AQcredix","alternateName":"AQcredix \u2014 Accreditation & Quality Implementation Guidance Platform","url":"https://accrediq.vercel.app/","description":"An independent healthcare quality education and training forum covering NABH accreditation standards, department roles, KPIs, quality tools and mock assessment.","founder":{"@type":"Person","name":"Dr. Santhoshkumar SG","jobTitle":"Founder & Chief Quality Officer, AQcredix; Infectious Disease Clinical Pharmacologist","honorificSuffix":"FISQua, CPQIH (Basic) (CAHO)"},"knowsAbout":["NABH accreditation","Healthcare quality improvement","Hospital infection control","Patient safety","Standard operating procedures","Clinical audit"]}</script>
 <script type="application/ld+json">{"@context":"https://schema.org","@type":"WebSite","name":"AQcredix","url":"https://accrediq.vercel.app/","potentialAction":{"@type":"SearchAction","target":"https://accrediq.vercel.app/standards.html?q={search_term_string}","query-input":"required name=search_term_string"}}</script>
-<link rel="stylesheet" href="motion/motion.css?v=20260818e">
-<link rel="stylesheet" href="search/command.css?v=20260818e">
+<link rel="stylesheet" href="motion/motion.css?v=20260819b">
+<link rel="stylesheet" href="search/command.css?v=20260819b">
 </head>
 <body data-page="about" data-access="free">
 <div id="site-header"></div>
@@ -38,7 +38,7 @@
   <span class="eyebrow">Legal</span>
   <h1>Privacy Policy</h1>
   <p class="lead">What we store, where it lives, who can read it, and how to get it back or have it deleted.</p>
-  <p class="legal-date">Last updated: <span class="tofill">[DATE OF PUBLICATION]</span></p>
+  <p class="legal-date">Last updated: 19 August 2026</p>
 </div></section>
 
 <section class="section wrap"><div class="legal">
@@ -48,9 +48,9 @@ details, and a lawyer familiar with the DPDP Act 2023 should review this. It is 
 describe accurately what the software actually does.</div>
 
 <h2>1. Who is responsible</h2>
-<p><span class="tofill">[LEGAL ENTITY NAME]</span> is the data fiduciary for account data,
+<p>AQcredix (proprietor: Dr S. G. Santhoshkumar) is the data fiduciary for account data,
 and a data processor acting on your hospital's instructions for the compliance records you
-enter. Contact: <span class="tofill">[PRIVACY CONTACT EMAIL]</span>.</p>
+enter. Contact: s.g.santhoshkumar18@gmail.com.</p>
 
 <h2>2. What we hold</h2>
 <table>
@@ -77,16 +77,21 @@ patient name, number or identifier, in the form or in the database. The printed 
 ruled blanks completed in pen and kept by the hospital. This is a deliberate design
 decision and we will not reverse it.</p>
 <p><strong>Card details.</strong> We never see or store card or bank credentials. Payment
-is made through <span class="tofill">[UPI / RAZORPAY]</span>; we hold only the reference
+is made through UPI and Razorpay; we hold only the reference
 number you give us.</p>
 
 <h2>3. Where it lives</h2>
 <p>Data is held in Supabase (PostgreSQL and object storage) in the
-<span class="tofill">[REGION — check Supabase → Settings → General]</span> region, and the
+<b id="dataRegion">ap-northeast-1 (Tokyo)</b> region, and the
 site is served by Vercel. Email, when enabled, is sent through
-<span class="tofill">[EMAIL PROVIDER]</span>.</p>
+Resend.</p>
 <p>If any of these are outside India, that means your data is transferred and stored
-outside India. <span class="tofill">[STATE PLAINLY WHETHER THIS IS THE CASE.]</span></p>
+outside India. <b>At present your data is stored outside India</b>, in Supabase's Tokyo region, so this
+is a cross-border transfer and we state it plainly rather than leaving you to discover it.
+We are migrating to Supabase's Mumbai region so that hospital records stay within India;
+this page will be updated on the day that happens, not before. Vercel serves the site from
+a global network, which caches static page files worldwide, but no hospital data passes
+through it — the workspace reads and writes directly to the database.</p>
 
 <h2>4. Who can read it</h2>
 <ul>
@@ -110,10 +115,10 @@ outside India. <span class="tofill">[STATE PLAINLY WHETHER THIS IS THE CASE.]</s
   <tr><th>Data</th><th>Kept for</th></tr>
   <tr><td>Compliance records</td>
       <td>As long as the account is active, and at least
-          <span class="tofill">[N] days</span> after a subscription ends</td></tr>
+          90 days after a subscription ends</td></tr>
   <tr><td>Account details</td><td>Until you ask us to delete them</td></tr>
   <tr><td>Payment records</td>
-      <td>As long as tax law requires (<span class="tofill">[N] years</span>)</td></tr>
+      <td>As long as tax law requires (8 years)</td></tr>
 </table>
 
 <h2>6. Your rights</h2>
@@ -128,7 +133,7 @@ outside India. <span class="tofill">[STATE PLAINLY WHETHER THIS IS THE CASE.]</s
   <li><strong>Complain.</strong> To us first, and then to the Data Protection Board of
       India if we have not resolved it.</li>
 </ul>
-<p>We will respond within <span class="tofill">[N] days</span>.</p>
+<p>We will respond within 90 days.</p>
 
 <h2>7. Security</h2>
 <ul>
@@ -154,17 +159,17 @@ chosen department. We do not use advertising or third-party tracking cookies.</p
 the workspace or by email.</p>
 
 <h2>11. Contact</h2>
-<p><span class="tofill">[PRIVACY CONTACT EMAIL]</span> \u00b7
-<span class="tofill">[POSTAL ADDRESS]</span></p>
+<p>s.g.santhoshkumar18@gmail.com \u00b7
+Thoraipakkam, Chennai, Tamil Nadu, India</p>
 
 </div></section>
 <div id="site-footer"></div>
-<script src="dept-icons.js?v=20260818e"></script>
-<script src="orbit.js?v=20260818e"></script>
-<script src="app.js?v=20260818e"></script>
-<script src="search/search.js?v=20260818e"></script>
-<script src="motion/motion.js?v=20260818e"></script>
-<script src="search/command.js?v=20260818e"></script>
-<script src="motion/scrolly.js?v=20260818e"></script>
+<script src="dept-icons.js?v=20260819b"></script>
+<script src="orbit.js?v=20260819b"></script>
+<script src="app.js?v=20260819b"></script>
+<script src="search/search.js?v=20260819b"></script>
+<script src="motion/motion.js?v=20260819b"></script>
+<script src="search/command.js?v=20260819b"></script>
+<script src="motion/scrolly.js?v=20260819b"></script>
 </body>
 </html>

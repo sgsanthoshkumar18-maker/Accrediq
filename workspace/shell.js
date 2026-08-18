@@ -145,6 +145,7 @@
       var pv = document.body.getAttribute("data-preview");
       if (pv && window.AQPreview) {
         host.innerHTML = window.AQPreview.render(pv, "../");
+        setTimeout(function () { window.AQPreview.mount(); }, 0);
         var pw = document.createElement("div");
         host.appendChild(pw);
         if (window.AQPaywall) window.AQPaywall.render(pw, W.user, st);

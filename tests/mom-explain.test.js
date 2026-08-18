@@ -148,6 +148,33 @@ ok(/mechanical rewrite/.test(R('nabh-explain.js')),
   });
   eq(unresolved.join(', '), '', 'every declared preview resolves to a renderer');
 
+  /* NO GATED PAGE MAY FALL BACK TO `generic`.
+     Code Alerts once showed a defibrillator calibration, because it had no preview of its
+     own and inherited the workspace sample. A preview that describes a different page is
+     worse than none — it tells the visitor the product is not what they came for. */
+  const generic = gated.filter(f => /data-preview="generic"/.test(R(f)));
+  eq(generic.join(', '), '', 'no gated page falls back to the generic preview');
+
+  /* Preview markup must depend only on styles.css. The first version borrowed `cal-row`
+     from calendar.css, which the workspace loads and almost no other gated page does — so
+     every preview outside the workspace rendered as a stack of bare text. */
+  {
+    const pvSrc = R('billing/preview.js');
+    const code = pvSrc.replace(/\/\*[\s\S]*?\*\//g, '');
+    eq(/cal-row|cal-pill|cal-meta|cal-next|cal-rows/.test(code), false,
+       'preview markup does not depend on calendar.css');
+    const css = R('styles.css');
+    const used = new Set();
+    let mm; const re = /class="([^"]+)"/g;
+    while ((mm = re.exec(code))) {
+      mm[1].split(/\s+/).forEach(c => {
+        if (/^[a-zA-Z][\w-]*$/.test(c) && c !== 'btn') used.add(c);
+      });
+    }
+    const undefinedCls = [...used].filter(c => !new RegExp('\\.' + c + '(?![\\w-])').test(css));
+    eq(undefinedCls.join(', '), '', 'every class a preview renders is defined in styles.css');
+  }
+
   // Each renders with the banner, real substance, and a route to the plans page.
   Object.keys(P.PAGES).forEach(k => {
     const h = P.render(k, '');
@@ -162,6 +189,64 @@ ok(/mechanical rewrite/.test(R('nabh-explain.js')),
   ok(/free<\/b> with an account|free<\/b> \u2014 you do not need/.test(P.render('quiz', '')) ||
      /free/.test(P.render('quiz', '')),
      'and its preview says so');
+}
+
+/* ============================ the animated reel ============================
+   A static sample table shows what a page contains; it does not show what the page DOES,
+   and "does" is what someone weighing ₹500 a month is buying. Built as animated SVG rather
+   than video: eighteen video files would be a hundred megabytes to host, unreadable on a
+   slow hospital connection, and impossible to correct without re-recording. */
+{
+  const rlSb = { window: {}, console };
+  vm.createContext(rlSb);
+  vm.runInContext(R('billing/reel.js'), rlSb);
+  vm.runInContext(R('billing/preview.js'), rlSb);
+  const RL = rlSb.window.AQReel;
+  const PV = rlSb.window.AQPreview;
+
+  const noReel = Object.keys(PV.PAGES).filter(k => k !== 'generic' && !RL.REELS[k]);
+  eq(noReel.join(', '), '', 'every previewable page has a reel');
+
+  Object.keys(RL.REELS).forEach(k => {
+    const r = RL.REELS[k];
+    ok(r.title && r.line, k + ' reel has a title and a line');
+    ok(r.scenes.length >= 3, k + ' reel has at least three scenes');
+    ok(r.scenes.length <= 5, k + ' reel is short enough to watch');
+    r.scenes.forEach((s, i) => {
+      ok(s.cap && s.cap.length > 12, k + ' scene ' + i + ' has a real caption');
+      ok(s.svg && s.svg.length > 40, k + ' scene ' + i + ' has a stage');
+    });
+    /* Each reel should end on the outcome, not on the mechanism — the last thing seen is
+       what a visitor carries into the pricing decision. */
+    ok(/rl-done/.test(r.scenes[r.scenes.length - 1].svg),
+       k + ' reel ends on the payoff, not the mechanism');
+  });
+
+  const h = RL.render('rounds', '');
+  ok(/rl-stage/.test(h), 'the reel renders a stage');
+  ok(/rl-dot/.test(h), 'with scene controls');
+  ok(/plans\.html/.test(h), 'and routes to plans');
+
+  // The reel comes before the detail, because attention is spent in the first seconds.
+  const full = PV.render('rounds', '');
+  ok(full.indexOf('rl-stage') < full.indexOf('pv-detail-h'),
+     'the reel appears before the sample data');
+
+  const src = R('billing/reel.js');
+  /* Autoplay must yield permanently once someone takes control — resuming pulls the scene
+     away mid-read, which is the most irritating thing a carousel does. */
+  ok(/touched = true/.test(src), 'manual control stops autoplay');
+  ok(/if \(touched\) return;/.test(src), 'and it never resumes on its own');
+  ok(/prefers-reduced-motion/.test(src), 'reduced motion disables it');
+  ok(/IntersectionObserver/.test(src), 'it only plays on screen');
+  ok(/visibilitychange/.test(src), 'and pauses in a background tab');
+  /* Restarting a CSS animation needs a reflow; setting the same value again does nothing
+     and the progress bar freezes on scene two. */
+  ok(/void fill\.offsetWidth/.test(src), 'the progress bar restarts properly');
+
+  const css = R('styles.css');
+  ok(/@media \(prefers-reduced-motion:reduce\)[\s\S]{0,400}\.rl-scene/.test(css),
+     'and the stylesheet stands down under reduced motion too');
 }
 
 console.log('\n' + pass + ' passed, ' + fail + ' failed');

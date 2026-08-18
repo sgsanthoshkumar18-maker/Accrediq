@@ -145,7 +145,7 @@
           </div>
         </div>
         <div class="footer-bottom">
-          <span>© 2026 AQcredix — Accreditation &amp; Quality Implementation Guidance Platform. An independent healthcare education forum. Not affiliated with NABH, QCI, JCI or any accreditation body.</span>
+          <span>© 2026 AQcredix. All rights reserved. Accreditation &amp; Quality Implementation Guidance Platform. An independent healthcare education forum. Not affiliated with NABH, QCI, JCI or any accreditation body. Explanatory content on this site is original work; the published standards remain the property of their respective bodies.</span>
           <span><a href="${base}contact.html" style="color:inherit;text-decoration:underline;">Found an error on this page? Tell us.</a></span>
         </div>
       </div>
