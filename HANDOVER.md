@@ -596,6 +596,41 @@ answers already in memory, never a fresh fetch, so it can never be older than wh
 screen. A multi-line textarea answer becomes a real line break in the document, not a
 collapsed run of text.
 
+### Bulk import (`workspace/import.html`, `workspace/import.js`)
+The mirror of `data-export.js`, and the highest-value thing for onboarding a real hospital:
+forty pieces of equipment entered one modal at a time is the single biggest reason a
+platform gets abandoned in week one.
+
+**Previews before it writes, always.** A bad import is worse than no import — a hospital
+cannot easily tell which of two hundred rows are the duplicates, and "undo" across four
+tables is not a promise to make casually. Every row is validated and shown with its errors;
+nothing is written until the person presses Import.
+
+The CSV parser is hand-written rather than pulled in because the one thing that actually
+breaks hospital spreadsheets is **a comma inside a quoted description** — a naive split
+corrupts exactly those rows, silently. Headers match case- and punctuation-insensitively.
+An unknown frequency is rejected rather than accepted, because a row the schedule engine
+cannot read would sit on the register and never appear on the calendar. Templates
+round-trip: a test imports each generated template and asserts it validates.
+
+### Global search (`workspace/wsearch.js`)
+Ctrl/Cmd-K, on every workspace page. Covers standards, the 114-item library, equipment,
+obligations, committees, checklists, findings, incidents, gate passes and documents.
+Index built **lazily on first open** — nobody should pay nine requests for a search they
+may never use. A failing table yields partial results rather than none.
+
+**Element text goes through `AQText.element()`**, the same accessor the pages use, so
+search cannot leak wording the site is deliberately withholding — otherwise the copyright
+work is undone by the search index.
+
+### Cross-linking rounds to findings
+A round below target now offers to raise a CAPA, which stores `capa_id` on the round and
+names the round in the finding's root cause — both directions, so the link survives either
+being edited. **Offered, not created automatically:** a finding nobody chose to raise is a
+finding nobody owns, and an auto-generated CAPA queue is the fastest way to teach a
+hospital to ignore its own findings. A failed round with no finding against it says so on
+the row, since that is exactly what an assessor looks for.
+
 ### Billing / access
 - `billing/billing-config.js` is the only file to edit for pricing, UPI and email lists.
 - UPI ID: check `upiVpa` — the config has a `-1` suffix the handover didn't; unverified.
@@ -630,7 +665,7 @@ Redirect URLs, or Supabase ignores the parameter and falls back to Site URL.
 
 ---
 
-## Tests — 1460 assertions, plain Node, no install
+## Tests — 1528 assertions, plain Node, no install
 
     node tests/activity.test.js    node tests/sync.test.js
     node tests/profile.test.js     node tests/palette.test.js
@@ -643,6 +678,7 @@ Redirect URLs, or Supabase ignores the parameter and falls back to Site URL.
     node tests/export-dash.test.js  node tests/notify.test.js
     node tests/summary.test.js
     node tests/gatepass-library-apex.test.js
+    node tests/import-search.test.js
 
 `sync.test.js` is the important one: cross-device persistence against a fake Supabase, plus
 direct assertions on the RLS rules. `framing.test.js` locks the camera maths that was got

@@ -4,7 +4,7 @@
 <script>(function(){try{var DEF="neon";if(localStorage.getItem("aq-palette-v")!=="2"){localStorage.removeItem("aq-palette");localStorage.setItem("aq-palette-v","2");}var p=new URLSearchParams(location.search);var own=localStorage.getItem("aq-is-owner")==="1";if(p.has("dark")){localStorage.setItem("aq-theme",p.get("dark")==="0"?"light":"dark");}if(own&&p.has("neon")){localStorage.setItem("aq-palette",p.get("neon")==="0"?"default":"neon");}var t=localStorage.getItem("aq-theme")||"dark";var q=localStorage.getItem("aq-palette")||DEF;if(q!=="default"){q="neon";}if(t!=="light"){document.documentElement.setAttribute("data-theme","dark");}if(q==="neon"&&t!=="light"){document.documentElement.setAttribute("data-palette","neon");}}catch(e){document.documentElement.setAttribute("data-theme","dark");document.documentElement.setAttribute("data-palette","neon");}})();</script>
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width, initial-scale=1">
-<title>Calendar — AQcredix Workspace</title>
+<title>Bulk Import — AQcredix Workspace</title>
 <meta name="robots" content="noindex">
 <link rel="icon" href="data:image/svg+xml,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 40 40'><circle cx='20' cy='20' r='16' fill='none' stroke='%23D8E0E6' stroke-width='3.4'/><path d='M20 4a16 16 0 1 1-11.31 4.69' fill='none' stroke='%2317A2B8' stroke-width='3.4' stroke-linecap='round'/><path d='M19.15 14.05H20.85L25.61 25.015H26.97V25.95H22.21V25.015H23.315L22 22H18L16.685 25.015H17.79V25.95H13.03V25.015H14.39ZM20 16.26L22.027 20.935H17.973Z' fill='%2317A2B8' fill-rule='evenodd'/></svg>">
 <link rel="stylesheet" href="../styles.css?v=20260813h">
@@ -21,25 +21,21 @@
 
 <main id="aq-main">
   <div id="wsGate"></div>
-
   <div id="wsBody" style="display:none">
     <section class="page-head"><div class="wrap">
-      <h1>Compliance calendar</h1>
-      <p class="lead">Committee meetings and recurring NABH obligations, with what is overdue today. An assessor asks how often you meet and then asks to see the minutes — this is the answer to both.</p>
+      <h1>Bulk import</h1>
+      <p class="lead">Bring in your existing spreadsheets &mdash; equipment, recurring obligations, committees, team. Every row is checked and shown to you before anything is saved.</p>
     </div></section>
-
     <section class="section wrap">
       <div class="ws-topbar"><div id="wsNotice"></div><div id="wsSearch"></div><div id="wsBell"></div><div id="wsPin"></div></div>
-      <div id="calStats" style="margin-bottom:20px"></div>
-
-      <div class="cal-tabs" id="calTabs">
-        <button class="cal-tab is-on" data-tab="calendar">Calendar</button>
-        <button class="cal-tab" data-tab="committees">Committees</button>
-        <button class="cal-tab" data-tab="tasks">Recurring tasks</button>
-      </div>
-
-      <div id="calPanel"></div>
-      <div class="ws-modal" id="calModal"></div>
+      <div class="cal-tabs" id="impTabs"></div>
+      <div class="imp-intro" id="impIntro"></div>
+      <label class="imp-drop" id="impDrop">
+        <input type="file" id="impFile" accept=".csv,.xlsx,.xls" hidden>
+        <b>Drop a spreadsheet here, or click to choose</b>
+        <span>Excel (.xlsx) or CSV</span>
+      </label>
+      <div id="impPreview"></div>
     </section>
   </div>
 </main>
@@ -59,13 +55,15 @@
 <script src="pin.js?v=20260813h"></script>
 <script src="shell.js?v=20260813h"></script>
 <script src="../calendar/schedule.js?v=20260813h"></script>
-<script src="../calendar/calendar.js?v=20260813h"></script>
+<script src="../workspace/import.js?v=20260813h"></script>
+<script src="import-ui.js?v=20260813h"></script>
 <script>(function(){var s=["https://cdn.jsdelivr.net/npm/jszip@3.10.1/dist/jszip.min.js","https://cdnjs.cloudflare.com/ajax/libs/jszip/3.10.1/jszip.min.js"];function t(i){if(i>=s.length)return;var e=document.createElement("script");e.src=s[i];e.onerror=function(){t(i+1)};document.head.appendChild(e)}t(0)})();</script>
 <script src="../motion/motion.js?v=20260813h"></script>
 <script src="../search/command.js?v=20260813h"></script>
 <script src="../motion/scrolly.js?v=20260813h"></script>
 <script src="digest.js?v=20260813h"></script>
 <script src="bell.js?v=20260813h"></script>
+<script src="attach.js?v=20260813h"></script>
 <script src="library-data.js?v=20260813h"></script>
 <script src="wsearch.js?v=20260813h"></script>
 </body>

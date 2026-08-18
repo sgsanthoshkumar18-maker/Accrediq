@@ -237,6 +237,13 @@
               (r.area ? " \u00b7 " + esc(r.area) : "") +
               (r.performed_by ? " \u00b7 " + esc(r.performed_by) : "") + "</div>" +
             (r.notes ? '<div class="cal-next">' + esc(r.notes) + "</div>" : "") +
+            /* A failed round with no finding against it is exactly what an assessor looks
+               for, so say so on the row rather than leaving it to be noticed. */
+            (r.passed === false
+              ? (r.capa_id
+                  ? '<div class="cal-next"><a href="capa.html">Finding raised \u2192</a></div>'
+                  : '<div class="cal-next rd-flag">No action recorded against this round</div>')
+              : "") +
           "</div>" +
           '<div class="cal-row-side"><span class="cal-pill st-' +
             (r.passed === false ? "overdue" : "ok") + '">' +
@@ -463,8 +470,9 @@
     var sc = score(answers, l);
     if (sc.pct == null) { W.toast("Answer at least one question", "bad"); return; }
 
+    var roundId = id("rnd");
     await S.adapter.upsert("rounds", {
-      id: id("rnd"),
+      id: roundId,
       checklist_id: lid,
       performed_on: on,
       performed_by: val("rBy") || null,
@@ -481,13 +489,75 @@
     if (window.AQActivity) window.AQActivity.record("round_recorded", { id: lid, score: sc.pct });
 
     close(); await refresh();
+
     if (!sc.passed) {
       /* Offering the CAPA immediately is the whole point: a low score with no action
-         recorded against it is the single most common assessor finding. */
-      W.toast("Scored " + sc.pct + "% \u2014 below target. Raise a CAPA against it.", "bad");
+         recorded against it is the single most common assessor finding. Offered rather
+         than created automatically — a finding nobody chose to raise is a finding nobody
+         owns, and an auto-generated CAPA queue is the fastest way to teach a hospital to
+         ignore its own findings. */
+      offerCapa(l, roundId, sc, on);
     } else {
       W.toast("Scored " + sc.pct + "% \u2014 pass", "ok");
     }
+  }
+
+  /* The round and the finding it caused must reference each other, or a hospital ends up
+     with a low score on one page and an action on another and no way to show an assessor
+     they are the same event. */
+  function offerCapa(l, roundId, sc, on) {
+    modal("<h3>Below target</h3>" +
+      '<p class="cal-hint">' + esc(l.name) + " scored <b>" + sc.pct +
+        "%</b> against a target of " + esc(l.target_pct || 0) + "%" +
+        (sc.criticalFail ? ", and a critical item failed" : "") + ".</p>" +
+      "<p>A round that falls below target with no action recorded against it is the most " +
+      "common finding an assessor raises. Raise one now and it will be linked to this round.</p>" +
+      '<div class="ws-form">' +
+        '<div class="ws-f ws-f-wide"><label for="cpTitle">Finding</label>' +
+          '<input id="cpTitle" value="' + esc(l.name + " scored " + sc.pct + "%, below target") + '"></div>' +
+        '<div class="ws-f"><label for="cpOwner">Owner</label>' +
+          '<input id="cpOwner" value="' + esc(l.owner || "") + '"></div>' +
+        '<div class="ws-f"><label for="cpDue">Due by</label>' +
+          '<input id="cpDue" type="date"></div>' +
+      "</div>" +
+      '<div class="ws-modal-actions">' +
+        '<button class="btn btn-ghost" data-act="close">Not now</button>' +
+        '<span style="flex:1"></span>' +
+        '<button class="btn btn-accent" data-act="make-capa" data-id="' + esc(roundId) +
+          '" data-list="' + esc(l.id) + '">Raise a CAPA</button>' +
+      "</div>");
+  }
+
+  async function makeCapa(roundId, lid) {
+    var l = lists.filter(function (x) { return x.id === lid; })[0];
+    var r = rounds.filter(function (x) { return x.id === roundId; })[0];
+    var title = val("cpTitle");
+    if (!title) { W.toast("The finding needs a title", "bad"); return; }
+    var capaId = "capa_" + Date.now().toString(36) + Math.random().toString(36).slice(2, 7);
+
+    await S.adapter.upsert("capa", {
+      id: capaId,
+      title: title,
+      status: "open",
+      source: "Round",
+      department: l ? l.department : null,
+      owner: val("cpOwner") || null,
+      due_on: val("cpDue") || null,
+      element_code: l ? l.element_code : null,
+      /* Both directions. The CAPA names the round in its own words for a reader, and the
+         round stores the id so the link survives the title being edited later. */
+      root_cause: "Raised from the round recorded on " +
+        (r ? r.performed_on : "\u2014") + (r && r.area ? " in " + r.area : "") + ".",
+      updated_at: new Date().toISOString()
+    });
+
+    if (r) {
+      r.capa_id = capaId;
+      await S.adapter.upsert("rounds", r);
+    }
+
+    close(); await refresh();
+    W.toast("CAPA raised and linked to this round", "ok");
   }
 
   async function removeList(lid) {
@@ -535,6 +605,7 @@
       else if (act === "save-items") saveItems(rid);
       else if (act === "run") openRun(find());
       else if (act === "save-round") saveRound(rid);
+      else if (act === "make-capa") makeCapa(rid, b.dataset.list);
     });
 
     document.getElementById("rdModal").addEventListener("click", function (e) {

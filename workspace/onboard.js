@@ -59,6 +59,17 @@
       done: function (c) { return c.lists > 0; },
       detail: function (c) { return c.lists + " checklists"; } },
 
+    { key: "library",
+      title: "Find your department's forms and registers",
+      body: "114 checklists, forms and registers, each tagged to the department that keeps " +
+            "it \u2014 with what it must contain and a blank template to download.",
+      href: "library.html", cta: "Open the library",
+      /* Not a data check: nothing is created here, it is a reference shelf. Marked done
+         once the hospital has something of its own on the register, since that is the
+         point at which the library stops being the first thing they need. */
+      done: function (c) { return c.assets > 0 || c.lists > 0; },
+      detail: function () { return "Available any time"; } },
+
     { key: "score",
       title: "Score your readiness",
       body: "Work through the elements chapter by chapter. You do not have to finish it " +

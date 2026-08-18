@@ -1187,9 +1187,9 @@ a:focus-visible,button:focus-visible,input:focus-visible,select:focus-visible,te
 .tr-label{display:inline-block;font-size:10.5px;font-weight:700;text-transform:uppercase;
   letter-spacing:.06em;color:var(--accent-bright);margin-right:10px;}
 .tour-bar{display:flex;align-items:center;gap:8px;margin-top:12px;flex-wrap:wrap;}
-.tour-btn{padding:8px 14px;border-radius:999px;border:1px solid rgba(255,255,255,.20);
+.tour-btn{padding:10px 16px;border-radius:999px;border:1px solid rgba(255,255,255,.20);
   background:rgba(255,255,255,.05);color:#fff;font-size:12.5px;font-weight:600;
-  cursor:pointer;min-height:36px;font-family:inherit;}
+  cursor:pointer;min-height:40px;font-family:inherit;}
 .tour-btn:hover{background:rgba(255,255,255,.12);}
 .tour-dots{display:flex;gap:5px;flex:1;margin-left:6px;}
 .tour-dot{flex:1;height:4px;border-radius:2px;border:0;padding:0;cursor:pointer;

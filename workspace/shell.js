@@ -37,6 +37,8 @@
       desc: "Controlled document register" },
     { key: "access", href: "access.html", label: "Access", ownerOnly: true,
       desc: "Subscriptions and payment approvals" },
+    { key: "import", href: "import.html", label: "Bulk Import",
+      desc: "Bring in existing spreadsheets — equipment, obligations, committees, team" },
     { key: "team", href: "team.html", label: "Team",
       desc: "Seats, roles and departments" }
   ];
