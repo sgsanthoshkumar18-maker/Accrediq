@@ -19,6 +19,43 @@
 (function () {
   "use strict";
 
+function friendlyAuthError(err) {
+    var raw = String((err && err.message) || err || "");
+    var code = "";
+    try { code = (JSON.parse(raw) || {}).error_code || (JSON.parse(raw) || {}).code || ""; }
+    catch (e) { code = ""; }
+    var t = (code + " " + raw).toLowerCase();
+
+    if (t.indexOf("email_not_confirmed") >= 0 || t.indexOf("not confirmed") >= 0) {
+      return { text: "This email has not been confirmed yet. Open the confirmation link " +
+               "sent when the account was created, then sign in.", resend: true };
+    }
+    if (t.indexOf("invalid_credentials") >= 0 || t.indexOf("invalid login") >= 0) {
+      return { text: "That email and password do not match an account. If the account " +
+               "was created on another device, use Reset password below.", reset: true };
+    }
+    if (t.indexOf("user_already_exists") >= 0 || t.indexOf("already registered") >= 0) {
+      return { text: "An account with this email already exists \u2014 use Sign in instead." };
+    }
+    if (t.indexOf("over_email_send_rate") >= 0 || t.indexOf("rate limit") >= 0) {
+      return { text: "Too many attempts just now. Wait a minute and try again." };
+    }
+    if (t.indexOf("weak_password") >= 0 || t.indexOf("password should be") >= 0) {
+      return { text: "That password is too short \u2014 six characters or more." };
+    }
+    if (t.indexOf("failed to fetch") >= 0 || t.indexOf("networkerror") >= 0) {
+      return { text: "No connection to the server. Check the network and try again." };
+    }
+    return { text: raw.slice(0, 200) || "Sign-in failed. Please try again." };
+  }
+
+  /* Shared with workspace/shell.js, which printed the raw Supabase JSON — a 400
+     response reached the screen as {"code":400,"error_code":"email_not_confirmed",...},
+     unreadable and overflowing its box because a JSON blob has no spaces to wrap at.
+     One translator, used by both panels, so they cannot drift apart. */
+  window.AQAuthError = friendlyAuthError;
+
+
   // Hide the page instantly, before first paint, so there is no flash of protected
   // content while the auth check runs. Removed only once access is confirmed.
   var lock = document.createElement("style");
@@ -112,35 +149,14 @@
        something like {"code":"email_not_confirmed","message":... and cannot tell whether
        the account is missing, unconfirmed, or the password is simply wrong — three very
        different problems with three different fixes. Translate them. */
-    function friendlyAuthError(err) {
-      var raw = String((err && err.message) || err || "");
-      var code = "";
-      try { code = (JSON.parse(raw) || {}).error_code || (JSON.parse(raw) || {}).code || ""; }
-      catch (e) { code = ""; }
-      var t = (code + " " + raw).toLowerCase();
+    /* Exposed so workspace/shell.js uses the same translator. It previously printed the
+       raw Supabase JSON, which is how a 400 response ended up on screen as
+       {"code":400,"error_code":"email_not_confirmed",...} — unreadable, and overflowing
+       its box because a JSON blob has no spaces to wrap at. Two copies of this logic
+       would drift; one cannot. */
+    // Defined at module scope below and shared with shell.js.
 
-      if (t.indexOf("email_not_confirmed") >= 0 || t.indexOf("not confirmed") >= 0) {
-        return { text: "This email has not been confirmed yet. Open the confirmation link " +
-                 "sent when the account was created, then sign in.", resend: true };
-      }
-      if (t.indexOf("invalid_credentials") >= 0 || t.indexOf("invalid login") >= 0) {
-        return { text: "That email and password do not match an account. If the account " +
-                 "was created on another device, use Reset password below.", reset: true };
-      }
-      if (t.indexOf("user_already_exists") >= 0 || t.indexOf("already registered") >= 0) {
-        return { text: "An account with this email already exists \u2014 use Sign in instead." };
-      }
-      if (t.indexOf("over_email_send_rate") >= 0 || t.indexOf("rate limit") >= 0) {
-        return { text: "Too many attempts just now. Wait a minute and try again." };
-      }
-      if (t.indexOf("weak_password") >= 0 || t.indexOf("password should be") >= 0) {
-        return { text: "That password is too short \u2014 six characters or more." };
-      }
-      if (t.indexOf("failed to fetch") >= 0 || t.indexOf("networkerror") >= 0) {
-        return { text: "No connection to the server. Check the network and try again." };
-      }
-      return { text: raw.slice(0, 200) || "Sign-in failed. Please try again." };
-    }
+
 
     function draw(tab) {
       body.innerHTML =

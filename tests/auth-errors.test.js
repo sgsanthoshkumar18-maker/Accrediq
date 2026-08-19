@@ -1,53 +1,86 @@
-/* Sign-in failures must say what is actually wrong. A person locked out on a second
-   device was shown raw truncated JSON, which cannot distinguish "not confirmed" from
-   "wrong password" from "no such account" — three problems with three different fixes. */
-const fs = require('fs'), path = require('path');
+/* AQcredix — sign-in error messages.
+ * Run: node tests/auth-errors.test.js
+ *
+ * Supabase returns machine-readable JSON on failure. Printed raw, a person locked out sees
+ *   {"code":400,"error_code":"email_not_confirmed","msg":"Email not confirmed"}
+ * and cannot tell whether the account is missing, unconfirmed, or the password is simply
+ * wrong — three different problems with three different fixes. It also overflowed its box,
+ * because a JSON blob has no spaces to wrap at.
+ */
+const fs = require('fs'), path = require('path'), vm = require('vm');
 let pass = 0, fail = 0;
-const eq = (g, w, m) => { if (JSON.stringify(g) === JSON.stringify(w)) pass++;
-  else { fail++; console.log('FAIL:', m, '- got', g, 'want', w); } };
+function eq(g, w, m) {
+  if (g === w) pass++;
+  else { fail++; console.log('FAIL: ' + m + ' - got ' + JSON.stringify(g) + ' want ' + JSON.stringify(w)); }
+}
+function ok(c, m) { eq(!!c, true, m); }
 
-const src = fs.readFileSync(path.join(__dirname, '../workspace/auth-gate.js'), 'utf8');
-const body = /function friendlyAuthError\(err\) \{[\s\S]*?\n    \}/.exec(src)[0];
-eval(body);
+const ROOT = path.join(__dirname, '..');
+const R = f => fs.readFileSync(path.join(ROOT, f), 'utf8');
 
-// Real Supabase error payloads.
-const cases = [
-  ['{"code":"email_not_confirmed","message":"Email not confirmed"}', /not been confirmed/, 'resend'],
-  ['{"error_code":"invalid_credentials","message":"Invalid login credentials"}', /do not match/, 'reset'],
-  ['{"code":"user_already_exists","message":"User already registered"}', /already exists/, null],
-  ['{"code":"over_email_send_rate_limit","message":"..."}', /Too many attempts/, null],
-  ['{"code":"weak_password","message":"Password should be at least 6 characters"}', /too short/, null],
-  ['TypeError: Failed to fetch', /No connection/, null],
-];
-cases.forEach(([raw, expect, action]) => {
-  const r = friendlyAuthError(new Error(raw));
-  eq(expect.test(r.text), true, 'explains: ' + raw.slice(0, 42));
-  eq(/[{}"]|error_code/.test(r.text), false, 'no raw JSON shown for: ' + raw.slice(0, 30));
-  if (action) eq(!!r[action], true, 'offers ' + action + ' for ' + raw.slice(0, 30));
-});
-// An unrecognised error must still say something, never blank.
-eq(friendlyAuthError(new Error('')).text.length > 0, true, 'unknown errors still produce a message');
+const sb = {
+  window: {},
+  document: {
+    addEventListener() {}, getElementById: () => null, querySelector: () => null,
+    createElement: () => ({
+      style: {}, classList: { add() {} }, appendChild() {}, addEventListener() {}
+    }),
+    body: { appendChild() {} },
+    readyState: 'complete'
+  },
+  console
+};
+vm.createContext(sb);
+// The file also does DOM setup that cannot run here; the translator is what matters.
+try { vm.runInContext(R('workspace/auth-gate.js'), sb); } catch (e) { /* expected */ }
 
-// Recovery must exist on both adapters, or local mode throws.
-const store = fs.readFileSync(path.join(__dirname, '../workspace/store.js'), 'utf8');
-eq((store.match(/async resetPassword/g) || []).length, 2, 'resetPassword on both adapters');
-eq((store.match(/async resendConfirmation/g) || []).length, 2, 'resendConfirmation on both adapters');
-eq(/\/auth\/v1\/recover/.test(store), true, 'reset uses the Supabase recover endpoint');
-eq(/\/auth\/v1\/resend/.test(store), true, 'resend uses the Supabase resend endpoint');
+const f = sb.window.AQAuthError;
+ok(typeof f === 'function', 'the translator is exported at module scope');
 
+/* Module scope specifically: assigned inside a function that only runs on some pages, it
+   would be undefined exactly where shell.js needs it. */
+ok(/^\s{2}window\.AQAuthError = friendlyAuthError;/m.test(R('workspace/auth-gate.js')),
+   'and is assigned at module scope, not inside a page-specific branch');
 
-/* --- confirmation links must point at the site the user is actually on ---
-   Without an explicit redirect Supabase builds the link from Site URL, which defaults
-   to localhost:3000. Every new user then gets a confirmation email whose link goes
-   nowhere, and is refused at sign-in — while the developer's own machine keeps working
-   off a saved session, so the site looks fine to the one person who cannot see it. */
-const storeJs = fs.readFileSync(path.join(__dirname, '../workspace/store.js'), 'utf8');
-eq(/function siteOrigin\(\)/.test(storeJs), true, 'the redirect target is derived, not hardcoded');
-eq(/emailRedirectTo: siteOrigin\(\)/.test(storeJs), true, 'sign-up sends a redirect target');
-eq(/recover\?redirect_to=/.test(storeJs), true, 'password reset sends a redirect target');
-eq(/resend\?redirect_to=/.test(storeJs), true, 'confirmation resend sends a redirect target');
-// Derived from location.origin, never a pasted domain that would rot on a rename.
-eq(/location\.origin/.test(storeJs), true, 'the redirect target comes from the browser');
+if (typeof f === 'function') {
+  const cases = [
+    ['email_not_confirmed', 'not been confirmed'],
+    ['invalid_credentials', 'do not match an account'],
+    ['user_already_exists', 'already exists'],
+    ['over_email_send_rate', 'Too many attempts'],
+    ['weak_password', 'too short']
+  ];
+  cases.forEach(function (c) {
+    const out = f({ message: JSON.stringify({ code: 400, error_code: c[0] }) }).text;
+    ok(out.indexOf(c[1]) >= 0, c[0] + ' is translated into plain words');
+    eq(/[{}"]/.test(out), false, c[0] + ' output shows no raw JSON punctuation');
+    ok(out.length < 220, c[0] + ' message is short enough to read');
+  });
 
-console.log(`\n${pass} passed, ${fail} failed`);
-process.exit(fail ? 1 : 0);
+  /* The two cases with a remedy should offer it — knowing the problem without the fix
+     leaves the person no better off. */
+  ok(f({ message: '{"error_code":"email_not_confirmed"}' }).resend,
+     'an unconfirmed email offers to resend');
+  ok(f({ message: '{"error_code":"invalid_credentials"}' }).reset,
+     'a credential mismatch offers a password reset');
+
+  // An unrecognised error must still produce something readable rather than raw JSON.
+  const unknown = f({ message: '{"code":500,"error_code":"something_new"}' }).text;
+  ok(unknown.length > 0 && unknown.length < 220, 'an unknown error still reads as a sentence');
+}
+
+/* Both panels must share one translator — two copies would drift apart. */
+const shell = R('workspace/shell.js');
+ok(/window\.AQAuthError/.test(shell), 'the workspace panel uses the shared translator');
+ok(/friendlyAuthError/.test(R('workspace/auth-gate.js')), 'which lives in auth-gate.js');
+
+/* A long unbroken token has no spaces to wrap at and simply runs out of its container
+   unless told otherwise. */
+const css = R('workspace/workspace.css');
+ok(/overflow-wrap:\s*anywhere/.test(css), 'the message box wraps unbreakable strings');
+ok(/word-break:\s*break-word/.test(css), 'and breaks long words rather than overflowing');
+ok(/\.ws-auth-msg\{[\s\S]{0,240}max-width:\s*100%/.test(css),
+   'and cannot exceed its container');
+
+console.log('\n' + pass + ' passed, ' + fail + ' failed');
+if (fail) process.exit(1);

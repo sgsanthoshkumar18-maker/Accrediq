@@ -257,7 +257,15 @@
             }
             location.reload();
           } catch (err) {
-            msg.textContent = String(err.message || err).slice(0, 220);
+            /* Translate rather than dumping the raw response. Supabase returns JSON on
+               failure, and printing it left a person reading
+               {"code":400,"error_code":"email_not_confirmed",...} with no idea whether the
+               account was missing, unconfirmed, or the password simply wrong — three
+               problems with three different fixes. Shared with auth-gate.js so the two
+               panels cannot drift apart. */
+            msg.textContent = window.AQAuthError
+              ? window.AQAuthError(err).text
+              : String(err.message || err).slice(0, 220);
             this.disabled = false;
           }
         });
