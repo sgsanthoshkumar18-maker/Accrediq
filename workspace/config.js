@@ -17,8 +17,8 @@
  * key in this file; it bypasses all of that.
  */
 window.AQ_CONFIG = {
-  supabaseUrl: "https://onnzhnfqlkxmaznijwck.supabase.co",        // e.g. "https://abcdefghijkl.supabase.co"
-  supabaseAnonKey: "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6Im9ubnpobmZxbGt4bWF6bmlqd2NrIiwicm9sZSI6ImFub24iLCJpYXQiOjE3ODYwMjE4MzksImV4cCI6MjEwMTU5NzgzOX0.jEUyAPCUKDGOij5f_LH2kYhppsA2UX53-_eXVL4lvf8",    // the anon / public key, not service_role
+  supabaseUrl: "https://teqzrmtjtwzepdjtiiyl.supabase.co",        // e.g. "https://abcdefghijkl.supabase.co"
+  supabaseAnonKey: "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6InRlcXpybXRqdHd6ZXBkanRpaXlsIiwicm9sZSI6ImFub24iLCJpYXQiOjE3ODcwNzAyMjQsImV4cCI6MjEwMjY0NjIyNH0.RwivT_4jFAth137YfE9SgD7Aq7LsiljJ9KJNu_TJBpc",    // the anon / public key, not service_role
 
   // Shown in the workspace header.
   productName: "AQcredix Workspace",

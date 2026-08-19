@@ -158,6 +158,103 @@ ok(/\.ws-pin\.is-on/.test(read('workspace/workspace.css')), 'and pinned looks di
   });
   eq(bad, 0, 'every do-block loop references tables already created above it');
 
+  /* ALTER TABLE was not checked by the first version of this test, and that is exactly how
+     `alter table public.incidents` ended up above `create table public.incidents` — the
+     whole script failed on a fresh project with
+       ERROR: 42P01: relation "public.incidents" does not exist
+     Every statement type that requires an existing table must be checked, not just loops. */
+  /* FUNCTIONS USED BY POLICIES MUST BE DEFINED FIRST.
+     `create policy` resolves function names at creation time. A plpgsql function BODY does
+     not — it resolves at call time — so a helper called from inside another function may be
+     defined later, but one called from a policy may not. Defining aq_is_owner() below the
+     site_settings policies failed a fresh project with
+       ERROR: 42883: function public.aq_is_owner() does not exist
+     while passing on an existing project where the function was already present. */
+  {
+    const fnDef = {};
+    [...sql.matchAll(/create or replace function public\.(\w+)/g)].forEach(m => {
+      if (!(m[1] in fnDef)) fnDef[m[1]] = m.index;
+    });
+    // Blank out comments and function bodies so only executable references remain.
+    let scan = sql.replace(/^--.*$/gm, m => ' '.repeat(m.length));
+    [...scan.matchAll(/create or replace function[\s\S]*?\$\$;/g)].forEach(m => {
+      scan = scan.slice(0, m.index) + ' '.repeat(m[0].length) + scan.slice(m.index + m[0].length);
+    });
+    let badFn = 0;
+    [...scan.matchAll(/public\.(\w+)\s*\(/g)].forEach(m => {
+      const fn = m[1];
+      if (!(fn in fnDef)) return;
+      if (m.index < fnDef[fn]) {
+        badFn++;
+        console.log('  ' + fn + ' is called before it is defined');
+      }
+    });
+    eq(badFn, 0, 'every function called outside a function body is defined above that call');
+  }
+
+  /* EVERY TABLE MUST HAVE RLS ENABLED.
+     This was a hand-written list of eight tables while the POLICY loops covered
+     twenty-one. Every table added afterwards got policies that did nothing, because RLS
+     was never switched on for it — fifteen tables were readable by any signed-in user of
+     any hospital, and the schema ran without a single error. Two lists that must agree
+     will eventually disagree; the enable is now a loop over the same list. */
+  {
+    const createdTables = [...sql.matchAll(/create table if not exists public\.(\w+)/g)]
+      .map(m => m[1]);
+    const explicit = [...sql.matchAll(/alter table public\.(\w+)\s+enable row level security/g)]
+      .map(m => m[1]);
+    const loopM = /foreach t in array array\[([^\]]*?)\] loop\s*\n\s*execute format\('alter table public\.%I enable row level security'/
+      .exec(sql);
+    const looped = loopM
+      ? loopM[1].split(',').map(x => x.trim().replace(/'/g, '')).filter(Boolean)
+      : [];
+    ok(looped.length > 15, 'RLS is enabled by a loop, not a hand-written list');
+
+    const covered = new Set([...explicit, ...looped]);
+    const noRls = createdTables.filter(t => !covered.has(t));
+    eq(noRls.join(', '), '', 'every table created has RLS enabled (' +
+       createdTables.length + ' tables)');
+
+    /* And the enable list must match the policy list. A table with policies but no RLS is
+       silently open; a table with RLS but no policy is silently locked. */
+    /* Non-greedy AND anchored to the nearest loop: a greedy match spans from the RLS loop
+       all the way to the policy loop and swallows everything between. */
+    const policyLoop = /foreach t in array array\[([^\]]*?)\] loop\s*\n\s*execute format\('drop policy if exists %I_read/
+      .exec(sql);
+    if (policyLoop) {
+      const polTables = policyLoop[1].split(',').map(x => x.trim().replace(/'/g, '')).filter(Boolean);
+      const noEnable = polTables.filter(t => !covered.has(t));
+      eq(noEnable.join(', '), '', 'every table with policies also has RLS switched on');
+    }
+  }
+
+  let badAlter = 0;
+  [...sql.matchAll(/alter table (?:if exists )?public\.(\w+)/g)].forEach(m => {
+    const t = m[1];
+    if (created[t] === undefined) {
+      badAlter++; console.log('  alter on unknown table: ' + t);
+    } else if (created[t] > m.index) {
+      badAlter++; console.log('  alter on ' + t + ' precedes its create table');
+    }
+  });
+  eq(badAlter, 0, 'every ALTER TABLE comes after the table it alters');
+
+  let badIdx = 0;
+  [...sql.matchAll(/create index if not exists \w+\s+on public\.(\w+)/g)].forEach(m => {
+    if (created[m[1]] !== undefined && created[m[1]] > m.index) {
+      badIdx++; console.log('  index on ' + m[1] + ' precedes its table');
+    }
+  });
+  eq(badIdx, 0, 'every index comes after its table');
+
+  let badPol = 0;
+  [...sql.matchAll(/create policy \w+ on public\.(\w+)/g)].forEach(m => {
+    if (created[m[1]] !== undefined && created[m[1]] > m.index) {
+      badPol++; console.log('  policy on ' + m[1] + ' precedes its table');
+    }
+  });
+  eq(badPol, 0, 'every policy comes after its table');
+
   let badTrig = 0;
   [...sql.matchAll(/create trigger \w+ (?:before|after) \w+ on public\.(\w+)/g)].forEach(m => {
     if (created[m[1]] !== undefined && created[m[1]] > m.index) {

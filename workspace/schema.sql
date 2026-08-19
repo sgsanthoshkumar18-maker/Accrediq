@@ -161,11 +161,12 @@ alter table public.compliance_tasks  add column if not exists owner    text;
 -- this controls what can be written, which is the only place a rule like this can live.
 -- =====================================================================
 
-alter table public.capa       add column if not exists created_by  uuid;
-alter table public.capa       add column if not exists verified_by uuid;
-alter table public.capa       add column if not exists closed_by   uuid;
-alter table public.incidents  add column if not exists created_by  uuid;
-alter table public.audits     add column if not exists created_by  uuid;
+-- The authorship COLUMNS are added at the end of this file, not here. `alter table`
+-- requires the table to exist already, and `incidents` and `audits` are created further
+-- down — adding them here failed the whole script with
+--   ERROR: 42P01: relation "public.incidents" does not exist
+-- which, because the file is re-run every session, breaks every migration and not just
+-- this block.
 
 -- Stamp the author from the JWT on insert. Taken from auth.uid() rather than a client
 -- field, so it cannot be forged by sending someone else's id.
@@ -692,14 +693,29 @@ create table if not exists public.incidents (
 create index if not exists incidents_org_time_idx
   on public.incidents (org_id, occurred_at desc);
 
-alter table public.orgs              enable row level security;
-alter table public.members           enable row level security;
-alter table public.elements          enable row level security;
-alter table public.capa              enable row level security;
-alter table public.documents         enable row level security;
-alter table public.document_versions enable row level security;
-alter table public.audits            enable row level security;
-alter table public.incidents         enable row level security;
+-- RLS is enabled by LOOP over the same list the policies use, not by a hand-written list.
+--
+-- It was a hand-written list of eight, and every table added afterwards — assets, rounds,
+-- gate_passes, attachments, checklists and the rest — was added to the policy loops but
+-- never here. The policies existed and did nothing, because RLS was never switched on for
+-- those tables: fifteen of them were readable by any signed-in user of any hospital.
+--
+-- Two lists that must agree will eventually disagree. One list cannot.
+alter table public.orgs    enable row level security;
+alter table public.members enable row level security;
+
+do $$
+declare t text;
+begin
+  foreach t in array array['elements','capa','documents','document_versions','audits','incidents',
+                        'committees','committee_meetings','compliance_tasks',
+                        'assets','asset_schedules','asset_events',
+                        'checklists','checklist_items','rounds',
+                        'notifications','onboarding','attachments',
+                        'gate_passes','apex_manual','trials'] loop
+    execute format('alter table public.%I enable row level security', t);
+  end loop;
+end $$;
 
 drop policy if exists org_read on public.orgs;
 create policy org_read on public.orgs
@@ -782,6 +798,108 @@ drop trigger if exists doc_version_log on public.documents;
 create trigger doc_version_log
   after insert or update on public.documents
   for each row execute function public.log_document_version();
+-- =====================================================================
+-- Owner / identity helpers — defined BEFORE any policy that calls them.
+--
+-- `create policy` resolves function names at creation time, unlike a plpgsql
+-- function body which resolves at call time. Defining aq_is_owner() below the
+-- site_settings policies failed a fresh project with
+--   ERROR: 42883: function public.aq_is_owner() does not exist
+-- while passing on an existing one, where the function was already present.
+-- =====================================================================
+
+-- =====================================================================
+create table if not exists public.subscriptions (
+  id            text primary key,
+  user_id       uuid references auth.users(id) on delete cascade,
+  email         text,
+  name          text,
+  plan          text not null,
+  months        int  not null default 1,
+  amount_paise  int  not null default 0,
+  method        text not null default 'upi_manual',
+  txn_ref       text,
+  note          text,
+  status        text not null default 'pending',   -- pending | active | rejected
+  requested_at  timestamptz not null default now(),
+  activated_at  timestamptz,
+  expires_at    timestamptz,
+  approved_by   text,
+  created_at    timestamptz not null default now(),
+  -- store.js stamps updated_at on every write, so every table it touches must have it.
+  updated_at    timestamptz not null default now()
+);
+
+-- For anyone who created this table before updated_at was added: `create table if not
+-- exists` will not alter an existing table, so add the column explicitly. Safe to re-run.
+alter table public.subscriptions add column if not exists updated_at timestamptz not null default now();
+
+create index if not exists subscriptions_user_idx on public.subscriptions (user_id, status, expires_at desc);
+
+alter table public.subscriptions enable row level security;
+
+-- Who counts as an owner. Keep this list in step with ownerEmails in billing-config.js.
+--
+-- Gmail ignores dots in the local part and anything after a '+', so s.g.name@gmail.com
+-- and sgname@gmail.com are the same mailbox. The address is normalised the same way the
+-- browser does it before comparing, so signing in with either spelling still grants owner
+-- rights. Without this, the owner could be locked out of their own approval queue by the
+-- punctuation of the address they happened to register with.
+create or replace function public.aq_norm_email(raw text) returns text
+language sql immutable as $$
+  select case
+    when split_part(lower(coalesce(raw, '')), '@', 2) in ('gmail.com', 'googlemail.com')
+      then replace(split_part(split_part(lower(raw), '@', 1), '+', 1), '.', '') || '@gmail.com'
+    else lower(coalesce(raw, ''))
+  end;
+$$;
+
+-- Owner addresses live in a table, not in the body of a function. Editing a function
+-- means re-running the whole schema; editing a row means one insert. Keep this in step
+-- with ownerEmails in billing-config.js — the browser and the database each keep their
+-- own copy of the list, and when the two disagree the panel renders Approve buttons that
+-- the database then refuses. That disagreement is invisible without aq_whoami() below.
+create table if not exists public.aq_owners (
+  email_norm text primary key,
+  added_at   timestamptz not null default now()
+);
+
+alter table public.aq_owners enable row level security;
+
+-- Nobody reads this table from the browser. aq_is_owner() is security definer and reads
+-- it on the caller's behalf, so no policy is needed and none is granted: an anonymous
+-- visitor must not be able to enumerate who the owners are.
+insert into public.aq_owners (email_norm)
+values (public.aq_norm_email('s.g.santhoshkumar18@gmail.com'))
+on conflict (email_norm) do nothing;
+
+-- The signed-in address, hunted down in the three places it can hide.
+--
+-- The top-level 'email' claim is the normal case. It is absent for some providers and for
+-- sessions minted before the claim was added, in which case the address is either in
+-- user_metadata or nowhere in the token at all — hence the final lookup against
+-- auth.users by uid, which is always authoritative. Reading auth.users requires elevated
+-- rights, which is why the callers below are security definer.
+create or replace function public.aq_jwt_email() returns text
+language sql stable security definer set search_path = public, auth as $$
+  select coalesce(
+    nullif(auth.jwt() ->> 'email', ''),
+    nullif(auth.jwt() -> 'user_metadata' ->> 'email', ''),
+    (select u.email from auth.users u where u.id = auth.uid())
+  );
+$$;
+
+-- security definer so it can reach auth.users through aq_jwt_email() and read aq_owners,
+-- neither of which the anon role may touch directly. It returns a boolean and nothing
+-- else, so it leaks no addresses.
+create or replace function public.aq_is_owner() returns boolean
+language sql stable security definer set search_path = public, auth as $$
+  select exists (
+    select 1 from public.aq_owners o
+    where o.email_norm = public.aq_norm_email(public.aq_jwt_email())
+  );
+$$;
+
 
 -- =====================================================================
 -- Site settings. Owner-controlled values that every visitor reads.
@@ -903,97 +1021,7 @@ create policy activity_insert on public.activity
 -- Critically, ordinary users must NOT be able to UPDATE their own row — otherwise anyone
 -- could set status='active' and grant themselves free access. Approval is an owner-only
 -- operation, enforced below.
--- =====================================================================
-create table if not exists public.subscriptions (
-  id            text primary key,
-  user_id       uuid references auth.users(id) on delete cascade,
-  email         text,
-  name          text,
-  plan          text not null,
-  months        int  not null default 1,
-  amount_paise  int  not null default 0,
-  method        text not null default 'upi_manual',
-  txn_ref       text,
-  note          text,
-  status        text not null default 'pending',   -- pending | active | rejected
-  requested_at  timestamptz not null default now(),
-  activated_at  timestamptz,
-  expires_at    timestamptz,
-  approved_by   text,
-  created_at    timestamptz not null default now(),
-  -- store.js stamps updated_at on every write, so every table it touches must have it.
-  updated_at    timestamptz not null default now()
-);
 
--- For anyone who created this table before updated_at was added: `create table if not
--- exists` will not alter an existing table, so add the column explicitly. Safe to re-run.
-alter table public.subscriptions add column if not exists updated_at timestamptz not null default now();
-
-create index if not exists subscriptions_user_idx on public.subscriptions (user_id, status, expires_at desc);
-
-alter table public.subscriptions enable row level security;
-
--- Who counts as an owner. Keep this list in step with ownerEmails in billing-config.js.
---
--- Gmail ignores dots in the local part and anything after a '+', so s.g.name@gmail.com
--- and sgname@gmail.com are the same mailbox. The address is normalised the same way the
--- browser does it before comparing, so signing in with either spelling still grants owner
--- rights. Without this, the owner could be locked out of their own approval queue by the
--- punctuation of the address they happened to register with.
-create or replace function public.aq_norm_email(raw text) returns text
-language sql immutable as $$
-  select case
-    when split_part(lower(coalesce(raw, '')), '@', 2) in ('gmail.com', 'googlemail.com')
-      then replace(split_part(split_part(lower(raw), '@', 1), '+', 1), '.', '') || '@gmail.com'
-    else lower(coalesce(raw, ''))
-  end;
-$$;
-
--- Owner addresses live in a table, not in the body of a function. Editing a function
--- means re-running the whole schema; editing a row means one insert. Keep this in step
--- with ownerEmails in billing-config.js — the browser and the database each keep their
--- own copy of the list, and when the two disagree the panel renders Approve buttons that
--- the database then refuses. That disagreement is invisible without aq_whoami() below.
-create table if not exists public.aq_owners (
-  email_norm text primary key,
-  added_at   timestamptz not null default now()
-);
-
-alter table public.aq_owners enable row level security;
-
--- Nobody reads this table from the browser. aq_is_owner() is security definer and reads
--- it on the caller's behalf, so no policy is needed and none is granted: an anonymous
--- visitor must not be able to enumerate who the owners are.
-insert into public.aq_owners (email_norm)
-values (public.aq_norm_email('s.g.santhoshkumar18@gmail.com'))
-on conflict (email_norm) do nothing;
-
--- The signed-in address, hunted down in the three places it can hide.
---
--- The top-level 'email' claim is the normal case. It is absent for some providers and for
--- sessions minted before the claim was added, in which case the address is either in
--- user_metadata or nowhere in the token at all — hence the final lookup against
--- auth.users by uid, which is always authoritative. Reading auth.users requires elevated
--- rights, which is why the callers below are security definer.
-create or replace function public.aq_jwt_email() returns text
-language sql stable security definer set search_path = public, auth as $$
-  select coalesce(
-    nullif(auth.jwt() ->> 'email', ''),
-    nullif(auth.jwt() -> 'user_metadata' ->> 'email', ''),
-    (select u.email from auth.users u where u.id = auth.uid())
-  );
-$$;
-
--- security definer so it can reach auth.users through aq_jwt_email() and read aq_owners,
--- neither of which the anon role may touch directly. It returns a boolean and nothing
--- else, so it leaks no addresses.
-create or replace function public.aq_is_owner() returns boolean
-language sql stable security definer set search_path = public, auth as $$
-  select exists (
-    select 1 from public.aq_owners o
-    where o.email_norm = public.aq_norm_email(public.aq_jwt_email())
-  );
-$$;
 
 -- Diagnostic. The SQL editor cannot answer "does the database think I am the owner?"
 -- because the editor has no JWT — aq_is_owner() is false there no matter what, which has
@@ -1102,6 +1130,18 @@ end; $$;
 drop trigger if exists aq_claim_comp_trg on auth.users;
 create trigger aq_claim_comp_trg after insert on auth.users
   for each row execute function public.aq_claim_comp_subscription();
+
+-- =====================================================================
+-- Authorship columns — after every table above exists.
+-- =====================================================================
+alter table public.capa       add column if not exists created_by  uuid;
+alter table public.capa       add column if not exists verified_by uuid;
+alter table public.capa       add column if not exists closed_by   uuid;
+alter table public.incidents  add column if not exists created_by  uuid;
+alter table public.audits     add column if not exists created_by  uuid;
+alter table public.assets     add column if not exists created_by  uuid;
+alter table public.checklists add column if not exists created_by  uuid;
+alter table public.rounds     add column if not exists created_by  uuid;
 
 -- =====================================================================
 -- Authorship triggers — LAST, because every table named here must already exist.

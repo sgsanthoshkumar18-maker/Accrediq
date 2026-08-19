@@ -843,7 +843,7 @@ Redirect URLs, or Supabase ignores the parameter and falls back to Site URL.
 
 ---
 
-## Tests — 2322 assertions, plain Node, no install
+## Tests — 2330 assertions, plain Node, no install
 
     node tests/activity.test.js    node tests/sync.test.js
     node tests/profile.test.js     node tests/palette.test.js
@@ -911,9 +911,40 @@ creating that table further down failed the entire script with
 `ERROR: relation "public.assets" does not exist` — and because the file is idempotent and
 re-run every session, that breaks *every* migration, not just the new part.
 
-The authorship trigger loop therefore lives at the **end of the file**, after all tables.
-A test in `register.test.js` checks every `do`-block loop and every `create trigger`
-against the position of its table, so this cannot recur silently.
+The authorship trigger loop AND the authorship `alter table` columns therefore live at the
+**end of the file**, after all tables.
+
+**This recurred once because the test was too narrow.** The first version checked only
+`do`-block loops, so `alter table public.incidents` sitting above `create table
+public.incidents` went unnoticed until a fresh project failed with
+`ERROR: 42P01: relation "public.incidents" does not exist`. On an existing project it
+passed, because the table was already there — the bug was invisible until the exact moment
+it mattered most. `register.test.js` now checks **`alter table`, `create index`,
+`create policy` and `create trigger`** against the position of their table, not just loops.
+
+**And a third time, for functions.** `create policy` resolves function names at creation
+time; a plpgsql function *body* resolves at call time. So a helper called from inside
+another function may be defined later, but one called from a policy may not.
+`aq_is_owner()` was defined below the `site_settings` policies that call it —
+`ERROR: 42883: function public.aq_is_owner() does not exist` on a fresh project, passing
+on an existing one. The owner/identity helpers now sit above every policy that uses them,
+and the test blanks out comments and function bodies before scanning, so it distinguishes
+a real forward reference from a mention in prose.
+
+**And a fourth, the worst of them: RLS was enabled by a hand-written list of eight tables
+while the policy loops covered twenty-one.** Every table added since — assets, rounds,
+gate_passes, attachments, checklists — got policies that did nothing, because RLS was never
+switched on. Fifteen tables were readable by any signed-in user of any hospital, and the
+schema ran without a single error. It surfaced only because the post-migration RLS check
+was actually run rather than assumed.
+
+The enable is now a **loop over the same list the policies use**, and a test asserts every
+created table has RLS and every table with policies has RLS switched on. Two lists that
+must agree will eventually disagree; one list cannot.
+
+**The pattern across all four:** every one passed on the existing project and failed only
+on a fresh one — or, in the RLS case, failed silently on both. Test against a clean
+database, and verify security properties rather than inferring them from a clean run.
 
 ## Element wording — copyright and accuracy
 `nabh-data.js` holds wording close to the published NABH standard. Two problems, and the
