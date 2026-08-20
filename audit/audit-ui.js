@@ -131,9 +131,23 @@
   /* ------------------------------ checklist ----------------------------- */
 
   function start(deptKey) {
-    session = A.create(deptKey, W.user);
-    A.save(session, true);
+    /* Render first, save second, and never block the render on the save.
+     *
+     * A.save() writes to the database. If that write fails the auditor should still get
+     * their checklist -- the session lives in memory and saves again on every finding.
+     * Blanking the page because a write failed would lose work that had not started yet. */
+    try {
+      session = A.create(deptKey, W.user);
+    } catch (e) {
+      if (window.console) console.error("could not start audit:", e);
+      W.toast("That department's scope could not be loaded", "bad");
+      return;
+    }
     showChecklist();
+    Promise.resolve(A.save(session, true)).catch(function (e) {
+      if (window.console) console.error("audit did not save:", e);
+      W.toast("Working offline — this audit is not being saved", "bad");
+    });
   }
 
   function view(name) {
@@ -471,8 +485,29 @@
     }
 
     renderPicker();
-    await renderRecords();
+
+    /* Show the page BEFORE fetching past records, and never let that fetch blank it.
+     *
+     * This ordering was the bug behind "internal audit opens blank when I choose a
+     * department". boot() awaited renderRecords(), and renderRecords awaits
+     * A.list("audits"). If that call rejected -- a dropped RLS policy, an expired token,
+     * a flaky connection -- the await threw, boot() stopped, and view("audHome") never
+     * ran. audHome, audWork and audDone all start hidden, so the whole page stayed black
+     * with only the nav visible. Nothing on screen said anything was wrong, and the
+     * department picker itself had rendered perfectly a line earlier.
+     *
+     * Past records are supporting information. The ability to START an audit must not
+     * depend on being able to LIST old ones. */
     view("audHome");
+    try {
+      await renderRecords();
+    } catch (e) {
+      el("audRecords").innerHTML = "<h2>Your audit records</h2>" +
+        '<p class="aud-empty">Your past audits could not be loaded just now. ' +
+        "You can still start a new audit above — this only affects the list of " +
+        "previous ones. If it keeps happening, sign out and back in.</p>";
+      if (window.console) console.error("audit records failed to load:", e);
+    }
     document.addEventListener("keydown", keys);
     document.addEventListener("visibilitychange", function () {
       if (session) A.tick(session);
