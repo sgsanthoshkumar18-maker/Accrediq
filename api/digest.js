@@ -21,8 +21,8 @@ const D = require("../workspace/digest.js");
 const SB = process.env.SUPABASE_URL;
 const KEY = process.env.SUPABASE_SERVICE_KEY;
 const RESEND = process.env.RESEND_API_KEY;
-const FROM = process.env.DIGEST_FROM || "AQcredix <noreply@accrediq.vercel.app>";
-const SITE = process.env.SITE_URL || "https://accrediq.vercel.app";
+const FROM = process.env.DIGEST_FROM || "AQcredix <noreply@aqcredix.com>";
+const SITE = process.env.SITE_URL || "https://aqcredix.com";
 
 async function table(name, select) {
   const r = await fetch(

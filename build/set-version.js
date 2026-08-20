@@ -51,9 +51,15 @@ for (const file of walk(ROOT)) {
   const before = fs.readFileSync(file, "utf8");
 
   /* Only local paths. An absolute URL points at a CDN we do not control, and appending a
-     query to it can miss their cache or, worse, break a signed URL. */
+     query to it can miss their cache or, worse, break a signed URL.
+
+     /_vercel/ is excluded for that same reason even though it looks local. It is the
+     platform's own endpoint — the Web Analytics script lives at
+     /_vercel/insights/script.js — served and versioned by Vercel, not by us. Stamping it
+     asks their edge for a URL we invented, which is the exact failure the rule above
+     exists to prevent. */
   const after = before.replace(
-    /(\s(?:href|src)=")((?!https?:|\/\/|data:|mailto:)[^"?#]+\.(?:css|js))(\?[^"]*)?(")/g,
+    /(\s(?:href|src)=")((?!https?:|\/\/|data:|mailto:|\/_vercel\/)[^"?#]+\.(?:css|js))(\?[^"]*)?(")/g,
     function (m, lead, p, _q, tail) {
       refs++;
       return lead + p + "?v=" + VERSION + tail;

@@ -1,4 +1,15 @@
 User-agent: *
 Allow: /
 
-Sitemap: https://accrediq.vercel.app/sitemap.xml
+# Reference material, not pages. sample-digest-email.html is an email template: it has no
+# <head>, so it cannot carry a noindex meta tag the way every other non-public page does,
+# and a crawl rule is the only way to keep it out of results.
+Disallow: /docs/
+
+# The workspace, the 404 and tools/summary-review.html are excluded by a noindex meta tag
+# instead, which is deliberate — noindex keeps a page OUT of the index, whereas Disallow
+# only stops the crawl and still permits a bare URL to be listed from an external link.
+# summary-review.html matters most: it shows the stored NABH wording beside our own
+# summaries, which is exactly what we are trying to stop publishing.
+
+Sitemap: https://aqcredix.com/sitemap.xml

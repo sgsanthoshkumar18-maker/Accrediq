@@ -109,7 +109,9 @@ ok(/profile\/founder\.css/.test(html), 'and the stylesheet');
    which is exactly what happened when the reel would not stack on a phone. Every local
    asset must carry a version query. */
 {
-  const unversioned = [...html.matchAll(/(?:href|src)="((?!https?:|\/\/|data:|mailto:)[^"]+\.(?:css|js))"/g)]
+  /* /_vercel/ is excluded for the same reason build/set-version.js skips it: the Web
+     Analytics script is the platform's endpoint, versioned by Vercel rather than by us. */
+  const unversioned = [...html.matchAll(/(?:href|src)="((?!https?:|\/\/|data:|mailto:|\/_vercel\/)[^"]+\.(?:css|js))"/g)]
     .map(m => m[1]);
   eq(unversioned.join(', '), '', 'every local asset on this page carries a version query');
   ok(/founder\.css\?v=/.test(html), 'including the portfolio stylesheet');

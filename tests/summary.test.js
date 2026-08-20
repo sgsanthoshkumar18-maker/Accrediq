@@ -38,8 +38,26 @@ ok(drafts.length > 0, 'the seeded examples exist (' + drafts.length + ')');
 drafts.forEach(k => {
   eq(T.element(k, 'STORED'), 'STORED', k + ' is withheld until reviewed');
 });
-eq(Object.keys(S).filter(k => S[k].reviewed).length, 0,
-   'nothing ships marked reviewed — that is Dr Santhoshkumar\'s judgement, not mine');
+/* THE REVIEWED COUNT IS DECLARED HERE, ON PURPOSE.
+ *
+ * This assertion used to read `=== 0`: nothing could ship marked reviewed, because that
+ * flag is Dr Santhoshkumar's professional judgement against a legitimate copy of the
+ * standard and nobody else — no assistant, no contributor — may set it.
+ *
+ * That guard now has to survive him actually doing the work. A flat zero would mean the
+ * build fails the moment he reviews his first element, and a rule that has to be deleted
+ * to get on with the job stops protecting anything.
+ *
+ * So the number lives here as a declaration. Marking elements reviewed in
+ * nabh-summary.js requires editing this line in the same commit, which keeps the property
+ * that matters: reviewed entries can never appear as a silent side effect of someone
+ * else's change. Raise it only when the elements really have been checked against the
+ * book. It goes to 639 when the migration is finished. */
+const REVIEWED_BY_AUTHOR = 0;
+
+eq(Object.keys(S).filter(k => S[k].reviewed).length, REVIEWED_BY_AUTHOR,
+   'the reviewed count matches what this test declares — raise it deliberately, ' +
+   'in the same commit as the summaries you actually checked');
 
 // Once reviewed, it is used and attributed correctly.
 {

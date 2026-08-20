@@ -184,6 +184,10 @@ check('all local css and js references carry the same version stamp', () => {
     let m;
     while ((m = re.exec(s))) {
       if (/^https?:|^\/\//.test(m[1])) continue;
+      /* Vercel's own endpoints are not our asset graph. /_vercel/insights/script.js is
+         served and cache-managed by the platform, so build/set-version.js deliberately
+         leaves it alone — asserting a stamp on it here would fail a correct build. */
+      if (/^\/_vercel\//.test(m[1])) continue;
       if (STANDALONE.test(m[1]) || STANDALONE.test(path.relative(ROOT, f))) continue;
       if (!m[3]) unstamped.push(path.relative(ROOT, f) + ' -> ' + m[1]);
       else stamps.add(m[3]);

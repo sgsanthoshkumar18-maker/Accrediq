@@ -109,7 +109,7 @@ module.exports = async function handler(req, res) {
       const timer = setTimeout(() => controller.abort(), 6000);
       const r = await fetch(src.url, {
         signal: controller.signal,
-        headers: { "User-Agent": "AQcredix/1.0 (+https://accrediq.vercel.app)", "Accept": "application/rss+xml, application/xml, text/xml" }
+        headers: { "User-Agent": "AQcredix/1.0 (+https://aqcredix.com)", "Accept": "application/rss+xml, application/xml, text/xml" }
       });
       clearTimeout(timer);
       if (!r.ok) return;
