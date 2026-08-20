@@ -834,7 +834,7 @@ begin
   -- DEPARTMENT-SCOPED tables that carry their own department column.
   -- Biomedical must not read HR's personal files. This is the claim made to the hospital
   -- when they buy, so it is enforced here rather than by hiding menu items.
-  foreach t in array array['capa','documents','audits','compliance_tasks',
+  foreach t in array array['capa','documents','compliance_tasks',
                         'assets','checklists','gate_passes'] loop
     execute format('drop policy if exists %I_read on public.%I', t, t);
     execute format(
@@ -850,6 +850,41 @@ begin
                 and public.dept_visible(department))', t, t);
   end loop;
 end $$;
+
+-- ---------------------------------------------------------------------
+-- AUDITS: scoped on department_name, not department.
+--
+-- This table names its columns department_id and department_name, not department, so it
+-- cannot join the loop above -- the first attempt did and Postgres rejected the whole
+-- script with "column department does not exist". Written out here instead.
+--
+-- department_name is the one to match on. department_id holds the AUDIT_SCOPE key
+-- ('biomedical'), while members.department holds a DEPT_DATA display name -- two different
+-- vocabularies that agree on only five of forty-five entries. Matching the wrong one would
+-- have hidden almost every audit from the department that ran it, which is a far quieter
+-- failure than the error above: no message, just an empty list.
+--
+-- KNOWN LIMITATION, deliberately not papered over: department_name comes from
+-- AUDIT_SCOPE (45 areas) and members.department from DEPT_DATA (25), and the two agree on
+-- only five names. So a technician in 'ICU / Critical Care' will not currently see audits
+-- filed against 'ICU, PICU, NICU, HDU'. Quality and admins see everything, so nothing is
+-- lost -- but the two lists must be reconciled before department isolation is described
+-- to a hospital as complete. A clause that guessed across the two vocabularies would hide
+-- the problem rather than fix it.
+-- ---------------------------------------------------------------------
+drop policy if exists audits_read on public.audits;
+create policy audits_read on public.audits
+  for select using (
+    org_id = public.my_org() and (
+      public.sees_all_depts()
+      or department_name is null
+      or department_name = public.my_dept()
+    ));
+
+drop policy if exists audits_write on public.audits;
+create policy audits_write on public.audits
+  for all using (org_id = public.my_org() and public.can_edit())
+  with check (org_id = public.my_org() and public.can_edit());
 
 -- ---------------------------------------------------------------------
 -- CHILD tables: department is inherited from the parent, not stored here.

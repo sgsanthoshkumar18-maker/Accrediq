@@ -33,7 +33,7 @@ console.log('department-isolation');
 
 /* Tables that hold department-owned records. If one of these gains a policy without a
    department clause, the isolation promise is false for that table. */
-const DEPT_SCOPED = ['capa', 'documents', 'audits', 'compliance_tasks',
+const DEPT_SCOPED = ['capa', 'documents', 'compliance_tasks',
                      'assets', 'checklists', 'gate_passes'];
 
 /* Children whose department comes from a parent row. Each needs a subquery, not a
@@ -114,11 +114,59 @@ check('hospital-wide tables are deliberately not scoped', () => {
 /* No table may fall through both loops unnoticed. Any table that has RLS enabled but
    appears in neither list is one nobody decided about, and the default for an
    undecided table is the wrong one either way. */
+/* The error that actually reached Supabase: the loop referenced `department` on a table
+   whose column is `department_name`, and Postgres rejected the entire script. A regex over
+   column names had matched `department_id` as if it were `department`.
+
+   So this parses the real CREATE TABLE bodies and checks every column a policy names
+   actually exists on that table. Cheap to run, and it fails at the keyboard instead of in
+   the SQL editor. */
+function columnsOf(table) {
+  const m = SQL.match(new RegExp(
+    'create table if not exists public\\.' + table + ' \\(([\\s\\S]*?)\\n\\);'));
+  if (!m) return null;
+  return (m[1].match(/^ {2}(\w+)\s/gm) || []).map(x => x.trim().split(/\s/)[0]);
+}
+
+check('every table in the department loop really has a department column', () => {
+  /* This is the check that would have stopped the Supabase error.
+     The loop builds its policies with format('%I'), so the column name `department` only
+     appears once, in the template -- a regex over finished policy statements never sees
+     the generated ones. So verify the LIST instead: every table named in the loop must
+     actually have the column the loop's template references. */
+  const loop = SQL.split('DEPARTMENT-SCOPED tables')[1].split('end $$;')[0];
+  const tables = (loop.match(/'(\w+)'/g) || []).map(x => x.replace(/'/g, ''));
+  assert.ok(tables.length, 'no tables found in the department-scoped loop');
+
+  const col = (loop.match(/dept_visible\((\w+)\)/) || [])[1];
+  assert.ok(col, 'the loop does not call dept_visible on a named column');
+
+  const bad = tables.filter(t => {
+    const cols = columnsOf(t);
+    return cols && !cols.includes(col);
+  });
+  assert.strictEqual(bad.length, 0,
+    'these tables have no "' + col + '" column and would abort the whole script: ' +
+    bad.map(t => t + ' (has: ' + (columnsOf(t) || []).filter(c => /department/.test(c))
+      .join(', ') + ')').join('; '));
+});
+
+check('audits is scoped on its real column name', () => {
+  const cols = columnsOf('audits');
+  assert.ok(cols.includes('department_name'), 'audits should have department_name');
+  assert.ok(!cols.includes('department'), 'if audits gained a department column, revisit this');
+  const p = SQL.match(/create policy audits_read[\s\S]*?\);/)[0];
+  assert.ok(/department_name = public\.my_dept\(\)/.test(p),
+    'audits must match on department_name, not department or department_id');
+  assert.ok(!/department_id/.test(p),
+    'department_id holds AUDIT_SCOPE keys, not the names members.department stores');
+});
+
 check('no table is left out of both loops', () => {
   const enables = SQL.split('RLS is enabled by LOOP')[1].split('end $$;')[0];
   const listed = (enables.match(/'(\w+)'/g) || []).map(x => x.replace(/'/g, ''));
   const accounted = new Set([].concat(DEPT_SCOPED, ORG_WIDE,
-    Object.keys(CHILD_OF), ['incidents', 'attachments']));
+    Object.keys(CHILD_OF), ['incidents', 'attachments', 'audits']));
   const orphans = listed.filter(t => !accounted.has(t));
   assert.strictEqual(orphans.length, 0,
     'tables with RLS on but no decided scope: ' + orphans.join(', '));
