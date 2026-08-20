@@ -146,11 +146,17 @@
   }
 
   /* days < 0 is overdue, 0 is due today. `null` due means never met. */
-  function status(lastIso, freq, refIso, dueOverride) {
+  function status(lastIso, freq, refIso, dueOverride, soonDays) {
     var ref = parse(refIso) || today();
     /* dueOverride carries the preferred-weekday date. Status must be measured against the
        day the meeting will actually be held, or a committee shifted two days forward
-       would read as overdue for those two days every single cycle. */
+       would read as overdue for those two days every single cycle.
+
+       It also carries a fixed expiry date, for the things whose deadline is printed on
+       them rather than computed from a cycle — a nurse's council registration, a pharmacy
+       licence, an AERB permit. For those, `lastIso` may be blank forever (nobody
+       "performed" a registration) and yet the item is emphatically not "never recorded".
+       See the guard below. */
     var due = dueOverride || nextDue(lastIso, freq);
     if (!due) {
       return { state: "never", due: null, days: null,
@@ -161,10 +167,23 @@
                         text: Math.abs(d) + (Math.abs(d) === 1 ? " day overdue" : " days overdue") };
     if (d === 0) return { state: "due", due: due, days: 0, text: "Due today" };
     /* "Due soon" is a fifth of the interval, not a fixed 30 days: a week ahead is urgent
-       for a weekly huddle and irrelevant for an annual review. */
-    var f = FREQ[freq] || FREQ.monthly;
-    var span = f.days || (f.months * 30);
-    if (d <= Math.max(3, Math.round(span / 5))) {
+       for a weekly huddle and irrelevant for an annual review.
+
+       soonDays overrides that for fixed expiry dates, where a fifth of the interval is
+       the wrong shape entirely. A nursing council registration renews every five years,
+       so a fifth of the interval would start warning a full year out and the warning
+       would be background noise by the time it mattered. What a registration actually
+       needs is a lead time long enough to complete the council's renewal process —
+       measured in weeks, and the same whether the cycle is one year or five. */
+    var lead;
+    if (soonDays) {
+      lead = soonDays;
+    } else {
+      var f = FREQ[freq] || FREQ.monthly;
+      var span = f.days || (f.months * 30);
+      lead = Math.max(3, Math.round(span / 5));
+    }
+    if (d <= lead) {
       return { state: "soon", due: due, days: d, text: "Due in " + d + (d === 1 ? " day" : " days") };
     }
     return { state: "ok", due: due, days: d, text: "Due " + due };

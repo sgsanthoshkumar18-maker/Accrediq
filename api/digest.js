@@ -94,6 +94,11 @@ module.exports = async function handler(req, res) {
     return res.status(401).json({ error: "unauthorised" });
   }
 
+  /* ?scope=expiry selects the monthly certificate run. Anything else is the weekly
+     all-items digest, so an unrecognised value degrades to the existing behaviour rather
+     than sending nothing. */
+  const EXPIRY_ONLY = String((req.query && req.query.scope) || "") === "expiry";
+
   if (!SB || !KEY) {
     return res.status(200).json({
       ok: false,
@@ -138,6 +143,24 @@ module.exports = async function handler(req, res) {
         lists: mine(lists), rounds: mine(rounds), capa: mine(capa)
       }, { department: p.department || "", today: iso, overdueOnly: !!p.overdue_only });
 
+      /* Monthly certificate run.
+         The weekly digest already carries registrations among everything else, and for a
+         biomedical engineer that is the right shape. It is the wrong shape for HR: a
+         registration expiring in eleven weeks sits below six overdue calibrations and is
+         read as noise, every week, until it is not a warning any more.
+
+         So the monthly run keeps only the things with a printed expiry date and sends
+         them under their own subject line. Same data, same lead time, different envelope
+         — a mail an HR head can act on in one pass rather than one they learn to skim. */
+      if (EXPIRY_ONLY) {
+        const keep = i => i.expires_on && i.state !== "ok";
+        digest.overdue = (digest.overdue || []).filter(keep);
+        digest.soon = (digest.soon || []).filter(keep);
+        digest.never = [];
+        digest.findings = [];
+        digest.empty = !digest.overdue.length && !digest.soon.length;
+      }
+
       /* Nothing to say is a real answer. "You have 0 overdue items" every Monday is how a
          digest teaches people to filter it into a folder they never open. */
       if (digest.empty) { quiet++; continue; }
@@ -149,7 +172,9 @@ module.exports = async function handler(req, res) {
           body: JSON.stringify({
             from: FROM,
             to: member.email,
-            subject: "AQcredix · " + D.summarise(digest),
+            subject: EXPIRY_ONLY
+              ? "AQcredix · Certificates expiring soon"
+              : "AQcredix · " + D.summarise(digest),
             html: render(digest, member.name)
           })
         });

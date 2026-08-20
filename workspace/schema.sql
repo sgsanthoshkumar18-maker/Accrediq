@@ -257,9 +257,15 @@ create table if not exists public.asset_schedules (
   org_id         uuid references public.orgs(id) on delete cascade,
   asset_id       text references public.assets(id) on delete cascade,
   kind           text not null default 'calibration',
-    -- calibration | preventive | amc | renewal | inspection
+    -- calibration | preventive | amc | renewal | registration | inspection
   frequency      text not null default 'yearly',
   last_done_on   date,
+  -- The date printed on the certificate, for the things whose deadline is issued to them
+  -- rather than computed from a cycle: council registrations (RNRM, TNPC, NMC), licences,
+  -- AERB permits. When set it overrides the computed due date everywhere -- register,
+  -- calendar and digest -- because the certificate in the personal file is what an
+  -- assessor reads, and a register that disagrees with it is worse than no register.
+  expires_on     date,
   pref_dow       smallint,
   owner          text,
   vendor         text,
@@ -268,7 +274,11 @@ create table if not exists public.asset_schedules (
   created_at     timestamptz not null default now(),
   updated_at     timestamptz not null default now()
 );
+alter table public.asset_schedules add column if not exists expires_on date;
 create index if not exists asch_org_idx   on public.asset_schedules(org_id);
+-- Expiry lookups drive the monthly certificate email, which scans every org at once.
+create index if not exists asch_expires_idx on public.asset_schedules(expires_on)
+  where expires_on is not null;
 create index if not exists asch_asset_idx on public.asset_schedules(asset_id);
 
 -- Each time one is actually performed. The schedule says when it is due; this is the

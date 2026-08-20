@@ -31,11 +31,23 @@
       return d.length ? d[d.length - 1] : (fallback || null);
     }
 
-    function push(kind, name, meta, freq, last, prefDow, href, el) {
+    /* Same ninety-day lead as the register. Kept as a literal in both places rather than
+       shared, because digest.js is loaded by a Vercel function that must not depend on
+       workspace code. If one changes, change both — the tests check they agree. */
+    var EXPIRY_LEAD_DAYS = 90;
+
+    function push(kind, name, meta, freq, last, prefDow, href, el, expiresOn) {
       var d = K.nextDates(last, freq, prefDow);
-      var st = K.status(last, freq, ref, d.preferred);
+      /* A printed expiry date overrides the computed cycle, exactly as it does in the
+         register. Without this a nurse's registration would appear in the digest against
+         a date derived from when someone last touched the record, which is not a date
+         anyone can act on. */
+      var st = expiresOn
+        ? K.status(last, freq, ref, expiresOn, EXPIRY_LEAD_DAYS)
+        : K.status(last, freq, ref, d.preferred);
       items.push({ kind: kind, name: name, meta: meta, element: el || null,
-                   due: d.preferred, state: st.state, days: st.days, text: st.text,
+                   due: expiresOn || d.preferred, state: st.state, days: st.days, text: st.text,
+                   expires_on: expiresOn || null,
                    href: href });
     }
 
@@ -52,9 +64,15 @@
         if (!a || a.status === "condemned") return;
         if (dept && a.department !== dept) return;
         var last = lastOf(data.events, "performed_on", "schedule_id", sc.id, sc.last_done_on);
-        push("Equipment", a.name,
-             String(sc.kind || "").replace(/_/g, " ") + " · " + K.label(sc.frequency),
-             sc.frequency, last, sc.pref_dow, "workspace/register.html", a.element_code);
+        /* Registrations belong to people, not machines, so they are labelled as their own
+           kind. An HR head scanning the digest for "Equipment" would skip straight past
+           the line telling them a staff nurse is about to be unregistered. */
+        var isReg = sc.kind === "registration";
+        push(isReg ? "Registration" : "Equipment", a.name,
+             String(sc.kind || "").replace(/_/g, " ") +
+               (sc.expires_on ? " · expires " + sc.expires_on : " · " + K.label(sc.frequency)),
+             sc.frequency, last, sc.pref_dow, "workspace/register.html", a.element_code,
+             sc.expires_on || null);
       });
 
     (data.lists || []).filter(function (l) {

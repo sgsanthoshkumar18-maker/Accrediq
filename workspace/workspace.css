@@ -555,3 +555,11 @@
 .ws-skel-stalled{padding:48px 0;max-width:52ch;}
 .ws-skel-stalled h2{font-size:20px;margin-bottom:10px;}
 .ws-skel-stalled p{font-size:14.5px;color:var(--fg-muted);line-height:1.6;margin-bottom:18px;}
+
+/* Inline qualifier inside a form label — "(as printed)", "(from the renewed certificate)".
+   Lighter and smaller than the label it sits in, because it narrows the field's meaning
+   rather than naming it. Used by the certificate expiry fields, where the difference
+   between the date you computed and the date printed on the certificate is the whole
+   point of the field. */
+.ws-f label .cal-hint-inline{font-weight:400;font-size:11.5px;color:var(--fg-faint);
+  margin-left:4px;}

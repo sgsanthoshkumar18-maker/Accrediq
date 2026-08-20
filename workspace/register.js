@@ -37,6 +37,13 @@
     preventive:  "Preventive maintenance",
     amc:         "AMC renewal",
     renewal:     "Licence renewal",
+    /* Council registrations — RNRM, TNPC, NMC/TNMC, physiotherapy and lab technician
+       councils. Kept apart from "Licence renewal" because a licence belongs to the
+       hospital and a registration belongs to a person: one lapses and a department stops
+       operating, the other lapses and an individual is practising unregistered while
+       still on the duty roster. HR chases them differently, and the digest names them
+       differently. */
+    registration: "Registration renewal",
     inspection:  "Inspection"
   };
 
@@ -77,8 +84,24 @@
     return done.length ? done[done.length - 1] : (sc.last_done_on || null);
   }
 
+  /* How long before a fixed expiry counts as "due soon".
+     Ninety days is the working figure for Indian council renewals: the Tamil Nadu Nurses
+     and Midwives Council and the Tamil Nadu Pharmacy Council both want the application in
+     well before the date on the certificate, and a nurse who starts at thirty days is
+     already working on an expired registration by the time it clears. Ninety days is also
+     roughly three monthly emails' warning, which is the point of the monthly digest. */
+  var EXPIRY_LEAD_DAYS = 90;
+
   function statusOf(sc) {
     var last = lastDone(sc);
+    /* A printed expiry date wins over a computed cycle.
+       A council registration, a licence or an AERB permit carries its deadline on its
+       face. Computing one from "last renewed + frequency" would quietly disagree with the
+       certificate in the person's file the moment a council issued a short renewal, and
+       the file is what the assessor reads. */
+    if (sc.expires_on) {
+      return K.status(last, sc.frequency, null, sc.expires_on, EXPIRY_LEAD_DAYS);
+    }
     var d = K.nextDates(last, sc.frequency, sc.pref_dow);
     return K.status(last, sc.frequency, null, d.preferred);
   }
@@ -343,6 +366,12 @@
         '<div class="ws-f"><label for="sKind">What kind?</label><select id="sKind">' + opts(SCHED_KINDS, sc.kind || "calibration") + "</select></div>" +
         '<div class="ws-f"><label for="sFreq">How often?</label><select id="sFreq">' + freqOpts(sc.frequency || "yearly") + "</select></div>" +
         '<div class="ws-f"><label for="sLast">When was it last done?</label><input id="sLast" type="date" value="' + esc(sc.last_done_on || "") + '"></div>' +
+        /* The date printed on the certificate. Optional, because equipment cycles do not
+           have one — but when it is filled in it drives the due date outright, so a
+           registration cannot read as "on track" while the certificate in the file has
+           already expired. */
+        '<div class="ws-f"><label for="sExp">Expires on <span class="cal-hint-inline">(as printed)</span></label>' +
+          '<input id="sExp" type="date" value="' + esc(sc.expires_on || "") + '"></div>' +
         '<div class="ws-f"><label for="sDow">Preferred day</label><select id="sDow">' + dowOpts(sc.pref_dow) + "</select></div>" +
         '<div class="ws-f"><label for="sVendor">Vendor / engineer</label><input id="sVendor" value="' + esc(sc.vendor || "") + '"></div>' +
         '<div class="ws-f"><label for="sOwner">Responsible person</label><input id="sOwner" value="' + esc(sc.owner || "") + '"></div>' +
@@ -369,6 +398,13 @@
         '<div class="ws-f"><label for="eResult">Result</label><select id="eResult">' + opts(RESULTS, "pass") + "</select></div>" +
         '<div class="ws-f"><label for="eBy">Performed by</label><input id="eBy" value="' + esc(sc.vendor || "") + '"></div>' +
         '<div class="ws-f"><label for="eCert">Certificate number</label><input id="eCert" placeholder="An assessor will ask for this"></div>' +
+        /* Only for items that carry a printed expiry. The renewed certificate has a new
+           date on its face; asking for it here is the difference between the register
+           agreeing with the file and quietly disagreeing with it. */
+        (sc.expires_on
+          ? '<div class="ws-f"><label for="eExp">New expiry date <span class="cal-hint-inline">(from the renewed certificate)</span></label>' +
+            '<input id="eExp" type="date"></div>'
+          : "") +
         '<div class="ws-f"><label for="eDown">Downtime (hours)</label><input id="eDown" type="number" min="0" step="0.5"></div>' +
         '<div class="ws-f ws-f-wide"><label for="eNotes">Notes</label><textarea id="eNotes" rows="3"></textarea></div>' +
       "</div>" +
@@ -409,6 +445,7 @@
       kind: val("sKind") || "calibration",
       frequency: val("sFreq") || "yearly",
       last_done_on: val("sLast") || null,
+      expires_on: val("sExp") || null,
       pref_dow: val("sDow") === "" ? null : Number(val("sDow")),
       vendor: val("sVendor") || null,
       owner: val("sOwner") || null,
@@ -421,8 +458,12 @@
     setTab("due");
     render();
     var nd = K.nextDates(row.last_done_on, row.frequency, row.pref_dow);
-    W.toast(nd.preferred ? "Next due " + nd.preferred
-                         : "Record when it was last done to start the schedule", "ok");
+    if (row.expires_on) {
+      W.toast("Expires " + row.expires_on + " — you'll be warned from 90 days out", "ok");
+    } else {
+      W.toast(nd.preferred ? "Next due " + nd.preferred
+                           : "Record when it was last done to start the schedule", "ok");
+    }
   }
 
   async function saveLog(sid) {
@@ -451,10 +492,29 @@
       sc.last_done_on = on;
       await S.adapter.upsert("asset_schedules", sc);
     }
+    /* Move the expiry forward, or the item stays overdue for ever.
+       A renewed registration carries a NEW printed date, and that date is the only one
+       that matters — the council decides it, not the cycle. So the renewal form asks for
+       it outright and only falls back to computing one from the frequency when nobody
+       filled it in. Without this the whole feature inverts: the person renews, the
+       calendar still says overdue, and within two months they stop believing it. */
+    if (sc.expires_on) {
+      var newExp = val("eExp");
+      if (!newExp) {
+        var adv = K.nextDue(on, sc.frequency);
+        newExp = adv || sc.expires_on;
+      }
+      sc.expires_on = newExp;
+      await S.adapter.upsert("asset_schedules", sc);
+    }
     if (window.AQActivity) window.AQActivity.record("asset_event_logged", { id: sid, kind: sc.kind });
     close(); await refresh();
-    var nd = K.nextDates(on, sc.frequency, sc.pref_dow);
-    W.toast("Recorded — next due " + (nd.preferred || "—"), "ok");
+    if (sc.expires_on) {
+      W.toast("Recorded — now expires " + sc.expires_on, "ok");
+    } else {
+      var nd = K.nextDates(on, sc.frequency, sc.pref_dow);
+      W.toast("Recorded — next due " + (nd.preferred || "—"), "ok");
+    }
   }
 
   async function removeRow(table, rid) {
