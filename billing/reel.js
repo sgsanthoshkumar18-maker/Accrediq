@@ -39,7 +39,7 @@ window.AQReel = (function () {
           svg: sceneFilter() },
         { cap: "Three things overdue. Named, dated, owned.",
           svg: sceneList([
-            ["Defibrillator \u2014 ICU bed 4", "59 days overdue", "bad"],
+            ["Defibrillator — ICU bed 4", "59 days overdue", "bad"],
             ["Hand hygiene round", "43 days overdue", "bad"],
             ["Gas pipeline check", "24 days overdue", "bad"]
           ]) },
@@ -58,9 +58,9 @@ window.AQReel = (function () {
           svg: sceneAsset() },
         { cap: "Overdue surfaces before the assessor finds it.",
           svg: sceneList([
-            ["Defibrillator \u2014 ICU bed 4", "Calibration \u00b7 59 days overdue", "bad"],
-            ["Autoclave \u2014 CSSD 1", "Preventive \u00b7 due 10 Nov", "ok"],
-            ["Fire NOC", "Renewal \u00b7 due 2 Nov", "warn"]
+            ["Defibrillator — ICU bed 4", "Calibration · 59 days overdue", "bad"],
+            ["Autoclave — CSSD 1", "Preventive · due 10 Nov", "ok"],
+            ["Fire NOC", "Renewal · due 2 Nov", "warn"]
           ]) },
         { cap: "Certificate ZL/CAL/2026/4471 attached to the record.",
           svg: sceneDone("Evidence, not a promise that evidence exists") }
@@ -77,7 +77,7 @@ window.AQReel = (function () {
           svg: sceneScore(67) },
         { cap: "Below target, so it cannot quietly pass.",
           svg: sceneList([
-            ["Hand hygiene round \u00b7 ICU", "67% against a 90% target", "bad"],
+            ["Hand hygiene round · ICU", "67% against a 90% target", "bad"],
             ["A critical item failed", "Fails outright, whatever the average", "bad"]
           ]) },
         { cap: "Raise a CAPA, linked to the round that found it.",
@@ -87,7 +87,7 @@ window.AQReel = (function () {
 
     capa: {
       title: "NC & CAPA",
-      line: "Findings tracked to closure \u2014 properly.",
+      line: "Findings tracked to closure — properly.",
       scenes: [
         { cap: "A finding is raised.",
           svg: sceneQuestion("Hand hygiene 67%, below target") },
@@ -162,9 +162,9 @@ window.AQReel = (function () {
           svg: sceneQuestion("What counts as the denominator?") },
         { cap: "Each one defined, with its formula and frequency.",
           svg: sceneList([
-            ["Hand hygiene compliance", "Taken \u00f7 observed \u00d7 100 \u00b7 monthly", "ok"],
-            ["Medication error rate", "Errors \u00f7 patient days \u00d7 1000", "ok"],
-            ["Return to ICU < 48h", "Unplanned \u00f7 discharges \u00d7 100", "ok"]
+            ["Hand hygiene compliance", "Taken \u00f7 observed × 100 · monthly", "ok"],
+            ["Medication error rate", "Errors \u00f7 patient days × 1000", "ok"],
+            ["Return to ICU < 48h", "Unplanned \u00f7 discharges × 100", "ok"]
           ]) },
         { cap: "Consistent numbers, month after month.",
           svg: sceneDone("Trends that mean something") }
@@ -192,9 +192,9 @@ window.AQReel = (function () {
           svg: sceneQuestion("What does reconciliation actually require?") },
         { cap: "Short, specific, tied to the element.",
           svg: sceneList([
-            ["Medication reconciliation", "MOM.4.e \u00b7 6 min", "ok"],
-            ["What an assessor asks on hand hygiene", "IPC.2.c \u00b7 8 min", "ok"],
-            ["Writing a CAPA that closes", "PSQ \u00b7 5 min", "ok"]
+            ["Medication reconciliation", "MOM.4.e · 6 min", "ok"],
+            ["What an assessor asks on hand hygiene", "IPC.2.c · 8 min", "ok"],
+            ["Writing a CAPA that closes", "PSQ · 5 min", "ok"]
           ]) },
         { cap: "Train a new nurse in an afternoon.",
           svg: sceneDone("Understanding, not memorising") }
@@ -222,9 +222,9 @@ window.AQReel = (function () {
           svg: sceneQuestion("And how often must each meet?") },
         { cap: "Each one, with frequency, chair and quorum.",
           svg: sceneList([
-            ["Infection Control Committee", "Quarterly \u00b7 Microbiologist", "ok"],
-            ["Pharmacy & Therapeutics", "Quarterly \u00b7 Medical Superintendent", "ok"],
-            ["Quality Assurance", "Monthly \u00b7 Quality Manager", "ok"]
+            ["Infection Control Committee", "Quarterly · Microbiologist", "ok"],
+            ["Pharmacy & Therapeutics", "Quarterly · Medical Superintendent", "ok"],
+            ["Quality Assurance", "Monthly · Quality Manager", "ok"]
           ]) },
         { cap: "Feeding straight into the calendar.",
           svg: sceneDone("Sittings tracked, not remembered") }
@@ -239,9 +239,9 @@ window.AQReel = (function () {
           svg: sceneQuestion("Does everyone know their part?") },
         { cap: "Each code defined, with the team and the protocol.",
           svg: sceneList([
-            ["Code Blue", "Cardiopulmonary arrest \u00b7 drilled half-yearly", "ok"],
-            ["Code Red", "Fire \u00b7 drilled half-yearly", "ok"],
-            ["Code Pink", "Abduction \u00b7 not yet drilled", "warn"]
+            ["Code Blue", "Cardiopulmonary arrest · drilled half-yearly", "ok"],
+            ["Code Red", "Fire · drilled half-yearly", "ok"],
+            ["Code Pink", "Abduction · not yet drilled", "warn"]
           ]) },
         { cap: "With the drill record an assessor asks to see.",
           svg: sceneDone("Rehearsed, not just written down") }
@@ -273,8 +273,8 @@ window.AQReel = (function () {
           svg: sceneQuestion("Was it reported within the hour?") },
         { cap: "Classified, timed, and tracked from the moment it is entered.",
           svg: sceneList([
-            ["Level 3 \u00b7 Patient fall", "Reported in 22 min \u00b7 RCA complete", "ok"],
-            ["Level 2 \u00b7 Wrong strength, intercepted", "Near miss \u00b7 in review", "warn"]
+            ["Level 3 · Patient fall", "Reported in 22 min · RCA complete", "ok"],
+            ["Level 2 · Wrong strength, intercepted", "Near miss · in review", "warn"]
           ]) },
         { cap: "No patient identifiers stored. By design.",
           svg: sceneDone("The printed form carries them, in pen") }
@@ -299,18 +299,18 @@ window.AQReel = (function () {
     },
 
     quiz: {
-      title: "Today\u2019s quiz",
+      title: "Today’s quiz",
       line: "Free with an account. No subscription needed.",
       scenes: [
         { cap: "Ten questions a day, drawn from the standards.",
           svg: sceneQuestion("Which evidence would an assessor accept?") },
-        { cap: "Answer, and find out why \u2014 not just whether.",
+        { cap: "Answer, and find out why — not just whether.",
           svg: sceneList([
-            ["Your own observed audit data", "Correct \u00b7 evidence, not assertion", "ok"],
+            ["Your own observed audit data", "Correct · evidence, not assertion", "ok"],
             ["A signed policy document", "A policy is not proof it happens", "bad"]
           ]) },
         { cap: "Your score history builds, and the certificate carries your name.",
-          svg: sceneDone("Free \u2014 an account is all it takes") }
+          svg: sceneDone("Free — an account is all it takes") }
       ]
     },
 
@@ -322,9 +322,9 @@ window.AQReel = (function () {
           svg: sceneQuestion("And what would close it?") },
         { cap: "Every element, judged and recorded.",
           svg: sceneList([
-            ["MOM.4.e", "Not met \u00b7 no defined process", "bad"],
-            ["IPC.2.c", "Partially met \u00b7 audit data missing", "warn"],
-            ["FMS.5.a", "Met \u00b7 drill records current", "ok"]
+            ["MOM.4.e", "Not met · no defined process", "bad"],
+            ["IPC.2.c", "Partially met · audit data missing", "warn"],
+            ["FMS.5.a", "Met · drill records current", "ok"]
           ]) },
         { cap: "A plan, not an anxiety.",
           svg: sceneDone("Effort where it changes the score") }
@@ -367,9 +367,9 @@ window.AQReel = (function () {
 
   function sceneAsset() {
     return '<div class="rl-card">' +
-      '<div class="rl-card-h">Defibrillator \u2014 ICU bed 4</div>' +
+      '<div class="rl-card-h">Defibrillator — ICU bed 4</div>' +
       '<div class="rl-kv"><span>Serial</span><b>ZOLL-R-88213</b></div>' +
-      '<div class="rl-kv"><span>Cycle</span><b>Calibration \u00b7 yearly</b></div>' +
+      '<div class="rl-kv"><span>Cycle</span><b>Calibration · yearly</b></div>' +
       '<div class="rl-kv"><span>Last done</span><b>15 June 2025</b></div>' +
       '<div class="rl-kv rl-late"><span>Status</span><b>59 days overdue</b></div>' +
       "</div>";
@@ -424,7 +424,7 @@ window.AQReel = (function () {
   function sceneDates() {
     return '<div class="rl-dates">' +
       '<div class="rl-date" style="animation-delay:120ms"><b>12 Aug</b><span>exact interval</span></div>' +
-      '<div class="rl-arrow">\u2192</div>' +
+      '<div class="rl-arrow">→</div>' +
       '<div class="rl-date rl-on" style="animation-delay:420ms"><b>10 Aug</b><span>nearest Monday</span></div>' +
       "</div>";
   }
@@ -443,7 +443,7 @@ window.AQReel = (function () {
   function sceneExplain() {
     return '<div class="rl-card rl-quote">' +
       '<div class="rl-card-h">MOM.4.e</div>' +
-      "<p>Reconcile medicines at every transition in care \u2014 to confirm what the patient " +
+      "<p>Reconcile medicines at every transition in care — to confirm what the patient " +
       "is taking still matches the current picture, and that nothing carried over is now " +
       "working against it.</p></div>";
   }

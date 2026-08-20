@@ -83,7 +83,7 @@
       var last = lastOf(data.events, "performed_on", "schedule_id", sc.id, sc.last_done_on);
       var d = K.nextDates(last, sc.frequency, sc.pref_dow);
       out.push({ kind: "Equipment", name: a.name,
-                 meta: (sc.kind || "").replace(/_/g, " ") + " \u00b7 " + K.label(sc.frequency),
+                 meta: (sc.kind || "").replace(/_/g, " ") + " · " + K.label(sc.frequency),
                  el: a.element_code, due: d.preferred,
                  st: K.status(last, sc.frequency, null, d.preferred),
                  href: "register.html" });
@@ -192,7 +192,7 @@
       host.innerHTML = '<div class="cal-empty"><h3>' +
         (dept ? "Nothing tracked for " + esc(dept) + " yet" : "Nothing tracked yet") + "</h3>" +
         "<p>Add this department's recurring obligations, equipment and rounds, and they " +
-        "will all appear here \u2014 sorted by how late they are.</p>" +
+        "will all appear here — sorted by how late they are.</p>" +
         '<a class="btn btn-accent" href="calendar.html">Compliance calendar</a> ' +
         '<a class="btn btn-ghost" href="register.html">Equipment register</a></div>';
       return;
@@ -216,8 +216,8 @@
           return '<div class="cal-row st-overdue"><div class="cal-row-main">' +
             "<h4>" + esc(c.title) + "</h4>" +
             '<div class="cal-meta">' + esc(c.status || "open") +
-              (c.owner ? " \u00b7 " + esc(c.owner) : "") +
-              (c.element_code ? " \u00b7 " + esc(c.element_code) : "") + "</div></div>" +
+              (c.owner ? " · " + esc(c.owner) : "") +
+              (c.element_code ? " · " + esc(c.element_code) : "") + "</div></div>" +
             '<div class="cal-row-side"><a class="btn btn-ghost btn-sm" href="capa.html">Open</a></div>' +
           "</div>";
         }).join("") + "</div>";
@@ -230,8 +230,8 @@
           return '<div class="cal-row"><div class="cal-row-main">' +
             "<h4>" + esc(i.type || "Incident") + "</h4>" +
             '<div class="cal-meta">' + esc(i.occurred_on || "") +
-              (i.severity ? " \u00b7 " + esc(i.severity) : "") +
-              (i.status ? " \u00b7 " + esc(i.status) : "") + "</div></div>" +
+              (i.severity ? " · " + esc(i.severity) : "") +
+              (i.status ? " · " + esc(i.status) : "") + "</div></div>" +
             '<div class="cal-row-side"><a class="btn btn-ghost btn-sm" href="incidents.html">Open</a></div>' +
           "</div>";
         }).join("") + "</div>";
@@ -259,7 +259,7 @@
             '<span class="dash-kind">' + esc(d.kind) + "</span>" +
             "<h4>" + esc(d.name) + "</h4>" +
             '<div class="cal-meta">' + esc(d.meta) +
-              (d.el ? " \u00b7 " + esc(d.el) : "") + "</div>" +
+              (d.el ? " · " + esc(d.el) : "") + "</div>" +
             (d.due ? '<div class="cal-next">Due <b>' + esc(d.due) + "</b></div>" : "") +
           "</div>" +
           '<div class="cal-row-side"><span class="cal-pill st-' + d.st.state + '">' +

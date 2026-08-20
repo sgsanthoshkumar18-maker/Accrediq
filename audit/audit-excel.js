@@ -142,13 +142,13 @@ window.AQAuditExcel = (function () {
 
   function coverSheet(session, sc) {
     var rows = [
-      [B("AQcredix \u2014 Internal Audit Record")],
+      [B("AQcredix — Internal Audit Record")],
       [],
       [L("Department"), session.department_name],
       [L("Auditor"), session.auditor_name],
       [L("Standard"), session.standard_edition],
       [L("Audit started"), new Date(session.started_at).toLocaleString()],
-      [L("Audit finished"), session.finished_at ? new Date(session.finished_at).toLocaleString() : "\u2014"],
+      [L("Audit finished"), session.finished_at ? new Date(session.finished_at).toLocaleString() : "—"],
       [L("Duration"), A.fmtDuration(session.duration_seconds != null ? session.duration_seconds : A.elapsedSeconds(session))],
       [L("Paused (idle) excluded"), A.fmtDuration(session.paused_seconds || 0)],
       [],
@@ -166,11 +166,11 @@ window.AQAuditExcel = (function () {
       [L("Open Core-category findings"), { v: sc.coreOpen, n: true }],
       [],
       [B("Legend")],
-      [{ v: "C", s: XF.compliant }, W("Compliant \u2014 requirement met, evidence seen")],
-      [{ v: "PC", s: XF.partial }, W("Partially compliant \u2014 requirement met in part, or met without evidence")],
-      [{ v: "NC", s: XF.nc }, W("Non-compliant \u2014 requirement not met")],
-      [{ v: "NA", s: XF.na }, W("Not applicable \u2014 out of this department's scope, with a stated reason")],
-      [{ v: "\u2014", s: XF.unassessed }, W("Unassessed")],
+      [{ v: "C", s: XF.compliant }, W("Compliant — requirement met, evidence seen")],
+      [{ v: "PC", s: XF.partial }, W("Partially compliant — requirement met in part, or met without evidence")],
+      [{ v: "NC", s: XF.nc }, W("Non-compliant — requirement not met")],
+      [{ v: "NA", s: XF.na }, W("Not applicable — out of this department's scope, with a stated reason")],
+      [{ v: "—", s: XF.unassessed }, W("Unassessed")],
       [],
       [W("Internal self-assessment of one department against the NABH 5th Edition assessor " +
          "checklist. It is not an NABH opinion and will not reproduce an assessor's score.")]
@@ -182,7 +182,7 @@ window.AQAuditExcel = (function () {
      department reads at a glance the way a physical Kamishibai board does. */
   function boardSheet(session, rows) {
     var PER = 10;
-    var out = [[B("Kamishibai Board \u2014 " + session.department_name)], []];
+    var out = [[B("Kamishibai Board — " + session.department_name)], []];
     var merges = ["A1:J1"];
     var byChapter = {};
     rows.forEach(function (r) { (byChapter[r.chapter] = byChapter[r.chapter] || []).push(r); });
@@ -190,7 +190,7 @@ window.AQAuditExcel = (function () {
     A.CH_ORDER.forEach(function (ck) {
       var list = byChapter[ck];
       if (!list || !list.length) return;
-      out.push([H(ck + " \u2014 " + list[0].chapterName)]);
+      out.push([H(ck + " — " + list[0].chapterName)]);
       merges.push("A" + out.length + ":J" + out.length);
       for (var i = 0; i < list.length; i += PER) {
         var slice = list.slice(i, i + PER);
@@ -284,7 +284,7 @@ window.AQAuditExcel = (function () {
     out.push([B("Responsible persons")]);
     out.push([H("Person"), H("Open findings"), H("Earliest due"), H("Worst severity"), H("Elements")]);
     A.ownerMatrix(sc).forEach(function (o) {
-      out.push([o.owner, { v: o.count, n: true }, o.earliest || "\u2014", o.worst, W(o.codes.join(", "))]);
+      out.push([o.owner, { v: o.count, n: true }, o.earliest || "—", o.worst, W(o.codes.join(", "))]);
     });
 
     out.push([]);
@@ -301,7 +301,7 @@ window.AQAuditExcel = (function () {
                 "Quality Indicators", "Analysis"];
 
   function build(session) {
-    if (!window.JSZip) throw new Error("JSZip is not loaded yet \u2014 wait a moment and try again.");
+    if (!window.JSZip) throw new Error("JSZip is not loaded yet — wait a moment and try again.");
     var rows = A.scopeRows(session.department_id);
     var sc = A.score(session);
     var zip = new window.JSZip();

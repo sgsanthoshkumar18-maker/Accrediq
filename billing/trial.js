@@ -97,7 +97,7 @@ window.AQTrial = (function () {
       return "Your free trial ends on " + fmt(st.endsAt) + ", and " + amountLabel +
         " will be charged then. Cancel before that and nothing is taken.";
     }
-    return "Free trial \u00b7 " + st.daysLeft + " day" + (st.daysLeft === 1 ? "" : "s") +
+    return "Free trial · " + st.daysLeft + " day" + (st.daysLeft === 1 ? "" : "s") +
       " left. It ends on " + fmt(st.endsAt) + ", and we will remind you before anything " +
       "is charged.";
   }

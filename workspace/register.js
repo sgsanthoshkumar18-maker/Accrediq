@@ -152,11 +152,11 @@
           "<h4>" + esc(a.name) +
             (a.identifier ? ' <span class="cal-abbr">' + esc(a.identifier) + "</span>" : "") +
           "</h4>" +
-          '<div class="cal-meta">' + esc(SCHED_KINDS[sc.kind] || sc.kind) + " \u00b7 " +
+          '<div class="cal-meta">' + esc(SCHED_KINDS[sc.kind] || sc.kind) + " · " +
             esc(K.label(sc.frequency)) +
-            (a.department ? " \u00b7 " + esc(a.department) : "") +
-            (a.location ? " \u00b7 " + esc(a.location) : "") +
-            (sc.vendor ? " \u00b7 " + esc(sc.vendor) : "") + "</div>" +
+            (a.department ? " · " + esc(a.department) : "") +
+            (a.location ? " · " + esc(a.location) : "") +
+            (sc.vendor ? " · " + esc(sc.vendor) : "") + "</div>" +
           (nd.preferred
             ? '<div class="cal-next">Next: <b>' + esc(nd.preferred) + "</b>" +
               (nd.shifted ? ' <span class="cal-exact">exact ' + esc(nd.exact) + "</span>" : "") +
@@ -179,8 +179,8 @@
 
     if (!list.length) {
       return '<div class="cal-empty"><h3>The register is empty</h3>' +
-        "<p>Every item an assessor may ask about \u2014 an analyser, a fire NOC, an AMC, a " +
-        "nurse's licence \u2014 belongs here with its number and its renewal cycle.</p>" +
+        "<p>Every item an assessor may ask about — an analyser, a fire NOC, an AMC, a " +
+        "nurse's licence — belongs here with its number and its renewal cycle.</p>" +
         (ro ? "" : '<button class="btn btn-accent" data-act="add-asset">Add an item</button>') +
         "</div>";
     }
@@ -194,15 +194,15 @@
           '<div class="cal-row-main"><h4>' + esc(a.name) +
             (a.identifier ? ' <span class="cal-abbr">' + esc(a.identifier) + "</span>" : "") + "</h4>" +
             '<div class="cal-meta">' + esc(KINDS[a.kind] || a.kind) +
-              (a.department ? " \u00b7 " + esc(a.department) : "") +
-              (a.location ? " \u00b7 " + esc(a.location) : "") +
-              (a.manufacturer ? " \u00b7 " + esc(a.manufacturer) : "") +
-              (a.element_code ? " \u00b7 " + esc(a.element_code) : "") + "</div>" +
+              (a.department ? " · " + esc(a.department) : "") +
+              (a.location ? " · " + esc(a.location) : "") +
+              (a.manufacturer ? " · " + esc(a.manufacturer) : "") +
+              (a.element_code ? " · " + esc(a.element_code) : "") + "</div>" +
             '<div class="cal-next">' +
               (mine.length
                 ? mine.length + (mine.length === 1 ? " cycle" : " cycles") + ": " +
                   esc(mine.map(function (sc) { return SCHED_KINDS[sc.kind] || sc.kind; }).join(", "))
-                : "No cycle attached \u2014 it will never appear on the calendar") +
+                : "No cycle attached — it will never appear on the calendar") +
             "</div>" +
           "</div>" +
           '<div class="cal-row-side">' +
@@ -225,7 +225,7 @@
     if (!list.length) {
       return '<div class="cal-empty"><h3>No records yet</h3>' +
         "<p>Every calibration and service recorded here keeps its certificate number and " +
-        "its result \u2014 which is what an assessor asks to see for a named machine.</p></div>";
+        "its result — which is what an assessor asks to see for a named machine.</p></div>";
     }
 
     return '<div class="cal-bar"><h3>' + list.length + " record" + (list.length === 1 ? "" : "s") +
@@ -234,11 +234,11 @@
         var a = assets.filter(function (x) { return x.id === e.asset_id; })[0];
         return '<div class="cal-row' + (e.result === "fail" ? " st-overdue" : "") + '">' +
           '<div class="cal-row-main"><h4>' + esc(a ? a.name : "Removed item") + "</h4>" +
-            '<div class="cal-meta">' + esc(SCHED_KINDS[e.kind] || e.kind) + " \u00b7 " +
+            '<div class="cal-meta">' + esc(SCHED_KINDS[e.kind] || e.kind) + " · " +
               esc(e.performed_on) +
-              (e.vendor ? " \u00b7 " + esc(e.vendor) : "") +
-              (e.certificate_no ? ' \u00b7 cert ' + esc(e.certificate_no) : "") +
-              (e.downtime_hours ? " \u00b7 " + esc(e.downtime_hours) + "h downtime" : "") +
+              (e.vendor ? " · " + esc(e.vendor) : "") +
+              (e.certificate_no ? ' · cert ' + esc(e.certificate_no) : "") +
+              (e.downtime_hours ? " · " + esc(e.downtime_hours) + "h downtime" : "") +
             "</div>" +
             (e.notes ? '<div class="cal-next">' + esc(e.notes) + "</div>" : "") +
           "</div>" +
@@ -314,7 +314,7 @@
     modal("<h3>" + (a.id ? "Edit item" : "Add an item") + "</h3>" +
       '<div class="ws-form">' +
         '<div class="ws-f ws-f-wide"><label for="aName">What is it?</label>' +
-          '<input id="aName" value="' + esc(a.name || "") + '" placeholder="e.g. Defibrillator \u2014 ICU bed 4"></div>' +
+          '<input id="aName" value="' + esc(a.name || "") + '" placeholder="e.g. Defibrillator — ICU bed 4"></div>' +
         '<div class="ws-f"><label for="aKind">Type</label><select id="aKind">' + opts(KINDS, a.kind || "equipment") + "</select></div>" +
         '<div class="ws-f"><label for="aId">Serial / number</label><input id="aId" value="' + esc(a.identifier || "") + '"></div>' +
         '<div class="ws-f"><label for="aDept">Department</label><input id="aDept" value="' + esc(a.department || "") + '" placeholder="e.g. Biomedical"></div>' +
@@ -360,9 +360,9 @@
     var a = assetOf(sc.id);
     var st = statusOf(sc);
     modal("<h3>Record it</h3>" +
-      '<p class="cal-hint">' + esc(a ? a.name : "") + " \u00b7 " +
+      '<p class="cal-hint">' + esc(a ? a.name : "") + " · " +
         esc(SCHED_KINDS[sc.kind] || sc.kind) +
-        (st.due ? " \u00b7 was due " + esc(st.due) : "") + "</p>" +
+        (st.due ? " · was due " + esc(st.due) : "") + "</p>" +
       '<div class="ws-form">' +
         '<div class="ws-f"><label for="eOn">Date performed</label>' +
           '<input id="eOn" type="date" value="' + esc(K.fmt(K.today())) + '"></div>' +
@@ -398,7 +398,7 @@
       updated_at: new Date().toISOString()
     });
     close(); await refresh();
-    W.toast(existing ? "Saved" : name + " added \u2014 attach a cycle so it appears on the calendar", "ok");
+    W.toast(existing ? "Saved" : name + " added — attach a cycle so it appears on the calendar", "ok");
   }
 
   async function saveSched(existing, assetId) {
@@ -454,7 +454,7 @@
     if (window.AQActivity) window.AQActivity.record("asset_event_logged", { id: sid, kind: sc.kind });
     close(); await refresh();
     var nd = K.nextDates(on, sc.frequency, sc.pref_dow);
-    W.toast("Recorded \u2014 next due " + (nd.preferred || "\u2014"), "ok");
+    W.toast("Recorded — next due " + (nd.preferred || "—"), "ok");
   }
 
   async function removeRow(table, rid) {

@@ -41,8 +41,9 @@ window.AUDIT_SCOPE = {
    "Fire safety",
    "Medical gas",
    "Reassessment",
-   "Discharge / transfer note — DTH patients or transfer to another organisation"
-  ],
+   "Discharge / transfer note — DTH patients or transfer to another organisation",
+    "Risk matrix — current, scored, and reviewed",
+    "Risk register — with owners and mitigation status"],
   "kpis": [
    "PSQ 3a(1) Time for initial assessment",
    "PSQ 3a(11) Return to Emergency within 72 hrs with similar presenting complaints",
@@ -179,8 +180,9 @@ window.AUDIT_SCOPE = {
    "Checklist of ambulance drugs and equipment",
    "Cleaning after each transport",
    "Communication system",
-   "MOU if outsourced"
-  ],
+   "MOU if outsourced",
+    "Risk matrix — current, scored, and reviewed",
+    "Risk register — with owners and mitigation status"],
   "kpis": [],
   "codes": [
    "COP.3.a",
@@ -218,8 +220,9 @@ window.AUDIT_SCOPE = {
    "Physician's sample drugs",
    "Fire safety",
    "BMW",
-   "Equipment / furniture maintenance"
-  ],
+   "Equipment / furniture maintenance",
+    "Risk matrix — current, scored, and reviewed",
+    "Risk register — with owners and mitigation status"],
   "kpis": [
    "PSQ 3d(32) Compliance rate to medication prescription in capitals",
    "PSQ 3c(22) Waiting time for out-patient consultation"
@@ -354,8 +357,9 @@ window.AUDIT_SCOPE = {
    "Hand hygiene",
    "DVT",
    "Pressure ulcers",
-   "Patient experience"
-  ],
+   "Patient experience",
+    "Risk matrix — current, scored, and reviewed",
+    "Risk register — with owners and mitigation status"],
   "kpis": [
    "PSQ 3a(1) Time for initial assessment",
    "PSQ 3a(4) Medication error rate",
@@ -601,8 +605,9 @@ window.AUDIT_SCOPE = {
    "Patient experience",
    "Provision for special care of children",
    "Prevention of child abduction",
-   "Credentialing & privileging"
-  ],
+   "Credentialing & privileging",
+    "Risk matrix — current, scored, and reviewed",
+    "Risk register — with owners and mitigation status"],
   "kpis": [
    "PSQ 3a(1) Time for initial assessment",
    "PSQ 3a(4) Medication error rate",
@@ -869,8 +874,9 @@ window.AUDIT_SCOPE = {
    "High risk obstetrics",
    "MTP",
    "Pre, peri & post natal monitoring",
-   "Credentialing & privileging"
-  ],
+   "Credentialing & privileging",
+    "Risk matrix — current, scored, and reviewed",
+    "Risk register — with owners and mitigation status"],
   "kpis": [
    "PSQ 3a(1) Time for initial assessment",
    "PSQ 3a(4) Medication error rate",
@@ -1139,8 +1145,9 @@ window.AUDIT_SCOPE = {
    "Chemotherapy management",
    "Narcotics",
    "Disposal of chemo drugs",
-   "Credentialing & privileging"
-  ],
+   "Credentialing & privileging",
+    "Risk matrix — current, scored, and reviewed",
+    "Risk register — with owners and mitigation status"],
   "kpis": [
    "PSQ 3a(1) Time for initial assessment",
    "PSQ 3a(4) Medication error rate",
@@ -1364,8 +1371,9 @@ window.AUDIT_SCOPE = {
    "Pain management",
    "End of life care",
    "Narcotics",
-   "Multi-professional approach"
-  ],
+   "Multi-professional approach",
+    "Risk matrix — current, scored, and reviewed",
+    "Risk register — with owners and mitigation status"],
   "kpis": [],
   "codes": [
    "COP.16.a",
@@ -1416,8 +1424,9 @@ window.AUDIT_SCOPE = {
    "Narcotics",
    "Consents",
    "Medication management",
-   "Monitoring after procedure"
-  ],
+   "Monitoring after procedure",
+    "Risk matrix — current, scored, and reviewed",
+    "Risk register — with owners and mitigation status"],
   "kpis": [
    "PSQ 3d(30) Incidence of needle stick injury"
   ],
@@ -1474,8 +1483,9 @@ window.AUDIT_SCOPE = {
    "Organ transplant awareness",
    "BMW",
    "Fire safety",
-   "Patients' rights"
-  ],
+   "Patients' rights",
+    "Risk matrix — current, scored, and reviewed",
+    "Risk register — with owners and mitigation status"],
   "kpis": [
    "PSQ 3a(4) Medication error rate",
    "PSQ 3a(4) Percentage of medication charts with error prone abbreviations",
@@ -1598,8 +1608,9 @@ window.AUDIT_SCOPE = {
    "Compressed air purity",
    "Referrals",
    "Patients' rights displayed",
-   "Policy for bed shortage"
-  ],
+   "Policy for bed shortage",
+    "Risk matrix — current, scored, and reviewed",
+    "Risk register — with owners and mitigation status"],
   "kpis": [
    "PSQ 3a(1) Time for initial assessment",
    "PSQ 3a(4) Medication error rate",
@@ -1870,8 +1881,9 @@ window.AUDIT_SCOPE = {
    "BMW",
    "Hazmat",
    "Patients' rights displayed",
-   "Case records — documentation"
-  ],
+   "Case records — documentation",
+    "Risk matrix — current, scored, and reviewed",
+    "Risk register — with owners and mitigation status"],
   "kpis": [
    "PSQ 3a(4) Medication error rate",
    "PSQ 3a(6) Percentage of patients developing ADRs",
@@ -2054,8 +2066,9 @@ window.AUDIT_SCOPE = {
    "Narcotics",
    "Medication orders",
    "Patients' rights",
-   "Case records — documentation"
-  ],
+   "Case records — documentation",
+    "Risk matrix — current, scored, and reviewed",
+    "Risk register — with owners and mitigation status"],
   "kpis": [],
   "codes": [
    "COP.5.a",
@@ -2125,8 +2138,9 @@ window.AUDIT_SCOPE = {
    "Sterilisation / disinfection",
    "Hazmat",
    "Procedure checklist",
-   "Procedural sedation record"
-  ],
+   "Procedural sedation record",
+    "Risk matrix — current, scored, and reviewed",
+    "Risk register — with owners and mitigation status"],
   "kpis": [],
   "codes": [
    "COP.5.a",
@@ -2256,8 +2270,9 @@ window.AUDIT_SCOPE = {
    "Biomedical waste management",
    "Patients' rights",
    "Case records — documentation",
-   "Fire safety"
-  ],
+   "Fire safety",
+    "Risk matrix — current, scored, and reviewed",
+    "Risk register — with owners and mitigation status"],
   "kpis": [],
   "codes": [
    "COP.16.a",
@@ -2310,8 +2325,9 @@ window.AUDIT_SCOPE = {
    "Equipment / furniture maintenance",
    "Fire safety",
    "Clinico-radiological meeting",
-   "Appropriateness of investigation"
-  ],
+   "Appropriateness of investigation",
+    "Risk matrix — current, scored, and reviewed",
+    "Risk register — with owners and mitigation status"],
   "kpis": [
    "PSQ 3a(2) Number of reporting errors",
    "PSQ 3a(3) Percentage of adherence to safety precautions by staff working in diagnostics",
@@ -2390,8 +2406,9 @@ window.AUDIT_SCOPE = {
    "Infection control",
    "Equipment / furniture maintenance",
    "Fire safety",
-   "Critical alert not more than one hour"
-  ],
+   "Critical alert not more than one hour",
+    "Risk matrix — current, scored, and reviewed",
+    "Risk register — with owners and mitigation status"],
   "kpis": [
    "PSQ 3a(2) Number of reporting errors",
    "PSQ 3a(3) Percentage of adherence to safety precautions by staff working in diagnostics",
@@ -2479,8 +2496,9 @@ window.AUDIT_SCOPE = {
    "Fire safety",
    "BMW",
    "Hazmat",
-   "Procedural sedation record"
-  ],
+   "Procedural sedation record",
+    "Risk matrix — current, scored, and reviewed",
+    "Risk register — with owners and mitigation status"],
   "kpis": [
    "PSQ 3a(2) Number of reporting errors",
    "PSQ 3a(3) Percentage of adherence to safety precautions by staff working in diagnostics",
@@ -2604,8 +2622,9 @@ window.AUDIT_SCOPE = {
    "Hand hygiene",
    "Patient privacy",
    "Infection control",
-   "Needle stick injuries"
-  ],
+   "Needle stick injuries",
+    "Risk matrix — current, scored, and reviewed",
+    "Risk register — with owners and mitigation status"],
   "kpis": [],
   "codes": [
    "AAC.6.e",
@@ -2641,8 +2660,9 @@ window.AUDIT_SCOPE = {
    "BMW",
    "Hazmat",
    "Fire safety",
-   "Ensures quality of test results"
-  ],
+   "Ensures quality of test results",
+    "Risk matrix — current, scored, and reviewed",
+    "Risk register — with owners and mitigation status"],
   "kpis": [
    "PSQ 3a(2) Number of reporting errors",
    "PSQ 3a(3) Percentage of adherence to safety precautions by staff working in diagnostics",
@@ -2722,8 +2742,9 @@ window.AUDIT_SCOPE = {
    "Hazmat",
    "Equipment / furniture maintenance",
    "Fire safety",
-   "Rational use of blood and blood components"
-  ],
+   "Rational use of blood and blood components",
+    "Risk matrix — current, scored, and reviewed",
+    "Risk register — with owners and mitigation status"],
   "kpis": [
    "PSQ 3a(9) Transfusion reactions",
    "PSQ 3c(20) Turnaround time for issue of blood and blood components"
@@ -2787,8 +2808,9 @@ window.AUDIT_SCOPE = {
    "Infection control",
    "MOU for outsourced investigations",
    "Equipment / furniture maintenance",
-   "Fire safety"
-  ],
+   "Fire safety",
+    "Risk matrix — current, scored, and reviewed",
+    "Risk register — with owners and mitigation status"],
   "kpis": [],
   "codes": [
    "AAC.1.b",
@@ -2855,8 +2877,9 @@ window.AUDIT_SCOPE = {
    "Patient family education",
    "Maternal & paediatric nutritional assessment",
    "Documentation",
-   "Patient interviews"
-  ],
+   "Patient interviews",
+    "Risk matrix — current, scored, and reviewed",
+    "Risk register — with owners and mitigation status"],
   "kpis": [],
   "codes": [
    "AAC.4.a",
@@ -2898,8 +2921,9 @@ window.AUDIT_SCOPE = {
    "Pre / post exposure prophylaxis",
    "Outbreaks",
    "Training",
-   "Post exposure prophylaxis"
-  ],
+   "Post exposure prophylaxis",
+    "Risk matrix — current, scored, and reviewed",
+    "Risk register — with owners and mitigation status"],
   "kpis": [
    "PSQ 3b(13) CAUTI",
    "PSQ 3b(14) VAP",
@@ -2974,8 +2998,9 @@ window.AUDIT_SCOPE = {
    "Transplant ICU",
    "Policies & procedures",
    "Creating awareness",
-   "Privileging"
-  ],
+   "Privileging",
+    "Risk matrix — current, scored, and reviewed",
+    "Risk register — with owners and mitigation status"],
   "kpis": [],
   "codes": [
    "COP.9.a",
@@ -3024,8 +3049,9 @@ window.AUDIT_SCOPE = {
    "Case records — documentation",
    "Patients' rights",
    "Fire safety",
-   "BMW"
-  ],
+   "BMW",
+    "Risk matrix — current, scored, and reviewed",
+    "Risk register — with owners and mitigation status"],
   "kpis": [],
   "codes": [
    "AAC.9.a",
@@ -3194,8 +3220,9 @@ window.AUDIT_SCOPE = {
    "Training in CPR — ICU",
    "Provided with adequate equipment",
    "Patient feedback to include nursing care",
-   "Documentation of monitoring and all nursing activities"
-  ],
+   "Documentation of monitoring and all nursing activities",
+    "Risk matrix — current, scored, and reviewed",
+    "Risk register — with owners and mitigation status"],
   "kpis": [
    "PSQ 3a(1) Time for initial assessment",
    "PSQ 3a(4) Medication error rate",
@@ -3303,8 +3330,9 @@ window.AUDIT_SCOPE = {
    "NABH application form contents",
    "Self-assessment checklist",
    "Internal assessment report",
-   "Scope of services of the organisation"
-  ],
+   "Scope of services of the organisation",
+    "Risk matrix — current, scored, and reviewed",
+    "Risk register — with owners and mitigation status"],
   "kpis": [],
   "codes": [
    "IPC.2.a",
@@ -3376,8 +3404,9 @@ window.AUDIT_SCOPE = {
    "Staff & patient interviews",
    "Clinical audits",
    "Analysis of patient safety risks",
-   "Feedback to implement patient safety & QIP"
-  ],
+   "Feedback to implement patient safety & QIP",
+    "Risk matrix — current, scored, and reviewed",
+    "Risk register — with owners and mitigation status"],
   "kpis": [],
   "codes": [
    "MOM.4.e",
@@ -3442,8 +3471,9 @@ window.AUDIT_SCOPE = {
    "Risk management",
    "Ethical management",
    "Mechanism to update statutory requirements",
-   "Support for quality, infection control"
-  ],
+   "Support for quality, infection control",
+    "Risk matrix — current, scored, and reviewed",
+    "Risk register — with owners and mitigation status"],
   "kpis": [],
   "codes": [
    "PRE.1.c",
@@ -3530,8 +3560,9 @@ window.AUDIT_SCOPE = {
    "Frequency of meetings as per SOP",
    "Composition of committee",
    "Action taken on recommendations",
-   "Minutes of meetings"
-  ],
+   "Minutes of meetings",
+    "Risk matrix — current, scored, and reviewed",
+    "Risk register — with owners and mitigation status"],
   "kpis": [],
   "codes": [
    "COP.5.c",
@@ -3592,8 +3623,9 @@ window.AUDIT_SCOPE = {
    "Training on safety",
    "Disciplinary & grievance",
    "Personal file",
-   "Job description"
-  ],
+   "Job description",
+    "Risk matrix — current, scored, and reviewed",
+    "Risk register — with owners and mitigation status"],
   "kpis": [
    "PSQ 4e(i) Employee satisfaction index",
    "PSQ 4e(ii) Employee attrition rate",
@@ -3694,8 +3726,9 @@ window.AUDIT_SCOPE = {
    "System for access to records",
    "Case records sampling",
    "Statutory documents",
-   "Fire safety"
-  ],
+   "Fire safety",
+    "Risk matrix — current, scored, and reviewed",
+    "Risk register — with owners and mitigation status"],
   "kpis": [
    "PSQ 4g(i) Records not having discharge summary",
    "PSQ 4g(ii) Records not ICD codified",
@@ -3774,8 +3807,9 @@ window.AUDIT_SCOPE = {
    "Licences",
    "Telemedicine",
    "Access to patients' data",
-   "Destruction of data"
-  ],
+   "Destruction of data",
+    "Risk matrix — current, scored, and reviewed",
+    "Risk register — with owners and mitigation status"],
   "kpis": [],
   "codes": [
    "FMS.3.f",
@@ -3815,8 +3849,9 @@ window.AUDIT_SCOPE = {
    "Admission process",
    "Patients' rights display",
    "Generation of UHID",
-   "Feedback / complaints"
-  ],
+   "Feedback / complaints",
+    "Risk matrix — current, scored, and reviewed",
+    "Risk register — with owners and mitigation status"],
   "kpis": [
    "PSQ 4d(iii) Waiting time for OP consultation"
   ],
@@ -3868,8 +3903,9 @@ window.AUDIT_SCOPE = {
    "Inventory",
    "PM, calibration",
    "Colour coding",
-   "Compressed air purity"
-  ],
+   "Compressed air purity",
+    "Risk matrix — current, scored, and reviewed",
+    "Risk register — with owners and mitigation status"],
   "kpis": [],
   "codes": [
    "FMS.4.a",
@@ -3907,8 +3943,9 @@ window.AUDIT_SCOPE = {
    "Inventory",
    "LASA",
    "High risk medications",
-   "Narcotics"
-  ],
+   "Narcotics",
+    "Risk matrix — current, scored, and reviewed",
+    "Risk register — with owners and mitigation status"],
   "kpis": [
    "PSQ 4a(i) Percentage of drugs/consumables procured by local purchase",
    "PSQ 4a(ii) Percentage of stockouts",
@@ -3960,8 +3997,9 @@ window.AUDIT_SCOPE = {
    "Consumables",
    "Equipment",
    "Selection",
-   "Disposal"
-  ],
+   "Disposal",
+    "Risk matrix — current, scored, and reviewed",
+    "Risk register — with owners and mitigation status"],
   "kpis": [
    "PSQ 4a(i) Percentage of consumables procured by local purchase",
    "PSQ 4a(ii) Percentage of stockouts",
@@ -4005,8 +4043,9 @@ window.AUDIT_SCOPE = {
    "STP",
    "Safety devices",
    "PM & calibration of equipment",
-   "Green measures"
-  ],
+   "Green measures",
+    "Risk matrix — current, scored, and reviewed",
+    "Risk register — with owners and mitigation status"],
   "kpis": [],
   "codes": [
    "COP.14.j",
@@ -4057,8 +4096,9 @@ window.AUDIT_SCOPE = {
    "Facility rounds",
    "Fire plans",
    "Mock drills",
-   "Spill management"
-  ],
+   "Spill management",
+    "Risk matrix — current, scored, and reviewed",
+    "Risk register — with owners and mitigation status"],
   "kpis": [],
   "codes": [
    "PSQ.1.a",
@@ -4091,8 +4131,9 @@ window.AUDIT_SCOPE = {
    "Surveillance",
    "Biomedical waste handling",
    "Checklist",
-   "Hazmat"
-  ],
+   "Hazmat",
+    "Risk matrix — current, scored, and reviewed",
+    "Risk register — with owners and mitigation status"],
   "kpis": [],
   "codes": [
    "IPC.2.c",
@@ -4118,8 +4159,9 @@ window.AUDIT_SCOPE = {
    "Washing protocols",
    "Linen segregation",
    "Infection control",
-   "Machine maintenance"
-  ],
+   "Machine maintenance",
+    "Risk matrix — current, scored, and reviewed",
+    "Risk register — with owners and mitigation status"],
   "kpis": [],
   "codes": [
    "IPC.4.e",
@@ -4148,8 +4190,9 @@ window.AUDIT_SCOPE = {
    "Fire safety",
    "Storage & distribution",
    "Food handlers screening",
-   "Machine maintenance"
-  ],
+   "Machine maintenance",
+    "Risk matrix — current, scored, and reviewed",
+    "Risk register — with owners and mitigation status"],
   "kpis": [],
   "codes": [
    "IPC.4.f",
@@ -4174,8 +4217,9 @@ window.AUDIT_SCOPE = {
   "quickList": [
    "Mortuary facilities",
    "Infection control",
-   "Machine maintenance"
-  ],
+   "Machine maintenance",
+    "Risk matrix — current, scored, and reviewed",
+    "Risk register — with owners and mitigation status"],
   "kpis": [],
   "codes": [
    "IPC.2.a",
@@ -4204,8 +4248,9 @@ window.AUDIT_SCOPE = {
    "Reprocessing of instruments",
    "Recall procedure",
    "Reuse policy",
-   "Machine"
-  ],
+   "Machine",
+    "Risk matrix — current, scored, and reviewed",
+    "Risk register — with owners and mitigation status"],
   "kpis": [],
   "codes": [
    "IPC.1.b",

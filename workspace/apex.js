@@ -28,15 +28,15 @@
       fields: [
         ["vision", "Vision", "textarea"],
         ["mission", "Mission", "textarea"],
-        ["quality_policy", "Quality policy \u2014 measurable, and the one displayed in the hospital", "textarea"]
+        ["quality_policy", "Quality policy — measurable, and the one displayed in the hospital", "textarea"]
       ] },
     { key: "structure", title: "Organisational structure",
       fields: [
-        ["reporting", "Reporting structure \u2014 who reports to whom", "textarea"],
+        ["reporting", "Reporting structure — who reports to whom", "textarea"],
         ["quality_lead", "Who is accountable for quality, and to whom", "textarea"]
       ] },
     { key: "committees", title: "Committees",
-      note: "Pulled automatically from your compliance calendar \u2014 add or edit committees " +
+      note: "Pulled automatically from your compliance calendar — add or edit committees " +
             "there and this section updates on its own." },
     { key: "programme", title: "Quality and patient safety programme",
       fields: [
@@ -46,28 +46,28 @@
       ] },
     { key: "system", title: "How the system works",
       fields: [
-        ["doc_control", "Document control \u2014 how a document is approved and revised", "textarea"],
-        ["incident", "Incident reporting \u2014 how an incident becomes a finding", "textarea"],
-        ["capa", "CAPA \u2014 how a finding is tracked to closure", "textarea"],
-        ["audit", "Internal audit \u2014 frequency and scope", "textarea"],
+        ["doc_control", "Document control — how a document is approved and revised", "textarea"],
+        ["incident", "Incident reporting — how an incident becomes a finding", "textarea"],
+        ["capa", "CAPA — how a finding is tracked to closure", "textarea"],
+        ["audit", "Internal audit — frequency and scope", "textarea"],
         ["risk", "Risk management approach", "textarea"]
       ] },
     { key: "coverage", title: "Chapter-by-chapter coverage",
       fields: [
-        ["AAC", "AAC \u2014 Access, Assessment and Continuity of Care", "textarea"],
-        ["COP", "COP \u2014 Care of Patients", "textarea"],
-        ["MOM", "MOM \u2014 Management of Medication", "textarea"],
-        ["PRE", "PRE \u2014 Patient Rights and Education", "textarea"],
-        ["IPC", "IPC \u2014 Infection Prevention and Control", "textarea"],
-        ["PSQ", "PSQ \u2014 Patient Safety and Quality Improvement", "textarea"],
-        ["ROM", "ROM \u2014 Responsibility of Management", "textarea"],
-        ["FMS", "FMS \u2014 Facility Management and Safety", "textarea"],
-        ["HRM", "HRM \u2014 Human Resource Management", "textarea"],
-        ["IMS", "IMS \u2014 Information Management System", "textarea"]
+        ["AAC", "AAC — Access, Assessment and Continuity of Care", "textarea"],
+        ["COP", "COP — Care of Patients", "textarea"],
+        ["MOM", "MOM — Management of Medication", "textarea"],
+        ["PRE", "PRE — Patient Rights and Education", "textarea"],
+        ["IPC", "IPC — Infection Prevention and Control", "textarea"],
+        ["PSQ", "PSQ — Patient Safety and Quality Improvement", "textarea"],
+        ["ROM", "ROM — Responsibility of Management", "textarea"],
+        ["FMS", "FMS — Facility Management and Safety", "textarea"],
+        ["HRM", "HRM — Human Resource Management", "textarea"],
+        ["IMS", "IMS — Information Management System", "textarea"]
       ] },
     { key: "crossref", title: "Cross-reference matrix",
       note: "AQcredix already generates an element-by-department matrix from your standards " +
-            "and SOP data \u2014 export it from Standards \u2192 Departments and attach it as an " +
+            "and SOP data — export it from Standards → Departments and attach it as an " +
             "appendix, rather than retyping it here." },
     { key: "review", title: "Review and revision",
       fields: [
@@ -157,24 +157,24 @@
 
   function committeesBlock() {
     if (!committees.length) {
-      return '<p class="apex-note">No committees entered yet \\u2014 add them on the ' +
+      return '<p class="apex-note">No committees entered yet — add them on the ' +
         '<a href="calendar.html">calendar</a> and they will appear here.</p>';
     }
     return '<div class="apex-committees">' + committees.map(function (c) {
       return '<div class="apex-c"><b>' + esc2(c.name) + "</b>" +
         '<span>' + esc2(c.frequency || "") +
-          (c.chairperson ? " \\u00b7 Chair: " + esc2(c.chairperson) : "") +
-          (c.secretary ? " \\u00b7 Convener: " + esc2(c.secretary) : "") + "</span></div>";
+          (c.chairperson ? " · Chair: " + esc2(c.chairperson) : "") +
+          (c.secretary ? " · Convener: " + esc2(c.secretary) : "") + "</span></div>";
     }).join("") + "</div>";
   }
 
   /* --------------------------------- download --------------------------------- */
 
-  function fieldValue(key) { return (answers[key] || "").trim() || "\u2014 not yet completed"; }
+  function fieldValue(key) { return (answers[key] || "").trim() || "— not yet completed"; }
 
   async function generate() {
     var blocks = [
-      { type: "h1", text: (answers.legal_name || "Hospital") + " \u2014 Quality (Apex) Manual" },
+      { type: "h1", text: (answers.legal_name || "Hospital") + " — Quality (Apex) Manual" },
       { type: "p", text: "Generated by AQcredix on " + new Date().toLocaleDateString() +
         ". This manual is authored and owned by the hospital; AQcredix provides the " +
         "structure and pulls in data already entered elsewhere in the workspace." },
@@ -190,8 +190,8 @@
           blocks.push({ type: "table", rows: [["Committee", "Frequency / chair / convener"]].concat(
             committees.map(function (c) {
               return [c.name, (c.frequency || "") +
-                (c.chairperson ? " \u00b7 Chair: " + c.chairperson : "") +
-                (c.secretary ? " \u00b7 Convener: " + c.secretary : "")];
+                (c.chairperson ? " · Chair: " + c.chairperson : "") +
+                (c.secretary ? " · Convener: " + c.secretary : "")];
             })
           )});
         } else {
@@ -233,10 +233,10 @@
     document.getElementById("apexDownload").addEventListener("click", async function () {
       var btn = this;
       var label = btn.textContent;
-      btn.disabled = true; btn.textContent = "Building\u2026";
+      btn.disabled = true; btn.textContent = "Building…";
       try {
         await generate();
-        btn.textContent = "Downloaded \u2713";
+        btn.textContent = "Downloaded ✓";
       } catch (e) {
         console.error(e);
         btn.textContent = "Could not build";

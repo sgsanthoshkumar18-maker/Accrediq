@@ -183,9 +183,9 @@ window.AQIncident = (function () {
   }
 
   function fmtDateTime(iso) {
-    if (!iso) return "\u2014";
+    if (!iso) return "—";
     var d = new Date(iso);
-    if (isNaN(d)) return "\u2014";
+    if (isNaN(d)) return "—";
     return d.toLocaleString(undefined, {
       day: "2-digit", month: "short", year: "numeric", hour: "2-digit", minute: "2-digit"
     });
@@ -255,7 +255,7 @@ window.AQIncident = (function () {
     var sev = c && c.severity >= 4 ? "critical" : c && c.severity === 3 ? "major" : "minor";
     await S.saveCapa({
       id: "capa_" + inc.id,
-      title: inc.reference + " \u2014 " + String(inc.details || "").slice(0, 110),
+      title: inc.reference + " — " + String(inc.details || "").slice(0, 110),
       element_code: "PSQ.7",     // incident management
       source: "incident report",
       severity: sev,

@@ -92,7 +92,7 @@
         await savePref(next);
         if (window.AQWorkspace && window.AQWorkspace.toast) {
           window.AQWorkspace.toast(
-            next ? "Pinned \u2014 this opens first when you sign in" : "Unpinned", "ok");
+            next ? "Pinned — this opens first when you sign in" : "Unpinned", "ok");
         }
       });
     }

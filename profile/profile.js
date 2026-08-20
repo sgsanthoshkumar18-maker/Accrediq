@@ -31,6 +31,32 @@
     return document.body.getAttribute("data-base") || "";
   }
 
+  /* What to print after the email address.
+   *
+   * `user.role` comes from the members table, where the first account to create an
+   * organisation is stored as "owner" — owner OF THAT HOSPITAL'S workspace. Printed raw
+   * it read as "owner" on every hospital's first account, which looks like they own
+   * AQcredix. Only the addresses in billing-config ownerEmails are that.
+   *
+   * So: the platform owner gets "owner"; everyone else gets the organisation word for
+   * the same seat, which is what they actually are. */
+  var ORG_ROLE = {
+    owner: "hospital administrator",
+    admin: "administrator",
+    editor: "contributor",
+    viewer: "member"
+  };
+
+  function roleLabel(user) {
+    if (B && B.isOwner && B.isOwner(user)) return " · owner";
+    if (B && B.isComplimentary && B.isComplimentary(user)) {
+      return " · complimentary access";
+    }
+    var r = String(user && user.role || "").toLowerCase();
+    if (!r) return "";
+    return " · " + esc(ORG_ROLE[r] || r);
+  }
+
   function fmtDate(iso) {
     if (!iso) return "—";
     var d = new Date(iso);
@@ -42,7 +68,7 @@
     if (paise == null) return "—";
     var r = paise / 100;
     // Whole rupees read better on an invoice line; paise only shown when they exist.
-    return "\u20B9" + r.toLocaleString("en-IN", {
+    return "₹" + r.toLocaleString("en-IN", {
       minimumFractionDigits: r % 1 ? 2 : 0, maximumFractionDigits: 2
     });
   }
@@ -151,7 +177,7 @@
        figures sit beside six device-local personal ones looking identical, and the user
        has no way to tell that one of them counts their colleagues' work too. */
     var note = fromServer
-      ? "Hospital total \u00B7 synced"
+      ? "Hospital total · synced"
       : (count ? esc(relative(last) || "recorded") : "Not started yet");
     return '<a class="pf-stat' + (fromServer ? " is-synced" : "") + '" href="' + esc(f.href) + '">' +
       '<div class="pf-stat-n">' + count + "</div>" +
@@ -188,7 +214,7 @@
       '<div class="pf-bar pf-bar-lg"><span style="width:' + pct + '%"></span></div>' +
       "<p>" + (used === total
         ? "You have used every tool on the site at least once."
-        : "The cards below with no count are tools you have not opened yet \u2014 each one links straight to it.") +
+        : "The cards below with no count are tools you have not opened yet — each one links straight to it.") +
       "</p></div>";
 
     host.innerHTML = coverage + html;
@@ -200,7 +226,7 @@
     var unused = A.FEATURES.filter(function (f) { return countFor(f, email) === 0; });
     if (!unused.length) {
       host.innerHTML = '<div class="pf-next-done">Every tool has been used at least once. ' +
-        "Keep the streak going \u2014 readiness is a cycle, not a finish line.</div>";
+        "Keep the streak going — readiness is a cycle, not a finish line.</div>";
       return;
     }
     host.innerHTML = '<ul class="pf-next">' + unused.slice(0, 4).map(function (f) {
@@ -215,7 +241,7 @@
 
       if (st.owner) {
         host.innerHTML = '<div class="pf-sub pf-sub-owner"><div class="pf-sub-row">' +
-          "<span>Plan</span><b>Owner \u2014 full access</b></div>" +
+          "<span>Plan</span><b>Owner — full access</b></div>" +
           '<div class="pf-sub-row"><span>Renews</span><b>Never expires</b></div>' +
           "<p class=\"pf-sub-note\">This account owns the platform and bypasses billing.</p></div>";
         return;
@@ -236,7 +262,7 @@
         var startedAt = r.activated_at || r.requested_at || r.created_at;
         rows.push(["Status", '<b class="pf-ok">Active</b>']);
         rows.push(["Plan", esc(r.plan === "yearly" ? "Annual" : "Monthly") +
-          (r.months ? " \u00B7 " + r.months + " month" + (r.months > 1 ? "s" : "") : "")]);
+          (r.months ? " · " + r.months + " month" + (r.months > 1 ? "s" : "") : "")]);
         rows.push(["Amount paid", esc(fmtRupees(r.amount_paise))]);
         rows.push(["Started", esc(fmtDate(startedAt))]);
         rows.push(["Ends", esc(fmtDate(r.expires_at))]);
@@ -260,7 +286,7 @@
          sets. Check the reason. */
       if (st.reason === "pending") {
         var pr = st.record || {};
-        host.innerHTML = '<div class="pf-sub pf-sub-warn"><b>Payment submitted \u2014 awaiting approval.</b>' +
+        host.innerHTML = '<div class="pf-sub pf-sub-warn"><b>Payment submitted — awaiting approval.</b>' +
           "<p>Your reference has been received and is being checked against the bank " +
           "statement. Access opens as soon as it is approved.</p>" +
           (pr.requested_at ? "<p>Submitted " + esc(fmtDate(pr.requested_at)) + "." : "") +
@@ -285,7 +311,7 @@
           '<div class="pf-sub-row"><span>Started</span><b>' +
             esc(fmtDate(x.activated_at || x.requested_at || x.created_at)) + "</b></div>" +
           '<div class="pf-sub-row"><span>Ended</span><b>' + esc(fmtDate(x.expires_at)) +
-            (isNaN(lapsed) ? "" : " \u00B7 " + lapsed + " day" + (lapsed === 1 ? "" : "s") + " ago") +
+            (isNaN(lapsed) ? "" : " · " + lapsed + " day" + (lapsed === 1 ? "" : "s") + " ago") +
           "</b></div></div>" +
           '<p class="pf-sub-note">Your work is kept. Renewing restores access to it ' +
           'immediately. <a href="' + base() + 'dashboard.html">View plans</a></p>';
@@ -306,8 +332,8 @@
     A.FEATURES.forEach(function (f) { labels[f.key] = f.label.replace(/s$/, ""); });
     var items = A.timeline().slice(0, 12);
     if (!items.length) {
-      host.innerHTML = '<p class="pf-empty">Nothing recorded yet. Anything you complete \u2014 ' +
-        "a quiz, a mock survey, an SOP \u2014 appears here.</p>";
+      host.innerHTML = '<p class="pf-empty">Nothing recorded yet. Anything you complete — ' +
+        "a quiz, a mock survey, an SOP — appears here.</p>";
       return;
     }
     host.innerHTML = '<ol class="pf-timeline">' + items.map(function (e) {
@@ -334,6 +360,35 @@
     A.setUser(user);
     var email = user.email || "";
 
+    /* Painted BEFORE the sync await, not after.
+       Sign out is the one control on this page that must never depend on the network:
+       if the activity sync hangs, the old ordering left a signed-in person on a shared
+       computer with no way to leave the account at all. Identity and sign out are known
+       the moment currentUser() returns, so they render then. */
+    whoHost.innerHTML = '<div class="pf-id"><div class="pf-avatar">' +
+      esc((user.name || email || "?").trim().charAt(0).toUpperCase()) + "</div><div>" +
+      "<h1>" + esc(user.name || email) + "</h1>" +
+      '<p class="pf-email">' + esc(email) + roleLabel(user) + "</p>" +
+      /* Sign out lives here because this is the only page a free account reliably reaches.
+         The workspace has its own sign-out, but a free user never gets that far — so
+         without this there was no way to leave the account at all on a shared computer. */
+      '<button type="button" class="pf-signout" id="pfSignOut">Sign out</button>' +
+      "</div></div>";
+
+    var so = document.getElementById("pfSignOut");
+    if (so) so.addEventListener("click", async function () {
+      so.disabled = true;
+      so.textContent = "Signing out…";
+      try { await S.signOut(); } catch (e) {}
+      /* replace(), not href: pressing Back after signing out should not return to a page
+         rendered for the account that just left. */
+      /* base() not "../": profile.html is at the site root, so "../index.html" pointed
+         one level above the site and 404'd — the account was signed out but the person
+         landed on an error page and reasonably assumed sign-out had failed. */
+      location.replace(base() + "index.html");
+    });
+
+
     /* Wait for the server history before painting any count.
      *
      * setUser() kicks off a sync but does not block, which is right for a feature page
@@ -347,12 +402,6 @@
      * is and the page says so in the footer note. */
     var synced = await A.sync();
 
-    whoHost.innerHTML = '<div class="pf-id"><div class="pf-avatar">' +
-      esc((user.name || email || "?").trim().charAt(0).toUpperCase()) + "</div><div>" +
-      "<h1>" + esc(user.name || email) + "</h1>" +
-      '<p class="pf-email">' + esc(email) + (user.role ? " \u00B7 " + esc(user.role) : "") + "</p>" +
-      "</div></div>";
-
     var tl = A.timeline();
     var days = streak(tl);
     document.getElementById("pfStreak").innerHTML =
@@ -362,8 +411,8 @@
          that has not reached the server. A subscriber relying on this for their own
          audit trail needs to know which they are looking at. */
       (synced
-        ? '<div class="pf-chip pf-chip-ok"><b>\u2713</b><span>Saved to your account</span></div>'
-        : '<div class="pf-chip pf-chip-warn"><b>!</b><span>Offline \u2014 showing this device only</span></div>');
+        ? '<div class="pf-chip pf-chip-ok"><b>✓</b><span>Saved to your account</span></div>'
+        : '<div class="pf-chip pf-chip-warn"><b>!</b><span>Offline — showing this device only</span></div>');
 
     /* Before the stats render, so a card is never drawn with the local figure and then
        silently swapped for the server one — a number that changes under the reader is

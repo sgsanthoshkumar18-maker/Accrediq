@@ -16,16 +16,16 @@ window.FOUNDER = {
   linkedin: "https://www.linkedin.com/in/dr-santhoshkumar-sg-pharm-d-rph-420333260",
   email: "s.g.santhoshkumar18@gmail.com",
 
-  roleLine: "Infectious Disease Clinical Pharmacologist \u00b7 Fellow of ISQua \u00b7 Founder & Chief Quality Officer, AQcredix",
+  roleLine: "Infectious Disease Clinical Pharmacologist · Fellow of ISQua · Founder & Chief Quality Officer, AQcredix",
   affiliation: "Department of Clinical Pharmacy, The Voluntary Health Services Multispecialty Hospital, Chennai",
 
   headline: [
     "ID Clinical Pharmacologist, VHS",
-    "Reviewer \u2014 ARIC",
-    "Reviewer \u2014 IJIDT",
-    "Consultant \u2014 Clinical Documentation Designer (NABH, JCI)",
+    "Reviewer — ARIC",
+    "Reviewer — IJIDT",
+    "Consultant — Clinical Documentation Designer (NABH, JCI)",
     "Ex-Oncology & AMSP CP, APCC",
-    "Administrator & Secretary \u2014 MEDODRIX"
+    "Administrator & Secretary — MEDODRIX"
   ],
 
   /* Portrait. Drop a file at assets/founder.jpg and it appears automatically; until then
@@ -37,7 +37,7 @@ window.FOUNDER = {
   /* The three-stage story for the pinned scrollytelling card. */
   lens: [
     {
-      step: "01 \u2014 THE FLOOR",
+      step: "01 — THE FLOOR",
       title: "It starts at the bedside",
       heading: "Clinical practice",
       body: "Infectious disease pharmacology at Voluntary Health Services, oncology and " +
@@ -50,78 +50,78 @@ window.FOUNDER = {
       ]
     },
     {
-      step: "02 \u2014 THE EVIDENCE",
+      step: "02 — THE EVIDENCE",
       title: "Then it becomes evidence",
       heading: "Research and peer review",
       body: "Ten peer-reviewed publications on medication safety, regulatory compliance " +
-            "and clinical case management \u2014 and now peer review for two journals, " +
+            "and clinical case management — and now peer review for two journals, " +
             "including a Q1 Springer Nature title.",
       points: [
-        "Reviewer \u2014 Antimicrobial Resistance and Infection Control (Springer Nature, Q1)",
-        "Reviewer \u2014 International Journal of Infectious Diseases and Therapy",
-        "10 publications, 2022\u20132025"
+        "Reviewer — Antimicrobial Resistance and Infection Control (Springer Nature, Q1)",
+        "Reviewer — International Journal of Infectious Diseases and Therapy",
+        "10 publications, 2022–2025"
       ]
     },
     {
-      step: "03 \u2014 THE SYSTEM",
+      step: "03 — THE SYSTEM",
       title: "Then it becomes a system",
       heading: "Quality and accreditation",
       body: "NABH and JCI documentation design, ISQua membership, Lean Six Sigma. " +
             "AQcredix is the same work, built once so every hospital can use it instead " +
             "of rebuilding it alone.",
       points: [
-        "Consultant \u2014 Clinical Documentation Designer (NABH, JCI)",
-        "Fellow of ISQua (FISQua) \u00b7 ID 1013000",
-        "CPQIH (Basic), CAHO \u2014 NABH Entry Level Standards",
-        "Lean Six Sigma Yellow Belt \u00b7 Six Sigma White Belt"
+        "Consultant — Clinical Documentation Designer (NABH, JCI)",
+        "Fellow of ISQua (FISQua) · ID 1013000",
+        "CPQIH (Basic), CAHO — NABH Entry Level Standards",
+        "Lean Six Sigma Yellow Belt · Six Sigma White Belt"
       ]
     }
   ],
 
   /* Reverse-chronological. `current: true` draws the live marker on the timeline. */
   experience: [
-    { role: "Clinical Reviewer", org: "Springer Nature", type: "Full-time \u00b7 Remote",
+    { role: "Clinical Reviewer", org: "Springer Nature", type: "Full-time · Remote",
       from: "Mar 2026", to: "Present", current: true,
       note: "Reviewer of Antimicrobial Resistance and Infection Control Journal (Q1)." },
 
     { role: "Clinical Reviewer",
       org: "International Journal of Infectious Diseases and Therapy (IJIDT)",
-      type: "Science Publishing Group \u00b7 Full-time",
+      type: "Science Publishing Group · Full-time",
       from: "Mar 2026", to: "Present", current: true,
-      note: "Certificate of Reviewing issued 3 June 2026, for the review of \u201cExpert Perspectives " +
+      note: "Certificate of Reviewing issued 3 June 2026, for the review of “Expert Perspectives " +
             "on the usage of co-amoxiclav and cefuroxime in clinical practice: A cross-sectional " +
-            "survey from Indian settings\u201d." },
+            "survey from Indian settings”." },
 
     { role: "ID Clinical Pharmacist", org: "Voluntary Health Services",
-      type: "Full-time \u00b7 Chennai \u00b7 On-site",
+      type: "Full-time · Chennai · On-site",
       from: "Dec 2025", to: "Present", current: true,
-      note: "Consultant \u2014 Documentation Designer (NABH), Communication and more." },
+      note: "Consultant — Documentation Designer (NABH), Communication and more." },
 
     { role: "Head Content Writer", org: "MEDODRIX.COM",
-      type: "Part-time \u00b7 Chennai \u00b7 Hybrid",
+      type: "Part-time · Chennai · Hybrid",
       from: "Aug 2018", to: "Present", current: true, note: "Web content writing." },
 
     { role: "AMSP Clinical Pharmacist", org: "Apollo Proton Cancer Centre",
-      type: "Chennai \u00b7 On-site", from: "Aug 2025", to: "Dec 2025" },
+      type: "Chennai · On-site", from: "Aug 2025", to: "Dec 2025" },
 
     { role: "Clinical Pharmacist", org: "Apollo Proton Cancer Centre",
       type: "Full-time", from: "Feb 2025", to: "Dec 2025" },
 
     { role: "Internship Trainee",
       org: "Stanley Medical College & Hospital, Chennai",
-      type: "Full-time \u00b7 On-site", from: "Jan 2024", to: "Dec 2025" },
+      type: "Full-time · On-site", from: "Jan 2024", to: "Dec 2025" },
 
     { role: "Clinical Pharmacist", org: "Voluntary Health Services",
-      type: "Internship \u00b7 Chennai", from: "Feb 2023", to: "Sep 2023",
+      type: "Internship · Chennai", from: "Feb 2023", to: "Sep 2023",
       note: "Pharmacy and pharmacy practice." }
   ],
 
   education: [
     { school: "C.L. Baid Metha College of Pharmacy, Chennai",
-      degree: "Doctor of Pharmacy \u2014 Pharm.D", from: "Aug 2018", to: "Dec 2024",
+      degree: "Doctor of Pharmacy — Pharm.D", from: "Aug 2018", to: "Dec 2024",
       note: "Team leadership, Basic Life Support (BLS), IBM SPSS Statistics, communication." },
     { school: "The Tamil Nadu Dr. M.G.R. Medical University",
-      degree: "Doctor of Pharmacy \u2014 Pharm.D, Pharmacology and Toxicology",
+      degree: "Doctor of Pharmacy — Pharm.D, Pharmacology and Toxicology",
       from: "2018", to: "Present" }
   ],
 
@@ -132,7 +132,7 @@ window.FOUNDER = {
       date: "1 February 2025",
       note: "Using the Simulated Client Method, the study highlights critical gaps in pharmacy compliance with prescription requirements." },
 
-    { title: "Pilocytic Astrocytoma \u2014 Management of Post-Operative Complications",
+    { title: "Pilocytic Astrocytoma — Management of Post-Operative Complications",
       journal: "International Journal of Medical and Pharmaceutical Case Reports",
       date: "29 December 2024",
       note: "A case of recurrent pilocytic astrocytoma in a five-year-old, and the complexity of managing it after surgery." },
@@ -189,23 +189,23 @@ window.FOUNDER = {
       date: "17 July 2026", id: "1013000", group: "quality", top: true,
       note: "Satisfied the requirements of the award of Fellowship." },
     { name: "Individual Member of the Society", issuer: "ISQua",
-      date: "Valid 28 April 2026 \u2014 28 April 2027", id: "1010566", group: "quality" },
+      date: "Valid 28 April 2026 — 28 April 2027", id: "1010566", group: "quality" },
     { name: "Artificial Intelligence & Machine Learning in Healthcare", issuer: "ISQua course",
       date: "17 July 2026", group: "quality" },
     { name: "Quality Improvement", issuer: "ISQua course", date: "21 May 2026", group: "quality" },
 
     /* ---- CAHO: the NABH-facing credentials ---- */
-    { name: "Certified Professional for Quality Implementation in Hospitals (CPQIH \u2014 Basic)",
+    { name: "Certified Professional for Quality Implementation in Hospitals (CPQIH — Basic)",
       issuer: "Consortium of Accredited Healthcare Organizations (CAHO)",
-      date: "30\u201331 May 2026", id: "CPQIH-31-025", group: "quality", top: true,
-      note: "Implementation of NABH Entry Level Standards (2nd Edition) for Hospitals \u00b7 8 CAHO credit points." },
+      date: "30–31 May 2026", id: "CPQIH-31-025", group: "quality", top: true,
+      note: "Implementation of NABH Entry Level Standards (2nd Edition) for Hospitals · 8 CAHO credit points." },
     { name: "Basic Certificate Course on Antimicrobial Stewardship", issuer: "CAHO",
       date: "16 May 2026", id: "AMS-22-046", group: "quality",
-      note: "Antibiotic policy, PK/PD, diagnostic stewardship, surgical prophylaxis, AMSP implementation \u00b7 4 CAHO credit points." },
-    { name: "CAHOCON 2026 \u2014 10th Edition, Delegate",
-      issuer: "CAHO \u00b7 Chennai Trade Centre",
-      date: "11\u201312 April 2026", group: "quality",
-      note: "Tech \u00b7 Touch \u00b7 Trust \u2014 The New Healthcare Code." },
+      note: "Antibiotic policy, PK/PD, diagnostic stewardship, surgical prophylaxis, AMSP implementation · 4 CAHO credit points." },
+    { name: "CAHOCON 2026 — 10th Edition, Delegate",
+      issuer: "CAHO · Chennai Trade Centre",
+      date: "11–12 April 2026", group: "quality",
+      note: "Tech · Touch · Trust — The New Healthcare Code." },
 
     /* ---- Six Sigma ---- */
     { name: "Lean Six Sigma Yellow Belt", issuer: "Anexas Europe Certification",
@@ -225,16 +225,16 @@ window.FOUNDER = {
 
     /* ---- Clinical and public health ---- */
     { name: "The Social and Technical Context of Health Informatics",
-      issuer: "Johns Hopkins University \u00b7 Coursera", date: "7 May 2026",
+      issuer: "Johns Hopkins University · Coursera", date: "7 May 2026",
       id: "VSOQRHYQGT8A", group: "clinical" },
     { name: "Foundations of Public Health Practice: The Public Health Approach",
-      issuer: "Imperial College London \u00b7 Coursera", date: "2 May 2026",
+      issuer: "Imperial College London · Coursera", date: "2 May 2026",
       id: "26IUC1N78A29", group: "clinical" },
     { name: "Basic Course in Vector-Borne Diseases for Health Professionals",
       issuer: "SWAYAM MHRD", date: "September 2024", group: "clinical" },
     { name: "Wound Management in Resource-Limited Settings: Training of Health Workers on Skin-NTDs",
       issuer: "World Health Organization", date: "September 2024", group: "clinical" },
-    { name: "Management of Tuberculosis in Children and Adolescents \u2014 Programmatic Considerations",
+    { name: "Management of Tuberculosis in Children and Adolescents — Programmatic Considerations",
       issuer: "World Health Organization", date: "July 2024", group: "clinical" },
     { name: "How to Taper Patients Off of Chronic Opioid Therapy",
       issuer: "Stanford University School of Medicine", date: "July 2024", group: "clinical" },

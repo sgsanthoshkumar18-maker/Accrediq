@@ -193,8 +193,8 @@ window.MOM_EXPLAIN = {
   "MOM.5.b":
     "Fix one place in the record where medication orders are written, so that anyone opening " +
     "a file finds them without searching. Recording prescription and administration on the " +
-    "same sheet helps. Avoid shorthand such as \u201ccontinue same treatment\u201d or " +
-    "\u201crepeat all\u201d: each review should state what the patient is actually taking.",
+    "same sheet helps. Avoid shorthand such as “continue same treatment” or " +
+    "“repeat all”: each review should state what the patient is actually taking.",
 
   "MOM.5.c":
     "Every order must be legible, dated, timed and signed. The date and time make it possible " +

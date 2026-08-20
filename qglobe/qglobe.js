@@ -550,7 +550,7 @@
     // "Emergency Department" and "Quality Department" identify themselves without the
     // word Department, and dropping it avoids an ellipsis that helps nobody.
     s = s.replace(/\s+Department$/i, "");
-    if (s.length > 17) s = s.slice(0, 16).trim() + "\u2026";
+    if (s.length > 17) s = s.slice(0, 16).trim() + "…";
     return s;
   }
 

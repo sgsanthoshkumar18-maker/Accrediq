@@ -21,7 +21,7 @@
     { key: "team",
       title: "Add your departments and people",
       body: "Invite the department heads who will use this. Each signs in as themselves, " +
-            "so every record carries who did it \u2014 which is what an assessor asks.",
+            "so every record carries who did it — which is what an assessor asks.",
       href: "team.html", cta: "Open Team",
       done: function (c) { return c.members > 1; },
       detail: function (c) { return c.members + " on the team"; } },
@@ -36,7 +36,7 @@
 
     { key: "tasks",
       title: "Add your recurring obligations",
-      body: "Drills, audits, training, surveillance \u2014 anything on a cycle an assessor " +
+      body: "Drills, audits, training, surveillance — anything on a cycle an assessor " +
             "will ask about.",
       href: "calendar.html", cta: "Open Calendar",
       done: function (c) { return c.tasks > 0; },
@@ -45,15 +45,15 @@
     { key: "assets",
       title: "Build the equipment register",
       body: "Equipment, licences and AMCs with their calibration and maintenance cycles. " +
-            "Start with the items an assessor always asks about \u2014 defibrillators, " +
+            "Start with the items an assessor always asks about — defibrillators, " +
             "autoclaves, the fire NOC.",
       href: "register.html", cta: "Open Register",
       done: function (c) { return c.assets > 0; },
-      detail: function (c) { return c.assets + " items \u00b7 " + c.schedules + " cycles"; } },
+      detail: function (c) { return c.assets + " items · " + c.schedules + " cycles"; } },
 
     { key: "rounds",
       title: "Set up your rounds",
-      body: "Hand hygiene, cleaning, record review \u2014 any recurring check that produces " +
+      body: "Hand hygiene, cleaning, record review — any recurring check that produces " +
             "a score. Write the questions once.",
       href: "rounds.html", cta: "Open Rounds",
       done: function (c) { return c.lists > 0; },
@@ -62,7 +62,7 @@
     { key: "library",
       title: "Find your department's forms and registers",
       body: "114 checklists, forms and registers, each tagged to the department that keeps " +
-            "it \u2014 with what it must contain and a blank template to download.",
+            "it — with what it must contain and a blank template to download.",
       href: "library.html", cta: "Open the library",
       /* Not a data check: nothing is created here, it is a reference shelf. Marked done
          once the hospital has something of its own on the register, since that is the
@@ -73,7 +73,7 @@
     { key: "score",
       title: "Score your readiness",
       body: "Work through the elements chapter by chapter. You do not have to finish it " +
-            "today \u2014 the score updates as you go.",
+            "today — the score updates as you go.",
       href: "workspace.html?stay=1", cta: "Open Readiness",
       done: function (c) { return c.elements > 0; },
       detail: function (c) { return c.elements + " elements assessed"; } }
@@ -125,7 +125,7 @@
         '<div class="ob-top">' +
           "<div><b>Getting set up</b>" +
             '<span class="ob-sub">' + p.done + " of " + p.total +
-              " done \u00b7 about " + Math.max(2, (p.total - p.done) * 2) + " minutes left</span></div>" +
+              " done · about " + Math.max(2, (p.total - p.done) * 2) + " minutes left</span></div>" +
           '<button class="ob-x" data-ob="dismiss" type="button" ' +
             'title="Hide this. Everything stays where it is.">\u2715</button>' +
         "</div>" +
@@ -134,7 +134,7 @@
           var ok = s.done(counts);
           return '<div class="ob-step' + (ok ? " is-done" : "") +
             (s === next ? " is-next" : "") + '">' +
-            '<span class="ob-tick">' + (ok ? "\u2713" : "") + "</span>" +
+            '<span class="ob-tick">' + (ok ? "✓" : "") + "</span>" +
             '<div class="ob-body"><b>' + esc(s.title) + "</b>" +
               (ok ? '<span class="ob-detail">' + esc(s.detail(counts)) + "</span>"
                   : "<span>" + esc(s.body) + "</span>") +

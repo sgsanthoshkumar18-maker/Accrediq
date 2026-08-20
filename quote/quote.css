@@ -29,7 +29,17 @@
   background:transparent;color:rgba(255,255,255,.55);cursor:pointer;line-height:1.6;
   transition:background .15s ease,color .15s ease,border-color .15s ease;}
 .aq-quote-lang:hover{color:rgba(255,255,255,.9);border-color:var(--brand-2);}
-.aq-quote-lang.is-active{background:var(--brand-2);border-color:var(--brand-2);color:#fff;}
+/* Tamil and Devanagari have no glyphs in most monospace stacks, so those two chips fall
+   back to whatever the OS substitutes — usually a size and weight that does not match the
+   Latin one beside it. Naming the UI stack after the mono font keeps the fallback sane. */
+.aq-quote-lang{font-family:var(--font-mono),system-ui,"Noto Sans Tamil","Noto Sans Devanagari",sans-serif;}
+/* Dark text on the bright teal, not white. White on this background fails contrast badly
+   and is unreadable at a glance — which is the only way a language switch is ever read.
+   !important because the neon palette re-declares button colours at a higher specificity
+   than this rule, which is how white text survived here in the first place. */
+.aq-quote-lang.is-active,
+.aq-quote-langs .aq-quote-lang.is-active{background:var(--brand-2);border-color:var(--brand-2);
+  color:#001512 !important;font-weight:700;}
 
 @media (max-width:820px){
   .aq-quote-text{font-size:12px;}

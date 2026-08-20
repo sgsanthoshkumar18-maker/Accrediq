@@ -380,11 +380,26 @@
   background:var(--bg-elevated);cursor:pointer;font-family:inherit;display:flex;flex-direction:column;gap:6px;}
 .lib-card:hover{border-color:var(--brand-2);}
 .lib-card.is-detailed{border-left:3px solid var(--brand-2);}
-.lib-card b{font-size:13.5px;line-height:1.35;}
+/* The card title inherited the panel's muted body colour against a dark card, which left
+   the document names close to unreadable — the thing a person is actually scanning for.
+   Title in full foreground, subtitle muted: hierarchy by contrast, not by both being dim.
+
+   The colour is repeated on `.lib-card b` at group specificity because the workspace
+   panel sets a muted colour on descendants of `.ws-panel`, which was winning here and is
+   the reason these read as dark-navy-on-dark-navy in the first place. */
+.lib-card b,
+.lib-grid .lib-card b{font-size:13.5px;line-height:1.35;color:var(--fg);font-weight:700;}
+/* Teal on hover rather than teal always: 45 department cards all in the accent colour
+   removes the very hierarchy that makes "Full detail" mean something. The title is the
+   loudest thing on the card by brightness; the accent stays reserved for status. */
+.lib-card:hover b,
+.lib-card:focus-visible b{color:var(--brand-2);}
 .lib-tag{font-size:10px;font-weight:700;padding:2px 7px;border-radius:999px;
   background:var(--bg);color:var(--fg-faint);width:fit-content;}
 .lib-ready{font-size:11px;color:var(--brand-2);font-weight:600;}
-.lib-soon{font-size:11px;color:var(--fg-faint);}
+/* Lifted from --fg-faint, which on this card background was barely distinguishable from
+   the card itself. It is secondary information, not invisible information. */
+.lib-soon{font-size:11px;color:var(--fg-muted);}
 .lib-detail{max-width:620px;}
 .lib-detail-head h3{font-size:19px;margin:6px 0 0;}
 .lib-why{font-size:13.5px;color:var(--fg-muted);margin:10px 0;line-height:1.6;

@@ -53,7 +53,7 @@
         if (dept && a.department !== dept) return;
         var last = lastOf(data.events, "performed_on", "schedule_id", sc.id, sc.last_done_on);
         push("Equipment", a.name,
-             String(sc.kind || "").replace(/_/g, " ") + " \u00b7 " + K.label(sc.frequency),
+             String(sc.kind || "").replace(/_/g, " ") + " · " + K.label(sc.frequency),
              sc.frequency, last, sc.pref_dow, "workspace/register.html", a.element_code);
       });
 
@@ -133,7 +133,7 @@
     if (c.never) bits.push(c.never + " never recorded");
     if (c.soon) bits.push(c.soon + " due soon");
     if (c.findings) bits.push(c.findings + " open finding" + (c.findings === 1 ? "" : "s"));
-    return bits.join(" \u00b7 ") + where;
+    return bits.join(" · ") + where;
   }
 
   return { build: build, summarise: summarise };

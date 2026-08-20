@@ -182,7 +182,7 @@ setTimeout(function () {
 
   // Classes must exist — the failure that made the calendar modals dead buttons.
   {
-    const sheets = read('../aq/styles.css') + css + read('calendar/calendar.css');
+    const sheets = read('styles.css') + css + read('calendar/calendar.css');
     const used = new Set();
     let m; const re = /class="([^"]+)"/g;
     while ((m = re.exec(dash))) {

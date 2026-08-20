@@ -23,7 +23,7 @@
 
     document.getElementById("impIntro").innerHTML =
       (spec.help ? "<p>" + esc(spec.help) + "</p>" : "") +
-      "<p>Expected columns \u2014 headers are matched loosely, so capitalisation and spacing " +
+      "<p>Expected columns — headers are matched loosely, so capitalisation and spacing " +
       "do not have to match:</p>" +
       '<div class="imp-cols">' + spec.cols.map(function (c) {
         return '<span class="imp-col' + (c[2] ? " is-req" : "") + '">' + esc(c[1]) +
@@ -55,7 +55,7 @@
         ? '<div class="imp-bad"><b>These rows have problems and will not be imported</b>' +
           '<div class="imp-bad-rows">' + bad.slice(0, 12).map(function (r) {
             return '<div><span class="imp-line">Line ' + r.line + "</span>" +
-              esc(r.errs.join(" \u00b7 ")) + "</div>";
+              esc(r.errs.join(" · ")) + "</div>";
           }).join("") +
           (bad.length > 12 ? "<div>and " + (bad.length - 12) + " more</div>" : "") +
           "</div></div>"
@@ -67,7 +67,7 @@
           "</tr></thead><tbody>" +
           good.slice(0, 6).map(function (r) {
             return "<tr>" + show.map(function (c) {
-              return "<td>" + esc(r.rec[c[0]] || "\u2014") + "</td>";
+              return "<td>" + esc(r.rec[c[0]] || "—") + "</td>";
             }).join("") + "</tr>";
           }).join("") + "</tbody></table></div>" +
           '<div class="imp-actions">' +
@@ -81,7 +81,7 @@
 
   async function onFile(file) {
     var host = document.getElementById("impPreview");
-    host.innerHTML = '<p class="muted">Reading ' + esc(file.name) + "\u2026</p>";
+    host.innerHTML = '<p class="muted">Reading ' + esc(file.name) + "…</p>";
     try {
       var rows = await I.parseFile(file);
       parsed = I.validate(typeKey, rows);
@@ -93,9 +93,9 @@
 
   async function commit() {
     var btn = document.querySelector('[data-act="commit"]');
-    if (btn) { btn.disabled = true; btn.textContent = "Importing\u2026"; }
+    if (btn) { btn.disabled = true; btn.textContent = "Importing…"; }
     var res = await I.commit(typeKey, parsed.rows, function (n, total) {
-      if (btn) btn.textContent = "Importing " + n + " of " + total + "\u2026";
+      if (btn) btn.textContent = "Importing " + n + " of " + total + "…";
     });
     parsed = null;
     render();

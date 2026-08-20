@@ -17,14 +17,14 @@ window.LENS_ROTATION = [
   { code: "IPC.2.c",
     topic: "Hand hygiene",
     looks: [
-      "Sinks, soap and alcohol rub within reach at the point of care \u2014 not down the corridor",
+      "Sinks, soap and alcohol rub within reach at the point of care — not down the corridor",
       "Your own compliance audit: numbers, not an assertion",
       "Staff stopped at random and asked to name the five moments",
       "Training records that match the current duty roster"
     ],
     gap: "The audit exists but stops at 60% compliance with no action recorded against it.",
     fix: "Raise it as a finding, assign a department owner, re-audit, and file the second set " +
-         "of numbers beside the first. That second audit is the evidence \u2014 the first one " +
+         "of numbers beside the first. That second audit is the evidence — the first one " +
          "on its own is only the finding." },
 
   { code: "COP.14.d",
@@ -46,11 +46,11 @@ window.LENS_ROTATION = [
       "Look-alike and sound-alike drugs physically separated and labelled",
       "High-alert medications stored apart, with independent double-checks recorded",
       "Expiry checks with a documented frequency and a named person",
-      "What was done after the last dispensing error \u2014 not just that it was logged"
+      "What was done after the last dispensing error — not just that it was logged"
     ],
     gap: "The LASA list exists on paper but the shelves are still alphabetical, so the two " +
          "look-alikes sit side by side.",
-    fix: "Walk the shelf against the list. The document is not the control \u2014 the physical " +
+    fix: "Walk the shelf against the list. The document is not the control — the physical " +
          "separation is. An assessor checks the shelf, not the folder." },
 
   { code: "PRE.4.a",
@@ -74,14 +74,14 @@ window.LENS_ROTATION = [
       "Elderly, paediatric, disabled and unconscious patients all covered"
     ],
     gap: "The policy names five vulnerable groups; the assessment form has one tick-box marked " +
-         "\u201cvulnerable: yes/no\u201d.",
+         "“vulnerable: yes/no”.",
     fix: "Make the form carry the same categories as the policy, and make the care plan change " +
          "when the box is ticked. An identification that changes nothing is not identification." },
 
   { code: "IMS.1.a",
     topic: "Information needs",
     looks: [
-      "Who was asked, and when \u2014 patients, staff, management, regulators",
+      "Who was asked, and when — patients, staff, management, regulators",
       "The information plan that came out of asking",
       "Evidence it was reviewed, not written once and filed",
       "Data actually reaching the people who make decisions with it"
@@ -94,7 +94,7 @@ window.LENS_ROTATION = [
   { code: "PSQ.1.a",
     topic: "Patient safety programme",
     looks: [
-      "A multi-disciplinary group \u2014 not the quality department alone",
+      "A multi-disciplinary group — not the quality department alone",
       "Minutes showing decisions, not attendance",
       "Incidents that changed something, traced end to end",
       "Leadership present in the room, on the record"
@@ -108,7 +108,7 @@ window.LENS_ROTATION = [
     topic: "Rational prescribing",
     looks: [
       "Prescriptions legible, with generic names, dose, route and frequency",
-      "The antibiotic policy followed \u2014 and the deviations justified in writing",
+      "The antibiotic policy followed — and the deviations justified in writing",
       "Prescription audits with findings fed back to prescribers",
       "Verbal orders countersigned within a defined time"
     ],
@@ -141,7 +141,7 @@ window.LENS_ROTATION = [
     gap: "The crash cart checklist is signed daily but the defibrillator test strips stop three " +
          "months ago.",
     fix: "Test and retain the strip. A signed checklist covering an untested defibrillator is " +
-         "worse than no checklist \u2014 it documents an assurance that was never carried out." },
+         "worse than no checklist — it documents an assurance that was never carried out." },
 
   { code: "COP.1.a",
     topic: "Uniform care",
@@ -197,7 +197,7 @@ window.LENS_ROTATION = [
     topic: "Governance",
     looks: [
       "Who governs, named, with documented responsibilities",
-      "Evidence they exercise those responsibilities \u2014 minutes, approvals, decisions",
+      "Evidence they exercise those responsibilities — minutes, approvals, decisions",
       "Quality reports reaching the governing body",
       "Resources committed on the record"
     ],

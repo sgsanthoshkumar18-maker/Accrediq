@@ -149,7 +149,7 @@ module.exports = async function handler(req, res) {
           body: JSON.stringify({
             from: FROM,
             to: member.email,
-            subject: "AQcredix \u00b7 " + D.summarise(digest),
+            subject: "AQcredix · " + D.summarise(digest),
             html: render(digest, member.name)
           })
         });

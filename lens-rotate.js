@@ -99,9 +99,9 @@
            would misrepresent it as the standard's own words. */
         (window.AQText && window.AQText.isOwn(r.code)
           ? '<p class="lens-verbatim">' + esc(window.AQText.element(r.code, e.text)) + "</p>"
-          : '<p class="lens-verbatim">\u201c' + esc(e.text) + "\u201d</p>") +
-        '<p class="lens-note">' + esc(e.chapter) + " \u00b7 " + esc(e.chapterName) +
-          " \u2014 " + esc(e.stdCode) + "</p>" +
+          : '<p class="lens-verbatim">“' + esc(e.text) + "”</p>") +
+        '<p class="lens-note">' + esc(e.chapter) + " · " + esc(e.chapterName) +
+          " — " + esc(e.stdCode) + "</p>" +
         '<p class="lens-src">' +
           esc(window.AQText ? window.AQText.note(r.code)
                             : "Refer to the published NABH standard for the exact wording.") +

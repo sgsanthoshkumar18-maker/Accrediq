@@ -22,7 +22,7 @@ window.AQAudit = (function () {
     partial:    { key: "partial",    short: "PC", label: "Partially compliant" },
     nc:         { key: "nc",         short: "NC", label: "Non-compliant" },
     na:         { key: "na",         short: "NA", label: "Not applicable" },
-    unassessed: { key: "unassessed", short: "\u2014", label: "Unassessed" }
+    unassessed: { key: "unassessed", short: "—", label: "Unassessed" }
   };
 
   var SEVERITY = ["observation", "minor", "major", "critical"];
@@ -213,7 +213,7 @@ window.AQAudit = (function () {
   }
 
   function fmtDuration(sec) {
-    if (sec == null) return "\u2014";
+    if (sec == null) return "—";
     var h = Math.floor(sec / 3600), m = Math.floor((sec % 3600) / 60), s = sec % 60;
     return (h ? h + "h " : "") + (h || m ? m + "m " : "") + s + "s";
   }
@@ -425,7 +425,7 @@ window.AQAudit = (function () {
       var r = sc.open[i], f = r.finding;
       await S.saveCapa({
         id: "capa_" + session.id + "_" + r.code.replace(/\./g, "_"),
-        title: r.code + " \u2014 " + String(r.text || "").slice(0, 120),
+        title: r.code + " — " + String(r.text || "").slice(0, 120),
         element_code: r.code,
         source: "internal audit",
         severity: f.severity || "minor",

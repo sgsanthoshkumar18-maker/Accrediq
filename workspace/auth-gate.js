@@ -35,13 +35,13 @@ function friendlyAuthError(err) {
                "was created on another device, use Reset password below.", reset: true };
     }
     if (t.indexOf("user_already_exists") >= 0 || t.indexOf("already registered") >= 0) {
-      return { text: "An account with this email already exists \u2014 use Sign in instead." };
+      return { text: "An account with this email already exists — use Sign in instead." };
     }
     if (t.indexOf("over_email_send_rate") >= 0 || t.indexOf("rate limit") >= 0) {
       return { text: "Too many attempts just now. Wait a minute and try again." };
     }
     if (t.indexOf("weak_password") >= 0 || t.indexOf("password should be") >= 0) {
-      return { text: "That password is too short \u2014 six characters or more." };
+      return { text: "That password is too short — six characters or more." };
     }
     if (t.indexOf("failed to fetch") >= 0 || t.indexOf("networkerror") >= 0) {
       return { text: "No connection to the server. Check the network and try again." };
@@ -142,7 +142,7 @@ function friendlyAuthError(err) {
       // No backend connected at all — nothing to sign into. Say so rather than show a
       // login form that cannot work, and point at the one page that still functions.
       ov.innerHTML =
-        '<div class="aq-gate-box"><h2>Sign-in isn\u2019t connected yet</h2>' +
+        '<div class="aq-gate-box"><h2>Sign-in isn’t connected yet</h2>' +
         '<p>This copy of AQcredix has no backend configured, so there is no account system ' +
         "to sign into. The public pages — Home, About and Standards — still work normally.</p>" +
         '<a class="btn btn-accent" href="' + (document.body.getAttribute("data-base") || "") + 'index.html">Back to Home</a></div>';
@@ -200,7 +200,7 @@ function friendlyAuthError(err) {
         var e = body.querySelector("#agEmail").value.trim();
         var p = body.querySelector("#agPass").value;
         if (!e || !p) { msg.textContent = "Email and password are both needed."; return; }
-        this.disabled = true; msg.textContent = "Working\u2026";
+        this.disabled = true; msg.textContent = "Working…";
         try {
           if (tab === "up") {
             await S.adapter.signUp(e, p,

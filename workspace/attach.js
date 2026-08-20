@@ -101,7 +101,7 @@ window.AQAttach = (function () {
                       "Office document.");
     }
     if (file.size > MAX) {
-      throw new Error("That file is " + human(file.size) + ". The limit is 10 MB \u2014 " +
+      throw new Error("That file is " + human(file.size) + ". The limit is 10 MB — " +
                       "a scanned certificate is usually well under it.");
     }
     var url = base();
@@ -132,13 +132,13 @@ window.AQAttach = (function () {
          and "upload failed" sends them nowhere. */
       if (r.status === 404 || /bucket/i.test(t)) {
         throw new Error("The 'evidence' storage bucket does not exist yet. Create it in " +
-                        "Supabase \u2192 Storage, and keep it private.");
+                        "Supabase → Storage, and keep it private.");
       }
       /* A 403 here almost always means the storage policies have not been applied — the
          bucket exists but nothing grants access to it. Naming that is the difference
          between a five-minute fix and an afternoon. */
       if (r.status === 403 || r.status === 401) {
-        throw new Error("Storage refused the upload. Re-run workspace/schema.sql \u2014 it " +
+        throw new Error("Storage refused the upload. Re-run workspace/schema.sql — it " +
                         "creates the policies that let your hospital write to its own folder.");
       }
       throw new Error("Upload failed (" + r.status + ").");
@@ -216,7 +216,7 @@ window.AQAttach = (function () {
           var f = this.files && this.files[0];
           if (!f) return;
           var label = host.querySelector(".att-add span");
-          label.textContent = "Uploading\u2026";
+          label.textContent = "Uploading…";
           try {
             await upload(f, table, entityId);
             await paint();

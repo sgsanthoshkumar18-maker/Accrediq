@@ -62,7 +62,7 @@
             "<b>" + esc(i.name) + "</b>" +
             (i.subtype ? '<span class="lib-tag">' + esc(i.subtype) + "</span>" : "") +
             (i.detailed
-              ? '<span class="lib-ready">Full detail \\u00b7 downloadable</span>'
+              ? '<span class="lib-ready">Full detail · downloadable</span>'
               : '<span class="lib-soon">Standard template</span>') +
           "</button>";
         }).join("") + "</div></div>";
@@ -80,8 +80,8 @@
     var m = document.getElementById("libModal");
     m.innerHTML = '<div class="ws-modal-in lib-detail">' +
       '<div class="lib-detail-head">' +
-        '<span class="eyebrow">' + esc(item.department) + " \\u00b7 " + esc(CAT_LABEL[item.category]) +
-          (item.subtype ? " \\u00b7 " + esc(item.subtype) : "") + "</span>" +
+        '<span class="eyebrow">' + esc(item.department) + " · " + esc(CAT_LABEL[item.category]) +
+          (item.subtype ? " · " + esc(item.subtype) : "") + "</span>" +
         "<h3>" + esc(item.name) + "</h3>" +
       "</div>" +
       (item.why ? '<p class="lib-why">' + esc(item.why) + "</p>" : "") +
@@ -93,7 +93,7 @@
         ? '<div class="lib-analytics"><b>Analytics</b><p>' + esc(item.analytics) + "</p></div>" : "") +
       (!item.detailed
         ? '<p class="lib-note">This uses the standard template for a ' + esc(item.category) +
-          " \\u2014 the fields every one of this type needs. A version specific to this " +
+          " — the fields every one of this type needs. A version specific to this " +
           "document is not written yet.</p>" : "") +
       '<div class="ws-modal-actions"><span style="flex:1"></span>' +
         '<button class="btn btn-ghost" data-act="close">Close</button>' +

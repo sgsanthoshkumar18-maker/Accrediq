@@ -220,7 +220,7 @@
         // policy is that every exclusive page requires a real account — a typed name
         // is not that, so this is refused rather than accepted as a workaround.
         host.innerHTML =
-          '<div class="ws-auth"><h2>Sign-in isn\u2019t connected yet</h2>' +
+          '<div class="ws-auth"><h2>Sign-in isn’t connected yet</h2>' +
           '<p>This copy of AQcredix has no backend configured. Until it is, the Workspace ' +
           "cannot issue real accounts, so it stays locked rather than accept a typed name as " +
           "a substitute for one.</p>" +
@@ -317,7 +317,7 @@
       if (!sk) return;
       sk.className = "wrap ws-skel-stalled";
       sk.innerHTML = "<h2>This is taking longer than it should</h2>" +
-        "<p>The workspace could not reach the server. Check your connection and reload \u2014 " +
+        "<p>The workspace could not reach the server. Check your connection and reload — " +
         "nothing you have entered is affected.</p>" +
         '<button class="btn btn-accent" onclick="location.reload()">Reload</button>';
     }, 12000);

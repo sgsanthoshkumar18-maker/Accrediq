@@ -159,7 +159,7 @@
     head.appendChild(el("p", "aq-quiz-eyebrow", longDate(set.date)));
     head.appendChild(el("h2", "aq-quiz-title", set.department.name));
     head.appendChild(el("p", "aq-quiz-sub",
-      "Every option is plausible \u2014 read all four before choosing. A perfect score earns a dated certificate."));
+      "Every option is plausible — read all four before choosing. A perfect score earns a dated certificate."));
     root.appendChild(head);
 
     var bar = el("div", "aq-quiz-progress");
@@ -315,7 +315,7 @@
       box.appendChild(row);
     } else {
       box.appendChild(el("p", "aq-result-line",
-        "The certificate needs all " + set.questions.length + " correct. Read the explanations under each question \u2014 " +
+        "The certificate needs all " + set.questions.length + " correct. Read the explanations under each question — " +
         "the reasoning matters more than the score. A new department and a new set arrive tomorrow."));
     }
   }
@@ -347,7 +347,7 @@
     wrap.appendChild(img);
 
     var meta = el("p", "aq-cert-meta",
-      "Serial " + res.serial + " \u00B7 valid one year from issue");
+      "Serial " + res.serial + " · valid one year from issue");
     wrap.appendChild(meta);
 
     /* Keyed on the serial. A person may re-open the certificate or regenerate it after

@@ -32,26 +32,26 @@
       '<section class="section wrap"><div class="dev-block">' +
         "<h1>This account is already in use on two devices</h1>" +
         "<p>An AQcredix subscription covers one person on up to " + res.limit +
-          " devices \\u2014 typically a computer and a phone. Signing in here would make a " +
+          " devices — typically a computer and a phone. Signing in here would make a " +
           "third, so it has been held.</p>" +
         "<p><b>If one of these is an old device you no longer use</b>, sign it out below " +
           "and this one will work straight away.</p>" +
         '<div class="dev-list">' + res.active.map(function (d) {
           return '<div class="dev-row"><div><b>' + esc(d.label || "Device") + "</b>" +
             "<span>" + esc(d.kind === "mobile" ? "Phone or tablet" : "Computer") +
-            " \\u00b7 last used " + esc(when(d.last_seen)) + "</span></div>" +
+            " · last used " + esc(when(d.last_seen)) + "</span></div>" +
             '<button class="btn btn-ghost btn-sm" data-revoke="' + esc(d.id) + '">Sign out</button>' +
           "</div>";
         }).join("") + "</div>" +
         '<p class="dev-note">If your hospital needs more people to have access, each person ' +
-          "should have their own account rather than sharing one \\u2014 that is also what " +
+          "should have their own account rather than sharing one — that is also what " +
           "makes the record of who did what stand up to an assessor. Add colleagues from " +
           '<a href="team.html">Team</a>.</p>' +
       "</div></section>";
 
     host.querySelectorAll("[data-revoke]").forEach(function (b) {
       b.addEventListener("click", async function () {
-        b.disabled = true; b.textContent = "Signing out\\u2026";
+        b.disabled = true; b.textContent = "Signing out…";
         await D.revoke(b.dataset.revoke);
         location.reload();
       });
@@ -65,7 +65,7 @@
     try { if (localStorage.getItem(key)) return; localStorage.setItem(key, "1"); } catch (e) {}
 
     if (W && W.toast) {
-      W.toast("This is the second device on your account. A third will be refused \\u2014 " +
+      W.toast("This is the second device on your account. A third will be refused — " +
               "each person needs their own login.", "warn");
     }
   }

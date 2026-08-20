@@ -35,41 +35,41 @@ window.AQPreview = (function () {
                  ["PSQ", 72], ["ROM", 81], ["FMS", 58], ["HRM", 70], ["IMS", 64]] },
 
     due: [
-      { kind: "Equipment", name: "Defibrillator \u2014 ICU bed 4",
-        meta: "Calibration \u00b7 yearly \u00b7 Biomedical", state: "overdue", text: "59 days overdue" },
+      { kind: "Equipment", name: "Defibrillator — ICU bed 4",
+        meta: "Calibration · yearly · Biomedical", state: "overdue", text: "59 days overdue" },
       { kind: "Round", name: "Hand hygiene compliance round",
-        meta: "Monthly \u00b7 Infection Control \u00b7 IPC.2.c", state: "overdue", text: "43 days overdue" },
+        meta: "Monthly · Infection Control · IPC.2.c", state: "overdue", text: "43 days overdue" },
       { kind: "Task", name: "Medical gas pipeline pressure check",
-        meta: "Monthly \u00b7 Biomedical \u00b7 FMS.6.a", state: "overdue", text: "24 days overdue" },
+        meta: "Monthly · Biomedical · FMS.6.a", state: "overdue", text: "24 days overdue" },
       { kind: "Committee", name: "Infection Control Committee",
-        meta: "Quarterly \u00b7 Chair: Dr Rao", state: "soon", text: "Due Monday" },
-      { kind: "Equipment", name: "Autoclave \u2014 CSSD 1",
-        meta: "Preventive \u00b7 quarterly \u00b7 Biomedical", state: "ok", text: "Due 10 Nov" }
+        meta: "Quarterly · Chair: Dr Rao", state: "soon", text: "Due Monday" },
+      { kind: "Equipment", name: "Autoclave — CSSD 1",
+        meta: "Preventive · quarterly · Biomedical", state: "ok", text: "Due 10 Nov" }
     ],
 
     findings: [
       { title: "Hand hygiene compliance 67%, below the 90% target",
-        meta: "IPC.2.c \u00b7 Sister Lakshmi \u00b7 verification due", state: "overdue" },
+        meta: "IPC.2.c · Sister Lakshmi · verification due", state: "overdue" },
       { title: "Defibrillator calibration lapsed beyond 12 months",
-        meta: "FMS.4.a \u00b7 Mr Ravi \u00b7 corrective action", state: "overdue" }
+        meta: "FMS.4.a · Mr Ravi · corrective action", state: "overdue" }
     ],
 
     rounds: [
       { name: "Hand hygiene compliance round", score: 67, passed: false,
-        meta: "10 Aug \u00b7 ICU \u00b7 target 90%" },
-      { name: "Cleaning audit \u2014 wards", score: 92, passed: true,
-        meta: "8 Aug \u00b7 Ward 3 \u00b7 target 85%" },
+        meta: "10 Aug · ICU · target 90%" },
+      { name: "Cleaning audit — wards", score: 92, passed: true,
+        meta: "8 Aug · Ward 3 · target 85%" },
       { name: "Crash cart and emergency drug check", score: 100, passed: true,
-        meta: "12 Aug \u00b7 ICU \u00b7 target 100%" }
+        meta: "12 Aug · ICU · target 100%" }
     ],
 
     register: [
-      { name: "Defibrillator \u2014 ICU bed 4", meta: "ZOLL-R-88213 \u00b7 Biomedical \u00b7 ICU",
+      { name: "Defibrillator — ICU bed 4", meta: "ZOLL-R-88213 · Biomedical · ICU",
         state: "overdue", text: "59 days overdue" },
-      { name: "Autoclave \u2014 CSSD 1", meta: "AUT-01 \u00b7 Biomedical \u00b7 CSSD",
+      { name: "Autoclave — CSSD 1", meta: "AUT-01 · Biomedical · CSSD",
         state: "ok", text: "Due 10 Nov" },
-      { name: "Fire NOC", meta: "NOC-2025 \u00b7 Facilities", state: "soon", text: "Due 2 Nov" },
-      { name: "Ventilator fleet AMC \u2014 Hamilton", meta: "Contract \u00b7 Biomedical",
+      { name: "Fire NOC", meta: "NOC-2025 · Facilities", state: "soon", text: "Due 2 Nov" },
+      { name: "Ventilator fleet AMC — Hamilton", meta: "Contract · Biomedical",
         state: "ok", text: "Due 20 Jan" }
     ]
   };
@@ -169,7 +169,7 @@ window.AQPreview = (function () {
           return '<div class="pv-row pv-' + (r.passed ? "ok" : "overdue") + '">' +
             '<div class="pv-row-main"><b>' + esc(r.name) + "</b>" +
             '<span class="pv-meta">' + esc(r.meta) + "</span>" +
-            (!r.passed ? '<span class="pv-flag">Below target \u2014 record an action</span>' : "") +
+            (!r.passed ? '<span class="pv-flag">Below target — record an action</span>' : "") +
             "</div>" +
             '<div class="pv-row-side"><span class="pv-pill pv-' +
               (r.passed ? "ok" : "overdue") + '">' + r.score + "%</span></div></div>";
@@ -177,7 +177,7 @@ window.AQPreview = (function () {
     },
     capa: function () {
       return "<h1>NC &amp; CAPA</h1>" +
-        '<p class="lead">Findings tracked to closure \u2014 and never closed by whoever ' +
+        '<p class="lead">Findings tracked to closure — and never closed by whoever ' +
         "raised them.</p>" +
         '<div class="pv-stats">' + stat(2, "Open", "ws-stat-bad") +
           stat(1, "Awaiting verification", "ws-stat-warn") + stat(17, "Raised this year") +
@@ -195,11 +195,11 @@ window.AQPreview = (function () {
         rows(SAMPLE.due);
     },
     quiz: function () {
-      return "<h1>Today\u2019s quiz</h1>" +
+      return "<h1>Today’s quiz</h1>" +
         '<p class="lead">A fresh set every day, drawn from the standards, with your score ' +
         "history and a certificate in your name.</p>" +
         '<div class="pv-q">' +
-          "<div class=\"pv-q-n\">Question 3 of 10 \u00b7 IPC</div>" +
+          "<div class=\"pv-q-n\">Question 3 of 10 · IPC</div>" +
           "<b>Hand-hygiene facilities must be accessible where care is delivered. Which of " +
           "these best evidences compliance?</b>" +
           '<div class="pv-q-opt">A written hand-hygiene policy signed by the ICN</div>' +
@@ -207,7 +207,7 @@ window.AQPreview = (function () {
           '<div class="pv-q-opt">A training attendance register</div>' +
           '<div class="pv-q-opt">Alcohol rub purchase invoices</div>' +
         "</div>" +
-        '<div class="pv-note-inline">The quiz is <b>free with an account</b> \u2014 you do ' +
+        '<div class="pv-note-inline">The quiz is <b>free with an account</b> — you do ' +
         "not need a subscription for this page.</div>";
     },
     kpi: function () {
@@ -215,11 +215,11 @@ window.AQPreview = (function () {
         '<p class="lead">The indicators an assessor expects, with how each is calculated.</p>' +
         '<div class="pv-kpi">' +
           '<div><b>Hand hygiene compliance rate</b><span>Opportunities taken \u00f7 ' +
-            "opportunities observed \u00d7 100 \u00b7 monthly \u00b7 IPC</span></div>" +
-          '<div><b>Medication error rate</b><span>Errors \u00f7 patient days \u00d7 1000 ' +
-            "\u00b7 monthly \u00b7 Pharmacy</span></div>" +
+            "opportunities observed × 100 · monthly · IPC</span></div>" +
+          '<div><b>Medication error rate</b><span>Errors \u00f7 patient days × 1000 ' +
+            "· monthly · Pharmacy</span></div>" +
           '<div><b>Return to ICU within 48 hours</b><span>Unplanned returns \u00f7 ICU ' +
-            "discharges \u00d7 100 \u00b7 monthly \u00b7 ICU</span></div>" +
+            "discharges × 100 · monthly · ICU</span></div>" +
         "</div>";
     },
     sop: function () {
@@ -236,13 +236,13 @@ window.AQPreview = (function () {
     },
     tools: function () {
       return "<h1>Quality tools</h1>" +
-        '<p class="lead">Five Why, fishbone, PDCA and the rest \u2014 working tools, not ' +
+        '<p class="lead">Five Why, fishbone, PDCA and the rest — working tools, not ' +
         "diagrams to look at.</p>" +
         '<div class="pv-tool">' +
-          "<b>5 Why \u2014 hand hygiene compliance fell to 67%</b>" +
+          "<b>5 Why — hand hygiene compliance fell to 67%</b>" +
           '<div class="pv-why"><span>1</span>Why? Alcohol rub was empty in three of six bays.</div>' +
           '<div class="pv-why"><span>2</span>Why? Nobody was named to check levels each shift.</div>' +
-          '<div class="pv-why is-dim"><span>3</span>Continue in the full tool\u2026</div>' +
+          '<div class="pv-why is-dim"><span>3</span>Continue in the full tool…</div>' +
         "</div>";
     },
     videos: function () {
@@ -250,10 +250,10 @@ window.AQPreview = (function () {
         '<p class="lead">Short explainers on the elements teams find hardest.</p>' +
         '<div class="pv-vids">' +
           '<div class="pv-vid"><b>Medication reconciliation at transitions</b>' +
-            "<span>MOM.4.e \u00b7 6 min</span></div>" +
+            "<span>MOM.4.e · 6 min</span></div>" +
           '<div class="pv-vid"><b>What an assessor actually asks about hand hygiene</b>' +
-            "<span>IPC.2.c \u00b7 8 min</span></div>" +
-          '<div class="pv-vid"><b>Writing a CAPA that closes</b><span>PSQ \u00b7 5 min</span></div>' +
+            "<span>IPC.2.c · 8 min</span></div>" +
+          '<div class="pv-vid"><b>Writing a CAPA that closes</b><span>PSQ · 5 min</span></div>' +
         "</div>";
     },
     standards: function () {
@@ -270,27 +270,27 @@ window.AQPreview = (function () {
       return "<h1>Committees</h1>" +
         '<p class="lead">Which committees a hospital must run, how often, and who sits on them.</p>' +
         rows([
-          { name: "Infection Control Committee", meta: "Quarterly \u00b7 chaired by the Microbiologist",
+          { name: "Infection Control Committee", meta: "Quarterly · chaired by the Microbiologist",
             state: "ok", text: "4 sittings/yr" },
-          { name: "Pharmacy & Therapeutics Committee", meta: "Quarterly \u00b7 chaired by the Medical Superintendent",
+          { name: "Pharmacy & Therapeutics Committee", meta: "Quarterly · chaired by the Medical Superintendent",
             state: "ok", text: "4 sittings/yr" },
-          { name: "Quality Assurance Committee", meta: "Monthly \u00b7 chaired by the Quality Manager",
+          { name: "Quality Assurance Committee", meta: "Monthly · chaired by the Quality Manager",
             state: "ok", text: "12 sittings/yr" }
         ]);
     },
     codealerts: function () {
       return "<h1>Code alerts</h1>" +
-        '<p class="lead">The colour codes your hospital must define, publish and drill \u2014 ' +
+        '<p class="lead">The colour codes your hospital must define, publish and drill — ' +
         "with who responds and what they do.</p>" +
         rows([
           { kind: "Code Blue", name: "Cardiopulmonary arrest",
-            meta: "Response team \u00b7 all clinical areas \u00b7 drill half-yearly",
+            meta: "Response team · all clinical areas · drill half-yearly",
             state: "ok", text: "Defined" },
           { kind: "Code Red", name: "Fire",
-            meta: "Fire marshal and security \u00b7 hospital-wide \u00b7 drill half-yearly",
+            meta: "Fire marshal and security · hospital-wide · drill half-yearly",
             state: "ok", text: "Defined" },
           { kind: "Code Pink", name: "Infant or child abduction",
-            meta: "Security \u00b7 maternity, paediatrics \u00b7 drill yearly",
+            meta: "Security · maternity, paediatrics · drill yearly",
             state: "warn", text: "Not drilled" }
         ]) +
         '<div class="pv-note-inline">The full page carries every code, the response ' +
@@ -316,9 +316,9 @@ window.AQPreview = (function () {
         '<div class="pv-stats">' + stat(45, "Departments in scope") + stat(12, "Audits this year") +
           stat(3, "Open findings", "ws-stat-bad") + stat("68%", "Average score") + "</div>" +
         rows([
-          { name: "Pharmacy", meta: "Audited 4 Aug \u00b7 Dr Menon \u00b7 34 elements",
+          { name: "Pharmacy", meta: "Audited 4 Aug · Dr Menon · 34 elements",
             state: "ok", text: "82%" },
-          { name: "Intensive Care Unit", meta: "Audited 28 Jul \u00b7 41 elements",
+          { name: "Intensive Care Unit", meta: "Audited 28 Jul · 41 elements",
             state: "overdue", text: "61%" },
           { name: "Central Sterile Supply", meta: "Not yet audited this cycle",
             state: "warn", text: "Due" }
@@ -331,13 +331,13 @@ window.AQPreview = (function () {
         '<div class="pv-stats">' + stat(42, "Reported this year") + stat(2, "Open", "ws-stat-bad") +
           stat(6, "Near misses this month") + stat("94%", "Reported within the hour") + "</div>" +
         rows([
-          { kind: "Level 3", name: "Patient fall \u2014 no injury",
-            meta: "ICU \u00b7 1 Aug \u00b7 RCA complete", state: "ok", text: "Closed" },
+          { kind: "Level 3", name: "Patient fall — no injury",
+            meta: "ICU · 1 Aug · RCA complete", state: "ok", text: "Closed" },
           { kind: "Level 2", name: "Wrong-strength medicine dispensed, intercepted",
-            meta: "Pharmacy \u00b7 9 Aug \u00b7 near miss", state: "warn", text: "In review" }
+            meta: "Pharmacy · 9 Aug · near miss", state: "warn", text: "In review" }
         ]) +
         '<div class="pv-note-inline">Patient identifiers are <b>deliberately not stored</b> ' +
-        "\u2014 the printed form carries them in pen, and the hospital keeps that.</div>";
+        "— the printed form carries them in pen, and the hospital keeps that.</div>";
     },
     gap: function () {
       return "<h1>Gap analysis</h1>" +
@@ -345,11 +345,11 @@ window.AQPreview = (function () {
         "takes.</p>" +
         rows([
           { kind: "IPC.2.c", name: "Hand-hygiene facilities at the point of care",
-            meta: "Partially met \u00b7 audit data missing", state: "warn", text: "Gap" },
+            meta: "Partially met · audit data missing", state: "warn", text: "Gap" },
           { kind: "MOM.4.e", name: "Medication reconciliation at transitions",
-            meta: "Not met \u00b7 no defined process", state: "overdue", text: "Gap" },
+            meta: "Not met · no defined process", state: "overdue", text: "Gap" },
           { kind: "FMS.5.a", name: "Fire and emergency plans",
-            meta: "Met \u00b7 drill records current", state: "ok", text: "Met" }
+            meta: "Met · drill records current", state: "ok", text: "Met" }
         ]);
     },
     generic: function () {
@@ -365,7 +365,7 @@ window.AQPreview = (function () {
     return '<div class="pv-cta">' +
       "<h2>This is a preview. Here is what changes when you subscribe.</h2>" +
       '<div class="pv-grid">' +
-        '<div><b>Your own hospital</b><p>Every figure above becomes your data \u2014 your ' +
+        '<div><b>Your own hospital</b><p>Every figure above becomes your data — your ' +
           "equipment, your committees, your findings.</p></div>" +
         '<div><b>Everyone in your hospital</b><p>Unlimited accounts, every department, ' +
           "no per-user charge.</p></div>" +

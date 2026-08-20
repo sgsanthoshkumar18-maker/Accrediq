@@ -88,13 +88,13 @@
     var st = statusOf(p);
     return '<div class="cal-row st-' + (st.state === "closed" ? "ok" : st.state) + '">' +
       '<div class="cal-row-main">' +
-        '<h4>Pass #' + esc(p.pass_no) + " \u2014 " + esc(p.particulars.split("\n")[0]) + "</h4>" +
-        '<div class="cal-meta">' + esc(p.department || "\u2014") +
-          (p.reason ? " \u00b7 " + esc(p.reason) : "") +
-          (p.asset_code ? " \u00b7 " + esc(p.asset_code) : "") +
-          " \u00b7 " + (p.returnable ? "Returnable" : "Non-returnable") + "</div>" +
+        '<h4>Pass #' + esc(p.pass_no) + " — " + esc(p.particulars.split("\n")[0]) + "</h4>" +
+        '<div class="cal-meta">' + esc(p.department || "—") +
+          (p.reason ? " · " + esc(p.reason) : "") +
+          (p.asset_code ? " · " + esc(p.asset_code) : "") +
+          " · " + (p.returnable ? "Returnable" : "Non-returnable") + "</div>" +
         (p.taken_by ? '<div class="cal-next">Taken by ' + esc(p.taken_by) +
-          (p.vehicle_no ? " \u00b7 " + esc(p.vehicle_no) : "") + "</div>" : "") +
+          (p.vehicle_no ? " · " + esc(p.vehicle_no) : "") + "</div>" : "") +
       "</div>" +
       '<div class="cal-row-side"><span class="cal-pill st-' +
         (st.state === "closed" ? "ok" : st.state) + '">' + esc(st.text) + "</span>" +
@@ -131,8 +131,8 @@
     document.getElementById("gpPanel").innerHTML = list.length
       ? '<div class="cal-rows">' + list.map(function (p) { return row(p, ro); }).join("") + "</div>"
       : '<div class="cal-empty"><h3>Nothing here</h3>' +
-        "<p>Every material leaving the building through security \u2014 for repair, on loan, " +
-        "for disposal \u2014 is recorded here, returnable or not.</p>" +
+        "<p>Every material leaving the building through security — for repair, on loan, " +
+        "for disposal — is recorded here, returnable or not.</p>" +
         (ro ? "" : '<button class="btn btn-accent" data-act="add">New gate pass</button>') + "</div>";
   }
 
@@ -150,14 +150,14 @@
     p = p || {};
     var isNew = !p.id;
     modal("<h3>" + (isNew ? "New material gate pass" : "Edit gate pass") + "</h3>" +
-      (isNew ? '<p class="cal-hint">Pass #' + esc(nextPassNo()) + " \u00b7 " +
+      (isNew ? '<p class="cal-hint">Pass #' + esc(nextPassNo()) + " · " +
         new Date().toISOString().slice(0, 10) + "</p>" : "") +
       '<div class="ws-form">' +
         '<div class="ws-f"><label for="gDept">Department</label>' +
           '<input id="gDept" value="' + esc(p.department || "") + '" placeholder="e.g. IT, Biomedical"></div>' +
         '<div class="ws-f"><label for="gAsset">Asset code (if applicable)</label>' +
           '<input id="gAsset" value="' + esc(p.asset_code || "") + '"></div>' +
-        '<div class="ws-f ws-f-wide"><label for="gPart">Particulars \u2014 with asset code, make and serial as applicable</label>' +
+        '<div class="ws-f ws-f-wide"><label for="gPart">Particulars — with asset code, make and serial as applicable</label>' +
           '<textarea id="gPart" rows="2">' + esc(p.particulars || "") + "</textarea></div>" +
         '<div class="ws-f ws-f-wide"><label for="gReason">Reason / purpose</label>' +
           '<input id="gReason" value="' + esc(p.reason || "") + '" placeholder="e.g. Service, motherboard issue"></div>' +
@@ -193,7 +193,7 @@
 
   function openReturn(p) {
     modal("<h3>Record return</h3>" +
-      '<p class="cal-hint">Pass #' + esc(p.pass_no) + " \u2014 " + esc(p.particulars.split("\n")[0]) + "</p>" +
+      '<p class="cal-hint">Pass #' + esc(p.pass_no) + " — " + esc(p.particulars.split("\n")[0]) + "</p>" +
       '<div class="ws-form">' +
         '<div class="ws-f"><label for="rOn">Date returned</label>' +
           '<input id="rOn" type="date" value="' + new Date().toISOString().slice(0, 10) + '"></div>' +

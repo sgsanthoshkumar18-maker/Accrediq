@@ -1473,3 +1473,59 @@ a:focus-visible,button:focus-visible,input:focus-visible,select:focus-visible,te
 .rl-wrap{padding-bottom:8px;}
 .pv-detail-h{font-size:17px;margin-bottom:14px;padding-top:26px;
   border-top:1px solid var(--border-soft);}
+
+/* ---------- Native select dropdowns ----------
+   The <option> list is drawn by the operating system, not by the page, so it ignores the
+   dark theme entirely and renders near-invisible grey-on-white — a severity dropdown
+   looked empty until the cursor moved over it. Options accept only a few properties, but
+   background and color are among them and are enough to make the list readable. */
+select option{
+  background:var(--bg-elevated);
+  color:var(--fg);
+}
+select option:checked,
+select option:hover{
+  background:var(--brand-2);
+  color:#04241F;
+}
+/* The closed select itself must not inherit a light UA default either. */
+select{
+  background:var(--bg-elevated);
+  color:var(--fg);
+  /* color-scheme tells the browser to draw its own widgets — the dropdown arrow, the
+     scrollbar inside a long option list — in dark rather than light. Without it those
+     stay light even when the option colours are set. */
+  color-scheme:dark;
+}
+/* ...but the site has a light theme, and forcing dark widgets there gives a dark popup on
+   a white page, which is the same readability bug pointing the other way. */
+:root[data-theme="light"] select{color-scheme:light;}
+:root[data-theme="light"] select option{background:var(--bg-elevated);color:var(--fg);}
+
+/* ---------- Orbit mark: the same rotating arc as the hero ----------
+   The About page mark carries .hero-logo-arc and should have inherited the hero's
+   animation, but the arc sat static — or wobbled off centre — there.
+
+   The cause is the transform-box. An earlier attempt used fill-box, which resolves
+   transform-origin against the ELEMENT'S OWN bounding box. This element is a
+   three-quarter arc, so its bbox is roughly (4,4)-(36,33.5) and its centre is about
+   (20,18.7) — not (20,20). Rotating about that point swings the arc around a point
+   1.3 units off the circle it is supposed to trace, so it drifts away from the ring
+   instead of spinning inside it.
+
+   view-box resolves against the SVG's own viewBox, which is 0 0 40 40. There 50% 50%
+   is exactly (20,20) — the true centre of both the circle and the arc's path. Same
+   result as the hero's pixel origin, but stated in a way that survives the mark being
+   rendered at 42px on About and 90px in the hero. */
+.aqo-mark .hero-logo-arc{
+  transform-box:view-box;
+  transform-origin:50% 50%;
+  animation:aq-ring-spin 14s linear infinite;
+}
+/* Brighter and a touch heavier than the dim base ring, so the moving gap is actually
+   readable at the 42px About renders the mark at. Below about 2.6 the arc and the grey
+   circle underneath it merge into one flat ring and the motion becomes invisible. */
+.aqo-mark .hero-logo-arc{stroke:var(--accent-bright);stroke-width:3;}
+@media (prefers-reduced-motion:reduce){
+  .aqo-mark .hero-logo-arc{animation:none;}
+}

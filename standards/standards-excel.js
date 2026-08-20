@@ -155,13 +155,13 @@ window.AQStandardsExcel = (function () {
     var sopCount = rows.filter(function (r) { return r.sop; }).length;
 
     var out = [
-      [B("AQcredix \u2014 NABH Standards Export")],
+      [B("AQcredix — NABH Standards Export")],
       [],
-      [L("Chapter"), chapterCode + " \u2014 " + name],
+      [L("Chapter"), chapterCode + " — " + name],
       [L("Filter applied"), filterLabel(filter)],
       [L("Elements in this export"), { v: rows.length, n: true }],
       [L("Of which SOP required"), { v: sopCount, n: true }],
-      [L("Chapter totals"), o.standards + " standards \u00b7 " + o.elements + " elements"],
+      [L("Chapter totals"), o.standards + " standards · " + o.elements + " elements"],
       [L("Exported"), new Date().toLocaleString()],
       [],
       [W("Elements marked SOP required are asterisked in the NABH book: the hospital must " +
@@ -172,7 +172,7 @@ window.AQStandardsExcel = (function () {
 
     if (filter === "sop") {
       out.push([W("One row per SOP. The Departments column names every area the NABH assessor checklist " +
-                  "scopes that element to \u2014 the departments that must hold and follow " +
+                  "scopes that element to — the departments that must hold and follow " +
                   "the SOP. Where an element is not scoped to any single area it is marked " +
                   "hospital-wide, which usually means it belongs to governance or a " +
                   "committee rather than a department.")]);
@@ -192,7 +192,7 @@ window.AQStandardsExcel = (function () {
   function elementsSheet(chapterCode, filter, rows) {
     var withDepts = filter === "sop";
     var head = withDepts
-      ? [H("Element"), H("Objective Element \u2014 what the SOP must cover"),
+      ? [H("Element"), H("Objective Element — what the SOP must cover"),
          H("Departments that must maintain this SOP"), H("Depts"),
          H("Standard"), H("Category")]
       : [H("Element"), H("Objective Element"), H("Standard"), H("Category"), H("SOP required")];
@@ -213,7 +213,7 @@ window.AQStandardsExcel = (function () {
         ]);
       } else {
         out.push([{ v: r.code, s: XF.plain }, W(r.text), r.stdCode, cat,
-                  { v: r.sop ? "Yes" : "\u2014", s: r.sop ? XF.sop : XF.plain }]);
+                  { v: r.sop ? "Yes" : "—", s: r.sop ? XF.sop : XF.plain }]);
       }
     });
 
@@ -256,7 +256,7 @@ window.AQStandardsExcel = (function () {
 
   function build(chapterCode, filter) {
     if (!window.JSZip) {
-      throw new Error("The spreadsheet engine is still loading \u2014 wait a moment and try again.");
+      throw new Error("The spreadsheet engine is still loading — wait a moment and try again.");
     }
     var rows = collect(chapterCode, filter);
     var names = sheetNames(filter);

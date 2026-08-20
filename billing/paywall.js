@@ -248,20 +248,20 @@ window.AQPaywall = (function () {
      does not care what modules exist. */
   function justifyText(plan) {
     var yearly = B.planOf("yearly");
-    return "Subject: NABH accreditation software \u2014 approval request\n\n" +
+    return "Subject: NABH accreditation software — approval request\n\n" +
       "I would like approval to subscribe to AQcredix, a platform for managing our NABH " +
       "accreditation work.\n\n" +
       "What it does\n" +
-      "\u2022 Tracks every recurring obligation \u2014 committee meetings, drills, audits, " +
-      "calibration, licence renewals \u2014 and shows what is overdue, by department.\n" +
-      "\u2022 Holds our equipment and licence register with calibration certificates " +
+      "• Tracks every recurring obligation — committee meetings, drills, audits, " +
+      "calibration, licence renewals — and shows what is overdue, by department.\n" +
+      "• Holds our equipment and licence register with calibration certificates " +
       "attached to each item.\n" +
-      "\u2022 Records rounds and audits with scores, and tracks findings through to " +
+      "• Records rounds and audits with scores, and tracks findings through to " +
       "verified closure.\n" +
-      "\u2022 Produces the evidence exports an assessor asks for, in one press.\n\n" +
+      "• Produces the evidence exports an assessor asks for, in one press.\n\n" +
       "Cost\n" +
       B.rupees(plan.inr) + " " + (plan.months > 1 ? "per year" : "per month") +
-      " for the whole hospital \u2014 every department, unlimited accounts, no per-user " +
+      " for the whole hospital — every department, unlimited accounts, no per-user " +
       "charge.\n" +
       (B.CFG.introductory
         ? "This is an introductory rate. The standard price will be " +
@@ -274,7 +274,7 @@ window.AQPaywall = (function () {
       "does replace the spreadsheets and reminders we currently maintain by hand, and it " +
       "keeps the evidence in one place between surveillance visits.\n\n" +
       "The main risk it addresses is a non-conformity raised for something that lapsed " +
-      "because nobody was reminded \u2014 which is the most common category of finding.\n\n" +
+      "because nobody was reminded — which is the most common category of finding.\n\n" +
       "Happy to walk you through it.\n";
   }
 
@@ -297,8 +297,8 @@ window.AQPaywall = (function () {
     h += '<div class="pw-head">' +
       "<h2>Subscribe to the AQcredix workspace</h2>" +
       '<p class="pw-sub">The standards library, departments and tools stay free. ' +
-      "The workspace \u2014 readiness scoring, internal audit, incidents, CAPA and documents " +
-      "\u2014 needs an active subscription.</p></div>";
+      "The workspace — readiness scoring, internal audit, incidents, CAPA and documents " +
+      "— needs an active subscription.</p></div>";
 
     if (st && st.reason === "expired") {
       h += '<div class="pw-note warn">Your subscription ended on ' +
@@ -306,8 +306,8 @@ window.AQPaywall = (function () {
         ". Your data is untouched and comes straight back when you renew.</div>";
     }
     if (st && st.reason === "pending") {
-      h += '<div class="pw-note ok"><b>Payment submitted \u2014 awaiting confirmation.</b>' +
-        "<p>Reference <code>" + esc(st.record.txn_ref || "\u2014") + "</code>, submitted " +
+      h += '<div class="pw-note ok"><b>Payment submitted — awaiting confirmation.</b>' +
+        "<p>Reference <code>" + esc(st.record.txn_ref || "—") + "</code>, submitted " +
         B.fmtDate(st.record.requested_at) + ". Each UPI payment is checked by hand against " +
         "the bank statement, so this is usually same-day rather than instant. You will not " +
         "need to pay again.</p></div>";
@@ -315,7 +315,7 @@ window.AQPaywall = (function () {
     if (st && st.reason === "unavailable") {
       h += '<div class="pw-note bad"><b>Subscription status could not be checked.</b>' +
         "<p>Access is held rather than opened while this is unresolved. If you have an " +
-        "active subscription, nothing has been lost \u2014 reload in a moment, or contact " +
+        "active subscription, nothing has been lost — reload in a moment, or contact " +
         esc(B.CFG.supportEmail || "support") + ".</p>" +
         '<p class="pw-tech">' + esc(st.error || "") + "</p></div>";
     }
@@ -327,7 +327,7 @@ window.AQPaywall = (function () {
       h += '<div class="pw-intro">' +
         "<b>Introductory pricing</b>" +
         "<p>AQcredix is new. This is an introductory rate while we learn how hospitals " +
-        "actually use it \u2014 the standard price will be " +
+        "actually use it — the standard price will be " +
         B.rupees(B.CFG.standardMonthlyInr || 399900) + " a month. " +
         "<b>Subscribe now and you keep this rate for as long as your subscription runs " +
         "without a break.</b></p></div>";
@@ -341,7 +341,7 @@ window.AQPaywall = (function () {
        so the paywall offers that instead of assuming the reader holds the budget. */
     h += '<div class="pw-justify">' +
       "<b>Not the person who approves spending?</b>" +
-      "<p>Most quality managers are not. Send this to whoever signs off \u2014 it sets out " +
+      "<p>Most quality managers are not. Send this to whoever signs off — it sets out " +
       "what the subscription covers and what it replaces.</p>" +
       '<button type="button" class="btn btn-ghost btn-sm" data-pw="justify">' +
       "Draft an email I can forward</button></div>";
@@ -355,7 +355,7 @@ window.AQPaywall = (function () {
       "<dl class=\"pw-dl\">" +
       "<div><dt>UPI ID</dt><dd><code>" + esc(B.CFG.upiVpa || "") + "</code></dd></div>" +
       "<div><dt>Amount</dt><dd>" + B.rupees(plan.inr) + "</dd></div>" +
-      "<div><dt>Plan</dt><dd>" + esc(plan.label) + " \u00B7 " + plan.months + " month" +
+      "<div><dt>Plan</dt><dd>" + esc(plan.label) + " · " + plan.months + " month" +
         (plan.months > 1 ? "s" : "") + "</dd></div></dl>" +
       '<p class="pw-hint">On a phone, <a href="' + esc(B.upiUri(selected)) +
       '">tap here to open your UPI app</a> with the amount already filled in.</p>' +
@@ -364,7 +364,7 @@ window.AQPaywall = (function () {
     /* Claim form */
     h += '<div class="pw-claim"><h3>After paying, enter your UPI reference</h3>' +
       '<p class="pw-sub">Your UPI app shows a transaction ID or UTR once the payment ' +
-      "succeeds \u2014 usually 12 digits. Paste it here so the payment can be matched " +
+      "succeeds — usually 12 digits. Paste it here so the payment can be matched " +
       "against the bank statement and your access switched on.</p>" +
       '<div class="pw-claimrow">' +
       '<input type="text" id="pwTxn" placeholder="UPI transaction ID / UTR" autocomplete="off">' +
@@ -405,7 +405,7 @@ window.AQPaywall = (function () {
         /* execCommand rather than the clipboard API: this runs inside a modal on hospital
            desktops that are often old, and a copy button that silently fails is worse than
            one that uses a deprecated call which still works everywhere. */
-        try { document.execCommand("copy"); copy.textContent = "Copied \u2713"; }
+        try { document.execCommand("copy"); copy.textContent = "Copied ✓"; }
         catch (e) { copy.textContent = "Select the text and copy it"; }
         setTimeout(function () { copy.textContent = "Copy to clipboard"; }, 2200);
       });
@@ -427,10 +427,10 @@ window.AQPaywall = (function () {
       var msg = host.querySelector("#pwMsg");
       if (txn.length < 6) {
         msg.innerHTML = '<div class="pw-note bad">Enter the transaction ID exactly as your ' +
-          "UPI app shows it \u2014 it is usually 12 digits.</div>";
+          "UPI app shows it — it is usually 12 digits.</div>";
         return;
       }
-      sub.disabled = true; sub.textContent = "Submitting\u2026";
+      sub.disabled = true; sub.textContent = "Submitting…";
       try {
         await B.submitClaim(user, selected, txn, "");
         msg.innerHTML = '<div class="pw-note ok"><b>Submitted.</b> Your payment will be ' +
@@ -475,8 +475,8 @@ window.AQPaywall = (function () {
       if (!w) return "";                                  // local mode: no server opinion
       if (w.is_owner) {
         return '<details class="pw-note"><summary>Database recognises you as owner ' +
-          "\u2014 approvals will save.</summary><p class=\"pw-tech\">" +
-          esc(w.resolved_email || "") + " \u2192 " + esc(w.normalised || "") +
+          "— approvals will save.</summary><p class=\"pw-tech\">" +
+          esc(w.resolved_email || "") + " → " + esc(w.normalised || "") +
           "</p></details>";
       }
       return '<div class="pw-note bad"><b>The database does not recognise you as an owner.</b>' +
@@ -505,7 +505,7 @@ window.AQPaywall = (function () {
     var h = '<div class="pw-admin"><h2>Access &amp; subscriptions</h2>' + diag +
       '<div id="pwAdminMsg"></div>' +
       '<p class="pw-sub">Every UPI payment is a claim until you match it against your bank ' +
-      "statement. Approve only what you can actually see credited \u2014 a transaction ID " +
+      "statement. Approve only what you can actually see credited — a transaction ID " +
       "typed into a box is not proof that money arrived.</p>";
 
     if (!rows.length) {
@@ -523,7 +523,7 @@ window.AQPaywall = (function () {
           return "<tr><td>" + esc(r.name || r.email) + "<br><small>" + esc(r.email) + "</small></td>" +
             "<td>" + esc((B.planOf(r.plan) || {}).label || r.plan) + "</td>" +
             "<td>" + B.rupees(r.amount_paise || 0) + "</td>" +
-            "<td><code>" + esc(r.txn_ref || "\u2014") + "</code></td>" +
+            "<td><code>" + esc(r.txn_ref || "—") + "</code></td>" +
             "<td>" + B.fmtDate(r.requested_at) + "</td>" +
             '<td class="pw-acts">' +
             '<button type="button" class="btn btn-accent btn-sm" data-ok="' + esc(r.id) + '">Approve</button> ' +
@@ -546,7 +546,7 @@ window.AQPaywall = (function () {
             '<td><span class="pw-badge ' + (live ? "ok" : r.status === "rejected" ? "bad" : "warn") +
               '">' + (live ? "Active" : r.status === "active" ? "Expired" : esc(r.status)) + "</span></td>" +
             "<td>" + B.fmtDate(r.expires_at) + "</td>" +
-            "<td>" + esc(r.approved_by || "\u2014") + "</td></tr>";
+            "<td>" + esc(r.approved_by || "—") + "</td></tr>";
         }).join("") + "</tbody></table></div>";
     }
 

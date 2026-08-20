@@ -142,7 +142,7 @@
 
     if (!v.length) {
       return '<div class="cal-empty"><h3>No checklists yet</h3>' +
-        "<p>A round is a recurring check that produces a score \u2014 hand hygiene, cleaning, " +
+        "<p>A round is a recurring check that produces a score — hand hygiene, cleaning, " +
         "record review, crash cart. Write the questions once, set how often, and every " +
         "round after that is scored and trended for you.</p>" +
         (ro ? "" : '<button class="btn btn-accent" data-act="add-list">Create a checklist</button>') +
@@ -159,17 +159,17 @@
         '<div class="cal-row-main">' +
           "<h4>" + esc(l.name) + "</h4>" +
           '<div class="cal-meta">' + esc(K.label(l.frequency)) +
-            (l.department ? " \u00b7 " + esc(l.department) : "") +
-            (l.element_code ? " \u00b7 " + esc(l.element_code) : "") +
-            " \u00b7 " + itemsOf(l.id).length + " questions" +
-            " \u00b7 target " + esc(l.target_pct || 0) + "%" + "</div>" +
+            (l.department ? " · " + esc(l.department) : "") +
+            (l.element_code ? " · " + esc(l.element_code) : "") +
+            " · " + itemsOf(l.id).length + " questions" +
+            " · target " + esc(l.target_pct || 0) + "%" + "</div>" +
           (last
             ? '<div class="cal-next">Last round ' + esc(last.performed_on) + ": " +
               '<b class="' + (last.passed === false ? "rd-bad" : "rd-good") + '">' +
-              (last.score_pct != null ? esc(last.score_pct) + "%" : "\u2014") + "</b> " +
+              (last.score_pct != null ? esc(last.score_pct) + "%" : "—") + "</b> " +
               spark(t) +
               (last.passed === false
-                ? ' <span class="rd-flag">below target \u2014 record an action</span>' : "") +
+                ? ' <span class="rd-flag">below target — record an action</span>' : "") +
               "</div>"
             : '<div class="cal-next">No round recorded yet</div>') +
           (nd.preferred ? '<div class="cal-next">Next due <b>' + esc(nd.preferred) + "</b></div>" : "") +
@@ -193,16 +193,16 @@
             return '<div class="cal-row">' +
               '<div class="cal-row-main"><h4>' + esc(l.name) + "</h4>" +
                 '<div class="cal-meta">' + esc(K.label(l.frequency)) +
-                  (l.department ? " \u00b7 " + esc(l.department) : "") +
-                  " \u00b7 " + qs.length + " questions \u00b7 " +
+                  (l.department ? " · " + esc(l.department) : "") +
+                  " · " + qs.length + " questions · " +
                   qs.filter(function (q) { return q.critical; }).length + " critical</div>" +
                 (qs.length
                   ? '<ol class="rd-qs">' + qs.slice(0, 4).map(function (q) {
                       return "<li>" + esc(q.text) +
                         (q.critical ? ' <span class="rd-crit">critical</span>' : "") + "</li>";
                     }).join("") +
-                    (qs.length > 4 ? "<li>\u2026 and " + (qs.length - 4) + " more</li>" : "") + "</ol>"
-                  : '<div class="cal-next">No questions yet \u2014 a round cannot be scored</div>') +
+                    (qs.length > 4 ? "<li>… and " + (qs.length - 4) + " more</li>" : "") + "</ol>"
+                  : '<div class="cal-next">No questions yet — a round cannot be scored</div>') +
               "</div>" +
               '<div class="cal-row-side">' +
                 (ro ? "" :
@@ -224,7 +224,7 @@
 
     if (!rs.length) {
       return '<div class="cal-empty"><h3>No rounds recorded</h3>' +
-        "<p>Every round kept here carries its score and its answers \u2014 which is what an " +
+        "<p>Every round kept here carries its score and its answers — which is what an " +
         "assessor asks to see, alongside what you did when the score was low.</p></div>";
     }
 
@@ -234,20 +234,20 @@
         return '<div class="cal-row' + (r.passed === false ? " st-overdue" : "") + '">' +
           '<div class="cal-row-main"><h4>' + esc(l ? l.name : "Removed checklist") + "</h4>" +
             '<div class="cal-meta">' + esc(r.performed_on) +
-              (r.area ? " \u00b7 " + esc(r.area) : "") +
-              (r.performed_by ? " \u00b7 " + esc(r.performed_by) : "") + "</div>" +
+              (r.area ? " · " + esc(r.area) : "") +
+              (r.performed_by ? " · " + esc(r.performed_by) : "") + "</div>" +
             (r.notes ? '<div class="cal-next">' + esc(r.notes) + "</div>" : "") +
             /* A failed round with no finding against it is exactly what an assessor looks
                for, so say so on the row rather than leaving it to be noticed. */
             (r.passed === false
               ? (r.capa_id
-                  ? '<div class="cal-next"><a href="capa.html">Finding raised \u2192</a></div>'
+                  ? '<div class="cal-next"><a href="capa.html">Finding raised →</a></div>'
                   : '<div class="cal-next rd-flag">No action recorded against this round</div>')
               : "") +
           "</div>" +
           '<div class="cal-row-side"><span class="cal-pill st-' +
             (r.passed === false ? "overdue" : "ok") + '">' +
-            (r.score_pct != null ? esc(r.score_pct) + "%" : "\u2014") + "</span></div>" +
+            (r.score_pct != null ? esc(r.score_pct) + "%" : "—") + "</span></div>" +
         "</div>";
       }).join("") + "</div>";
   }
@@ -397,9 +397,9 @@
     if (!el) return;
     if (sc.pct == null) { el.textContent = "Answer the questions to see the score"; el.className = "rd-live"; return; }
     el.className = "rd-live " + (sc.passed ? "is-pass" : "is-fail");
-    el.innerHTML = "<b>" + sc.pct + "%</b> \u00b7 " + sc.answered + " of " + sc.total + " applicable" +
-      (sc.criticalFail ? " \u00b7 <b>a critical item failed</b>" : "") +
-      " \u00b7 target " + (l.target_pct || 0) + "% \u00b7 " +
+    el.innerHTML = "<b>" + sc.pct + "%</b> · " + sc.answered + " of " + sc.total + " applicable" +
+      (sc.criticalFail ? " · <b>a critical item failed</b>" : "") +
+      " · target " + (l.target_pct || 0) + "% · " +
       (sc.passed ? "pass" : "below target");
   }
 
@@ -423,7 +423,7 @@
     await S.adapter.upsert("checklists", row);
     close(); await refresh();
     if (!existing) {
-      W.toast("Created \u2014 now add the questions", "ok");
+      W.toast("Created — now add the questions", "ok");
       var made = lists.filter(function (x) { return x.id === row.id; })[0];
       if (made) openItems(made);
     } else W.toast("Saved", "ok");
@@ -498,7 +498,7 @@
          ignore its own findings. */
       offerCapa(l, roundId, sc, on);
     } else {
-      W.toast("Scored " + sc.pct + "% \u2014 pass", "ok");
+      W.toast("Scored " + sc.pct + "% — pass", "ok");
     }
   }
 
@@ -547,7 +547,7 @@
       /* Both directions. The CAPA names the round in its own words for a reader, and the
          round stores the id so the link survives the title being edited later. */
       root_cause: "Raised from the round recorded on " +
-        (r ? r.performed_on : "\u2014") + (r && r.area ? " in " + r.area : "") + ".",
+        (r ? r.performed_on : "—") + (r && r.area ? " in " + r.area : "") + ".",
       updated_at: new Date().toISOString()
     });
 

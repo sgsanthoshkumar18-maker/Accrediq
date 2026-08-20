@@ -209,9 +209,9 @@ window.AQDataExport = (function () {
 
   function coverSheet(all, org) {
     var rows = [
-      [{ v: "AQcredix \u2014 complete data export", s: 2 }],
+      [{ v: "AQcredix — complete data export", s: 2 }],
       [],
-      [{ v: "Organisation", s: 2 }, org || "\u2014"],
+      [{ v: "Organisation", s: 2 }, org || "—"],
       [{ v: "Exported", s: 2 }, new Date().toLocaleString()],
       [{ v: "Sheets", s: 2 }, String(all.length)],
       [],
@@ -219,7 +219,7 @@ window.AQDataExport = (function () {
     ];
     all.forEach(function (s) {
       rows.push([s.spec.name, String(s.rows.length),
-        s.failed ? "Could not be read \u2014 try again, or ask for help" : ""]);
+        s.failed ? "Could not be read — try again, or ask for help" : ""]);
     });
     rows.push([]);
     rows.push([{ v: "This is your hospital's own data, exported in full. Every record you " +
@@ -251,7 +251,7 @@ window.AQDataExport = (function () {
 
   async function build(org) {
     if (!window.JSZip) {
-      throw new Error("The spreadsheet engine is still loading \u2014 wait a moment and try again.");
+      throw new Error("The spreadsheet engine is still loading — wait a moment and try again.");
     }
     var all = await gather();
     var resolve = resolver(all);

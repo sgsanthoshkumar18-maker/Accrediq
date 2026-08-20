@@ -3,8 +3,17 @@
    a colour here has already caused one bug elsewhere in the site; don't reintroduce it. */
 
 .pf-wrap{padding-bottom:80px;}
+/* Top padding on the wrapper, not a top margin on the section. A margin on the first
+   child collapses through the parent, which is why "Subscription" sat flush against the
+   dark band above it with no gap at all.
+   Raised from 34px: the page-head band ends hard, and 34px still read as the heading
+   leaning on the bar rather than sitting clear of it. */
+.pf-wrap{padding-top:52px;}
 .pf-section{margin:0 0 40px;}
-.pf-section h2{font-size:20px;margin:0 0 14px;}
+/* Belt and braces for the first section: if a future change puts something between the
+   band and .pf-wrap, the heading still cannot end up touching it. */
+.pf-section:first-child{margin-top:0;padding-top:4px;}
+.pf-section h2{font-size:20px;margin:0 0 14px;line-height:1.3;}
 
 /* ---- identity ---- */
 .pf-id{display:flex;align-items:center;gap:16px;}
@@ -108,3 +117,19 @@
   .pf-sub-row{flex-direction:column;gap:3px;}
   .pf-sub-row b{text-align:left;}
 }
+
+/* Sign out. The only route off a free account — the workspace has its own, but a free user
+   never reaches the workspace, so without this there was no way to leave the account on a
+   shared computer.
+   It was previously styled "deliberately quiet": muted text on a muted border, which in
+   practice meant it was not found at all and the account was reported as having no sign
+   out. A control that is the only way to do something has to be visible. Full foreground
+   text and a solid border now; it turns red on hover to keep the destructive signal. */
+.pf-signout{margin-top:14px;padding:9px 18px;border-radius:999px;
+  border:1px solid var(--fg-faint);background:var(--bg-elevated);color:var(--fg);
+  font-size:13px;font-weight:600;cursor:pointer;min-height:40px;font-family:inherit;
+  display:inline-flex;align-items:center;gap:7px;
+  transition:border-color .15s ease,color .15s ease,background .15s ease;}
+.pf-signout:hover{border-color:var(--nc);color:var(--nc);background:var(--nc-tint);}
+.pf-signout:focus-visible{outline:2.5px solid var(--accent-bright);outline-offset:2px;}
+.pf-signout:disabled{opacity:.6;cursor:default;}

@@ -412,7 +412,7 @@ window.AQCert = (function () {
     ctx.fillStyle = INK_SOFT;
     ctx.font = "400 28px Helvetica, Arial, sans-serif";
     var endY = wrapCentered(ctx,
-      "has completed Today\u2019s Quiz for Quality Managers, a scenario-based assessment of " +
+      "has completed Today’s Quiz for Quality Managers, a scenario-based assessment of " +
       "NABH standards, achieving a perfect score in",
       cx, 762, W - 620, 44);
 

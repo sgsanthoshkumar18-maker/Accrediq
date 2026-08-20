@@ -92,7 +92,7 @@ window.AQBilling = (function () {
 
   function rupees(paise) {
     var r = paise / 100;
-    return "\u20B9" + (r % 1 === 0 ? r.toFixed(0) : r.toFixed(2));
+    return "₹" + (r % 1 === 0 ? r.toFixed(0) : r.toFixed(2));
   }
 
   function addMonths(d, n) {
@@ -298,9 +298,9 @@ window.AQBilling = (function () {
   }
 
   function fmtDate(iso) {
-    if (!iso) return "\u2014";
+    if (!iso) return "—";
     var d = new Date(iso);
-    return isNaN(d) ? "\u2014" : d.toLocaleDateString(undefined,
+    return isNaN(d) ? "—" : d.toLocaleDateString(undefined,
       { day: "2-digit", month: "short", year: "numeric" });
   }
 

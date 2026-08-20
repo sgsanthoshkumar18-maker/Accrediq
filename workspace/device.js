@@ -67,7 +67,7 @@ window.AQDevice = (function () {
       : /Chrome\//.test(ua) ? "Chrome"
       : /Firefox\//.test(ua) ? "Firefox"
       : /Safari\//.test(ua) ? "Safari" : "Browser";
-    return os + " \u00b7 " + br;
+    return os + " · " + br;
   }
 
   /* Devices not seen for 30 days stop counting. Without this, a laptop replaced two years

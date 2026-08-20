@@ -103,16 +103,16 @@
     var host = document.getElementById("wsqResults");
     if (!host) return;
 
-    if (building) { host.innerHTML = '<div class="wsq-empty">Building the index\u2026</div>'; return; }
+    if (building) { host.innerHTML = '<div class="wsq-empty">Building the index…</div>'; return; }
     if (!q.trim()) {
       host.innerHTML = '<div class="wsq-empty">Search standards, equipment, forms, ' +
-        "committees, findings \u2014 everything in the workspace.</div>";
+        "committees, findings — everything in the workspace.</div>";
       return;
     }
 
     var hits = search(q);
     if (!hits.length) {
-      host.innerHTML = '<div class="wsq-empty">Nothing matches \u201c' + esc(q) + "\u201d.</div>";
+      host.innerHTML = '<div class="wsq-empty">Nothing matches “' + esc(q) + "”.</div>";
       return;
     }
 
@@ -152,13 +152,13 @@
     if (!host) return;
 
     host.innerHTML = '<button class="wsq-open" id="wsqOpen" type="button">' +
-      '<span aria-hidden="true">\u2315</span> Search\u2026 <kbd>Ctrl K</kbd></button>';
+      '<span aria-hidden="true">\u2315</span> Search… <kbd>Ctrl K</kbd></button>';
 
     var m = document.createElement("div");
     m.className = "ws-modal wsq";
     m.id = "wsqModal";
     m.innerHTML = '<div class="ws-modal-in wsq-in">' +
-      '<input id="wsqInput" placeholder="Search everything\u2026" autocomplete="off">' +
+      '<input id="wsqInput" placeholder="Search everything…" autocomplete="off">' +
       '<div id="wsqResults"></div></div>';
     document.body.appendChild(m);
 

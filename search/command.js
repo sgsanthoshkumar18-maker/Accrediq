@@ -27,16 +27,16 @@
     if (D && D.chapters) {
       Object.keys(D.chapters).forEach(function (code) {
         var ch = D.chapters[code];
-        out.push({ t: code + " \u2014 " + ch.name, s: "Chapter", k: code + " " + ch.name,
+        out.push({ t: code + " — " + ch.name, s: "Chapter", k: code + " " + ch.name,
                    u: b + "standards.html?chapter=" + code });
         (ch.standards || []).forEach(function (std) {
-          out.push({ t: std.code + " \u2014 " + std.text, s: "Standard", k: std.code + " " + std.text,
+          out.push({ t: std.code + " — " + std.text, s: "Standard", k: std.code + " " + std.text,
                      u: b + "standards.html?chapter=" + code + "#" + std.code });
           (std.elements || []).forEach(function (e) {
             var c = std.code + "." + e.letter;
             out.push({
-              t: c + " \u2014 " + e.text,
-              s: e.sop ? "Element \u00b7 SOP required" : "Element",
+              t: c + " — " + e.text,
+              s: e.sop ? "Element · SOP required" : "Element",
               k: c + " " + e.text + (e.sop ? " sop" : ""),
               u: b + "standards.html?chapter=" + code + "#" + c
             });
@@ -51,14 +51,14 @@
     });
 
     (window.COMMITTEE_DATA || []).forEach(function (c) {
-      out.push({ t: c.name, s: "Committee \u00b7 " + (c.frequency || ""),
+      out.push({ t: c.name, s: "Committee · " + (c.frequency || ""),
                  k: c.name + " " + (c.short || ""),
                  u: b + "committee.html?c=" + encodeURIComponent(c.slug) });
     });
 
     [
       ["Readiness", "workspace/workspace.html"], ["Internal Audit", "workspace/audit.html"],
-      ["Calendar \u2014 committees and recurring tasks", "workspace/calendar.html"],
+      ["Calendar — committees and recurring tasks", "workspace/calendar.html"],
       ["Incidents", "workspace/incidents.html"], ["NC & CAPA", "workspace/capa.html"],
       ["Documents", "workspace/documents.html"], ["Team", "workspace/team.html"],
       ["Standards browser", "standards.html"], ["Departments", "departments.html"],
@@ -119,7 +119,7 @@
     box.innerHTML =
       '<div class="cmdk-box">' +
         '<input class="cmdk-input" type="text" autocomplete="off" spellcheck="false" ' +
-          'placeholder="Search elements, departments, committees, KPIs\u2026" ' +
+          'placeholder="Search elements, departments, committees, KPIs…" ' +
           'aria-label="Search" role="combobox" aria-expanded="true" aria-controls="cmdkList">' +
         '<div class="cmdk-list" id="cmdkList" role="listbox"></div>' +
         '<div class="cmdk-foot"><span><kbd>\u2191</kbd><kbd>\u2193</kbd> move</span>' +

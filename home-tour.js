@@ -28,11 +28,11 @@
       label: "My department",
       caption: "Each department opens one screen and sees only what it owns.",
       html:
-        '<div class="tr-head"><b>Biomedical</b><span class="tr-chip">1 overdue \u00b7 1 finding</span></div>' +
-        row("Defibrillator \u2014 ICU bed 4", "Calibration \u00b7 yearly", "59 days overdue", "bad") +
-        row("Autoclave \u2014 CSSD 1", "Preventive \u00b7 quarterly", "Due 10 Nov", "") +
-        row("Ventilator AMC", "Renewal \u00b7 yearly", "Due 20 Jan", "") +
-        '<div class="tr-note">Committees and other departments are hidden here on purpose \u2014 ' +
+        '<div class="tr-head"><b>Biomedical</b><span class="tr-chip">1 overdue · 1 finding</span></div>' +
+        row("Defibrillator — ICU bed 4", "Calibration · yearly", "59 days overdue", "bad") +
+        row("Autoclave — CSSD 1", "Preventive · quarterly", "Due 10 Nov", "") +
+        row("Ventilator AMC", "Renewal · yearly", "Due 20 Jan", "") +
+        '<div class="tr-note">Committees and other departments are hidden here on purpose — ' +
           "showing everything would bury the four things this department actually owns.</div>"
     },
     {
@@ -57,8 +57,8 @@
       caption: "All 640 elements, with what an assessor looks for and the gap that becomes an NC.",
       html:
         '<div class="tr-head"><b>IPC.2.c</b><span class="tr-chip warn">\u2726 SOP required</span></div>' +
-        '<div class="tr-quote">\u201cAdequate and appropriate facilities for hand hygiene in all ' +
-          'patient-care areas are accessible.\u201d</div>' +
+        '<div class="tr-quote">“Adequate and appropriate facilities for hand hygiene in all ' +
+          'patient-care areas are accessible.”</div>' +
         '<div class="tr-sub">What the assessor looks for</div>' +
         '<ul class="tr-list"><li>Rub within reach at the point of care</li>' +
           "<li>Your own audit data, not an assertion</li>" +
@@ -84,10 +84,10 @@
       caption: "Committees and recurring obligations, with what is overdue today.",
       html:
         '<div class="tr-head"><b>This week</b></div>' +
-        row("Hand hygiene audit", "Monthly \u00b7 Infection Control", "14 days overdue", "bad") +
-        row("Crash cart check", "Monthly \u00b7 every ward", "6 days overdue", "bad") +
+        row("Hand hygiene audit", "Monthly · Infection Control", "14 days overdue", "bad") +
+        row("Crash cart check", "Monthly · every ward", "6 days overdue", "bad") +
         row("Infection Control Committee", "Quarterly", "Due Monday", "warn") +
-        row("Fire drill", "Half-yearly \u00b7 Facilities", "Due 4 Nov", "")
+        row("Fire drill", "Half-yearly · Facilities", "Due 4 Nov", "")
     },
     {
       key: "register",
@@ -95,10 +95,10 @@
       caption: "Calibration, maintenance, AMCs and licences — per machine, with certificates.",
       html:
         '<div class="tr-head"><b>Biomedical</b><span class="tr-chip">42 items</span></div>' +
-        row("Defibrillator \u2014 ICU bed 4", "Calibration \u00b7 yearly", "58 days overdue", "bad") +
-        row("Autoclave \u2014 CSSD 1", "Preventive \u00b7 quarterly", "Due 10 Aug", "warn") +
-        row("Ventilator AMC", "Renewal \u00b7 yearly", "Due 20 Jan", "") +
-        row("Blood gas analyser", "Calibration \u00b7 half-yearly", "Due in 2 days", "warn")
+        row("Defibrillator — ICU bed 4", "Calibration · yearly", "58 days overdue", "bad") +
+        row("Autoclave — CSSD 1", "Preventive · quarterly", "Due 10 Aug", "warn") +
+        row("Ventilator AMC", "Renewal · yearly", "Due 20 Jan", "") +
+        row("Blood gas analyser", "Calibration · half-yearly", "Due in 2 days", "warn")
     },
     {
       key: "rounds",
@@ -109,7 +109,7 @@
         '<div class="tr-run"><span>Rub available at the point of care</span><em class="ok">Yes</em></div>' +
         '<div class="tr-run"><span>Five moments known when asked</span><em class="no">No</em></div>' +
         '<div class="tr-run"><span>Training record matches roster</span><em class="ok">Yes</em></div>' +
-        '<div class="tr-live">67% \u00b7 below target \u2014 raise a CAPA against it</div>'
+        '<div class="tr-live">67% · below target — raise a CAPA against it</div>'
     },
     {
       key: "capa",
@@ -117,8 +117,8 @@
       caption: "Findings tracked to closure — and never closed by whoever raised them.",
       html:
         '<div class="tr-head"><b>Open findings</b><span class="tr-chip warn">3 overdue</span></div>' +
-        row("Hand hygiene below target", "IPC.2.c \u00b7 Dr Menon", "Verification due", "warn") +
-        row("Crash cart drug expired", "COP.5.a \u00b7 ICU", "Corrective action", "bad") +
+        row("Hand hygiene below target", "IPC.2.c · Dr Menon", "Verification due", "warn") +
+        row("Crash cart drug expired", "COP.5.a · ICU", "Corrective action", "bad") +
         '<div class="tr-note">A finding cannot be verified or closed by the person who ' +
           "raised it. The database refuses it.</div>"
     },
@@ -127,9 +127,9 @@
       label: "Notifications",
       caption: "It tells people, rather than waiting for them to look.",
       html:
-        '<div class="tr-head"><b>\u2691 1 overdue \u00b7 1 open finding in Biomedical</b></div>' +
+        '<div class="tr-head"><b>\u2691 1 overdue · 1 open finding in Biomedical</b></div>' +
         '<div class="tr-sub">Overdue</div>' +
-        row("Defibrillator \u2014 ICU bed 4", "Equipment \u00b7 59 days overdue", "", "bad") +
+        row("Defibrillator — ICU bed 4", "Equipment · 59 days overdue", "", "bad") +
         '<div class="tr-sub">Weekly email</div>' +
         '<div class="tr-run"><span>Email me a weekly summary</span><em class="ok">On</em></div>' +
         '<div class="tr-run"><span>Overdue only</span><em>Off</em></div>' +
@@ -140,13 +140,13 @@
       label: "Guided setup",
       caption: "A new hospital is walked through setup in about ten minutes.",
       html:
-        '<div class="tr-head"><b>Getting set up</b><span class="tr-chip">1 of 6 \u00b7 10 min left</span></div>' +
+        '<div class="tr-head"><b>Getting set up</b><span class="tr-chip">1 of 6 · 10 min left</span></div>' +
         '<div class="tr-bars"><div class="tr-bar"><span></span><i><b style="width:17%"></b></i><em>17%</em></div></div>' +
-        '<div class="tr-run"><span>\u2713 Add your departments and people</span><em class="ok">4 on the team</em></div>' +
+        '<div class="tr-run"><span>✓ Add your departments and people</span><em class="ok">4 on the team</em></div>' +
         '<div class="tr-run"><span>Enter your committees</span><em>Next</em></div>' +
         '<div class="tr-run"><span>Build the equipment register</span><em></em></div>' +
         '<div class="tr-run"><span>Set up your rounds</span><em></em></div>' +
-        '<div class="tr-note">Each step marks itself done by detecting real records \u2014 never ' +
+        '<div class="tr-note">Each step marks itself done by detecting real records — never ' +
           "by ticking a box.</div>"
     },
     {
@@ -154,9 +154,9 @@
       label: "Evidence files",
       caption: "The certificate itself, attached to the record it proves.",
       html:
-        '<div class="tr-head"><b>Defibrillator \u2014 ICU bed 4</b>' +
-          '<span class="tr-chip">Calibration \u00b7 13 Aug 2026</span></div>' +
-        '<div class="tr-run"><span>Certificate ZL/CAL/2026/4471 \u00b7 Pass</span><em class="ok">Recorded</em></div>' +
+        '<div class="tr-head"><b>Defibrillator — ICU bed 4</b>' +
+          '<span class="tr-chip">Calibration · 13 Aug 2026</span></div>' +
+        '<div class="tr-run"><span>Certificate ZL/CAL/2026/4471 · Pass</span><em class="ok">Recorded</em></div>' +
         '<div class="tr-sub">Evidence</div>' +
         '<div class="tr-run"><span>ZOLL-calibration-2026.pdf</span><em>412 KB</em></div>' +
         '<div class="tr-run"><span>crash-cart-photo.jpg</span><em>1.2 MB</em></div>' +
@@ -169,11 +169,11 @@
       caption: "Every checklist, form and register a department must maintain, in one place.",
       html:
         '<div class="tr-head"><b>Biomedical</b><span class="tr-chip">16 documents</span></div>' +
-        row("Planned Preventive Maintenance", "Register \u00b7 detailed", "Downloadable", "") +
-        row("Material Gate Pass", "Checklist \u00b7 detailed", "Downloadable", "") +
-        row("Work Permit", "Register \u00b7 detailed", "Downloadable", "") +
+        row("Planned Preventive Maintenance", "Register · detailed", "Downloadable", "") +
+        row("Material Gate Pass", "Checklist · detailed", "Downloadable", "") +
+        row("Work Permit", "Register · detailed", "Downloadable", "") +
         '<div class="tr-note">What each document must contain, why it matters, and a blank ' +
-          "template \u2014 segregated by department.</div>"
+          "template — segregated by department.</div>"
     },
     {
       key: "gatepass",
@@ -181,10 +181,10 @@
       caption: "What left the building, why, and whether it comes back.",
       html:
         '<div class="tr-head"><b>Security</b><span class="tr-chip warn">1 overdue return</span></div>' +
-        row("Pass #050 \u2014 Dell Optiplex 3020 MT", "Service \u00b7 IT", "Due back \u2013 12 days overdue", "bad") +
-        row("Pass #049 \u2014 UPS battery", "Disposal \u00b7 Facilities", "Non-returnable", "") +
+        row("Pass #050 — Dell Optiplex 3020 MT", "Service · IT", "Due back – 12 days overdue", "bad") +
+        row("Pass #049 — UPS battery", "Disposal · Facilities", "Non-returnable", "") +
         '<div class="tr-note">Returnable and non-returnable, the way security already runs ' +
-          "it \u2014 with what is still outstanding answered in one screen.</div>"
+          "it — with what is still outstanding answered in one screen.</div>"
     },
     {
       key: "apex",
@@ -203,7 +203,7 @@
       label: "Assessment day",
       caption: "Every SOP, committee and cycle with its record. Exported in one press.",
       html:
-        '<div class="tr-head"><b>Export</b><span class="tr-chip">Excel \u00b7 4 sheets</span></div>' +
+        '<div class="tr-head"><b>Export</b><span class="tr-chip">Excel · 4 sheets</span></div>' +
         '<div class="tr-sheet"><div class="tr-sh tr-sh-h"><span>Element</span><span>Departments</span></div>' +
           '<div class="tr-sh"><span>IPC.2.c</span><span>All clinical areas</span></div>' +
           '<div class="tr-sh"><span>COP.5.a</span><span>ICU, Wards, ER</span></div>' +

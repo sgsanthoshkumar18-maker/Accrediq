@@ -258,14 +258,14 @@
     var all = document.getElementById("wsExportAll");
     if (all) all.addEventListener("click", async function () {
       var label = all.textContent;
-      all.disabled = true; all.textContent = "Building\u2026";
+      all.disabled = true; all.textContent = "Building…";
       try {
         /* W.user carries the signed-in member row; org_name is what a hospital calls
            itself. There is no W.org() — calling one would have thrown inside the try and
            reported "Could not build" for a working export. */
         var org = (W.user && (W.user.org_name || W.user.orgName)) || "";
         await window.AQDataExport.download(org);
-        all.textContent = "Downloaded \u2713";
+        all.textContent = "Downloaded ✓";
         setTimeout(function () { all.textContent = label; all.disabled = false; }, 2200);
       } catch (e) {
         console.error(e);

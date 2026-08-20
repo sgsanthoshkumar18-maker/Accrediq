@@ -79,7 +79,7 @@ window.AQDocx = (function () {
   var NUMBERING = '<?xml version="1.0" encoding="UTF-8" standalone="yes"?>' +
     '<w:numbering xmlns:w="http://schemas.openxmlformats.org/wordprocessingml/2006/main">' +
     '<w:abstractNum w:abstractNumId="0"><w:lvl w:ilvl="0">' +
-      '<w:numFmt w:val="bullet"/><w:lvlText w:val="\u2022"/>' +
+      '<w:numFmt w:val="bullet"/><w:lvlText w:val="•"/>' +
       '<w:pPr><w:ind w:left="720" w:hanging="360"/></w:pPr></w:lvl></w:abstractNum>' +
     '<w:num w:numId="1"><w:abstractNumId w:val="0"/></w:num>' +
     "</w:numbering>";

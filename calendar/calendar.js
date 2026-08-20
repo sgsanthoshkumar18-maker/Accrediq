@@ -168,7 +168,7 @@
     if (!committees.length) {
       return '<div class="cal-empty"><h3>No committees yet</h3>' +
         "<p>Add the committees your hospital actually runs. You will be asked for the name, " +
-        "how often it must meet, and when it last met \u2014 that is enough to work out every " +
+        "how often it must meet, and when it last met — that is enough to work out every " +
         "date from here on.</p>" +
         '<button class="btn btn-accent" data-act="add-cmte">Add a committee</button></div>';
     }
@@ -184,9 +184,9 @@
           '<div class="cal-row-main">' +
             "<h4>" + esc(c.name) + (c.short_name ? ' <span class="cal-abbr">' + esc(c.short_name) + "</span>" : "") + "</h4>" +
             '<div class="cal-meta">' + esc(K.label(c.frequency)) +
-              (lastMet(c) ? " \u00b7 last met " + esc(lastMet(c)) : " \u00b7 never met") +
-              (c.chairperson ? " \u00b7 chair: " + esc(c.chairperson) : "") +
-              (c.secretary ? " \u00b7 convener: " + esc(c.secretary) : "") + "</div>" +
+              (lastMet(c) ? " · last met " + esc(lastMet(c)) : " · never met") +
+              (c.chairperson ? " · chair: " + esc(c.chairperson) : "") +
+              (c.secretary ? " · convener: " + esc(c.secretary) : "") + "</div>" +
             (nd.preferred ? '<div class="cal-next">Next: <b>' + esc(nd.preferred) + "</b> (" +
                 esc(K.dowName(K.dayOfWeek(K.parse(nd.preferred)))) + ")" +
                 (nd.shifted ? ' <span class="cal-exact">compliance date ' + esc(nd.exact) + "</span>" : "") +
@@ -223,10 +223,10 @@
         return '<div class="cal-row st-' + s.state + '" data-id="' + esc(t.id) + '">' +
           '<div class="cal-row-main"><h4>' + esc(t.title) + "</h4>" +
             '<div class="cal-meta">' + esc(K.label(t.frequency)) +
-              (t.category ? " \u00b7 " + esc(t.category) : "") +
-              (t.element_code ? " \u00b7 " + esc(t.element_code) : "") +
-              (t.owner ? " \u00b7 " + esc(t.owner) : "") +
-              (t.last_done_on ? " \u00b7 last done " + esc(t.last_done_on) : " \u00b7 never recorded") +
+              (t.category ? " · " + esc(t.category) : "") +
+              (t.element_code ? " · " + esc(t.element_code) : "") +
+              (t.owner ? " · " + esc(t.owner) : "") +
+              (t.last_done_on ? " · last done " + esc(t.last_done_on) : " · never recorded") +
             "</div>" +
             (nd.preferred ? '<div class="cal-next">Next due: <b>' + esc(nd.preferred) + "</b> (" +
                 esc(K.dowName(K.dayOfWeek(K.parse(nd.preferred)))) + ")" +
@@ -275,7 +275,7 @@
     /* Sunday last: a hospital committee week runs Monday to Saturday, and putting Sunday
        first is a US calendar convention that reads as an error here. */
     var order = [1, 2, 3, 4, 5, 6, 0];
-    return '<option value="">No preference \u2014 use the exact date</option>' +
+    return '<option value="">No preference — use the exact date</option>' +
       order.map(function (n) {
         return '<option value="' + n + '"' + (String(sel) === String(n) ? " selected" : "") +
                ">" + K.dowName(n) + "</option>";
@@ -330,7 +330,7 @@
     if (!h) return;
     var last = val("fLast");
     if (!last) {
-      h.innerHTML = "Leave the last-met date blank if the committee has never sat \u2014 " +
+      h.innerHTML = "Leave the last-met date blank if the committee has never sat — " +
         "it will show as <b>never recorded</b> until you log a meeting.";
       return;
     }
@@ -385,8 +385,8 @@
     var s = committeeStatus(c);
     m.innerHTML =
       '<div class="ws-modal-in"><h3>Record a meeting</h3>' +
-      '<p class="cal-hint">' + esc(c.name) + " \u00b7 " + esc(K.label(c.frequency)) +
-        (s.due ? " \u00b7 was due " + esc(s.due) : "") + "</p>" +
+      '<p class="cal-hint">' + esc(c.name) + " · " + esc(K.label(c.frequency)) +
+        (s.due ? " · was due " + esc(s.due) : "") + "</p>" +
       '<div class="ws-form">' +
         '<div class="ws-f"><label for="fHeld">Date held</label>' +
           '<input id="fHeld" type="date" value="' + esc(K.fmt(K.today())) + '"></div>' +
@@ -437,8 +437,8 @@
     showOnCalendar(nd.preferred);
     render();
     W.toast(nd.preferred
-      ? name + " added \u2014 next sitting " + nd.preferred
-      : name + " added \u2014 record a meeting to start the schedule", "ok");
+      ? name + " added — next sitting " + nd.preferred
+      : name + " added — record a meeting to start the schedule", "ok");
   }
 
   async function saveTask(existingId) {
@@ -462,8 +462,8 @@
     showOnCalendar(nd.preferred);
     render();
     W.toast(nd.preferred
-      ? title + " added \u2014 next due " + nd.preferred
-      : title + " added \u2014 record when it was last done to start the schedule", "ok");
+      ? title + " added — next due " + nd.preferred
+      : title + " added — record when it was last done to start the schedule", "ok");
   }
 
   async function saveLog(cid) {
@@ -496,7 +496,7 @@
     var nd2 = cc ? K.nextDates(lastMet(cc), cc.frequency, cc.pref_dow) : { preferred: held };
     showOnCalendar(nd2.preferred || held);
     render();
-    W.toast("Meeting recorded \u2014 next sitting " + (nd2.preferred || "\u2014"), "ok");
+    W.toast("Meeting recorded — next sitting " + (nd2.preferred || "—"), "ok");
   }
 
   async function markDone(tid) {
@@ -509,7 +509,7 @@
     var nd = K.nextDates(t.last_done_on, t.frequency, t.pref_dow);
     showOnCalendar(nd.preferred);
     render();
-    W.toast("Marked done \u2014 next due " + (nd.preferred || "\u2014"), "ok");
+    W.toast("Marked done — next due " + (nd.preferred || "—"), "ok");
   }
 
   async function removeRow(table, rid) {

@@ -124,7 +124,7 @@
         "You will not need to pay again.</p>";
     } else if (st && st.reason === "unavailable") {
       extra = "<p>Subscription status could not be checked just now, so access is held " +
-        "rather than opened. If you have an active subscription nothing has been lost \u2014 " +
+        "rather than opened. If you have an active subscription nothing has been lost — " +
         "please reload in a moment.</p>";
     }
     /* Preview where the page declares one, prompt where it does not. The prompt is still

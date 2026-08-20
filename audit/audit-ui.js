@@ -63,7 +63,7 @@
     if (!all.length) {
       host.innerHTML = "<h2>Your audit records</h2>" +
         '<p class="aud-empty">No audits yet. Pick a department above to run the first one. ' +
-        "Every audit you finish is kept here \u2014 you can audit the same department as " +
+        "Every audit you finish is kept here — you can audit the same department as " +
         "many times as you like, and the second audit is the one that tells you whether " +
         "anything actually changed.</p>";
       return;
@@ -164,7 +164,7 @@
       (r.block === "interview" ? '<span class="aud-iv">' + esc(r.blockLabel) + "</span>" : "") +
       "</div>" +
       '<p class="aud-el">' + esc(r.text) + "</p>" +
-      '<p class="aud-std">' + esc(r.standard) + " \u2014 " + esc(r.standardText) + "</p></div>";
+      '<p class="aud-std">' + esc(r.standard) + " — " + esc(r.standardText) + "</p></div>";
 
     h += '<div class="aud-row-act"><div class="aud-seg">' + statusButtons(r.code, st) + "</div>" +
       '<textarea class="aud-note" data-note="' + esc(r.code) +
@@ -173,7 +173,7 @@
       '">' + esc(st === "na" ? (f.justification || "") : (f.evidence || "")) + "</textarea>";
 
     h += '<div class="aud-fix" style="display:' + (open ? "" : "none") + '">' +
-      '<select data-sev="' + esc(r.code) + '"><option value="">Severity\u2026</option>' +
+      '<select data-sev="' + esc(r.code) + '"><option value="">Severity…</option>' +
       A.SEVERITY.map(function (s) {
         return '<option value="' + s + '"' + (f.severity === s ? " selected" : "") + ">" +
           s.charAt(0).toUpperCase() + s.slice(1) + "</option>";
@@ -280,7 +280,7 @@
           return '<button type="button" class="aud-chip' + (filter.chapter === c ? " on" : "") +
             '" data-fc="' + c + '">' + c + "</button>";
         }).join("") + "</div>" +
-      '<input type="search" id="audQ" placeholder="Search elements\u2026" value="' + esc(filter.q) + '">';
+      '<input type="search" id="audQ" placeholder="Search elements…" value="' + esc(filter.q) + '">';
 
     el("audFilters").querySelectorAll("[data-fs]").forEach(function (b) {
       b.addEventListener("click", function () { filter.status = b.getAttribute("data-fs"); renderFilters(); renderList(); });
@@ -318,17 +318,26 @@
 
     el("audHead").innerHTML =
       "<div><h2>" + esc(session.department_name) + "</h2>" +
-      '<p class="aud-sub">Auditor <b>' + esc(session.auditor_name) + "</b> \u00B7 " +
-      rows.length + " elements \u00B7 " + esc(session.standard_edition) +
-      ' \u00B7 <span id="audClock">0s</span></p></div>' +
+      '<p class="aud-sub">Auditor <b>' + esc(session.auditor_name) + "</b> · " +
+      rows.length + " elements · " + esc(session.standard_edition) +
+      ' · <span id="audClock">0s</span></p></div>' +
       '<div class="aud-headact">' +
       '<button type="button" class="btn btn-ghost" id="audBack">Save &amp; close</button> ' +
       '<button type="button" class="btn btn-accent" id="audFinish">Finish audit</button></div>';
 
-    el("audQuick").innerHTML = (sc.quickList && sc.quickList.length)
-      ? '<details class="aud-quick" open><summary>Quick list \u2014 what to walk the floor with (' +
-        sc.quickList.length + ")</summary><ul>" +
-        sc.quickList.map(function (q) { return "<li>" + esc(q) + "</li>"; }).join("") + "</ul></details>"
+    /* Deduplicated at render. A sub-area inherits its parent's quick list and then adds
+       its own (build-scope.js concatenates the two), so an item named in both appears
+       twice — Chemotherapy currently lists "Narcotics" from Pharmacy and again from its
+       own scope. Doing this here rather than in the generated file means it holds for
+       every future inheritance too, without a regeneration step. */
+    var quick = (sc.quickList || []).filter(function (q, i, a) {
+      return a.indexOf(q) === i;
+    });
+
+    el("audQuick").innerHTML = quick.length
+      ? '<details class="aud-quick" open><summary>Quick list — what to walk the floor with (' +
+        quick.length + ")</summary><ul>" +
+        quick.map(function (q) { return "<li>" + esc(q) + "</li>"; }).join("") + "</ul></details>"
       : "";
 
     renderFilters();
@@ -379,7 +388,7 @@
         blocks.slice(0, 12).map(function (b) {
           return "<li><b>" + esc(b.code) + "</b> " + esc(b.why) + "</li>";
         }).join("") +
-        (blocks.length > 12 ? "<li>\u2026and " + (blocks.length - 12) + " more</li>" : "") +
+        (blocks.length > 12 ? "<li>…and " + (blocks.length - 12) + " more</li>" : "") +
         "</ul></div>";
       return;
     }

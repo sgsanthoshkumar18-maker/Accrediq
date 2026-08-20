@@ -133,7 +133,7 @@
        rather than dropping the alternation, which is what he asked to keep. */
     return '<div class="fp-item ' + side + (e.current ? " is-now" : "") + '">' +
       '<div class="fp-item-card" data-year="' + esc(year) + '">' +
-        '<div class="fp-when">' + esc(e.from) + " \u2014 " + esc(e.to) +
+        '<div class="fp-when">' + esc(e.from) + " — " + esc(e.to) +
           (e.current ? ' <span class="fp-now">Current</span>' : "") + "</div>" +
         "<h4>" + esc(opts.title ? opts.title(e) : e.role) + "</h4>" +
         '<div class="fp-org">' + esc(opts.org ? opts.org(e) : e.org) + "</div>" +
@@ -167,7 +167,7 @@
       return '<article class="fp-pub" data-tilt>' +
         '<div class="fp-pub-n">' + String(i + 1).padStart(2, "0") + "</div>" +
         "<h4>" + esc(p.title) + "</h4>" +
-        '<div class="fp-journal">' + esc(p.journal) + '<span class="fp-date"> \u00b7 ' +
+        '<div class="fp-journal">' + esc(p.journal) + '<span class="fp-date"> · ' +
           esc(p.date) + "</span></div>" +
         (p.note ? "<p>" + esc(p.note) + "</p>" : "") +
         "</article>";
@@ -191,7 +191,7 @@
           '<div class="fp-issuer">' + esc(c.issuer) + "</div>" +
           (c.note ? "<p>" + esc(c.note) + "</p>" : "") +
           '<div class="fp-cert-meta">' + esc(c.date) +
-            (c.id ? ' \u00b7 ID <span class="mono">' + esc(c.id) + "</span>" : "") + "</div>" +
+            (c.id ? ' · ID <span class="mono">' + esc(c.id) + "</span>" : "") + "</div>" +
           "</div>";
       }).join("");
 
@@ -203,7 +203,7 @@
             '<div class="fp-issuer">' + esc(c.issuer) + "</div>" +
             (c.note ? '<p class="fp-cert-note">' + esc(c.note) + "</p>" : "") +
             '<div class="fp-cert-meta">' + esc(c.date) +
-              (c.id ? ' \u00b7 <span class="mono">' + esc(c.id) + "</span>" : "") + "</div>" +
+              (c.id ? ' · <span class="mono">' + esc(c.id) + "</span>" : "") + "</div>" +
             "</div>";
         }).join("");
     }

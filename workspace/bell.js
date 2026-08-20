@@ -128,7 +128,7 @@
         g[1].slice(0, 5).map(function (i) {
           return '<a class="ws-bell-row is-' + g[2] + '" href="' + base() + esc(i.href) + '">' +
             "<b>" + esc(i.name) + "</b>" +
-            "<span>" + esc(i.kind) + " \u00b7 " + esc(i.text) + "</span></a>";
+            "<span>" + esc(i.kind) + " · " + esc(i.text) + "</span></a>";
         }).join("") +
         (g[1].length > 5 ? '<div class="ws-bell-more">and ' + (g[1].length - 5) + " more</div>" : "") +
         "</div>";

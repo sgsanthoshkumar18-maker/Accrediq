@@ -1,5 +1,5 @@
 /* Palette rules: neon is the owner's, dark/light is everyone's. */
-const fs = require('fs'), path = require('path');
+const fs = require('fs'), path = require('path'), vm = require('vm');
 let pass = 0, fail = 0;
 const eq = (g, w, m) => { if (JSON.stringify(g) === JSON.stringify(w)) pass++;
   else { fail++; console.log('FAIL:', m, '- got', g, 'want', w); } };

@@ -59,10 +59,10 @@ window.AQAuditReport = (function () {
     h += '<div class="aud-report" id="audReport">';
 
     h += '<div class="aud-rep-head">' +
-      "<div><h2>" + esc(session.department_name) + " \u2014 internal audit result</h2>" +
-      '<p class="aud-sub">' + esc(session.auditor_name) + " \u00B7 " +
-      new Date(session.started_at).toLocaleString() + " \u00B7 " + A.fmtDuration(dur) +
-      " \u00B7 " + esc(session.standard_edition) + "</p></div>" +
+      "<div><h2>" + esc(session.department_name) + " — internal audit result</h2>" +
+      '<p class="aud-sub">' + esc(session.auditor_name) + " · " +
+      new Date(session.started_at).toLocaleString() + " · " + A.fmtDuration(dur) +
+      " · " + esc(session.standard_edition) + "</p></div>" +
       '<div class="aud-rep-actions no-print">' +
       '<button type="button" class="btn btn-accent" id="audXlsx">Download Excel</button> ' +
       '<button type="button" class="btn btn-ghost" id="audPrint">Print / save as PDF</button>' +
@@ -93,10 +93,10 @@ window.AQAuditReport = (function () {
       "</div></div>";
 
     h += '<div class="aud-card"><h3>How this score is calculated</h3>' +
-      "<p>Unweighted readiness is <code>(C + 0.5 \u00D7 PC) \u00F7 applicable elements</code>, " +
+      "<p>Unweighted readiness is <code>(C + 0.5 × PC) \u00F7 applicable elements</code>, " +
       "where applicable excludes anything marked Not Applicable. The weighted figure applies " +
-      "the same category weights the Readiness page uses \u2014 Core counts for more than " +
-      "Excellence \u2014 so a Core non-conformity cannot be diluted by a run of easy wins. " +
+      "the same category weights the Readiness page uses — Core counts for more than " +
+      "Excellence — so a Core non-conformity cannot be diluted by a run of easy wins. " +
       "Both are shown because the unweighted number is the one people expect and the " +
       "weighted one is the more honest.</p>" +
       '<p class="aud-caveat">This is an internal self-assessment of one department against ' +
@@ -119,7 +119,7 @@ window.AQAuditReport = (function () {
           esc(A.STATUS[f.status].short) + "</span></td>" +
           "<td><b>" + esc(r.code) + "</b> " + esc(r.text) +
           (f.evidence ? '<div class="aud-ev">' + esc(f.evidence) + "</div>" : "") + "</td>" +
-          "<td>" + esc(f.owner || "\u2014") + "</td><td>" + esc(f.due_date || "\u2014") + "</td></tr>";
+          "<td>" + esc(f.owner || "—") + "</td><td>" + esc(f.due_date || "—") + "</td></tr>";
       });
       h += "</tbody></table>";
     }
@@ -146,12 +146,12 @@ window.AQAuditReport = (function () {
       h += '<table class="aud-table"><thead><tr><th>Person</th><th>Open</th>' +
         "<th>Earliest due</th><th>Worst</th><th>Elements</th><th></th></tr></thead><tbody>";
       owners.forEach(function (o) {
-        var sub = "Internal audit findings \u2014 " + session.department_name;
+        var sub = "Internal audit findings — " + session.department_name;
         var body = "Findings assigned to you from the internal audit of " +
           session.department_name + " on " + new Date(session.started_at).toLocaleDateString() +
           ":\n\n" + o.codes.join("\n") + "\n\nEarliest target closure: " + (o.earliest || "not set");
         h += "<tr><td>" + esc(o.owner) + "</td><td>" + o.count + "</td>" +
-          "<td>" + esc(o.earliest || "\u2014") + "</td><td>" + esc(o.worst) + "</td>" +
+          "<td>" + esc(o.earliest || "—") + "</td><td>" + esc(o.worst) + "</td>" +
           '<td class="aud-codes">' + esc(o.codes.join(", ")) + "</td>" +
           '<td class="no-print"><a class="btn btn-ghost btn-sm" href="mailto:?subject=' +
           encodeURIComponent(sub) + "&body=" + encodeURIComponent(body) +
@@ -165,11 +165,11 @@ window.AQAuditReport = (function () {
 
     h += '<div class="aud-card"><h3>Next steps</h3><ol class="aud-next">' +
       "<li>Every non-conformity and partial compliance above has been written into " +
-      '<a href="capa.html">NC &amp; CAPA</a> with source \u201Cinternal audit\u201D. ' +
+      '<a href="capa.html">NC &amp; CAPA</a> with source “internal audit”. ' +
       "Root cause and verification are recorded there, not here.</li>" +
       "<li>Suggested re-audit date: <b>" + next.toISOString().slice(0, 10) + "</b> (" +
       days + " days), set by the worst severity present.</li>" +
-      "<li>Keep the exported workbook with the department file \u2014 an assessor will ask " +
+      "<li>Keep the exported workbook with the department file — an assessor will ask " +
       "to see your internal audit records, and the dated Excel is that evidence.</li>" +
       "</ol></div>";
 
@@ -178,7 +178,7 @@ window.AQAuditReport = (function () {
 
     var xb = host.querySelector("#audXlsx");
     if (xb) xb.addEventListener("click", function () {
-      xb.disabled = true; xb.textContent = "Building\u2026";
+      xb.disabled = true; xb.textContent = "Building…";
       window.AQAuditExcel.download(session).then(function () {
         xb.disabled = false; xb.textContent = "Download Excel";
       }, function (e) {

@@ -97,6 +97,20 @@
 .aud-fix { display: grid; gap: 6px; margin-top: 7px; }
 .aud-fix select, .aud-fix input { border: 1px solid var(--aud-line); border-radius: 7px;
   padding: 7px 9px; font: inherit; font-size: .87rem; background: transparent; color: inherit; }
+/* The severity dropdown, specifically.
+   `background: transparent` above is fine for the closed control but it is the reason the
+   OPEN option list rendered white with near-white text — the dropdown looked empty until
+   the cursor moved over an item and the browser drew its own blue highlight. The popup is
+   drawn by the operating system, which decides light or dark from color-scheme and from
+   the control's own resolved background, not from the page theme. Naming both here, at
+   the specificity that beats the transparent rule, makes the list match the workspace.
+   The options themselves are handled by the global `select option` rules in styles.css. */
+.aud-fix select {
+  background: var(--aud-surface);
+  color: var(--fg);
+  color-scheme: dark;
+}
+:root[data-theme="light"] .aud-fix select { color-scheme: light; }
 
 .aud-kpis { list-style: none; padding: 0; margin: 10px 0 0; }
 .aud-kpis li { padding: 6px 0; border-bottom: 1px solid var(--aud-line); font-size: .9rem; }

@@ -45,7 +45,7 @@ window.AQSopDepts = (function () {
      plainly is correct; inventing a department for them would be worse than a blank,
      because a hospital would then file the SOP in the wrong place and an assessor would
      find nobody accountable for it. */
-  var UNSCOPED = "Hospital-wide \u2014 not scoped to a single department";
+  var UNSCOPED = "Hospital-wide — not scoped to a single department";
 
   function labelFor(code) {
     var d = forCode(code);
