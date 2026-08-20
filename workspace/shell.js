@@ -22,7 +22,7 @@
     { key: "calendar", href: "calendar.html", label: "Calendar",
       desc: "Committee meetings and recurring NABH obligations" },
     { key: "register", href: "register.html", label: "Register",
-      desc: "Equipment, licences and contracts with their renewal cycles" },
+      desc: "Equipment, licences, contracts and staff registrations with their renewal cycles" },
     { key: "rounds", href: "rounds.html", label: "Rounds",
       desc: "Recurring checks that produce a score, trended against your target" },
     { key: "capa", href: "capa.html", label: "NC & CAPA",

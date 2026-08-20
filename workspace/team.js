@@ -34,7 +34,13 @@
           return '<tr data-id="' + esc(r.id) + '"><td><b>' + esc(r.name || "—") + "</b></td>" +
             "<td>" + esc(r.email || "—") + "</td>" +
             '<td><span class="role-pill role-' + esc(r.role) + '">' + esc(r.role) + "</span></td>" +
-            "<td>" + esc(r.department || "—") + "</td>" +
+            "<td>" + esc(r.department || "—") +
+              /* Say it in the table, not just in the edit dialog. An admin reviewing who
+                 can see what should not have to open six rows to find out. */
+              (r.role === "owner" || r.role === "admin"
+                ? ' <span class="tm-scope">all departments</span>'
+                : r.all_departments ? ' <span class="tm-scope">all departments</span>' : "") +
+              "</td>" +
             '<td>' + (r.status === "invited" ? '<span class="capa-over">Invited</span>' : "Active") + "</td>" +
             (admin ? '<td class="nowrap"><button type="button" class="btn btn-sm" data-act="edit">Edit</button>' +
               (r.role === "owner" ? "" : '<button type="button" class="btn btn-sm btn-danger" data-act="del">×</button>') +
@@ -78,10 +84,25 @@
           ROLES.map(function (r) {
             return '<option value="' + r.k + '"' + (row.role === r.k ? " selected" : "") + ">" + r.label + "</option>";
           }).join("") + "</select></div>" +
-        '<div class="ws-f"><label>Department</label><select data-k="department"><option value=""></option>' +
+        /* Required, and chosen by the admin rather than by the person joining.
+           Department decides what data this account can see, so it cannot be
+           self-selected at sign-up: everyone would simply pick the one that sees
+           everything. The admin who is paying decides. */
+        '<div class="ws-f"><label>Department *</label><select data-k="department"><option value="">Choose a department</option>' +
           W.DEPARTMENTS.map(function (d) {
             return '<option value="' + esc(d) + '"' + (row.department === d ? " selected" : "") + ">" + esc(d) + "</option>";
           }).join("") + "</select></div>" +
+        /* The visibility flag, kept apart from role.
+           Role says what you may DO; this says what you may SEE. A biomedical editor and
+           a biomedical viewer look at the same records and one can change them. Quality
+           needs this because their job is auditing the other departments. */
+        '<div class="ws-f ws-f-wide"><label class="tm-check">' +
+          '<input type="checkbox" data-k="all_departments"' +
+            (row.all_departments ? " checked" : "") + ">" +
+          "<span>Can see every department" +
+          '<small>For quality and anyone auditing across the hospital. Leave unticked and ' +
+          "this person sees only their own department's records. Owners and admins always " +
+          "see everything.</small></span></label></div>" +
       "</div>" +
       (S.mode === "supabase"
         ? '<p class="ws-auth-msg">This records the seat. The person still needs to create an account with the same email address — sending the invitation email itself needs a server-side function, which is noted in the setup guide.</p>'
@@ -92,8 +113,14 @@
     m.querySelector("#tmCancel").addEventListener("click", function () { m.classList.remove("open"); });
     m.querySelector("#tmSave").addEventListener("click", async function () {
       var data = Object.assign({}, row);
-      m.querySelectorAll("[data-k]").forEach(function (i) { data[i.getAttribute("data-k")] = i.value; });
+      m.querySelectorAll("[data-k]").forEach(function (i) {
+        data[i.getAttribute("data-k")] = i.type === "checkbox" ? i.checked : i.value;
+      });
       if (!data.email) { W.toast("An email address is needed", "bad"); return; }
+      /* Refused rather than defaulted. A seat with no department would be invisible to
+         the department filter, and the tempting default -- show them everything -- is
+         exactly the leak this whole feature exists to prevent. */
+      if (!data.department) { W.toast("Choose a department for this person", "bad"); return; }
       var saved = await S.saveMember(data);
       var i = rows.findIndex(function (r) { return r.id === saved.id; });
       if (i >= 0) rows[i] = saved; else rows.push(saved);

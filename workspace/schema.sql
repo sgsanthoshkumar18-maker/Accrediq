@@ -29,11 +29,24 @@ create table if not exists public.members (
   name        text,
   role        text not null default 'viewer',
   department  text,
+  -- Whether this person sees every department or only their own.
+  --
+  -- Separate from `role` on purpose: role says what you may DO (read, edit, administer),
+  -- this says what you may SEE. A biomedical editor and a biomedical viewer look at the
+  -- same records; one can change them. Collapsing the two would mean promoting a
+  -- technician to edit their own register also handed them HR's personal files.
+  --
+  -- Quality gets this because their job is auditing the other departments. Owners and
+  -- admins get it implicitly in sees_all_depts() rather than by setting the flag, so a
+  -- hospital cannot lock itself out by clearing it on the only owner.
+  all_departments boolean not null default false,
   status      text not null default 'active',
   created_at  timestamptz not null default now(),
   updated_at  timestamptz not null default now()
 );
+alter table public.members add column if not exists all_departments boolean not null default false;
 create index if not exists members_org_idx  on public.members(org_id);
+create index if not exists members_dept_idx on public.members(org_id, department);
 create index if not exists members_user_idx on public.members(user_id);
 
 -- ---------- element readiness ----------
@@ -605,6 +618,52 @@ returns boolean language sql stable security definer set search_path = public as
   );
 $$;
 
+-- ---------- department scoping ----------
+--
+-- A hospital buys one subscription and every department works inside it. Biomedical must
+-- not read HR's personal files; HR must not read the pharmacy's narcotics register. That
+-- isolation is a claim made to the hospital when they buy, so it is enforced HERE, in the
+-- database, and not by hiding menu items in the browser. A nav item that is merely hidden
+-- is still one network request away, and a promise of isolation that a devtools tab can
+-- disprove is worse than never having made it -- under the DPDP Act it is a reportable
+-- incident with the hospital's name on it.
+
+-- The signed-in user's own department. Null for anyone who has not been given one, which
+-- deliberately matches nothing rather than everything.
+create or replace function public.my_dept()
+returns text language sql stable security definer set search_path = public as $$
+  select department from public.members where user_id = auth.uid() limit 1;
+$$;
+
+-- True when the user should see every department's records.
+--
+-- Owners and admins are included by ROLE, not by the flag. Otherwise an admin could clear
+-- their own all_departments box and lock the hospital out of its own data with no way
+-- back in -- and the person best placed to make that mistake is the one setting up the
+-- account on day one.
+create or replace function public.sees_all_depts()
+returns boolean language sql stable security definer set search_path = public as $$
+  select exists (
+    select 1 from public.members
+    where user_id = auth.uid()
+      and (role in ('owner','admin') or all_departments = true)
+  );
+$$;
+
+-- The visibility test applied to every department-scoped row.
+--
+-- Rows with a NULL department are visible to everyone in the hospital. That is deliberate:
+-- a document that belongs to no single department is a hospital-wide document, and the
+-- alternative -- hiding it from all -- would silently lose records the moment someone
+-- forgot to tag one. Failing open on untagged rows and closed on tagged ones is the safer
+-- direction, because an untagged row was never claimed as private in the first place.
+create or replace function public.dept_visible(row_dept text)
+returns boolean language sql stable security definer set search_path = public as $$
+  select public.sees_all_depts()
+      or row_dept is null
+      or row_dept = public.my_dept();
+$$;
+
 create or replace function public.is_admin()
 returns boolean language sql stable security definer set search_path = public as $$
   select exists (
@@ -689,7 +748,11 @@ create table if not exists public.incidents (
   occurred_at    timestamptz,
   reported_at    timestamptz,
   submitted_at   timestamptz,
-  department     text,
+  department     text,          -- the department that REPORTED it
+  -- The department that has to act on it, which is often not the one that spotted it:
+  -- a pharmacy dispensing error is found on a ward. Both see the incident, and so does
+  -- quality. Null while it is still being triaged.
+  responsible_department text,
   classification text,          -- near_miss | no_harm | adverse | sentinel | other
   severity       int,           -- 1..4, derived from classification
   status         text not null default 'reported',
@@ -702,6 +765,10 @@ create table if not exists public.incidents (
 
 create index if not exists incidents_org_time_idx
   on public.incidents (org_id, occurred_at desc);
+alter table public.incidents add column if not exists responsible_department text;
+-- Both department columns are read on every incident query once scoping is on.
+create index if not exists incidents_dept_idx on public.incidents (org_id, department);
+create index if not exists incidents_resp_idx on public.incidents (org_id, responsible_department);
 
 -- RLS is enabled by LOOP over the same list the policies use, not by a hand-written list.
 --
@@ -746,12 +813,13 @@ create policy members_write on public.members
 do $$
 declare t text;
 begin
-  foreach t in array array['elements','capa','documents','document_versions','audits','incidents',
-                        'committees','committee_meetings','compliance_tasks',
-                        'assets','asset_schedules','asset_events',
-                        'checklists','checklist_items','rounds',
-                        'notifications','onboarding','attachments',
-                        'gate_passes','apex_manual','trials'] loop
+  -- HOSPITAL-WIDE tables. Everyone in the org reads these regardless of department:
+  -- the NABH element data, the apex manual, committees (which are cross-departmental by
+  -- definition), and the plumbing tables. Adding a department clause here would be wrong,
+  -- not merely strict -- a committee that only its chair's department could see is not a
+  -- committee.
+  foreach t in array array['elements','committees','committee_meetings',
+                        'notifications','onboarding','apex_manual','trials'] loop
     execute format('drop policy if exists %I_read on public.%I', t, t);
     execute format(
       'create policy %I_read on public.%I for select using (org_id = public.my_org())', t, t);
@@ -762,7 +830,153 @@ begin
          using (org_id = public.my_org() and public.can_edit())
          with check (org_id = public.my_org() and public.can_edit())', t, t);
   end loop;
+
+  -- DEPARTMENT-SCOPED tables that carry their own department column.
+  -- Biomedical must not read HR's personal files. This is the claim made to the hospital
+  -- when they buy, so it is enforced here rather than by hiding menu items.
+  foreach t in array array['capa','documents','audits','compliance_tasks',
+                        'assets','checklists','gate_passes'] loop
+    execute format('drop policy if exists %I_read on public.%I', t, t);
+    execute format(
+      'create policy %I_read on public.%I for select
+         using (org_id = public.my_org() and public.dept_visible(department))', t, t);
+
+    execute format('drop policy if exists %I_write on public.%I', t, t);
+    execute format(
+      'create policy %I_write on public.%I for all
+         using (org_id = public.my_org() and public.can_edit()
+                and public.dept_visible(department))
+         with check (org_id = public.my_org() and public.can_edit()
+                and public.dept_visible(department))', t, t);
+  end loop;
 end $$;
+
+-- ---------------------------------------------------------------------
+-- CHILD tables: department is inherited from the parent, not stored here.
+--
+-- These are the dangerous ones and they are written out rather than looped, because each
+-- reaches a different parent through a different column. A missed child table is the worst
+-- kind of failure: the parent row is correctly hidden, the UI looks right, and the child
+-- rows -- the calibration dates, the checklist answers, the document history -- are served
+-- to anyone who asks the API directly. Nothing on screen would ever reveal it.
+--
+-- Same lesson as the RLS enables: two lists that must agree eventually disagree. Here the
+-- test suite enumerates every table and fails if a department-scoped one has no clause.
+-- ---------------------------------------------------------------------
+
+drop policy if exists asset_schedules_read on public.asset_schedules;
+create policy asset_schedules_read on public.asset_schedules
+  for select using (org_id = public.my_org() and exists (
+    select 1 from public.assets a
+    where a.id = asset_schedules.asset_id and public.dept_visible(a.department)));
+drop policy if exists asset_schedules_write on public.asset_schedules;
+create policy asset_schedules_write on public.asset_schedules
+  for all using (org_id = public.my_org() and public.can_edit() and exists (
+    select 1 from public.assets a
+    where a.id = asset_schedules.asset_id and public.dept_visible(a.department)))
+  with check (org_id = public.my_org() and public.can_edit() and exists (
+    select 1 from public.assets a
+    where a.id = asset_schedules.asset_id and public.dept_visible(a.department)));
+
+drop policy if exists asset_events_read on public.asset_events;
+create policy asset_events_read on public.asset_events
+  for select using (org_id = public.my_org() and exists (
+    select 1 from public.assets a
+    where a.id = asset_events.asset_id and public.dept_visible(a.department)));
+drop policy if exists asset_events_write on public.asset_events;
+create policy asset_events_write on public.asset_events
+  for all using (org_id = public.my_org() and public.can_edit() and exists (
+    select 1 from public.assets a
+    where a.id = asset_events.asset_id and public.dept_visible(a.department)))
+  with check (org_id = public.my_org() and public.can_edit() and exists (
+    select 1 from public.assets a
+    where a.id = asset_events.asset_id and public.dept_visible(a.department)));
+
+drop policy if exists checklist_items_read on public.checklist_items;
+create policy checklist_items_read on public.checklist_items
+  for select using (org_id = public.my_org() and exists (
+    select 1 from public.checklists c
+    where c.id = checklist_items.checklist_id and public.dept_visible(c.department)));
+drop policy if exists checklist_items_write on public.checklist_items;
+create policy checklist_items_write on public.checklist_items
+  for all using (org_id = public.my_org() and public.can_edit() and exists (
+    select 1 from public.checklists c
+    where c.id = checklist_items.checklist_id and public.dept_visible(c.department)))
+  with check (org_id = public.my_org() and public.can_edit() and exists (
+    select 1 from public.checklists c
+    where c.id = checklist_items.checklist_id and public.dept_visible(c.department)));
+
+drop policy if exists rounds_read on public.rounds;
+create policy rounds_read on public.rounds
+  for select using (org_id = public.my_org() and exists (
+    select 1 from public.checklists c
+    where c.id = rounds.checklist_id and public.dept_visible(c.department)));
+drop policy if exists rounds_write on public.rounds;
+create policy rounds_write on public.rounds
+  for all using (org_id = public.my_org() and public.can_edit() and exists (
+    select 1 from public.checklists c
+    where c.id = rounds.checklist_id and public.dept_visible(c.department)))
+  with check (org_id = public.my_org() and public.can_edit() and exists (
+    select 1 from public.checklists c
+    where c.id = rounds.checklist_id and public.dept_visible(c.department)));
+
+drop policy if exists document_versions_read on public.document_versions;
+create policy document_versions_read on public.document_versions
+  for select using (org_id = public.my_org() and exists (
+    select 1 from public.documents d
+    where d.id = document_versions.document_id and public.dept_visible(d.department)));
+drop policy if exists document_versions_write on public.document_versions;
+create policy document_versions_write on public.document_versions
+  for all using (org_id = public.my_org() and public.can_edit() and exists (
+    select 1 from public.documents d
+    where d.id = document_versions.document_id and public.dept_visible(d.department)))
+  with check (org_id = public.my_org() and public.can_edit() and exists (
+    select 1 from public.documents d
+    where d.id = document_versions.document_id and public.dept_visible(d.department)));
+
+-- Attachments hang off whatever raised them. Their own department column is authoritative
+-- where it is set; where it is not, they follow the org like any untagged row.
+drop policy if exists attachments_read on public.attachments;
+create policy attachments_read on public.attachments
+  for select using (org_id = public.my_org());
+drop policy if exists attachments_write on public.attachments;
+create policy attachments_write on public.attachments
+  for all using (org_id = public.my_org() and public.can_edit())
+  with check (org_id = public.my_org() and public.can_edit());
+
+-- ---------------------------------------------------------------------
+-- INCIDENTS: three-way visibility, by explicit decision.
+--
+-- An incident is not owned by one department. A pharmacy dispensing error is found on a
+-- ward; a ventilator failure in ICU is biomedical's to fix. Siloing incidents by a single
+-- department would make the reports drift away from what actually happened and would blind
+-- quality, which is the one function that must see all of them.
+--
+-- So an incident is visible to: the department that REPORTED it, the department
+-- RESPONSIBLE for it, and quality (via sees_all_depts). Anyone may report one -- the write
+-- policy deliberately does not restrict insert by department, because a nurse who spots a
+-- pharmacy error must be able to say so.
+-- ---------------------------------------------------------------------
+drop policy if exists incidents_read on public.incidents;
+create policy incidents_read on public.incidents
+  for select using (
+    org_id = public.my_org() and (
+      public.sees_all_depts()
+      or department is null
+      or department = public.my_dept()
+      or responsible_department = public.my_dept()
+    ));
+
+drop policy if exists incidents_write on public.incidents;
+create policy incidents_write on public.incidents
+  for all using (
+    org_id = public.my_org() and public.can_edit() and (
+      public.sees_all_depts()
+      or department is null
+      or department = public.my_dept()
+      or responsible_department = public.my_dept()
+    ))
+  with check (org_id = public.my_org() and public.can_edit());
 
 -- =====================================================================
 -- Stamp org_id automatically so the client never has to send it.
