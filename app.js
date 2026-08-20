@@ -11,6 +11,9 @@
         { key: "departments", href: "departments.html", label: "Administrative Departments" },
         { key: "clinicalareas", href: "clinical-areas.html", label: "Clinical Areas" },
         { key: "nonclinicalareas", href: "nonclinical-areas.html", label: "Non-Clinical Areas" },
+        /* Free page, sits with the departments rather than under Plans: a department head
+           sent this link is answering "what do I get", not "what does it cost". */
+        { key: "value", href: "value.html", label: "What Your Department Gets" },
       ]
     },
     { key: "workspace", href: "workspace/workspace.html", label: "Workspace" },
@@ -116,7 +119,7 @@
             <p>NABH accreditation, actually understood — every standard explained the way an assessor reads it.</p>
           </div>
           <div class="footer-col"><h4>Learn</h4>
-            <a href="${base}plans.html">Plans &amp; pricing</a><a href="${base}standards.html">Standards</a>
+            <a href="${base}plans.html">Plans &amp; pricing</a><a href="${base}value.html">What your department gets</a><a href="${base}standards.html">Standards</a>
             <a href="${base}departments.html">Departments</a>
             <a href="${base}workspace/workspace.html">Workspace</a>
             <a href="${base}clinical-areas.html">Clinical Areas</a>

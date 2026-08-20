@@ -1,0 +1,59 @@
+/* AQcredix — "What your department gets".
+   Every colour is a theme token, so light, dark and neon follow automatically. Hardcoding
+   a colour here has caused a bug elsewhere on this site; don't reintroduce it. */
+
+.vl-summary{display:grid;grid-template-columns:repeat(4,1fr);gap:14px;margin:0 0 14px;}
+@media (max-width:800px){.vl-summary{grid-template-columns:repeat(2,1fr);}}
+
+.vl-num{background:var(--bg-elevated);border:1px solid var(--border);border-radius:var(--r-md,12px);
+  padding:14px 16px;display:flex;flex-direction:column;gap:3px;}
+.vl-num b{font-family:var(--font-display,Georgia,serif);font-size:26px;line-height:1;
+  color:var(--brand-2);}
+.vl-num span{font-size:12px;color:var(--fg-faint);line-height:1.4;}
+.vl-num-lg b{font-size:32px;}
+
+/* The caveat that keeps the headline honest. Deliberately not muted into invisibility —
+   understating the qualification while overstating the number is the failure this page
+   was built to avoid. */
+.vl-honest{font-size:13.5px;line-height:1.65;color:var(--fg-muted);max-width:72ch;
+  margin:0 0 34px;padding-left:13px;border-left:2px solid var(--brand-2);}
+
+.vl-group{margin:0 0 44px;}
+.vl-group h2{font-size:20px;margin:0 0 16px;display:flex;align-items:center;gap:9px;}
+.vl-gn{font-family:var(--font-mono);font-size:12px;font-weight:700;color:var(--brand-2);
+  background:var(--brand-tint);border-radius:999px;padding:2px 9px;}
+
+.vl-grid{display:grid;grid-template-columns:repeat(2,1fr);gap:14px;}
+@media (max-width:900px){.vl-grid{grid-template-columns:1fr;}}
+
+.vl-card{background:var(--bg-elevated);border:1px solid var(--border);
+  border-radius:var(--r-lg,14px);padding:18px 20px;display:flex;flex-direction:column;gap:12px;}
+.vl-card:hover{border-color:var(--brand-2);}
+
+.vl-head{display:flex;align-items:baseline;justify-content:space-between;gap:12px;}
+/* Full foreground, not the muted body colour. The department name is the thing a reader
+   scans for; the same mistake left the workspace library cards unreadable. */
+.vl-head h3{font-size:16px;line-height:1.3;margin:0;color:var(--fg);}
+.vl-page{font-family:var(--font-mono);font-size:11px;color:var(--fg-faint);
+  white-space:nowrap;flex-shrink:0;}
+
+.vl-nums{display:grid;grid-template-columns:repeat(3,1fr);gap:8px;}
+.vl-nums .vl-num{padding:10px 12px;}
+.vl-nums .vl-num b{font-size:20px;}
+.vl-nums .vl-num span{font-size:11px;}
+
+.vl-pitch{margin:0;font-size:13.5px;line-height:1.65;color:var(--fg-muted);}
+
+.vl-docs{font-size:13px;color:var(--fg-muted);line-height:1.6;
+  padding-top:11px;border-top:1px solid var(--border-soft);}
+.vl-docs b{color:var(--fg);}
+.vl-docs b.vl-hi{color:var(--brand-2);}
+.vl-none{color:var(--fg-faint);font-style:italic;}
+.vl-cats{display:block;font-family:var(--font-mono);font-size:11px;color:var(--fg-faint);
+  margin-top:3px;}
+
+.vl-quick summary{cursor:pointer;font-size:12.5px;font-weight:600;color:var(--brand-2);}
+.vl-quick ul{columns:2;column-gap:24px;margin:10px 0 0;padding-left:18px;
+  font-size:12.5px;line-height:1.7;color:var(--fg-muted);}
+@media (max-width:700px){.vl-quick ul{columns:1;}}
+.vl-quick li{break-inside:avoid;}
