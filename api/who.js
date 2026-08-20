@@ -71,17 +71,71 @@ module.exports = async function handler(req, res) {
   let url = `${BASE}/${encodeURIComponent(indicator)}`;
   if (country) url += `?$filter=SpatialDim eq '${country.toUpperCase()}'`;
 
-  try {
+  /* RETRY ONCE, AND WHY.
+   *
+   * WHO serves GHO through an Azure CDN with a very slow COLD path. A first request for
+   * an indicator that is not in their edge cache can take well over eight seconds; every
+   * request after it returns in about a fifth of a second. Measured against the live
+   * endpoint: attempt 1 aborted at 8.6s, attempts 2-6 returned in 0.5-0.7s.
+   *
+   * The old single attempt with an 8s abort therefore failed exactly when it mattered —
+   * a cold indicator — and the globe asks for nine indicators at once on load, so all
+   * nine aborted together and every field read "No data". That looks like WHO having no
+   * figures for India, which is the wrong conclusion entirely: the figures are there and
+   * the request never completed.
+   *
+   * The failed first attempt is not wasted. It is what warms the CDN, which is why the
+   * retry is fast rather than a second eight-second gamble.
+   *
+   * BUDGET: 6s + 6s = 12s worst case, inside the 15s maxDuration set for api/*.js in
+   * vercel.json. If that maxDuration is ever lowered, lower these to match or the
+   * function is killed mid-retry and returns nothing at all. */
+  const ATTEMPT_MS = 6000;
+
+  async function once() {
     const controller = new AbortController();
-    const timer = setTimeout(() => controller.abort(), 8000);
-    const upstream = await fetch(url, { signal: controller.signal, headers: { Accept: "application/json" } });
-    clearTimeout(timer);
-    if (!upstream.ok) {
-      return res.status(upstream.status).json({ error: "WHO upstream error", status: upstream.status });
+    const timer = setTimeout(() => controller.abort(), ATTEMPT_MS);
+    try {
+      return await fetch(url, {
+        signal: controller.signal,
+        headers: { Accept: "application/json" }
+      });
+    } finally {
+      clearTimeout(timer);
     }
+  }
+
+  let upstream = null, lastErr = null;
+  for (let attempt = 0; attempt < 2; attempt++) {
+    try {
+      upstream = await once();
+      break;
+    } catch (err) {
+      lastErr = err;
+      /* Only a timeout is worth retrying. A DNS or TLS failure will fail identically the
+         second time and would just spend the caller's remaining budget. */
+      if (err && err.name !== "AbortError") break;
+    }
+  }
+
+  if (!upstream) {
+    return res.status(504).json({
+      error: "The WHO API did not respond in time.",
+      detail: "This is usually a slow first request on WHO's side. Reloading normally " +
+              "returns the data, because the attempt that timed out warms their cache.",
+      retried: true,
+      upstream: lastErr && lastErr.name === "AbortError" ? "timeout" : "unreachable"
+    });
+  }
+
+  if (!upstream.ok) {
+    return res.status(upstream.status).json({ error: "WHO upstream error", status: upstream.status });
+  }
+
+  try {
     const data = await upstream.json();
     return res.status(200).json(data);
   } catch (err) {
-    return res.status(502).json({ error: "Could not reach the WHO API." });
+    return res.status(502).json({ error: "WHO returned a response that was not JSON." });
   }
 };
