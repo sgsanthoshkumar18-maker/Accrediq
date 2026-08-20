@@ -1012,6 +1012,30 @@ fully idempotent and ~1144 lines, starting `-- ====`. **Clear the editor with Ct
 Delete first**: a paste on top of existing content produced a "syntax error at line 3070"
 in a 618-line file. Open it with Notepad, not Word — smart quotes break it.
 
+## vercel.json takes no comments — this broke a deploy
+
+`vercel.json` is validated against Vercel's published schema, and every object in it is
+`additionalProperties: false`. A `"_comment"` key added to the redirect rule — following
+this repo's convention of explaining *why* next to the thing — **failed the build twice**
+before anyone read the log. The site kept serving the previous deployment, so the symptom
+was "the push did nothing" rather than an obvious error.
+
+Check a change with the real schema rather than by eye:
+
+    curl -s https://openapi.vercel.sh/vercel.json -o /tmp/v.json
+
+Valid keys on a redirect are exactly: `source`, `destination`, `permanent`, `statusCode`,
+`has`, `missing`, `env`. Reasoning about that file belongs here instead.
+
+**Why the redirect exists.** The old `accrediq.vercel.app` host served the whole site
+alongside `aqcredix.com`, so every page existed at two addresses and a search engine had
+to guess which was canonical. The rule 308s the old host to the new one — permanent, so
+ranking transfers rather than restarting, and method-preserving.
+
+**It is deliberately not a www/apex rule.** That direction is set in the Vercel dashboard
+(apex is Production, www redirects to it). A rule here pointing the other way would be an
+infinite redirect loop.
+
 ## Open items
 
 1. **Sign-in on a second device** — the complimentary address was recorded with one `s`

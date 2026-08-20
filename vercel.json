@@ -10,7 +10,6 @@
   },
   "redirects": [
     {
-      "_comment": "The old Vercel host served the entire site alongside aqcredix.com, so every page existed twice and search engines had to guess which was real. 308 keeps the method and tells them the move is permanent, so the ranking follows rather than restarting. Deliberately NOT a www/apex rule: the direction between those two is set in the Vercel dashboard, and a rule here pointing the opposite way would be an infinite loop.",
       "source": "/:path*",
       "has": [{ "type": "host", "value": "accrediq.vercel.app" }],
       "destination": "https://aqcredix.com/:path*",
