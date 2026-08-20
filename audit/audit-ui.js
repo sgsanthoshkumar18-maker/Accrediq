@@ -477,19 +477,31 @@
      A blank screen tells the user nothing and tells us nothing. This puts the reason on
      screen and the detail in the console, so the next report comes with a cause. */
   function fail(message, err) {
-    if (window.console && err) console.error("audit page:", err);
+    if (window.console) console.error("audit page:", message, err || "");
     var host = el("wsBody");
     if (host) host.style.display = "";
-    var box = el("audNotice") || host;
-    if (!box) return;
-    box.innerHTML =
-      '<div class="ws-notice"><b>The internal audit page could not start.</b><br>' +
-      esc(message) +
-      (err && err.message ? '<br><small style="opacity:.7">' + esc(err.message) + "</small>" : "") +
-      "</div>";
+
+    /* Render into wsGate, NOT audNotice.
+     *
+     * The previous version wrote the message into audNotice and then hid audHome -- and
+     * audNotice lives INSIDE audHome. So the message was placed into a container that the
+     * very next line made invisible. The page went black and said nothing, which is
+     * precisely the bug fail() was written to prevent, reproduced by fail() itself.
+     *
+     * wsGate is a sibling of wsBody and is never hidden by view(), so a message put there
+     * cannot be swallowed by the panel-switching logic. */
     ["audHome", "audWork", "audDone"].forEach(function (id) {
       var n = el(id); if (n) n.style.display = "none";
     });
+
+    var box = el("wsGate");
+    if (!box) { box = document.createElement("div"); document.body.appendChild(box); }
+    box.innerHTML =
+      '<section class="section wrap"><div class="ws-notice">' +
+      "<b>The internal audit page could not start.</b><br>" + esc(message) +
+      (err && err.message
+        ? '<br><small style="opacity:.75">' + esc(err.message) + "</small>" : "") +
+      "</div></section>";
   }
 
   async function boot() {
@@ -576,6 +588,27 @@
     });
   }
 
-  if (document.readyState === "loading") document.addEventListener("DOMContentLoaded", boot);
-  else boot();
+  /* Last resort.
+   *
+   * boot() is async, so a throw inside it becomes a REJECTED PROMISE, not an uncaught
+   * error -- and an unhandled rejection does not always surface in the console the way a
+   * synchronous throw does. That is how this page managed to fail four times while showing
+   * an empty console: there was an error, it just never had anywhere to go.
+   *
+   * Catching here guarantees that any failure anywhere in boot ends up on screen. */
+  function startup() {
+    try {
+      var p = boot();
+      if (p && p.catch) p.catch(function (e) { fail("Something went wrong while loading this page.", e); });
+    } catch (e) {
+      fail("Something went wrong while loading this page.", e);
+    }
+  }
+
+  window.addEventListener("unhandledrejection", function (ev) {
+    if (window.console) console.error("audit page: unhandled rejection", ev && ev.reason);
+  });
+
+  if (document.readyState === "loading") document.addEventListener("DOMContentLoaded", startup);
+  else startup();
 })();
