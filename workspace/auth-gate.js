@@ -196,6 +196,22 @@ function friendlyAuthError(err) {
         '<button type="button" class="btn btn-accent" id="agGo">' +
           (tab === "up" ? "Create account" : "Sign in") + "</button>";
 
+      /* ENTER SUBMITS. This panel has no <form>, so the browser's implicit submission
+         never fires and Enter did nothing at all — someone who typed a password and
+         pressed Enter got silence, which reads as the password having been rejected.
+         Routed through the button's own click rather than duplicating the handler, so
+         there is exactly one sign-in path to keep correct, and the button keeps working
+         unchanged. Bound to the freshly drawn inputs, so redrawing for the other tab
+         cannot stack duplicate listeners. */
+      body.querySelectorAll("input").forEach(function (inp) {
+        inp.addEventListener("keydown", function (ev) {
+          if (ev.key !== "Enter") return;
+          ev.preventDefault();
+          var go = body.querySelector("#agGo");
+          if (go && !go.disabled) go.click();
+        });
+      });
+
       body.querySelector("#agGo").addEventListener("click", async function () {
         var e = body.querySelector("#agEmail").value.trim();
         var p = body.querySelector("#agPass").value;

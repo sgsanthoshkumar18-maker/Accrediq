@@ -6,22 +6,23 @@
 @import url('https://fonts.googleapis.com/css2?family=Fraunces:opsz,wght@9..144,400;9..144,500;9..144,600;9..144,700;9..144,800&family=Inter:wght@400;500;600;700;800&family=IBM+Plex+Mono:wght@400;500;600&display=swap');
 
 :root{
-  --bg:#F5F6FB;
-  --bg-elevated:#FFFFFF;
-  --bg-deep:#0D1130;
-  --bg-deep-2:#161B45;
-  --fg:#10122A;
-  --fg-muted:#4B4F6E;
-  --fg-faint:#6B6E8F;   /* darkened from #8A8DAA: the old value was 3.25:1 on white, below WCAG AA */
-  --border:#E3E5F1;
-  --border-soft:#ECEDF6;
+  --bg:#F4F2EC;              /* warm paper, not blue-white */
+  --bg-elevated:#FBFAF6;
+  --bg-deep:#0B2F2A;
+  --bg-deep-2:#0B4F45;
+  --fg:#12201D;
+  --fg-muted:#3D4F49;
+  --fg-faint:#5E6D67;        /* 4.86:1 on paper. The old #6B6E8F was tuned for a blue-white
+                                ground; on warm paper it drops, so it was re-picked. */
+  --border:#D6D2C6;
+  --border-soft:#E4E0D5;
 
-  --brand:#332E96;
-  --brand-2:#4F46E5;
-  --brand-tint:#EEEDFC;
-  --accent:#4F46E5;
-  --accent-bright:#0EA5A0;
-  --accent-bright-tint:#E1F6F4;
+  --brand:#0B4F45;
+  --brand-2:#0E7C6B;
+  --brand-tint:#DCEBE6;
+  --accent:#0B4F45;
+  --accent-bright:#0E7C6B;
+  --accent-bright-tint:#DCEBE6;
 
   --ok:#12805C;
   --ok-tint:#E2F6EC;
@@ -49,10 +50,11 @@
      them needed its own :root[data-palette="neon"] override — and anything that got
      missed stayed indigo while the rest of the page went neon. As tokens they re-tint
      with the palette automatically, so a new component is neon-correct by default. */
-  --deep-1:#232a6b;          /* the lit corner of a deep gradient */
-  --deep-2:#090b21;          /* its far, darkest corner */
-  --border-strong:#CBD0F0;   /* hover borders on tiles and live cards */
+  --deep-1:#0B4F45;          /* the lit corner of a deep gradient */
+  --deep-2:#0B2F2A;          /* its far, darkest corner */
+  --border-strong:#BDB8A8;   /* hover borders on tiles and live cards */
   --on-deep:#ffffff;         /* text on any of the above */
+  --brass:#7A5C36;          /* Direction B accent. Text-safe; #8C6A3F fails AA on paper */
   --wrap:1180px;
 }
 
@@ -248,6 +250,31 @@
   --deep-2:#05060F;
   --border-strong:#3A4180;
 }
+
+/* PINNED — dark only, explicitly NOT neon.
+ *
+ * These six used to be inherited by the dark theme from :root. :root is now the
+ * Direction B paper palette, so without pinning them the dark theme would turn forest
+ * green. They restore exactly what dark showed before.
+ *
+ * The :not([data-palette="neon"]) is load-bearing, and the reason is a cascade trap.
+ * :root[data-palette="neon"] and :root[data-theme="dark"] have IDENTICAL specificity,
+ * so source order decides between them — and the dark block sits lower in this file.
+ * Neon also sets data-theme="dark", so both match at once: declaring these tokens in
+ * the plain dark block silently overrode neon and turned every teal accent indigo, on
+ * every page. Caught only by looking at a screenshot; the neon block itself was still
+ * byte-for-byte unchanged, which is what made it invisible in a diff.
+ *
+ * If you ever add a token here, it must be one neon also declares, or scope it the
+ * same way. */
+:root[data-theme="dark"]:not([data-palette="neon"]){
+  --bg-deep:#0D1130;
+  --bg-deep-2:#161B45;
+  --brand:#332E96;
+  --brand-2:#4F46E5;
+  --accent:#4F46E5;
+  --accent-bright:#0EA5A0;
+}
 :root[data-theme="dark"] .page-head{background:linear-gradient(180deg,rgba(79,70,229,.14),var(--bg) 88%);}
 :root[data-theme="dark"] .site-header{background:rgba(10,13,30,.82);}
 :root[data-theme="dark"] .acc-band{background:var(--bg-elevated);}
@@ -309,6 +336,15 @@ p{margin:0 0 0;}
 }
 .eyebrow.tag{color:var(--accent-bright);}
 .eyebrow.tag::before{background:var(--brand-2);}
+
+/* Direction B gives the light theme one warm accent: the eyebrow rule and label go
+   brass rather than brand colour. Scoped with :not([data-theme="dark"]) because the boot
+   snippet sets no data-theme at all for light, and sets data-theme="dark" for both dark
+   and neon — so this reaches light only and leaves the other two palettes untouched. */
+:root:not([data-theme="dark"]) .eyebrow{color:var(--brass);}
+:root:not([data-theme="dark"]) .eyebrow::before{background:var(--brass);}
+:root:not([data-theme="dark"]) .eyebrow.tag{color:var(--brass);}
+:root:not([data-theme="dark"]) .eyebrow.tag::before{background:var(--brass);}
 
 .lead{font-size:18px;color:var(--fg-muted);max-width:58ch;margin-top:16px;}
 

@@ -16,7 +16,7 @@
         { key: "value", href: "value.html", label: "What Your Department Gets" },
       ]
     },
-    { key: "workspace", href: "workspace/workspace.html", label: "Workspace" },
+    { key: "workspace", href: "workspace/start.html", label: "Workspace" },
     {
       key: "toolsgroup", label: "Tools", dropdown: [
         { key: "todaysquiz", href: "quiz.html", label: "Today's Quiz" },
@@ -121,7 +121,7 @@
           <div class="footer-col"><h4>Learn</h4>
             <a href="${base}plans.html">Plans &amp; pricing</a><a href="${base}value.html">What your department gets</a><a href="${base}standards.html">Standards</a>
             <a href="${base}departments.html">Departments</a>
-            <a href="${base}workspace/workspace.html">Workspace</a>
+            <a href="${base}workspace/start.html">Workspace</a>
             <a href="${base}clinical-areas.html">Clinical Areas</a>
             <a href="${base}nonclinical-areas.html">Non-Clinical Areas</a>
             <a href="${base}dashboard.html">Quality Dashboard</a>

@@ -8,6 +8,8 @@
   var CFG = window.AQ_CONFIG || {};
 
   var PAGES = [
+    { key: "start", href: "start.html", label: "Start",
+      desc: "Choose where to go" },
     { key: "dashboard", href: "dashboard.html", label: "My department",
       desc: "Everything one department is answerable for, in one place" },
     /* ?stay=1 so this link is reachable when the user has pinned another page. Without
@@ -247,6 +249,19 @@
             : "") +
           '<button type="button" class="btn btn-accent" id="auGo">' +
             (tab === "up" ? "Create account" : "Sign in") + "</button>";
+
+        /* ENTER SUBMITS — same reasoning as auth-gate.js, and it has to be done in both
+           or the two panels behave differently depending on which one the person met.
+           There is no <form> here either, so Enter was silently ignored. Routed through
+           the button's click so a single handler stays the only sign-in path. */
+        body.querySelectorAll("input").forEach(function (inp) {
+          inp.addEventListener("keydown", function (ev) {
+            if (ev.key !== "Enter") return;
+            ev.preventDefault();
+            var go = body.querySelector("#auGo");
+            if (go && !go.disabled) go.click();
+          });
+        });
 
         body.querySelector("#auGo").addEventListener("click", async function () {
           var e = body.querySelector("#auEmail").value.trim();

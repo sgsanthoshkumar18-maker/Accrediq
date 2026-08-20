@@ -93,7 +93,7 @@
         : "The standards library is free, but it needs an account so your progress and " +
           "bookmarks stay with you.") + "</p>" +
       '<p class="ag-actions">' +
-      '<a class="btn btn-accent" href="' + b + 'workspace/workspace.html">' +
+      '<a class="btn btn-accent" href="' + b + 'workspace/start.html">' +
       (paid ? "Sign in or subscribe" : "Sign in") + "</a> " +
       '<a class="btn btn-ghost" href="' + b + 'standards.html">Browse the standards</a>' +
       "</p>");
