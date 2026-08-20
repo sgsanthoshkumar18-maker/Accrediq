@@ -473,32 +473,73 @@
 
   /* -------------------------------- boot -------------------------------- */
 
-  async function boot() {
-    if (!(await W.gate())) return;
-    W.renderNav("audits");
-    el("wsBody").style.display = "";
+  /* Render a visible failure into the page.
+     A blank screen tells the user nothing and tells us nothing. This puts the reason on
+     screen and the detail in the console, so the next report comes with a cause. */
+  function fail(message, err) {
+    if (window.console && err) console.error("audit page:", err);
+    var host = el("wsBody");
+    if (host) host.style.display = "";
+    var box = el("audNotice") || host;
+    if (!box) return;
+    box.innerHTML =
+      '<div class="ws-notice"><b>The internal audit page could not start.</b><br>' +
+      esc(message) +
+      (err && err.message ? '<br><small style="opacity:.7">' + esc(err.message) + "</small>" : "") +
+      "</div>";
+    ["audHome", "audWork", "audDone"].forEach(function (id) {
+      var n = el(id); if (n) n.style.display = "none";
+    });
+  }
 
-    if (!W.user || !(W.user.name || W.user.email)) {
-      el("audNotice").innerHTML =
-        '<div class="ws-notice">Your account has no display name yet, so audits would be ' +
-        'signed with your email address. Set a name in <a href="team.html">Team</a> first.</div>';
+  async function boot() {
+    /* Reveal the page FIRST, and never let a later step hide it again.
+     *
+     * Two rounds of "internal audit opens blank" both came from the same shape: a step in
+     * boot() threw, the function stopped, and view("audHome") -- which is what makes any
+     * of audHome/audWork/audDone visible -- never ran. The result is a black page with a
+     * working nav and no message. The first fix moved view() earlier but still left it
+     * after renderPicker(), so a throw in the picker reproduced it exactly.
+     *
+     * The ordering rule now: make the page visible before doing anything that can fail,
+     * and wrap every step that touches data or the network so a failure degrades one
+     * section instead of the whole screen. A visible error beats an invisible one --
+     * silence is the thing that wasted the most time here. */
+    try {
+      if (!(await W.gate())) return;
+    } catch (e) {
+      return fail("We could not confirm your access to this page.", e);
     }
 
-    renderPicker();
-
-    /* Show the page BEFORE fetching past records, and never let that fetch blank it.
-     *
-     * This ordering was the bug behind "internal audit opens blank when I choose a
-     * department". boot() awaited renderRecords(), and renderRecords awaits
-     * A.list("audits"). If that call rejected -- a dropped RLS policy, an expired token,
-     * a flaky connection -- the await threw, boot() stopped, and view("audHome") never
-     * ran. audHome, audWork and audDone all start hidden, so the whole page stayed black
-     * with only the nav visible. Nothing on screen said anything was wrong, and the
-     * department picker itself had rendered perfectly a line earlier.
-     *
-     * Past records are supporting information. The ability to START an audit must not
-     * depend on being able to LIST old ones. */
+    try { W.renderNav("audits"); } catch (e) { if (window.console) console.error(e); }
+    el("wsBody").style.display = "";
     view("audHome");
+
+    try {
+      if (!W.user || !(W.user.name || W.user.email)) {
+        el("audNotice").innerHTML =
+          '<div class="ws-notice">Your account has no display name yet, so audits would be ' +
+          'signed with your email address. Set a name in <a href="team.html">Team</a> first.</div>';
+      }
+    } catch (e) { if (window.console) console.error(e); }
+
+    /* The department picker. If this fails there is nothing to do on the page at all, so
+       it is the one step that reports loudly rather than degrading quietly. The usual
+       cause is scope-data.js not having loaded, which used to show as an empty black
+       page rather than as the missing file it is. */
+    try {
+      if (!window.AUDIT_SCOPE || !Object.keys(window.AUDIT_SCOPE).length) {
+        throw new Error("AUDIT_SCOPE is empty — audit/scope-data.js did not load");
+      }
+      renderPicker();
+    } catch (e) {
+      return fail("The department list could not be loaded. This usually means a file " +
+                  "failed to download — reload the page, and if it persists do a hard " +
+                  "refresh (Ctrl+Shift+R).", e);
+    }
+
+    /* Past records are supporting information. Being able to START an audit must not
+       depend on being able to LIST old ones. */
     try {
       await renderRecords();
     } catch (e) {
