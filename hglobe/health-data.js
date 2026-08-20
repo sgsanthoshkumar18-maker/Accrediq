@@ -53,7 +53,13 @@ window.HealthData = (function () {
   function whoValue(iso3, code) {
     return cached(`who:${iso3}:${code}`, async () => {
       const r = await fetch(`/api/who?indicator=${encodeURIComponent(code)}&country=${encodeURIComponent(iso3)}`);
-      if (!r.ok) return null;
+      /* A FAILED REQUEST IS NOT THE SAME AS NO FIGURE, and the panel must not say it is.
+         Both used to return null, so a WHO outage rendered as "No data" against every
+         indicator — which reads as WHO publishing nothing for that country. On a platform
+         hospitals use, stating that WHO has no maternal mortality figure for India when it
+         does is exactly the kind of confident wrongness this file exists to avoid.
+         `unavailable` travels through to the panel so it can say which happened. */
+      if (!r.ok) return { unavailable: true };
       const j = await r.json();
       const rows = (j && j.value) || [];
       if (!rows.length) return null;
@@ -73,17 +79,20 @@ window.HealthData = (function () {
     return cached(`whoall:${iso3}`, async () => {
       const [names, ...vals] = await Promise.all([
         indicatorNames(),
-        ...WHO_INDICATORS.map(i => whoValue(iso3, i.code).catch(() => null))
+        /* A thrown request is an outage too, not an absent figure. */
+        ...WHO_INDICATORS.map(i => whoValue(iso3, i.code).catch(() => ({ unavailable: true })))
       ]);
       return WHO_INDICATORS.map((meta, n) => {
         const got = vals[n];
+        const down = !!(got && got.unavailable);
         return {
           code: meta.code,
           label: names[meta.code] || meta.fallback,
           unit: meta.unit,
           decimals: meta.decimals,
-          value: got ? got.value : null,
-          year: got ? got.year : null,
+          value: got && !down ? got.value : null,
+          year: got && !down ? got.year : null,
+          unavailable: down,
           source: "WHO Global Health Observatory"
         };
       });

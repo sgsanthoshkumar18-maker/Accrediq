@@ -71,26 +71,32 @@ module.exports = async function handler(req, res) {
   let url = `${BASE}/${encodeURIComponent(indicator)}`;
   if (country) url += `?$filter=SpatialDim eq '${country.toUpperCase()}'`;
 
-  /* RETRY ONCE, AND WHY.
+  /* RETRY, AND WHAT IT CAN AND CANNOT FIX.
    *
-   * WHO serves GHO through an Azure CDN with a very slow COLD path. A first request for
-   * an indicator that is not in their edge cache can take well over eight seconds; every
-   * request after it returns in about a fifth of a second. Measured against the live
-   * endpoint: attempt 1 aborted at 8.6s, attempts 2-6 returned in 0.5-0.7s.
+   * WHO's data endpoints fail in two different ways, and only one of them is worth
+   * retrying.
    *
-   * The old single attempt with an 8s abort therefore failed exactly when it mattered —
-   * a cold indicator — and the globe asks for nine indicators at once on load, so all
-   * nine aborted together and every field read "No data". That looks like WHO having no
-   * figures for India, which is the wrong conclusion entirely: the figures are there and
-   * the request never completed.
+   * A TRANSIENT BLIP — one CDN node stops responding while others are healthy. A second
+   * attempt usually lands somewhere else and succeeds. Worth a retry.
    *
-   * The failed first attempt is not wasted. It is what warms the CDN, which is why the
-   * retry is fast rather than a second eight-second gamble.
+   * A WHO-SIDE OUTAGE — every data endpoint accepts the TCP connection, completes the TLS
+   * handshake in under 200ms, and then never sends a byte, while their /Indicator
+   * metadata endpoint keeps returning 413KB in 0.4s. Observed 2026-08-21: eight
+   * consecutive attempts at MDG_0000000001 all hung, having returned 7.7MB in 2s an hour
+   * earlier. No retry count fixes that, and a long timeout only makes the page hang
+   * before showing the same nothing.
    *
-   * BUDGET: 6s + 6s = 12s worst case, inside the 15s maxDuration set for api/*.js in
-   * vercel.json. If that maxDuration is ever lowered, lower these to match or the
-   * function is killed mid-retry and returns nothing at all. */
-  const ATTEMPT_MS = 6000;
+   * So the budget is deliberately SHORT: two attempts of 4.5s, 9s worst case, inside the
+   * 15s maxDuration set for api/*.js in vercel.json. Failing fast is the right behaviour
+   * when the upstream is down, and the globe requests its nine indicators in parallel,
+   * so 9s is the whole wait rather than 9s each.
+   *
+   * A CORRECTION WORTH RECORDING: an earlier version of this comment claimed the failed
+   * first attempt "warms WHO's CDN", citing a 502 followed by fast 200s. That was wrong.
+   * Those 200s were Vercel's own edge cache replaying an EARLIER successful response
+   * (s-maxage=86400 above), not WHO warming up. Retrying is still worth doing for the
+   * blip case, but not for that reason. */
+  const ATTEMPT_MS = 4500;
 
   async function once() {
     const controller = new AbortController();

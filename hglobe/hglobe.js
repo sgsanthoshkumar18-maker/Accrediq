@@ -570,9 +570,17 @@
       if (!still()) return;
       const rows = list.map(item => {
         const val = HD.format(item);
+        /* Three states, not two. "No data" is a claim ABOUT WHO — that they publish no
+           figure for this country — and it must only be made when WHO actually answered
+           and had nothing. When the request itself failed, say so instead, or an outage
+           on their side gets reported to a hospital as a gap in WHO's data. */
+        const empty = val ? "" : (item.unavailable ? "Unavailable" : "No data");
+        const title = item.unavailable
+          ? ' title="WHO&#39;s data service did not respond. Reloading in a few minutes usually works."'
+          : "";
         return `<li>
             <span class="hg-field-lbl">${esc(item.label)}</span>
-            <span class="hg-field-val ${val ? "" : "is-empty"}">${val ? esc(val) : "No data"}${
+            <span class="hg-field-val ${val ? "" : "is-empty"}"${title}>${val ? esc(val) : empty}${
               val && item.year ? ` <em class="hg-yr">${esc(item.year)}</em>` : ""}</span>
           </li>`;
       }).join("");
