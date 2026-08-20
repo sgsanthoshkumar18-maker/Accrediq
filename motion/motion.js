@@ -232,6 +232,19 @@
         return;
       }
 
+      /* thresholds [0, 0.04], not 0.04 alone.
+       *
+       * A single 0.04 threshold means "reveal once 4% of the element is on screen". For a
+       * card that is fine. For a tall one it is unsatisfiable: the audit checklist renders
+       * at ~46,000px, so 4% of it is ~1,875px -- more than twice a laptop viewport. The
+       * condition can never be met at any scroll position, so the section stayed at
+       * opacity 0 permanently and the page read as completely blank while measuring as
+       * fully rendered and correctly styled.
+       *
+       * Adding 0 fires as soon as any part of the element intersects, which is the right
+       * behaviour for anything taller than the viewport. The 0.04 entry is kept so short
+       * elements still wait until they are meaningfully on screen rather than revealing
+       * from a single pixel at the edge. */
       var io = new IntersectionObserver(function (entries) {
         entries.forEach(function (en) {
           if (!en.isIntersecting) return;
@@ -240,7 +253,7 @@
              every time someone scrolls back to re-read something. */
           io.unobserve(en.target);
         });
-      }, { rootMargin: "0px 0px -8% 0px", threshold: 0.04 });
+      }, { rootMargin: "0px 0px -8% 0px", threshold: [0, 0.04] });
 
       [].forEach.call(els, function (el, i) {
         // Idempotent: a re-scan after content is injected must not re-hide anything that
@@ -253,8 +266,35 @@
         if (d) el.style.setProperty("--aq-delay", d + "ms");
         io.observe(el);
       });
+
+      /* Backstop.
+       *
+       * Whatever the observer does or fails to do, nothing on this site may stay invisible
+       * indefinitely. An element inside a display:none panel cannot intersect anything, so
+       * a panel revealed by JavaScript rather than by scrolling -- the audit checklist, the
+       * finished report -- can leave its contents hidden with no scroll event ever coming
+       * to correct it.
+       *
+       * A decoration must never be able to hide content. If an element is still unrevealed
+       * a second after registration, show it and stop waiting. */
+      setTimeout(function () {
+        [].forEach.call(els, function (el) {
+          if (!el.classList.contains("aq-in")) el.classList.add("aq-in");
+        });
+      }, 1000);
     }
-    return { init: init };
+
+    /* Called when a panel is shown by script. Anything inside it that is still waiting on
+       the observer is revealed immediately, because it never had a chance to intersect. */
+    function reveal(root) {
+      if (!root) return;
+      if (root.classList && root.classList.contains("aq-reveal")) root.classList.add("aq-in");
+      [].forEach.call(root.querySelectorAll(".aq-reveal"), function (el) {
+        el.classList.add("aq-in");
+      });
+    }
+
+    return { init: init, reveal: reveal };
   })();
 
   /* ============================== 4. split text ==============================
@@ -469,6 +509,8 @@
     scrollTo: function (y) { Smooth.scrollToY(y); },
     refresh: function () { Parallax.measure(); Smooth.resync(); },
     rescan: rescan,
+    /* For panels shown by script rather than by scrolling. See Reveal.reveal(). */
+    reveal: function (root) { Reveal.reveal(root); },
     reduced: reduce
   };
 })();

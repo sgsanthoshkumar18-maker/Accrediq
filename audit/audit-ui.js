@@ -329,6 +329,11 @@
     rows = A.scopeRows(session.department_id);
     var sc = (window.AUDIT_SCOPE || {})[session.department_id] || {};
     view("audWork");
+    /* This panel is revealed by script, not by scrolling, so its contents never had a
+       chance to intersect the viewport while it was display:none. Tell the reveal
+       animation to release them, or the checklist stays at opacity 0 and the page looks
+       blank despite being fully rendered. */
+    if (window.AQMotion && window.AQMotion.reveal) window.AQMotion.reveal(el("audWork"));
 
     el("audHead").innerHTML =
       "<div><h2>" + esc(session.department_name) + "</h2>" +
@@ -433,6 +438,7 @@
 
   function showReport() {
     view("audDone");
+    if (window.AQMotion && window.AQMotion.reveal) window.AQMotion.reveal(el("audDone"));
     window.AQAuditReport.render(el("audReportHost"), session);
     var b = el("audDoneBack");
     if (b) b.onclick = goHome;
