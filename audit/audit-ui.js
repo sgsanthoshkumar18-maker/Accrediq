@@ -505,10 +505,28 @@
      * and wrap every step that touches data or the network so a failure degrades one
      * section instead of the whole screen. A visible error beats an invisible one --
      * silence is the thing that wasted the most time here. */
+    /* The access gate.
+     *
+     * A false return here is the ONE path that used to blank the page with nothing in the
+     * console at all -- no error, no message, just a silent `return`. That is exactly the
+     * symptom this page showed, and it cost two rounds of guessing to find because there
+     * was nothing to find.
+     *
+     * A gate that denies access normally redirects to sign-in or to the paywall, so
+     * reaching the next line with `false` means the redirect did not happen. Say so, out
+     * loud, rather than leaving a black rectangle. */
+    var allowed;
     try {
-      if (!(await W.gate())) return;
+      allowed = await W.gate();
     } catch (e) {
       return fail("We could not confirm your access to this page.", e);
+    }
+    if (!allowed) {
+      if (window.console) {
+        console.warn("audit page: W.gate() returned false and did not redirect");
+      }
+      return fail("This page needs an active subscription, or your session has expired. " +
+                  "Try signing out and back in.", null);
     }
 
     try { W.renderNav("audits"); } catch (e) { if (window.console) console.error(e); }
