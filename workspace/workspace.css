@@ -509,3 +509,34 @@
 .dev-note{font-size:13px;color:var(--fg-faint);border-top:1px solid var(--border-soft);
   padding-top:14px;}
 .dev-note a{color:var(--brand-2);}
+
+/* Loading skeleton.
+   The workspace hid #wsBody until the auth and entitlement checks returned, so every load
+   sat blank for a full network round-trip — two or three seconds, and worse on mobile data
+   or a distant database. A blank screen is indistinguishable from a broken one, which is
+   why this shows the page's shape instead of nothing. It is removed the moment real
+   content is ready. */
+.ws-skel{padding:26px 0;}
+.ws-skel-row{height:14px;border-radius:6px;margin-bottom:12px;
+  background:linear-gradient(90deg,var(--bg-elevated) 25%,var(--border-soft) 37%,var(--bg-elevated) 63%);
+  background-size:400% 100%;animation:wsShimmer 1.3s ease-in-out infinite;}
+.ws-skel-row.t{height:26px;width:44%;margin-bottom:20px;}
+.ws-skel-row.s{width:72%;}
+.ws-skel-row.m{width:88%;}
+.ws-skel-cards{display:grid;grid-template-columns:repeat(4,1fr);gap:12px;margin:22px 0;}
+.ws-skel-card{height:78px;border-radius:var(--r-md);
+  background:linear-gradient(90deg,var(--bg-elevated) 25%,var(--border-soft) 37%,var(--bg-elevated) 63%);
+  background-size:400% 100%;animation:wsShimmer 1.3s ease-in-out infinite;}
+@keyframes wsShimmer{0%{background-position:100% 50%}100%{background-position:0 50%}}
+@media (max-width:760px){
+  .ws-skel-cards{grid-template-columns:repeat(2,1fr);}
+}
+/* Under reduced motion a shimmering placeholder is worse than a still one — the animation
+   is the part that draws the eye, and it is the part someone sensitive to motion did not
+   ask for. */
+@media (prefers-reduced-motion:reduce){
+  .ws-skel-row,.ws-skel-card{animation:none;background:var(--bg-elevated);}
+}
+.ws-skel-stalled{padding:48px 0;max-width:52ch;}
+.ws-skel-stalled h2{font-size:20px;margin-bottom:10px;}
+.ws-skel-stalled p{font-size:14.5px;color:var(--fg-muted);line-height:1.6;margin-bottom:18px;}

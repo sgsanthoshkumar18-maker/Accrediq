@@ -809,6 +809,26 @@ would not stand. A test fails if any placeholder returns.
 Footer now asserts `© 2026 AQcredix. All rights reserved.` and distinguishes our
 commentary from the standards themselves.
 
+### No blank screen while the gate runs
+`auth-gate.js` hid the whole page until a network round-trip to Supabase returned — two or
+three seconds of blank screen on every load, worse on mobile data. A blank screen is
+indistinguishable from a broken one.
+
+It now hides **only when there is no stored session**. A token in localStorage is not proof
+of access and is not treated as one — the real check still runs and still redirects. It is
+proof this browser signed in recently, which is enough to justify painting immediately. An
+expired token still hides, since a refresh round-trip really is pending.
+
+Workspace pages additionally show a **shimmer skeleton** (`#wsSkel`) instead of nothing,
+cleared on *every* exit from the gate — signed in, paywalled, or signed out — because a
+skeleton left behind a sign-in panel looks like the page is still loading. It stops
+animating under `prefers-reduced-motion`, and after 12 seconds a stalled request replaces
+it with a plain explanation and a reload button rather than shimmering for ever.
+
+### Data region — Mumbai
+Migration complete. `privacy.html` now states data is stored in India (`ap-south-1`), and a
+test asserts Tokyo is gone and the anon key belongs to the project the site points at.
+
 ### Billing / access
 - `billing/billing-config.js` is the only file to edit for pricing, UPI and email lists.
 - UPI ID: check `upiVpa` — the config has a `-1` suffix the handover didn't; unverified.
@@ -843,7 +863,7 @@ Redirect URLs, or Supabase ignores the parameter and falls back to Site URL.
 
 ---
 
-## Tests — 2330 assertions, plain Node, no install
+## Tests — 2346 assertions, plain Node, no install
 
     node tests/activity.test.js    node tests/sync.test.js
     node tests/profile.test.js     node tests/palette.test.js

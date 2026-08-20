@@ -137,6 +137,7 @@
 
       var host = document.getElementById("wsGate");
       if (!host) return false;
+      W.clearSkeleton();
 
       /* Preview first, paywall beneath it. A locked page that shows nothing cannot sell
          itself: someone weighing ₹500 a month needs to see what they would be paying for.
@@ -160,6 +161,14 @@
     /* ---------- auth gate ---------- */
     // Returns true when the page may render. In local mode it asks only for a name,
     // because pretending to authenticate against nothing would be theatre.
+    /* Clears the loading placeholder. Called on EVERY exit from the gate — signed in,
+       paywalled, or signed out — because a skeleton left behind a sign-in panel looks like
+       the page is still loading behind it. */
+    clearSkeleton() {
+      var sk = document.getElementById("wsSkel");
+      if (sk) sk.remove();
+    },
+
     async gate() {
       W.user = await S.currentUser();
       /* Workspace pages gate through here rather than billing/page-gate.js, so the
@@ -193,6 +202,7 @@
         // fails closed: if entitlement cannot be established, access is held rather
         // than granted.
         var okEnt = await W.entitled();
+        W.clearSkeleton();
         /* Announced once the user AND their entitlement are known. The notification bell
            listens for this rather than DOMContentLoaded: before sign-in there is no org to
            read, and firing early would produce an empty bell that never refills. */
@@ -298,4 +308,19 @@
   };
 
   window.AQWorkspace = W;
+  /* A request that never returns would otherwise leave the placeholder shimmering for
+     ever, which tells the visitor nothing and looks broken. After twelve seconds, say so
+     plainly and offer the one action that helps. */
+  (function wsSkelTimeout() {
+    setTimeout(function () {
+      var sk = document.getElementById("wsSkel");
+      if (!sk) return;
+      sk.className = "wrap ws-skel-stalled";
+      sk.innerHTML = "<h2>This is taking longer than it should</h2>" +
+        "<p>The workspace could not reach the server. Check your connection and reload \u2014 " +
+        "nothing you have entered is affected.</p>" +
+        '<button class="btn btn-accent" onclick="location.reload()">Reload</button>';
+    }, 12000);
+  })();
+
 })();

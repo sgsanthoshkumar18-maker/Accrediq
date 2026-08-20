@@ -82,5 +82,61 @@ ok(/word-break:\s*break-word/.test(css), 'and breaks long words rather than over
 ok(/\.ws-auth-msg\{[\s\S]{0,240}max-width:\s*100%/.test(css),
    'and cannot exceed its container');
 
+/* ==================== NO BLANK SCREEN WHILE THE GATE RUNS ====================
+   The page was hidden entirely until a network round-trip to Supabase returned — two or
+   three seconds of blank screen on every load, worse on mobile data or a distant database.
+   A blank screen is indistinguishable from a broken one. */
+{
+  const gate = R('workspace/auth-gate.js');
+  ok(/function looksSignedIn/.test(gate),
+     'the gate checks for a stored session before deciding to hide the page');
+  ok(/if \(!looksSignedIn\(\)\)/.test(gate),
+     'and only hides when there is no plausible session');
+  /* A stored token is not proof of access and must not be treated as one — the real check
+     still runs. It is proof this browser signed in recently, which is enough to justify
+     painting immediately. */
+  ok(/not proof of access/.test(gate),
+     'with the reasoning recorded so it is not mistaken for an auth bypass');
+  ok(/expires_at/.test(gate),
+     'an expired token still hides, since a refresh round-trip really is pending');
+
+  const css = R('workspace/workspace.css');
+  ok(/\.ws-skel\{/.test(css), 'a loading skeleton exists');
+  ok(/@keyframes wsShimmer/.test(css), 'and it animates so it reads as loading');
+  /* A shimmering placeholder is worse than a still one for someone sensitive to motion —
+     the animation is exactly the part they did not ask for. */
+  ok(/prefers-reduced-motion:reduce\)\{[\s\S]{0,200}\.ws-skel-row/.test(css.replace(/\s+/g, m => m.includes('\n') ? '\n' : ' ')) ||
+     /\.ws-skel-row,\.ws-skel-card\{animation:none/.test(css.replace(/\s+/g, '')),
+     'and it stops animating under reduced motion');
+
+  const shell = R('workspace/shell.js');
+  ok(/clearSkeleton/.test(shell), 'the shell can clear the placeholder');
+  /* Cleared on EVERY exit — signed in, paywalled, or signed out. A skeleton left behind a
+     sign-in panel looks like the page is still loading behind it. */
+  ok((shell.match(/W\.clearSkeleton\(\)/g) || []).length >= 2,
+     'and clears it on more than one exit path');
+  ok(/wsSkelTimeout/.test(shell), 'a stalled request eventually says so');
+  ok(/taking longer than it should/.test(shell),
+     'rather than shimmering for ever with no explanation');
+
+  // Every workspace page must carry the placeholder, or some pages still blank.
+  const pages = fs.readdirSync(path.join(ROOT, 'workspace')).filter(f => f.endsWith('.html'));
+  const noSkel = pages.filter(f => !/wsSkel/.test(R('workspace/' + f)));
+  eq(noSkel.join(', '), '', 'every workspace page has a loading placeholder (' + pages.length + ')');
+}
+
+/* ==================== DATA REGION STATED ACCURATELY ==================== */
+{
+  const priv = R('privacy.html');
+  ok(/Mumbai/.test(priv), 'the privacy policy names the Mumbai region');
+  eq(/Tokyo/.test(priv), false, 'and no longer refers to Tokyo');
+  ok(/stored in India/.test(priv), 'and states plainly that data stays in India');
+  // The claim must match the project the site actually talks to.
+  const cfg = R('workspace/config.js');
+  const key = /supabaseAnonKey: "([^"]+)"/.exec(cfg)[1];
+  const ref = JSON.parse(Buffer.from(key.split('.')[1], 'base64').toString()).ref;
+  ok(cfg.includes(ref), 'the anon key belongs to the project the site points at');
+}
+
 console.log('\n' + pass + ' passed, ' + fail + ' failed');
 if (fail) process.exit(1);

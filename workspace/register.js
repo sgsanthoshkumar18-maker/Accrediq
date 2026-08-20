@@ -518,6 +518,7 @@
     esc = W.esc;
     if (!(await W.gate())) return;
     document.getElementById("wsGate").style.display = "none";
+    if (W.clearSkeleton) W.clearSkeleton();
     document.getElementById("wsBody").style.display = "";
     W.renderNav("register"); W.renderModeNotice();
     wire();

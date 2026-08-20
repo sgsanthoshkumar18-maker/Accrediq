@@ -56,12 +56,39 @@ function friendlyAuthError(err) {
   window.AQAuthError = friendlyAuthError;
 
 
-  // Hide the page instantly, before first paint, so there is no flash of protected
-  // content while the auth check runs. Removed only once access is confirmed.
-  var lock = document.createElement("style");
-  lock.id = "aqGateLock";
-  lock.textContent = "body{visibility:hidden !important;}";
-  document.head.appendChild(lock);
+  /* Hide the page before first paint so protected content never flashes while the auth
+     check runs.
+
+     BUT ONLY WHEN THERE IS NO STORED SESSION. Hiding unconditionally meant every page
+     load sat blank for the whole network round-trip to Supabase — two or three seconds,
+     and worse the further away the database is. The visitor could not tell a slow page
+     from a broken one.
+
+     A stored session token is not proof of access, and it is not treated as such: the
+     real check still runs and still redirects if it fails. It is proof that this browser
+     signed in recently, which is enough to justify painting the page immediately. The
+     failure mode of guessing wrong is a brief glimpse of a shell that the gate then
+     replaces — far better than blanking every load for everyone. */
+  function looksSignedIn() {
+    try {
+      var raw = localStorage.getItem("aq-sb-session");
+      if (!raw) return false;
+      var s = JSON.parse(raw);
+      if (!s || !s.access_token) return false;
+      /* An expired token means a refresh round-trip is coming, so hiding is honest there:
+         the page really is not ready yet. */
+      if (s.expires_at && (s.expires_at * 1000) < Date.now()) return false;
+      return true;
+    } catch (e) { return false; }
+  }
+
+  var lock = null;
+  if (!looksSignedIn()) {
+    lock = document.createElement("style");
+    lock.id = "aqGateLock";
+    lock.textContent = "body{visibility:hidden !important;}";
+    document.head.appendChild(lock);
+  }
 
   function esc(s) {
     return String(s == null ? "" : s).replace(/[&<>"']/g, function (c) {

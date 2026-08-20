@@ -271,6 +271,7 @@
       myUid = me && me.id ? me.id : null;
     } catch (e) { myUid = null; }
     document.getElementById("wsGate").style.display = "none";
+    if (W.clearSkeleton) W.clearSkeleton();
     document.getElementById("wsBody").style.display = "";
     W.renderNav("capa"); W.renderModeNotice();
     rows = await S.capaList();
