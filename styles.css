@@ -350,7 +350,10 @@ p{margin:0 0 0;}
 
 /* ---------- Buttons ---------- */
 .btn{
-  display:inline-flex;align-items:center;gap:9px;
+  /* justify-content matters only when a button is STRETCHED wider than its label —
+     inline-flex packs content to the start, so a full-width button put its own text on
+     the left and looked like a mislabelled bar. Harmless on buttons sized to content. */
+  display:inline-flex;align-items:center;justify-content:center;gap:9px;
   font-family:var(--font-body);font-weight:600;font-size:14.5px;
   padding:13px 22px;border-radius:999px;
   border:1px solid var(--border);cursor:pointer;

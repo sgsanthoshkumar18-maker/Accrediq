@@ -86,3 +86,21 @@
 .pw-intro b{font-size:13.5px;color:var(--accent-bright);}
 .pw-intro p{margin:5px 0 0;font-size:13px;line-height:1.6;color:var(--fg-muted);}
 .pw-intro p b{color:var(--fg);font-size:13px;}
+
+/* ---------------------------------------------------------------------------
+   THE RAZORPAY BLOCK — single column, full-width button.
+
+   It reuses .pw-pay for the card surface, but .pw-pay is grid-template-columns:auto 1fr,
+   built for the QR-plus-details layout. Dropped into that grid this block's five children
+   were dealt into two columns. Only the display is overridden here; the alignment is left
+   like every other block on the paywall, and the button stays the full width of the card.
+   The label inside it is centred by the justify-content fix on .btn in styles.css, which
+   is where the actual fault was.
+   --------------------------------------------------------------------------- */
+.pw-pay.pw-pay-primary{display:flex;flex-direction:column;align-items:stretch;gap:12px;padding:24px;}
+.pw-pay-primary h3{margin:0;}
+.pw-pay-primary .pw-dl{margin:2px 0 4px;}
+
+/* .btn-lg was referenced and did not exist, so it silently did nothing. A payment button
+   should be the largest control on the card. */
+.btn-lg{font-size:1.02rem;padding:15px 34px;}
