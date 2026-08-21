@@ -127,8 +127,9 @@ module.exports = async function handler(req, res) {
   if (!upstream) {
     return res.status(504).json({
       error: "The WHO API did not respond in time.",
-      detail: "This is usually a slow first request on WHO's side. Reloading normally " +
-              "returns the data, because the attempt that timed out warms their cache.",
+      detail: "WHO's Global Health Observatory accepted the connection and then sent " +
+              "nothing. This is a fault on their side, not a missing figure — the data " +
+              "exists and cannot be reached right now. It usually clears within hours.",
       retried: true,
       upstream: lastErr && lastErr.name === "AbortError" ? "timeout" : "unreachable"
     });

@@ -82,7 +82,13 @@
 
     return `
     <a class="aq-skip" href="#aq-main">Skip to main content</a>
-    <div class="aq-edition">Content based on the <b>NABH Hospital Accreditation Standards, 6th Edition</b> — effective 1 January 2025. Educational use only; verify against the official standard.</div>
+    <!-- The link is the point of this line, not decoration. Naming NABH as the source and
+         sending the reader to buy the standard from NABH themselves is what separates
+         commentary from substitution: we are not offering an alternative to the book, we
+         are telling every visitor where the book is. It also means nobody can claim they
+         mistook this site for the official text. rel="noopener" because target=_blank
+         without it hands the new tab a reference back to this window. -->
+    <div class="aq-edition">Content based on the <b>NABH Hospital Accreditation Standards, 6th Edition</b> — effective 1 January 2025. Educational use only; always verify against the official standard, available from <a href="https://nabh.co/programmes/hospitals-accreditation-programme-hco/" target="_blank" rel="noopener noreferrer">NABH</a>.</div>
     <header class="site-header">
       <div class="bar wrap">
         <a href="${base}index.html" class="brand brand-nomark">
@@ -145,6 +151,7 @@
             <a href="${base}contact.html">Contact</a>
             <a href="${base}privacy.html">Privacy Policy</a>
             <a href="${base}terms.html">Terms of Service</a>
+            <a href="${base}refunds.html">Refunds &amp; Cancellation</a>
           </div>
         </div>
         <div class="footer-bottom">

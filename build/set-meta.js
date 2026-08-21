@@ -93,9 +93,25 @@ function urlFor(rel) {
 }
 
 /* Attribute values go inside double quotes, so double quotes and angle brackets have to
-   go. Ampersands are escaped last or the escaping escapes itself. */
-function attr(s) {
+   go. Ampersands are escaped last or the escaping escapes itself.
+
+   DECODE BEFORE ENCODING. The title and description are read out of the page's own HTML,
+   where they are already escaped — a title written "Refund &amp; Cancellation" arrives
+   here containing "&amp;", and escaping that again produced "&amp;amp;", which readers
+   see verbatim as "&amp;" in the share card and the browser tab. Decoding first makes
+   this idempotent: running the script repeatedly can no longer pile up entities. */
+function decodeEntities(s) {
   return String(s)
+    .replace(/&#(\d+);/g, function (_, d) { return String.fromCodePoint(Number(d)); })
+    .replace(/&#x([0-9a-f]+);/gi, function (_, h) { return String.fromCodePoint(parseInt(h, 16)); })
+    .replace(/&quot;/g, '"').replace(/&apos;/g, "'")
+    .replace(/&lt;/g, "<").replace(/&gt;/g, ">")
+    /* &amp; last, so "&amp;lt;" becomes "&lt;" as text rather than a "<" character. */
+    .replace(/&amp;/g, "&");
+}
+
+function attr(s) {
+  return decodeEntities(s)
     .replace(/&/g, "&amp;").replace(/"/g, "&quot;")
     .replace(/</g, "&lt;").replace(/>/g, "&gt;")
     .replace(/\s+/g, " ").trim();
