@@ -346,6 +346,38 @@ window.AQPaywall = (function () {
       '<button type="button" class="btn btn-ghost btn-sm" data-pw="justify">' +
       "Draft an email I can forward</button></div>";
 
+    /* ONE PAYMENT PATH AT A TIME, AND RAZORPAY WINS WHEN IT IS AVAILABLE.
+     *
+     * Both used to render together, with the manual UPI claim first and Razorpay tacked
+     * on below as "or". That was right when Razorpay was dormant and wrong the moment it
+     * went live, because Razorpay ALREADY TAKES UPI — the customer can still pay from the
+     * same app, the payment is verified in seconds, and access opens by itself.
+     *
+     * Leaving both up asked a hospital to choose between two ways to pay by UPI, one of
+     * which needs them to hunt for a UTR, paste it, and then wait for a human to approve
+     * it. Offering a worse version of the same thing beside the better one does not read
+     * as flexibility; it reads as a payment page that is not sure of itself. And it made
+     * the founder the bottleneck on every sale.
+     *
+     * The manual path is not deleted. It is the fallback, and it returns automatically
+     * the moment razorpayEnabled goes false or the key is cleared — which is also the
+     * kill switch if Razorpay is ever suspended or dropped. */
+    if (B.razorpayReady()) {
+      h += '<div class="pw-pay pw-pay-primary">' +
+        "<h3>Pay " + B.rupees(plan.inr) + " — card, UPI or netbanking</h3>" +
+        '<p class="pw-sub">Confirmed instantly. Your workspace opens the moment the ' +
+        "payment succeeds — nothing to submit and nobody to wait for.</p>" +
+        '<dl class="pw-dl">' +
+        "<div><dt>Amount</dt><dd>" + B.rupees(plan.inr) + "</dd></div>" +
+        "<div><dt>Plan</dt><dd>" + esc(plan.label) + " · " + plan.months + " month" +
+          (plan.months > 1 ? "s" : "") + "</dd></div></dl>" +
+        '<button type="button" class="btn btn-accent btn-lg" id="pwRzp">Pay ' +
+        B.rupees(plan.inr) + " securely</button>" +
+        /* #pwMsg must exist in BOTH branches: the Razorpay failure handler writes into it
+           without checking, so dropping it here would turn a declined card into a crash. */
+        '<div id="pwMsg"></div></div>';
+    } else {
+
     /* UPI block */
     h += '<div class="pw-pay"><div class="pw-qrwrap">' +
       qrSvg(B.upiUri(selected), 210) +
@@ -371,10 +403,6 @@ window.AQPaywall = (function () {
       '<button type="button" class="btn btn-accent" id="pwSubmit">Submit for confirmation</button>' +
       "</div><div id=\"pwMsg\"></div></div>";
 
-    if (B.razorpayReady()) {
-      h += '<div class="pw-alt"><h3>Or pay by card, netbanking or UPI, confirmed instantly</h3>' +
-        '<button type="button" class="btn btn-accent" id="pwRzp">Pay ' + B.rupees(plan.inr) +
-        " securely</button></div>";
     }
 
     h += '<p class="pw-foot">Questions or a payment that has not been picked up: ' +
