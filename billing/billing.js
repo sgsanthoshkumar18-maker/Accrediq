@@ -253,15 +253,49 @@ window.AQBilling = (function () {
     return !!(CFG.razorpayKeyId && CFG.razorpayEnabled);
   }
 
+  /* LOADS RAZORPAY'S CHECKOUT SCRIPT ON DEMAND.
+   *
+   * Nothing on this site ever loaded checkout.js, so window.Razorpay was always
+   * undefined and payWithRazorpay refused every payment with "Razorpay script has not
+   * loaded" — an integration that looked switched on and could not take a single rupee.
+   *
+   * Loaded here rather than as a <script> tag on sixty pages, for two reasons. It is a
+   * third-party script on a site whose visitors are often on hospital wifi, and only the
+   * paywall ever needs it — so a page that never asks for money never pays for it. And a
+   * tag on every page would have to be kept in step across sixty files, which is the kind
+   * of list that eventually disagrees with itself.
+   *
+   * The promise is cached so two clicks do not inject two scripts, and cleared on failure
+   * so a customer who lost their connection can simply press pay again. */
+  function loadCheckout() {
+    if (window.Razorpay) return Promise.resolve();
+    if (loadCheckout._p) return loadCheckout._p;
+    loadCheckout._p = new Promise(function (resolve, reject) {
+      var s = document.createElement("script");
+      s.src = "https://checkout.razorpay.com/v1/checkout.js";
+      s.async = true;
+      s.onload = function () {
+        if (window.Razorpay) resolve();
+        else { loadCheckout._p = null; reject(new Error("Payment window could not start. Please try again.")); }
+      };
+      s.onerror = function () {
+        loadCheckout._p = null;
+        reject(new Error("Could not reach the payment provider. Check the connection and try again."));
+      };
+      document.head.appendChild(s);
+    });
+    return loadCheckout._p;
+  }
+
   /* Opens Razorpay checkout. Verification happens server-side in /api/verify-payment —
    * the signature must never be checked in the browser, because anything the browser
    * decides, the browser can be made to decide differently. */
   function payWithRazorpay(user, planKey, onDone, onFail) {
     if (!razorpayReady()) return onFail(new Error("Razorpay is not configured."));
-    if (!window.Razorpay) return onFail(new Error("Razorpay script has not loaded."));
     var p = planOf(planKey) || PLANS[0];
 
-    fetch("/api/create-order", {
+    loadCheckout().then(function () {
+    return fetch("/api/create-order", {
       method: "POST",
       headers: { "Content-Type": "application/json" },
       body: JSON.stringify({ plan: planKey, amount: p.inr, email: user.email })
@@ -294,6 +328,7 @@ window.AQBilling = (function () {
         modal: { ondismiss: function () { onFail(new Error("Payment cancelled.")); } }
       });
       rz.open();
+    });
     }).catch(onFail);
   }
 

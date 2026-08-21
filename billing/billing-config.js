@@ -129,8 +129,8 @@ window.AQ_BILLING = {
      razorpayKeyId is public (it starts rzp_test_ or rzp_live_).
      The key SECRET goes in Vercel environment variables. Never here.
      --------------------------------------------------------------- */
-  razorpayEnabled: false,
-  razorpayKeyId: "",
+  razorpayEnabled: true,
+  razorpayKeyId: "rzp_live_TSMzIsNBM7wlQ6",
 
   /* Support contact shown on the payment screen when something goes wrong. */
   supportEmail: "s.g.santhoshkumar18@gmail.com"
