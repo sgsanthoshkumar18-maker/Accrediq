@@ -1605,3 +1605,41 @@ body.aq-locked{
   width:100%;
   overflow:hidden;
 }
+
+/* ---------------------------------------------------------------------------
+   SUPPORT PANEL. Fixed full-viewport backdrop, so aq-scroll-lock.js recognises it
+   as a real overlay and holds the page still — no extra wiring needed.
+   --------------------------------------------------------------------------- */
+.aqs-back{position:fixed;inset:0;z-index:9998;display:flex;align-items:center;
+  justify-content:center;padding:24px;background:rgba(2,10,9,.72);
+  backdrop-filter:blur(6px);-webkit-backdrop-filter:blur(6px);}
+.aqs-card{position:relative;width:min(560px,100%);max-height:88vh;overflow:auto;
+  background:var(--bg-elevated);border:1px solid var(--border);
+  border-radius:var(--r-lg);padding:34px 34px 30px;box-shadow:var(--shadow-2);}
+.aqs-card h2{margin:0 0 8px;font-size:26px;}
+.aqs-sub{margin:0 0 22px;font-size:14.5px;color:var(--fg-muted);line-height:1.6;}
+.aqs-card label{display:block;font-size:13.5px;font-weight:650;margin:16px 0 7px;color:var(--fg);}
+.aqs-card label span{font-weight:400;color:var(--fg-faint);}
+.aqs-card input[type=email],.aqs-card textarea{width:100%;background:var(--bg);
+  border:1px solid var(--border);border-radius:var(--r-sm);padding:12px 14px;
+  color:var(--fg);font:inherit;font-size:15px;}
+.aqs-card textarea{resize:vertical;line-height:1.55;}
+.aqs-card input:focus,.aqs-card textarea:focus{outline:2px solid var(--accent-bright);
+  outline-offset:1px;border-color:transparent;}
+/* Off-screen rather than display:none — some bots skip hidden fields but fill this one. */
+.aqs-hp{position:absolute;left:-9999px;width:1px;height:1px;opacity:0;}
+.aqs-note{font-size:12.5px;color:var(--fg-faint);margin-top:14px;line-height:1.55;}
+.aqs-note code{font-family:var(--font-mono);font-size:12px;}
+.aqs-msg{margin-top:14px;font-size:14px;line-height:1.55;}
+.aqs-msg.ok{color:var(--ok);}
+.aqs-msg.bad{color:var(--nc);}
+.aqs-actions{display:flex;gap:12px;margin-top:22px;flex-wrap:wrap;}
+.aqs-x{position:absolute;right:14px;top:14px;width:34px;height:34px;border-radius:50%;
+  background:transparent;border:1px solid var(--border);color:var(--fg-muted);
+  cursor:pointer;font-size:15px;}
+.aqs-x:hover{color:var(--fg);border-color:var(--border-strong);}
+.aq-support-btn{display:inline-flex;align-items:center;justify-content:center;
+  width:34px;height:34px;border-radius:50%;background:transparent;
+  border:1px solid var(--border);color:var(--fg-muted);cursor:pointer;flex:none;}
+.aq-support-btn:hover{color:var(--accent-bright);border-color:var(--accent-bright);}
+.aq-support-btn:focus-visible{outline:2px solid var(--accent-bright);outline-offset:2px;}

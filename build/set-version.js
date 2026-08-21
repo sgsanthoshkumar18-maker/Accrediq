@@ -35,9 +35,19 @@ const SKIP = new Set([
   "galaxy", "galaxy2", "brain", "dna", "helix", "radar", "globe", "hglobe", "kpinet"
 ]);
 
+/* Files that are not site pages even though they end in .html.
+ *
+ * videos/aqcredix-film.html is the FILM BUNDLE — a self-contained document shown inside
+ * an iframe by videos/aq-film.js. Stamping it would put a canonical URL, a share card and
+ * the analytics beacon inside the frame, which would claim the film is a page of its own
+ * and count a second pageview every time someone presses play. It also carries its own
+ * inline assets, so there is nothing for the version stamp to bust. Leave it alone. */
+const SKIP_FILES = new Set(["aqcredix-film.html"]);
+
+
 function walk(dir, out = []) {
   for (const n of fs.readdirSync(dir)) {
-    if (SKIP.has(n)) continue;
+    if (SKIP.has(n) || SKIP_FILES.has(n)) continue;
     const f = path.join(dir, n);
     if (fs.statSync(f).isDirectory()) walk(f, out);
     else if (n.endsWith(".html")) out.push(f);

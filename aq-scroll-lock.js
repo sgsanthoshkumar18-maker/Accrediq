@@ -32,7 +32,8 @@
   var OVERLAY = [
     ".modal", ".modal-back", ".globe-card", ".dept-detail", ".explorer",
     ".tdx", ".cdx", ".ddx", ".qg-panel",
-    ".aq-gate", ".aq-gate-back", ".ws-auth", ".pw-modal", ".pw", ".device-block"
+    ".aq-gate", ".aq-gate-back", ".ws-auth", ".pw-modal", ".device-block",
+    ".aqs-back", ".aqf-mount.is-full"
   ].join(",");
 
   var open = 0;
@@ -92,23 +93,50 @@
      headless browser, which is how this was found. A 16ms timer coalesces bursts of
      mutations just as well and keeps running whatever the tab is doing. */
   var timer = null;
+  var watchdog = null;
+
+  function recount() {
+    var n = 0, els = document.querySelectorAll(OVERLAY);
+    for (var i = 0; i < els.length; i++) if (isVisible(els[i])) n++;
+    if (n > 0 && open === 0) lock();
+    else if (n === 0 && open > 0) { open = 1; unlock(); }
+    else open = n;
+    guard();
+  }
+
+  /* THE WATCHDOG, AND WHY IT EARNS ITS KEEP.
+   *
+   * Everything above depends on a mutation firing when an overlay closes. That is true
+   * for every close path in the site today, but "the page will not scroll any more" is
+   * the single worst way for this file to fail: the visitor cannot recover, cannot see a
+   * cause, and will not report it — they will just leave. A lock that has outlived its
+   * overlay must be able to notice on its own.
+   *
+   * So while — and ONLY while — the page is locked, recount every 400ms. If the overlay
+   * has gone without telling us, scrolling comes back within half a second instead of
+   * never. When nothing is open the timer is not running at all, so the cost on an
+   * ordinary page is exactly zero. */
+  function guard() {
+    if (open > 0 && !watchdog) watchdog = setInterval(recount, 400);
+    else if (open === 0 && watchdog) { clearInterval(watchdog); watchdog = null; }
+  }
+
   function sync() {
     if (timer) return;
-    timer = setTimeout(function () {
-      timer = null;
-      var n = 0, els = document.querySelectorAll(OVERLAY);
-      for (var i = 0; i < els.length; i++) if (isVisible(els[i])) n++;
-      if (n > 0 && open === 0) lock();
-      else if (n === 0 && open > 0) { open = 1; unlock(); }
-      else open = n;
-    }, 16);
+    timer = setTimeout(function () { timer = null; recount(); }, 16);
   }
 
   function start() {
     if (!document.body) return;
-    new MutationObserver(sync).observe(document.body, {
+    var mo = new MutationObserver(sync);
+    mo.observe(document.body, {
       childList: true, subtree: true,
       attributes: true, attributeFilter: ["class", "style", "hidden"]
+    });
+    /* Some overlays are driven by a class on <html> rather than on the panel itself —
+       the theme and gate scripts both do this. Observing only <body> misses those. */
+    mo.observe(document.documentElement, {
+      attributes: true, attributeFilter: ["class", "style"]
     });
     sync();
   }

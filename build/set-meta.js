@@ -58,6 +58,16 @@ const SKIP = new Set([
   "node_modules", ".git", "build", "tests", "tools-build"
 ]);
 
+/* Files that are not site pages even though they end in .html.
+ *
+ * videos/aqcredix-film.html is the FILM BUNDLE — a self-contained document shown inside
+ * an iframe by videos/aq-film.js. Stamping it would put a canonical URL, a share card and
+ * the analytics beacon inside the frame, which would claim the film is a page of its own
+ * and count a second pageview every time someone presses play. It also carries its own
+ * inline assets, so there is nothing for the version stamp to bust. Leave it alone. */
+const SKIP_FILES = new Set(["aqcredix-film.html"]);
+
+
 /* Pages that must never be indexed, and therefore get no canonical and no share card —
    only the robots directive and analytics.
 
@@ -74,7 +84,7 @@ const NOINDEX = new Set([
 
 function walk(dir, out = []) {
   for (const name of fs.readdirSync(dir)) {
-    if (SKIP.has(name)) continue;
+    if (SKIP.has(name) || SKIP_FILES.has(name)) continue;
     const full = path.join(dir, name);
     if (fs.statSync(full).isDirectory()) walk(full, out);
     else if (name.endsWith(".html")) out.push(full);

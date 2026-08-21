@@ -87,11 +87,16 @@ function walk(dir, out) {
      so it must never carry the site's motion layer. */
   const skip = new Set(['node_modules', '.git', 'build', 'tests', 'docs',
     'galaxy', 'galaxy2', 'brain', 'dna', 'helix', 'radar', 'globe', 'hglobe', 'kpinet']);
+  /* videos/aqcredix-film.html is the film BUNDLE, not a site page. It is a self-contained
+     document shown inside an iframe, with its own reset and no site header or footer for
+     the motion layer to act on. Linking our stylesheet into it would reach across the
+     boundary the iframe exists to draw. */
+  const skipFile = new Set(['aqcredix-film.html']);
   for (const n of fs.readdirSync(dir)) {
     if (skip.has(n)) continue;
     const full = path.join(dir, n);
     if (fs.statSync(full).isDirectory()) walk(full, out);
-    else if (n.endsWith('.html')) out.push(full);
+    else if (n.endsWith('.html') && !skipFile.has(n)) out.push(full);
   }
   return out;
 }
