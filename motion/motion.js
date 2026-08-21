@@ -417,10 +417,22 @@
     }
 
     function init() {
+      /* THIS CLASS PUTS A transform ON <body>, AND A TRANSFORMED BODY IS THE CONTAINING
+         BLOCK FOR EVERY position:fixed DESCENDANT. While it is on, the support panel, the
+         paywall, the auth gate and the full-screen film all size and place themselves
+         against the 12,000px document instead of the viewport — they end up thousands of
+         pixels down the page. Two frames is nothing, so normally nobody sees it.
+
+         But rAF does not run in a hidden tab, and a page opened into a BACKGROUND tab
+         therefore keeps the class — along with the opacity:0 that comes with it — for as
+         long as the tab stays unwatched. The queued callbacks do fire when it is finally
+         looked at, so it recovers, but nothing should depend on that: a 120ms timer keeps
+         running whatever the tab is doing and removes the class either way. Whichever
+         lands first wins; removing a class twice is free. */
       root.classList.add("aq-page-enter");
-      requestAnimationFrame(function () {
-        requestAnimationFrame(function () { root.classList.remove("aq-page-enter"); });
-      });
+      function endEnter() { root.classList.remove("aq-page-enter"); }
+      requestAnimationFrame(function () { requestAnimationFrame(endEnter); });
+      setTimeout(endEnter, 120);
 
       document.addEventListener("click", function (e) {
         if (e.defaultPrevented || e.button !== 0) return;
