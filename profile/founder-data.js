@@ -53,7 +53,7 @@ window.FOUNDER = {
       step: "02 — THE EVIDENCE",
       title: "Then it becomes evidence",
       heading: "Research and peer review",
-      body: "Ten peer-reviewed publications on medication safety, regulatory compliance " +
+      body: "Nine peer-reviewed publications on medication safety, regulatory compliance " +
             "and clinical case management — and now peer review for two journals, " +
             "including a Q1 Springer Nature title.",
       points: [
@@ -80,6 +80,14 @@ window.FOUNDER = {
 
   /* Reverse-chronological. `current: true` draws the live marker on the timeline. */
   experience: [
+    { role: "Founder & Chief Quality Officer", org: "AQcredix",
+      type: "Sole proprietorship · Chennai",
+      from: "2026", to: "Present", current: true,
+      note: "An accreditation platform for Indian hospitals: all 639 NABH objective " +
+            "elements explained the way an assessor reads them, with the committee " +
+            "calendar, evidence trail and internal audit across 45 departments that " +
+            "prove them." },
+
     { role: "Clinical Reviewer", org: "Springer Nature", type: "Full-time · Remote",
       from: "Mar 2026", to: "Present", current: true,
       note: "Reviewer of Antimicrobial Resistance and Infection Control Journal (Q1)." },

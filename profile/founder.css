@@ -553,3 +553,38 @@ html.fp-tilt-on [data-tilt].is-tilting::after { opacity: 1; }
     opacity: 1 !important; transform: none !important; transition: none !important; }
   .fp-spine { transform: scaleY(1) !important; }
 }
+
+/* ---------------------------------------------------------------------------
+   SIGN-OFF — the signature that closes the page.
+
+   THE IMAGE HAS A WHITE BACKGROUND, not transparency, and the ink is near-black.
+   Dropped in as-is it is a white rectangle on the dark theme and invisible if the white
+   is keyed out. Blend modes solve both without editing the file:
+
+     light theme : multiply  — white multiplies away, dark ink stays dark
+     dark theme  : invert then screen — invert makes the ink pale and the paper black,
+                   screen then drops the black, leaving pale ink on the dark ground
+
+   Scoped with :not([data-theme="dark"]) / [data-theme="dark"] because the boot snippet
+   sets no data-theme for light and sets "dark" for both dark and neon.
+   --------------------------------------------------------------------------- */
+.fp-signoff{margin-top:44px;padding-top:30px;border-top:1px solid var(--border);
+  display:flex;flex-direction:column;align-items:flex-start;gap:2px}
+.fp-signoff img{display:block;width:220px;height:auto;margin-bottom:6px;
+  /* Revealed left to right, the way it was written. */
+  clip-path:inset(0 100% 0 0);
+  transition:clip-path 1150ms cubic-bezier(.16,1,.3,1) 120ms}
+.fp-signoff.is-signed img{clip-path:inset(0 0 0 0)}
+
+:root:not([data-theme="dark"]) .fp-signoff img{mix-blend-mode:multiply}
+:root[data-theme="dark"] .fp-signoff img{filter:invert(1);mix-blend-mode:screen}
+
+.fp-signoff-name{font-family:var(--font-display);font-size:19px;color:var(--fg)}
+.fp-signoff-role{font-family:var(--font-mono);font-size:12px;letter-spacing:.08em;
+  text-transform:uppercase;color:var(--fg-faint)}
+
+@media (prefers-reduced-motion:reduce){
+  /* No writing animation, but the signature must still be visible — a clip-path left at
+     100% would hide it entirely for anyone who asked for less motion. */
+  .fp-signoff img{clip-path:inset(0 0 0 0);transition:none}
+}

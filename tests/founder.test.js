@@ -26,7 +26,11 @@ const html = read('founder.html');
 eq(F.name, 'Dr. Santhoshkumar SG', 'the name is right');
 eq(F.post, 'Pharm.D., RPh.', 'with the post-nominals from the profile');
 eq(F.publications.length, 9, 'every publication is captured');
-eq(F.experience.length, 8, 'every role is captured');
+/* 9, not 8, since AQcredix was added as the current first role. The founder's own
+   company was missing from his own work history while the role line above the page
+   called him its founder — a gap a hospital reading the page would notice before we
+   did. Raise this number only when a real role is added. */
+eq(F.experience.length, 9, 'every role is captured');
 eq(F.education.length, 2, 'both qualifications are captured');
 eq(F.certifications.length, 19, 'every certification is captured');
 ok(F.skills.length >= 12, 'the skills list is populated');
@@ -44,7 +48,8 @@ ok(/Springer Nature/.test(html), 'the page names Springer Nature');
 ok(/Antimicrobial Resistance and Infection Control/.test(html), 'and the ARIC journal');
 
 // Current roles must be flagged, or the timeline reads as entirely historical.
-eq(F.experience.filter(e => e.current).length, 4, 'four roles are marked current');
+eq(F.experience.filter(e => e.current).length, 5,
+   'five roles are marked current');
 
 // Every publication needs a journal and a date — a bare title is not a citation.
 let bad = 0;

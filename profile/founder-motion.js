@@ -235,6 +235,7 @@
     stagger();
     timelineSpine();
     reel();
+    signoff();
 
     /* POINTER-linked effects still need a pointer. Hero parallax follows the mouse and
        magnetic buttons lean toward it; neither has any meaning on a touch screen, and
@@ -242,6 +243,30 @@
     if (coarse) return;
     heroParallax();
     magnetic();
+  }
+
+  /* ----------------------------- 4. the sign-off -----------------------------
+     The signature is revealed left to right when it comes into view, at the speed a hand
+     moves rather than the speed a UI animates — it is the last thing a hospital director
+     sees on this page and it should read as a person signing, not as a component
+     appearing.
+
+     Fires once and disconnects: a signature that re-writes itself every time the page is
+     scrolled past becomes a fidget. If IntersectionObserver is unavailable the class is
+     set immediately, because the fallback for "cannot animate" is "visible", never
+     "hidden" — the CSS starts it clipped. */
+  function signoff() {
+    var el = document.querySelector("[data-signoff]");
+    if (!el) return;
+    if (!("IntersectionObserver" in window)) { el.classList.add("is-signed"); return; }
+    var io = new IntersectionObserver(function (ents) {
+      ents.forEach(function (en) {
+        if (!en.isIntersecting) return;
+        en.target.classList.add("is-signed");
+        io.disconnect();
+      });
+    }, { threshold: 0.35 });
+    io.observe(el);
   }
 
   /* founder.js renders the timeline and card lists from data, so none of this markup
