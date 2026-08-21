@@ -56,6 +56,17 @@
       <path d="M19.15 14.05H20.85L25.61 25.015H26.97V25.95H22.21V25.015H23.315L22 22H18L16.685 25.015H17.79V25.95H13.03V25.015H14.39ZM20 16.26L22.027 20.935H17.973Z" fill="#17A2B8" fill-rule="evenodd"/>
     </svg>`;
 
+  /* If the film is already on this page, the button plays it instead of navigating.
+     Anywhere else it falls through to its href and lands on the home page section. */
+  document.addEventListener('click', function (e) {
+    var b = e.target.closest && e.target.closest('#aqFilmBtn');
+    if (!b || !window.AQFilm) return;
+    e.preventDefault();
+    var host = document.getElementById('aqFilmHost');
+    if (host) { host.scrollIntoView({ block: 'center' }); host.querySelector('.aqf-poster') && host.querySelector('.aqf-poster').click(); }
+    else window.AQFilm.open();
+  });
+
   function getBase() {
     return document.body.getAttribute("data-base") || "";
   }
@@ -125,7 +136,7 @@
             <p>NABH accreditation, actually understood — every standard explained the way an assessor reads it.</p>
           </div>
           <div class="footer-col"><h4>Learn</h4>
-            <a href="${base}plans.html">Plans &amp; pricing</a><a href="${base}value.html">What your department gets</a><a href="${base}standards.html">Standards</a>
+            <a href="${base}plans.html">Plans &amp; pricing</a><a href="${base}index.html#aqFilmHome" id="aqFilmBtn">Wanna know about AQcredix?</a><a href="${base}value.html">What your department gets</a><a href="${base}standards.html">Standards</a>
             <a href="${base}departments.html">Departments</a>
             <a href="${base}workspace/start.html">Workspace</a>
             <a href="${base}clinical-areas.html">Clinical Areas</a>

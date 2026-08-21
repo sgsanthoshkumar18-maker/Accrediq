@@ -38,14 +38,31 @@
   var open = 0;
   var lockedY = 0;
 
+  /* A CLASS NAME IS NOT ENOUGH, and trusting one broke the site.
+   *
+   * The first version locked whenever any element matching the list above was visible.
+   * But .modal exists as STATIC MARKUP on twelve pages — empty containers that a script
+   * fills in later — so the lock engaged on page load and the page could not be scrolled
+   * at all before anything was even opened. The count then drifted, and closing a real
+   * card sometimes left the page stuck.
+   *
+   * So the test is what the element is DOING, not what it is called: a genuine overlay is
+   * position:fixed and covers most of the viewport. An empty container, an inline section
+   * and a collapsed panel all fail that, whatever their class. */
   function isVisible(el) {
     if (!el || !el.isConnected) return false;
     if (el.hasAttribute("hidden")) return false;
     var cs = getComputedStyle(el);
     if (cs.display === "none" || cs.visibility === "hidden") return false;
-    if (parseFloat(cs.opacity) === 0) return false;
-    /* A modal that is in the DOM but has no size is not covering anything. */
-    return el.getBoundingClientRect().height > 40;
+    if (parseFloat(cs.opacity) < 0.05) return false;
+    /* Only a fixed element can cover the page while it scrolls underneath. */
+    if (cs.position !== "fixed") return false;
+    var r = el.getBoundingClientRect();
+    var vw = document.documentElement.clientWidth || 1;
+    var vh = document.documentElement.clientHeight || 1;
+    /* Half the viewport in both axes. A toast, a tooltip or a sticky bar is fixed too,
+       and none of them should stop the page from scrolling. */
+    return r.width >= vw * 0.5 && r.height >= vh * 0.5;
   }
 
   function lock() {
