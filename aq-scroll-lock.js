@@ -1,0 +1,101 @@
+/* AQcredix — hold the page still while an overlay is open.
+ *
+ * THE PROBLEM. Opening an element card, a department drill-down or the globe panel left
+ * the page behind it fully scrollable. Scrolling over an open card moved the list
+ * underneath it, so closing the card put you somewhere you never navigated to. On a phone
+ * it is worse: the panel and the page compete for the same gesture, and the page usually
+ * wins, which reads as the panel refusing to scroll.
+ *
+ * WHY A WATCHER RATHER THAN EDITING EVERY MODAL. There are a dozen overlays across this
+ * site — element cards, the assessor lens, department detail, globe panels, tooltips,
+ * the paywall, the auth gate — written at different times by different code. Adding a
+ * lock/unlock call to each means a dozen places to keep in step, and the one that gets
+ * missed is the one a customer finds. One observer watching for any of them appearing
+ * cannot drift.
+ *
+ * WHY position:fixed AND NOT overflow:hidden. iOS Safari ignores overflow:hidden on the
+ * body — the classic lock that works on every desktop and fails on the device most people
+ * are actually holding. Fixing the body does work, but it collapses the scroll position
+ * to zero, so the offset is stored and restored on close. Without that restore, closing a
+ * card jumps you back to the top of a 639-element list.
+ *
+ * WHY IT COUNTS RATHER THAN TOGGLES. Two overlays can be open at once — a tooltip over a
+ * modal, or the paywall over a preview. A boolean would unlock on the first close and let
+ * the page move while the second is still open.
+ */
+(function () {
+  "use strict";
+
+  /* Selectors for things that cover the page. Kept in one list so a new overlay only has
+     to add its class here — and matching the EXCLUDE_ANCESTOR list already in app.js, so
+     the two agree about what counts as an overlay. */
+  var OVERLAY = [
+    ".modal", ".modal-back", ".globe-card", ".dept-detail", ".explorer",
+    ".tdx", ".cdx", ".ddx", ".qg-panel",
+    ".aq-gate", ".aq-gate-back", ".ws-auth", ".pw-modal", ".pw", ".device-block"
+  ].join(",");
+
+  var open = 0;
+  var lockedY = 0;
+
+  function isVisible(el) {
+    if (!el || !el.isConnected) return false;
+    if (el.hasAttribute("hidden")) return false;
+    var cs = getComputedStyle(el);
+    if (cs.display === "none" || cs.visibility === "hidden") return false;
+    if (parseFloat(cs.opacity) === 0) return false;
+    /* A modal that is in the DOM but has no size is not covering anything. */
+    return el.getBoundingClientRect().height > 40;
+  }
+
+  function lock() {
+    if (open++ > 0) return;                       // already locked by another overlay
+    lockedY = window.scrollY || window.pageYOffset || 0;
+    document.body.style.setProperty("--aq-lock-y", -lockedY + "px");
+    document.body.classList.add("aq-locked");
+  }
+
+  function unlock() {
+    if (open === 0) return;
+    if (--open > 0) return;                       // something else is still open
+    document.body.classList.remove("aq-locked");
+    document.body.style.removeProperty("--aq-lock-y");
+    /* 'instant' so the restore is not animated by the site's smooth-scroll layer — a
+       smooth scroll here looks like the page drifting away after the card closes. */
+    try { window.scrollTo({ top: lockedY, behavior: "instant" }); }
+    catch (e) { window.scrollTo(0, lockedY); }
+  }
+
+  /* Recount from scratch on every mutation rather than tracking individual nodes. The
+     overlays here are created, destroyed, emptied and re-filled by different code paths;
+     counting what is actually on screen right now cannot get out of step with reality. */
+  /* setTimeout, NOT requestAnimationFrame. rAF does not run in a hidden tab, so an
+     overlay opened while the page was in the background stayed unlocked until the tab
+     was looked at again — and the same pause makes the behaviour untestable in a
+     headless browser, which is how this was found. A 16ms timer coalesces bursts of
+     mutations just as well and keeps running whatever the tab is doing. */
+  var timer = null;
+  function sync() {
+    if (timer) return;
+    timer = setTimeout(function () {
+      timer = null;
+      var n = 0, els = document.querySelectorAll(OVERLAY);
+      for (var i = 0; i < els.length; i++) if (isVisible(els[i])) n++;
+      if (n > 0 && open === 0) lock();
+      else if (n === 0 && open > 0) { open = 1; unlock(); }
+      else open = n;
+    }, 16);
+  }
+
+  function start() {
+    if (!document.body) return;
+    new MutationObserver(sync).observe(document.body, {
+      childList: true, subtree: true,
+      attributes: true, attributeFilter: ["class", "style", "hidden"]
+    });
+    sync();
+  }
+
+  if (document.readyState === "loading") document.addEventListener("DOMContentLoaded", start);
+  else start();
+})();

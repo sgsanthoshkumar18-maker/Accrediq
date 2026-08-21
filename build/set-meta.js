@@ -167,6 +167,12 @@ for (const file of files) {
       '<meta property="og:title" content="' + attr(title) + '">',
       '<meta property="og:description" content="' + attr(desc) + '">',
       '<meta property="og:image" content="' + SITE + '/assets/og.png">',
+      /* secure_url and type are older Open Graph properties that most crawlers no longer
+         need — but WhatsApp is the one that matters here and it has historically been the
+         fussiest reader in the family. They cost two lines and remove a whole class of
+         "why is there no preview" from the list of things to investigate. */
+      '<meta property="og:image:secure_url" content="' + SITE + '/assets/og.png">',
+      '<meta property="og:image:type" content="image/png">',
       '<meta property="og:image:width" content="1200">',
       '<meta property="og:image:height" content="630">',
       '<meta property="og:image:alt" content="AQcredix — know it before the assessor does">',

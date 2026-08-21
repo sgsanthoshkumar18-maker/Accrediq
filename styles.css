@@ -321,6 +321,22 @@ h3{font-size:18px;line-height:1.3;}
 p{margin:0 0 0;}
 
 .wrap{max-width:var(--wrap);margin:0 auto;padding:0 28px;}
+
+/* ---------------------------------------------------------------------------
+   LARGE DISPLAYS. --wrap was a flat 1180px, so on a 2560px monitor the site used
+   under half the glass and the rest was empty margin — which reads as a page designed
+   for a laptop that never considered anything bigger.
+
+   Tiers rather than a pure vw formula: prose still has to stop somewhere, because a
+   paragraph 2000px wide is unreadable however much screen there is. These widen the
+   LAYOUT — grids, tiles and tables gain room — while the reading measure inside each
+   block keeps its own max-width. The vw ceiling keeps a margin at every size so
+   nothing ever touches the bezel.
+   --------------------------------------------------------------------------- */
+@media (min-width:1500px){ :root{ --wrap:min(92vw,1380px); } }
+@media (min-width:1800px){ :root{ --wrap:min(92vw,1620px); } }
+@media (min-width:2400px){ :root{ --wrap:min(90vw,1980px); } }
+@media (min-width:3200px){ :root{ --wrap:min(88vw,2560px); } }
 .section{padding:72px 0;}
 .mono{font-family:var(--font-mono);}
 .muted{color:var(--fg-muted);}
@@ -1567,4 +1583,25 @@ select{
 .aqo-mark .hero-logo-arc{stroke:var(--accent-bright);stroke-width:3;}
 @media (prefers-reduced-motion:reduce){
   .aqo-mark .hero-logo-arc{animation:none;}
+}
+
+/* ---------------------------------------------------------------------------
+   SCROLL LOCK. When a modal, drawer or detail panel is open the page behind it
+   must hold still. It did not: scrolling over an open element card moved the
+   list underneath, so closing the card left you somewhere you never navigated
+   to, and on a phone the two surfaces fought each other for the gesture.
+
+   position:fixed rather than overflow:hidden, because overflow:hidden alone is
+   ignored by iOS Safari — the classic symptom of a lock that works everywhere
+   except the device most people are holding. Fixing the body collapses the
+   scroll position to zero, so aq-scroll-lock.js stores the offset in --aq-lock-y
+   and restores it on close.
+   --------------------------------------------------------------------------- */
+body.aq-locked{
+  position:fixed;
+  top:var(--aq-lock-y,0);
+  left:0;
+  right:0;
+  width:100%;
+  overflow:hidden;
 }

@@ -84,7 +84,12 @@
     /* 1.12 leaves a margin so the sprites — which have width of their own and pulse —
        and the label under the canvas do not touch the edge. Without it the outermost
        points sit exactly on the boundary and read as clipped. */
-    const fit = (maxExtent * 1.12) / Math.sin(halfFov);
+    /* 1.28, raised from 1.12. The old margin framed the point cloud but not what grows
+       out of it: the sprites have width of their own and pulse, the widest shapes are
+       broader than the one maxExtent was tuned against, and a phone in portrait crops on
+       the horizontal axis where that extra width lands. Reported as shapes cut off at the
+       edges on a real handset, which is the only test that counts. */
+    const fit = (maxExtent * 1.28) / Math.sin(halfFov);
     // Never come closer than the desktop framing; only ever pull back.
     return Math.max(3.4, fit);
   }
