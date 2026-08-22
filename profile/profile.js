@@ -255,11 +255,28 @@
          subscription — view plans". That is the platform asking someone to pay for what
          it had already given them, on the one page they would check to confirm it. */
       if (st.reason === "complimentary") {
+        /* THE PRICE IS SHOWN EVEN THOUGH THEY ARE NOT PAYING IT.
+           "Complimentary — full access" is abstract: it tells someone they have
+           something without telling them what it is worth. Naming the figure they are
+           not being charged is what turns it from a setting into a gift, and it is the
+           same figure everyone else sees, taken from the same config rather than typed
+           here — so it cannot drift away from the real price. */
+        /* Read out of B.PLANS, the same list the pricing page and the paywall price
+           from, so this figure cannot drift away from what is actually charged. */
+        function planPrice(key, fallback) {
+          var p = (B.PLANS || []).filter(function (x) { return x.key === key; })[0];
+          return fmtRupees(p && p.inr != null ? p.inr : fallback);
+        }
+        var mp = planPrice("monthly", 50000);
+        var yp = planPrice("yearly", 500000);
         host.innerHTML = '<div class="pf-sub pf-sub-owner"><div class="pf-sub-row">' +
           "<span>Plan</span><b>Complimentary — full access</b></div>" +
+          '<div class="pf-sub-row"><span>Normally</span><b>' + esc(mp) + " a month · " +
+            esc(yp) + " a year</b></div>" +
+          '<div class="pf-sub-row"><span>You pay</span><b class="pf-ok">Nothing</b></div>' +
           '<div class="pf-sub-row"><span>Renews</span><b>Never expires</b></div>' +
-          '<p class="pf-sub-note">Access was granted directly by AQcredix. There is ' +
-          "nothing to pay and nothing to renew.</p></div>";
+          '<p class="pf-sub-note">Access was granted directly by AQcredix — everything a ' +
+          "paying subscriber gets, with nothing to pay and nothing to renew.</p></div>";
         return;
       }
 
