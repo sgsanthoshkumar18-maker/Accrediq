@@ -645,16 +645,29 @@
       if (!still()) return;
       const el = document.getElementById("hgHospitals");
       if (!list.length) { el.innerHTML = `<p class="hg-note">No hospitals tagged in OpenStreetMap near this point.</p>`; return; }
+      /* THE NAME BECOMES A LINK ONLY WHERE OSM HOLDS A REAL ADDRESS FOR IT.
+         About one hospital in seven is tagged with a website, so most stay plain text —
+         which is correct. Nothing is guessed and no search-engine fallback is offered: a
+         link that sends somebody to the wrong hospital is worse than no link.
+         nofollow because this is a map listing, not a recommendation, and we should not
+         be passing ranking signal to whoever happens to be tagged. noopener noreferrer
+         because target=_blank without them hands the opened page a handle on ours. */
       el.innerHTML = `<ul class="hg-hosp-list">${list.map(h => `
         <li>
-          <div class="hg-hosp-name">${esc(h.name)}</div>
+          <div class="hg-hosp-name">${h.website
+            ? `<a href="${esc(h.website)}" target="_blank" rel="noopener noreferrer nofollow"
+                  title="Opens ${esc(h.website)} in a new tab">${esc(h.name)}<span class="hg-ext" aria-hidden="true">&#8599;</span></a>`
+            : esc(h.name)}</div>
           ${h.operator ? `<div class="hg-hosp-meta">${esc(h.operator)}</div>` : ""}
           <div class="hg-hosp-stats">
             ${h.type ? `<span>${esc(h.type)}</span>` : ""}
             ${h.beds ? `<span>${esc(h.beds)} beds</span>` : ""}
           </div>
         </li>`).join("")}</ul>
-        <p class="hg-note">OpenStreetMap has no ratings, and bed counts appear only where contributors have tagged them.</p>`;
+        <p class="hg-note">Listings from OpenStreetMap, not recommendations &mdash; AQcredix does
+          not rate, endorse or accredit these hospitals. A name links out only where
+          contributors recorded a website; OpenStreetMap has no ratings, and bed counts
+          appear only where somebody tagged them.</p>`;
       const s = document.getElementById("hgSources");
       if (s) s.textContent = "Health indicators: WHO Global Health Observatory (ghoapi.azureedge.net). Indicator names are as published by WHO. Hospital locations: OpenStreetMap contributors (ODbL). Year shown per figure.";
     }).catch(() => {
