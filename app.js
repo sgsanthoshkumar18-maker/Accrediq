@@ -533,7 +533,14 @@
  * --------------------------------------------------------------------------- */
 (function () {
   "use strict";
-  var KEY = "aq-phone-tip-v1";
+  /* sessionStorage, NOT localStorage, and the difference is the whole behaviour.
+     localStorage remembered the dismissal for ever, so a visitor saw the tip once in
+     their life and never again — including on the visit three weeks later when they had
+     forgotten. sessionStorage lives exactly as long as the browser tab: the tip appears
+     once when the site is opened, stays quiet while they move from page to page, and
+     comes back the next time they open the site fresh. That is what was asked for, and
+     it is also the right shape for a tip — it is advice for a visit, not a setting. */
+  var KEY = "aq-phone-tip-visit";
 
   function isPhone() {
     try {
@@ -550,16 +557,21 @@
     el.setAttribute("role", "status");
     el.innerHTML =
       '<span class="aq-tip-ic" aria-hidden="true">&#128421;</span>' +
-      '<span class="aq-tip-t"><b>Best on a larger screen.</b> Everything works on your ' +
-        'phone — but the standards mesh, the globe and the film are built wide, and are ' +
-        'worth a second look on a laptop.</span>' +
+      /* The route is spelled out because advice nobody can act on is just noise —
+         most people have never opened that menu and will not go looking for it. Chrome
+         is named specifically since it is what almost every Android visitor is holding;
+         the same item exists in Safari under "aA", but naming two browsers in one line
+         costs more clarity than it buys. */
+      '<span class="aq-tip-t"><b>Turn on Desktop view for the best experience.</b> ' +
+        'In Chrome, tap the three dots <b>&#8942;</b> and switch on <b>Desktop site</b>. ' +
+        'The standards mesh, the globe and the film are built for a wide screen.</span>' +
       '<button type="button" class="aq-tip-x" aria-label="Dismiss">&#10005;</button>';
     document.body.appendChild(el);
     requestAnimationFrame(function () { el.classList.add("in"); });
 
     function close() {
       el.classList.remove("in");
-      try { localStorage.setItem(KEY, "1"); } catch (e) {}
+      try { sessionStorage.setItem(KEY, "1"); } catch (e) {}
       setTimeout(function () { el.remove(); }, 300);
     }
     el.querySelector(".aq-tip-x").addEventListener("click", close);
@@ -570,7 +582,10 @@
 
   function init() {
     if (!isPhone()) return;
-    try { if (localStorage.getItem(KEY) === "1") return; } catch (e) {}
+    try { if (sessionStorage.getItem(KEY) === "1") return; } catch (e) {}
+    /* Clear the old per-device flag, so anyone who dismissed the previous version is not
+       silenced for ever by a key that is no longer read. */
+    try { localStorage.removeItem("aq-phone-tip-v1"); } catch (e) {}
     setTimeout(show, 2200);
   }
   if (document.readyState === "loading") document.addEventListener("DOMContentLoaded", init);
