@@ -219,10 +219,33 @@ function friendlyAuthError(err) {
         this.disabled = true; msg.textContent = "Working…";
         try {
           if (tab === "up") {
-            await S.adapter.signUp(e, p,
+            /* WHETHER A CONFIRMATION EMAIL EXISTS IS DECIDED BY THE SIGN-UP RESPONSE,
+               NOT GUESSED AT IN THE MESSAGE.
+
+               This used to say "if email confirmation is required, check your inbox" in
+               every case. The project has mailer_autoconfirm switched on, so no email is
+               ever sent and none is needed — the account is live immediately. People read
+               that sentence, went to look for a message that was never coming, and
+               concluded the site was broken.
+
+               Supabase returns a session on sign-up when the account is already
+               confirmed, and returns none when it is genuinely waiting on an email. That
+               is the real answer, so it is what is used: a session means straight in, no
+               session means say plainly that an email is on its way. If confirmation is
+               ever switched on in the dashboard, this follows without an edit here. */
+            var out = await S.adapter.signUp(e, p,
               body.querySelector("#agName").value.trim() || e,
               body.querySelector("#agOrg").value.trim() || "My Hospital");
-            msg.textContent = "Account created. If email confirmation is required, check your inbox, then sign in.";
+
+            if (out && out.access_token) {
+              msg.textContent = "Account created. Signing you in…";
+              location.href = decodeURIComponent(here) || location.href;
+              return;
+            }
+
+            /* No session: the account really is pending an emailed link. */
+            msg.textContent = "Account created. Check " + e + " for a confirmation link, " +
+              "then sign in. It can take a minute, and it may land in spam.";
             this.disabled = false;
           } else {
             await S.adapter.signInPassword(e, p);
