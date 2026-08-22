@@ -77,21 +77,30 @@ window.HealthData = (function () {
   /** Newest value for one WHO indicator, for one country. */
   const sleep = ms => new Promise(r => setTimeout(r, ms));
 
-  /** Newest value for one WHO indicator, for one country.
+  /* NEVER RETRY A TIMEOUT. This is the whole lesson of the change before this one.
    *
-   *  TRIED TWICE, because the first attempt for a country is the expensive one: nothing
-   *  is in the edge cache yet, and the panel asks for eleven indicators at the same
-   *  moment. A single slow answer among eleven cold requests is ordinary, and giving up
-   *  on it after one try reported an outage that did not exist. The second attempt is
-   *  nearly always served from the cache the first one filled. */
+   * WHO's API is intermittently slow: the same indicator measured 504 after 10.7s, then
+   * 200 in 1.2s, then 200 in 0.6s, minutes apart. A blanket retry therefore turned every
+   * ten-second timeout into twenty — and with eleven indicators fired at once against a
+   * browser that opens about six connections per host, the slow ones queue behind each
+   * other. The panel took minutes to fill. The retry meant to rescue a flaky request
+   * instead doubled the cost of the very case that was already the problem.
+   *
+   * A retry is only worth making when the first attempt failed FAST, which means a real
+   * error — a blip, a cold function — rather than WHO taking its time. If it already
+   * spent seconds and gave up, asking again immediately will spend those seconds again
+   * and almost certainly give up again. */
+  const FAST_FAILURE_MS = 2500;
+
+  /** Newest value for one WHO indicator, for one country. */
   function whoValue(iso3, code) {
     return cached(`who:${iso3}:${code}`, async () => {
-      let r = await fetch(`/api/who?indicator=${encodeURIComponent(code)}&country=${encodeURIComponent(iso3)}`)
-        .catch(() => null);
-      if (!r || !r.ok) {
-        await sleep(1200);
-        r = await fetch(`/api/who?indicator=${encodeURIComponent(code)}&country=${encodeURIComponent(iso3)}`)
-          .catch(() => null);
+      const url = `/api/who?indicator=${encodeURIComponent(code)}&country=${encodeURIComponent(iso3)}`;
+      const t0 = Date.now();
+      let r = await fetch(url).catch(() => null);
+      if ((!r || !r.ok) && (Date.now() - t0) < FAST_FAILURE_MS) {
+        await sleep(600);
+        r = await fetch(url).catch(() => null);
       }
       if (!r) return { unavailable: true };
       /* A FAILED REQUEST IS NOT THE SAME AS NO FIGURE, and the panel must not say it is.
@@ -113,6 +122,43 @@ window.HealthData = (function () {
       if (v == null || isNaN(v)) return null;
       return { value: v, year: newest.TimeDim, source: "WHO Global Health Observatory" };
     });
+  }
+
+  /* PROGRESSIVE VERSION — the panel should never wait for the slowest of eleven.
+   *
+   * fetchIndicators() below uses Promise.all, which by definition finishes only when the
+   * last request does. Nine indicators answering in half a second were held back by one
+   * taking ten, so the panel showed "Loading WHO data…" for as long as the worst request
+   * took. That is the wait being reported, and no amount of tuning the slow request fixes
+   * a design that waits for all of them.
+   *
+   * This hands each row back the moment it lands. The panel draws the list immediately
+   * and fills each line in as its answer arrives, so the fast figures — which is most of
+   * them — are readable straight away and the slow ones catch up. Nothing is cached here
+   * that whoValue() does not already cache, so a second visit is still instant.
+   *
+   * onRow(index, row) is called once per indicator, in whatever order they resolve.
+   * Returns a promise that settles when they all have, for anyone who wants to know. */
+  function fetchIndicatorsProgressive(iso3, onRow) {
+    const namesP = indicatorNames();
+    return Promise.all(WHO_INDICATORS.map((meta, n) =>
+      Promise.all([namesP, whoValue(iso3, meta.code).catch(() => ({ unavailable: true }))])
+        .then(([names, got]) => {
+          const down = !!(got && got.unavailable);
+          const row = {
+            code: meta.code,
+            label: (names && names[meta.code]) || meta.fallback,
+            unit: meta.unit,
+            decimals: meta.decimals,
+            value: got && !down ? got.value : null,
+            year: got && !down ? got.year : null,
+            unavailable: down,
+            source: "WHO Global Health Observatory"
+          };
+          try { onRow(n, row); } catch (e) {}
+          return row;
+        })
+    ));
   }
 
   /** All panel indicators for one country, with WHO's own labels. */
@@ -187,5 +233,6 @@ window.HealthData = (function () {
     return ind.unit ? `${v} ${ind.unit}` : v;
   }
 
-  return { WHO_INDICATORS, fetchIndicators, fetchSeries, fetchHospitals, format, indicatorNames };
+  return { WHO_INDICATORS, fetchIndicators, fetchIndicatorsProgressive,
+           fetchSeries, fetchHospitals, format, indicatorNames };
 })();

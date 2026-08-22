@@ -565,10 +565,26 @@
     const token = d.id;                       // guards against a slower earlier request overwriting a newer selection
     const still = () => selectedDeptId === token;
 
-    // ---- WHO Global Health Observatory indicators ----
-    HD.fetchIndicators(d.iso3).then(list => {
-      if (!still()) return;
-      const rows = list.map(item => {
+    /* ---- WHO Global Health Observatory indicators ----
+       DRAWN FIRST, FILLED AS THEY ARRIVE. The list used to be built in one go after every
+       indicator had answered, so one slow request among eleven held the whole panel on
+       "Loading WHO data…" — sometimes for a minute or more, because WHO's service is
+       intermittently slow and a failure is never cached at the edge the way a success is.
+       The rows now appear immediately with their labels, and each value lands in its own
+       line as soon as it comes back. Most arrive in well under a second. */
+    (function () {
+      const host = document.getElementById("hgIndicators");
+      const metas = HD.WHO_INDICATORS || [];
+      host.innerHTML = '<ul class="hg-field-list">' + metas.map((m, n) =>
+        `<li data-ind="${n}">
+            <span class="hg-field-lbl">${esc(m.fallback)}</span>
+            <span class="hg-field-val is-empty" aria-busy="true">…</span>
+          </li>`).join("") + "</ul>";
+
+      HD.fetchIndicatorsProgressive(d.iso3, function (n, item) {
+        if (!still()) return;
+        const li = host.querySelector('[data-ind="' + n + '"]');
+        if (!li) return;
         const val = HD.format(item);
         /* Three states, not two. "No data" is a claim ABOUT WHO — that they publish no
            figure for this country — and it must only be made when WHO actually answered
@@ -576,20 +592,14 @@
            on their side gets reported to a hospital as a gap in WHO's data. */
         const empty = val ? "" : (item.unavailable ? "Unavailable" : "No data");
         const title = item.unavailable
-          ? ' title="WHO&#39;s data service did not respond. Reloading in a few minutes usually works."'
+          ? ' title="WHO&#39;s data service did not respond. Close the panel and open it again — it usually works on the second try."'
           : "";
-        return `<li>
-            <span class="hg-field-lbl">${esc(item.label)}</span>
-            <span class="hg-field-val ${val ? "" : "is-empty"}"${title}>${val ? esc(val) : empty}${
-              val && item.year ? ` <em class="hg-yr">${esc(item.year)}</em>` : ""}</span>
-          </li>`;
-      }).join("");
-      document.getElementById("hgIndicators").innerHTML =
-        `<ul class="hg-field-list">${rows}</ul>`;
-    }).catch(() => {
-      if (still()) document.getElementById("hgIndicators").innerHTML =
-        `<p class="hg-note">WHO data unavailable right now.</p>`;
-    });
+        li.innerHTML =
+          `<span class="hg-field-lbl">${esc(item.label)}</span>
+           <span class="hg-field-val ${val ? "" : "is-empty"}"${title}>${val ? esc(val) : empty}${
+             val && item.year ? ` <em class="hg-yr">${esc(item.year)}</em>` : ""}</span>`;
+      }).catch(() => { /* individual rows already report their own state */ });
+    })();
 
     // ---- WHO life-expectancy trend ----
     HD.fetchSeries(d.iso3, "WHOSIS_000001", 2000, 2024).then(series => {
