@@ -18,13 +18,28 @@
  *
  * REQUIRED ENVIRONMENT
  *   RESEND_API_KEY      already set
- *   OWNER_EMAIL         where the notice goes (falls back to SUPPORT_TO)
  *   NEW_USER_SECRET     a shared secret, checked below — see the note on why
+ *   SIGNUP_ALERT_TO     optional; defaults to support.aqcredix@gmail.com.
+ *                       Deliberately NOT OWNER_EMAIL — see the note beside TO.
  */
 
 const RESEND = process.env.RESEND_API_KEY;
 const FROM = process.env.DIGEST_FROM || "AQcredix <noreply@aqcredix.com>";
-const TO = (process.env.OWNER_EMAIL || process.env.SUPPORT_TO || "").trim();
+/* WHERE THE ALERT GOES — AND WHY NOT OWNER_EMAIL.
+ *
+ * This used to fall back to OWNER_EMAIL, which was convenient and wrong. OWNER_EMAIL is
+ * not a preference about where post should land: it is the IDENTITY CHECK that decides
+ * who may read the class-interest analytics, compared against the email a person is
+ * actually signed in with. Pointing it at a shared support mailbox to redirect these
+ * notices would silently lock the owner out of his own panel, and the failure would look
+ * like a bug rather than a consequence.
+ *
+ * So sign-up alerts get their own address, defaulting to the support mailbox already
+ * published across the site. SIGNUP_ALERT_TO overrides it if these ever need to go
+ * somewhere else, and neither knob can disturb the other. */
+const TO = (process.env.SIGNUP_ALERT_TO ||
+            process.env.SUPPORT_TO ||
+            "support.aqcredix@gmail.com").trim();
 const SECRET = (process.env.NEW_USER_SECRET || "").trim();
 const SITE = process.env.SITE_URL || "https://aqcredix.com";
 
