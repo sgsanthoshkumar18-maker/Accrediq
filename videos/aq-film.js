@@ -108,6 +108,90 @@
     catch (e) {}
   }
 
+  /* WHY THE FILM HAS TO BE TOLD TO START, AND WHY IT HAS TO BE TOLD TO GO TO ZERO.
+   *
+   * Loaded on its own the bundle comes up PAUSED ON ITS LAST FRAME — the closing card
+   * with the price on it — and stays there. Measured on a completely fresh document, with
+   * and without a cache-busting URL, in the real frame and in a throwaway one: the
+   * narration reports currentTime 42.11 of 42.1 and paused true, before anything on this
+   * page has touched it. That is why pressing play showed the ending, and why dragging
+   * the scrubber back to 0:00 by hand was the only way to watch it. Nothing on our side
+   * was seeking it there; that is simply how the bundle mounts.
+   *
+   * An earlier guess — that our own ?r= cache-buster was being read as a seek position —
+   * was wrong, and reloading harder was never going to fix it.
+   *
+   * THE TWO CONTROLS USED HERE ARE CHOSEN TO SURVIVE A RE-EXPORT. They are found by
+   * aria-label, which is written for screen readers and is stable, rather than by class
+   * name or coordinates, which are compiled output and change on every export. The film
+   * also documents the same two actions as keyboard shortcuts in those labels — "0" and
+   * "space" — so there is a second way in if the buttons are ever restructured.
+   *
+   * If neither can be found, nothing is pressed and the film behaves exactly as it does
+   * today. The failure mode is the current behaviour, never a worse one. */
+  /* THE EDITING BAR HAS NO PLACE IN FRONT OF A CUSTOMER.
+   *
+   * The bundle draws a strip across the bottom of every frame: play/pause, return to
+   * start, a timecode, a scrubber, and — worst of the lot — "Export video", which offers
+   * any visitor a download of the film. That is a working tool for whoever cut it and an
+   * editing timeline to everybody else, on the one page meant to look finished.
+   *
+   * It is removed only AFTER the two buttons above have been pressed, because they are
+   * inside it. It is found by walking up from a button whose title we matched, so it is
+   * anchored to something meaningful rather than to a compiled class name or a position;
+   * and every step is guarded so the worst outcome is that the bar stays. Nothing here
+   * touches the film itself. */
+  function hideEditorBar(doc, toStart, playPause) {
+    try {
+      var seed = toStart || playPause;
+      if (!seed) return;
+      var bar = seed.parentElement;
+      /* Climb until the box is as wide as the frame — the strip — but no further, or we
+         would hide the film along with it. */
+      for (var i = 0; i < 6 && bar; i++) {
+        var r = bar.getBoundingClientRect();
+        if (r.width >= 640 && r.height > 0 && r.height <= 70 && r.top >= 720 * 0.8) {
+          bar.style.display = "none";
+          return;
+        }
+        if (r.height > 70) return;                 // gone past it; leave well alone
+        bar = bar.parentElement;
+      }
+    } catch (e) { /* the film matters more than the tidying */ }
+  }
+
+  function startFromZero(doc) {
+    var waited = 0;
+    (function attempt() {
+      var toStart = null, playPause = null;
+      try {
+        /* title first, because that is what the bundle actually uses — it labels these
+           "Return to start (0)" and "Play/pause (space)". aria-label is checked too so
+           this keeps working if a later export moves to the more correct attribute. */
+        toStart   = doc.querySelector('[title^="Return to start"],[aria-label^="Return to start"]');
+        playPause = doc.querySelector('[title^="Play/pause"],[aria-label^="Play/pause"]');
+      } catch (e) { return; }
+
+      if (!toStart && !playPause) {
+        /* The control bar is drawn by the scene, so it is not there at load. */
+        if ((waited += 200) < 12000) setTimeout(attempt, 200);
+        return;
+      }
+
+      try { if (toStart) toStart.click(); } catch (e) {}
+
+      /* Press play only if it is actually stopped. Pressing a play/pause toggle blindly
+         would stop a film that had already started. */
+      setTimeout(function () {
+        var m = null;
+        try { m = doc.querySelector("video, audio"); } catch (e) {}
+        var stopped = m ? m.paused : true;
+        if (stopped && playPause) { try { playPause.click(); } catch (e) {} }
+        hideEditorBar(doc, toStart, playPause);
+      }, 90);
+    })();
+  }
+
   function mount(host, opts) {
     opts = opts || {};
     host.classList.add("aqf-mount");
@@ -210,6 +294,8 @@
 
       stopClock();
       clock = setInterval(tick, 250);
+
+      startFromZero(doc);
 
       /* The narration element is created by the scene and is not in the document at
          load, so it has to be waited for. It is a refinement, never a gate: if the
