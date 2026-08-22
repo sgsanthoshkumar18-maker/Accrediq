@@ -59,47 +59,17 @@
   .aqf-poster{transition:none;}
 }
 
-/* ---------- the closing call to action ----------
- * The film paints its two buttons into the scene, where they are pixels and cannot be
- * pressed. These are the real ones. Same wording, same place, but they are anchors —
- * focusable, middle-clickable, and readable by a screen reader.
+/* ---------- the calls to action, under the film ----------
+ * Deliberately NOT overlaid on the frame and NOT revealed on a timer. Both of those were
+ * tried; both broke the film. These are ordinary links in the ordinary page flow, so they
+ * are live from the moment the page renders — before the film is started, while it plays,
+ * after it ends, and on a connection where the 2.3MB bundle never arrives at all.
  */
-
-/* Transparent, and only present during the closing card. A press anywhere over the
-   frame at that point is almost certainly a press on a painted button. */
-.aqf-catch{position:absolute;inset:0;z-index:6;cursor:pointer;background:transparent;}
-
-.aqf-end{position:absolute;inset:0;z-index:7;display:flex;flex-direction:column;
-  align-items:center;justify-content:center;gap:0;text-align:center;padding:6% 7%;
-  background:radial-gradient(120% 90% at 50% 0%,rgba(14,59,52,.94),rgba(4,16,14,.97) 60%);
-  animation:aqf-end-in .5s ease both;}
-.aqf-end[hidden]{display:none;}
-@keyframes aqf-end-in{from{opacity:0;} to{opacity:1;}}
-
-.aqf-end-k{margin:0 0 10px;font-family:var(--font-mono,ui-monospace,monospace);
-  font-size:clamp(9px,1.05vw,12px);letter-spacing:.22em;text-transform:uppercase;
-  color:#5EEAD4;}
-.aqf-end-h{margin:0 0 clamp(16px,2.6vw,30px);font-weight:400;
-  font-family:Georgia,"Iowan Old Style",serif;color:#F4F2EC;letter-spacing:-.02em;
-  font-size:clamp(17px,2.9vw,36px);line-height:1.25;max-width:20ch;}
-
-.aqf-end-b{display:flex;gap:clamp(8px,1.1vw,14px);flex-wrap:wrap;justify-content:center;}
-/* The film is scaled to fit its container, so at small sizes these would inherit body
-   type and swamp the card. Sized against the frame instead. */
-.aqf-end-b .btn{font-size:clamp(12px,1.25vw,15px);
-  padding:clamp(9px,1.1vw,13px) clamp(15px,1.9vw,26px);}
-
-.aqf-again{margin-top:clamp(14px,2.2vw,26px);background:none;border:0;cursor:pointer;
-  color:#8FA39D;font:inherit;font-size:clamp(11px,1.15vw,14px);padding:6px 10px;
-  border-radius:6px;}
-.aqf-again:hover{color:#F4F2EC;}
-.aqf-again:focus-visible,.aqf-end .btn:focus-visible{outline:2px solid #5EEAD4;
-  outline-offset:2px;}
-
-/* Once the film has finished, the full-screen toggle is the only chrome worth keeping —
-   and the end card must not sit under it. */
-.aqf-mount.ended .aqf-ui{opacity:1;}
-
-@media (prefers-reduced-motion:reduce){
-  .aqf-end{animation:none;}
+.aqf-cta{display:flex;flex-wrap:wrap;gap:12px;align-items:center;
+  justify-content:center;margin-top:20px;}
+.aqf-cta-note{flex-basis:100%;text-align:center;margin:4px 0 0;
+  font-size:13.5px;color:var(--fg-faint);}
+@media (max-width:560px){
+  .aqf-cta{gap:10px;}
+  .aqf-cta .btn{flex:1 1 auto;}
 }
