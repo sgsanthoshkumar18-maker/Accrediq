@@ -29,6 +29,22 @@
   function base() {
     return (document.body && document.body.getAttribute("data-base")) || "";
   }
+
+  /* Who is signed in, according to the session this site already stores. Used only to
+     decide whether to ASK for an address — the answer is still recorded against the
+     address the server reads back off the token, so a tampered session here buys nothing
+     beyond skipping a form field. */
+  function session() {
+    try {
+      var raw = localStorage.getItem("aq-sb-session");
+      if (!raw) return null;
+      var s = JSON.parse(raw);
+      if (!s || !s.access_token) return null;
+      var email = (s.user && s.user.email) || null;
+      return { token: s.access_token, email: email };
+    } catch (e) { return null; }
+  }
+
   function esc(s) {
     return String(s).replace(/[&<>"]/g, function (c) {
       return { "&": "&amp;", "<": "&lt;", ">": "&gt;", '"': "&quot;" }[c];
@@ -87,29 +103,42 @@
       msgEl.innerHTML = html || "";
     }
 
+    /* Someone signed in has already given us their address. Asking for it a second time
+       is a form where none is needed, and a form is where people stop. Their answer is
+       sent the moment they press yes or no; everyone else is asked, because for them the
+       address is the only way to count one person once. */
     function pick(v) {
       choice = v;
+      var me = session();
+      if (me && me.token) { send(me); return; }
       show(stepEmail);
       try { emailEl.focus({ preventScroll: true }); } catch (e) { emailEl.focus(); }
     }
     host.querySelector("[data-yes]").addEventListener("click", function () { pick(true); });
     host.querySelector("[data-no]").addEventListener("click", function () { pick(false); });
 
-    stepEmail.addEventListener("submit", function (e) {
-      e.preventDefault();
-      var email = emailEl.value.trim();
-      if (!EMAIL_RE.test(email)) {
+    function send(me) {
+      var email = me ? "" : emailEl.value.trim();
+      if (!me && !EMAIL_RE.test(email)) {
         say("bad", "That email address does not look right.");
         emailEl.focus();
         return;
       }
-      sendBtn.disabled = true;
-      sendBtn.textContent = "Recording…";
-      say("", "");
+      if (!me) {
+        sendBtn.disabled = true;
+        sendBtn.textContent = "Recording…";
+        say("", "");
+      } else {
+        stepAsk.querySelectorAll("button").forEach(function (b) { b.disabled = true; });
+      }
+
+      var headers = { "Content-Type": "application/json" };
+      /* The server reads the real address off this and ignores whatever is in the body. */
+      if (me && me.token) headers.Authorization = "Bearer " + me.token;
 
       fetch(base() + "api/interest", {
         method: "POST",
-        headers: { "Content-Type": "application/json" },
+        headers: headers,
         body: JSON.stringify({
           email: email,
           answer: choice,
@@ -130,15 +159,26 @@
           }
           return;
         }
-        /* Never pretend it was recorded when it was not. */
+        /* Never pretend it was recorded when it was not. A signed-in person has no
+           message area on screen, so they are put back on the question with the buttons
+           live again rather than left staring at a card that did nothing. */
+        if (me) { show(stepAsk); }
+        stepAsk.querySelectorAll("button").forEach(function (b) { b.disabled = false; });
         say("bad", esc(r.body.error || "That did not record. Please try again in a moment."));
         sendBtn.disabled = false;
         sendBtn.textContent = "Record my answer";
       }).catch(function () {
+        if (me) { show(stepAsk); }
+        stepAsk.querySelectorAll("button").forEach(function (b) { b.disabled = false; });
         say("bad", "We could not reach the server. Please check your connection.");
         sendBtn.disabled = false;
         sendBtn.textContent = "Record my answer";
       });
+    }
+
+    stepEmail.addEventListener("submit", function (e) {
+      e.preventDefault();
+      send(null);
     });
   }
 
