@@ -44,7 +44,8 @@ window.AQ_BILLING = {
     "mavissneha@gmail.com",
     "ganesharun66@gmail.com",
     "arthigopi1709@gmail.com",
-    "snjohnfelixpharmd@gmail.com"
+    "snjohnfelixpharmd@gmail.com",
+    "bk11022001@gmail.com"
   ],
 
   /* ---------------------------------------------------------------

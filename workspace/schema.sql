@@ -1340,7 +1340,8 @@ language sql stable security definer set search_path = public, auth as $$
     public.aq_norm_email('mavissneha@gmail.com'),
     public.aq_norm_email('ganesharun66@gmail.com'),
     public.aq_norm_email('arthigopi1709@gmail.com'),
-    public.aq_norm_email('snjohnfelixpharmd@gmail.com')
+    public.aq_norm_email('snjohnfelixpharmd@gmail.com'),
+    public.aq_norm_email('bk11022001@gmail.com')
   );
 $$;
 
@@ -1409,6 +1410,19 @@ insert into public.subscriptions
    requested_at, activated_at, expires_at, approved_by, note)
 values
   ('sub_comp_johnfelix', null, 'snjohnfelixpharmd@gmail.com', 'Complimentary',
+   'complimentary', 1200, 0, 'complimentary', 'active',
+   now(), now(), now() + interval '100 years', 'owner',
+   'Lifetime complimentary access granted by the owner.')
+on conflict (id) do update
+  set email = excluded.email, status = 'active',
+      expires_at = excluded.expires_at, updated_at = now();
+
+-- Fifth complimentary account.
+insert into public.subscriptions
+  (id, user_id, email, name, plan, months, amount_paise, method, status,
+   requested_at, activated_at, expires_at, approved_by, note)
+values
+  ('sub_comp_bk1102', null, 'bk11022001@gmail.com', 'Complimentary',
    'complimentary', 1200, 0, 'complimentary', 'active',
    now(), now(), now() + interval '100 years', 'owner',
    'Lifetime complimentary access granted by the owner.')
@@ -1581,3 +1595,64 @@ alter table public.class_interest enable row level security;
 drop policy if exists class_interest_insert on public.class_interest;
 create policy class_interest_insert on public.class_interest
   for insert to anon, authenticated with check (true);
+
+-- ============================================================================
+-- COMPLIMENTARY ACCESS AS DATA, NOT AS CODE
+--
+-- Until now the list of complimentary accounts lived inside aq_is_comp() as a hardcoded
+-- IN clause, and granting access meant rewriting that function with `create or replace`.
+-- That works, and it has one nasty property: the statement replaces the WHOLE list, so
+-- naming only the new person silently revokes everybody else. It nearly happened twice.
+-- It also meant every grant needed a code push and a SQL run, in step, by hand.
+--
+-- The list is data. It belongs in a table. Granting is now an insert, revoking is a
+-- delete, and there is no way for either to disturb anyone else's access.
+--
+-- WHO CAN READ IT. A person may see their own row, so the site can tell them they have
+-- complimentary access rather than showing a price. Nobody can list the others — who else
+-- got a free account is not a visitor's business. The owner reads the whole table through
+-- /api/grant, which runs with the service key.
+-- ============================================================================
+
+create table if not exists public.complimentary_access (
+  email       text primary key,
+  note        text,
+  granted_by  text,
+  granted_at  timestamptz not null default now()
+);
+
+alter table public.complimentary_access enable row level security;
+
+-- Own row only. The comparison is on the normalised address so a Gmail dot or +tag
+-- spelling still matches the row that was granted.
+drop policy if exists comp_access_read_own on public.complimentary_access;
+create policy comp_access_read_own on public.complimentary_access
+  for select to anon, authenticated
+  using (
+    public.aq_norm_email(email) = public.aq_norm_email(public.aq_jwt_email())
+    or public.aq_is_owner()
+  );
+
+-- No insert, update or delete policy exists, so no client may write here at all.
+-- Grants go through /api/grant, which proves the caller is the owner first.
+
+-- aq_is_comp() now asks the table. Same signature, same callers, nothing else changes.
+create or replace function public.aq_is_comp() returns boolean
+language sql stable security definer set search_path = public, auth as $$
+  select exists (
+    select 1 from public.complimentary_access c
+     where public.aq_norm_email(c.email) = public.aq_norm_email(public.aq_jwt_email())
+  );
+$$;
+
+grant execute on function public.aq_is_comp() to anon, authenticated;
+
+-- Seed the table from the accounts granted before it existed. on conflict do nothing so
+-- this is safe to re-run and never disturbs a row already there.
+insert into public.complimentary_access (email, note, granted_by) values
+  ('mavissneha@gmail.com',        'Granted before the grant page existed.', 'owner'),
+  ('ganesharun66@gmail.com',      'Granted before the grant page existed.', 'owner'),
+  ('arthigopi1709@gmail.com',     'Granted before the grant page existed.', 'owner'),
+  ('snjohnfelixpharmd@gmail.com', 'Granted before the grant page existed.', 'owner'),
+  ('bk11022001@gmail.com',        'Granted before the grant page existed.', 'owner')
+on conflict (email) do nothing;

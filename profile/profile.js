@@ -254,7 +254,15 @@
          with lifetime access fell past every case to the fallback and was told "No active
          subscription — view plans". That is the platform asking someone to pay for what
          it had already given them, on the one page they would check to confirm it. */
-      if (st.reason === "complimentary") {
+      /* A GRANT MADE THROUGH THE OWNER PANEL DOES NOT APPEAR IN billing-config.js.
+         The list moved into the database so granting is one action instead of a code
+         push plus a SQL run done in step. isComplimentary() still reads the old config
+         array, so a newly granted person arrives here as an ordinary subscriber whose
+         subscription row happens to have plan "complimentary" — and the branch further
+         down would have called that "Monthly", quoted an amount of zero rupees and shown
+         an expiry a century out. Recognising the plan name catches both routes. */
+      if (st.reason === "complimentary" ||
+          (st.record && st.record.plan === "complimentary")) {
         /* THE PRICE IS SHOWN EVEN THOUGH THEY ARE NOT PAYING IT.
            "Complimentary — full access" is abstract: it tells someone they have
            something without telling them what it is worth. Naming the figure they are

@@ -1,0 +1,35 @@
+/* AQcredix — the owner's grant panel. Rendered for one person, so it is plain: a form,
+   a message line and a table. Palette tokens only, so it follows light, dark and neon. */
+
+.gr-form{display:flex;gap:10px;flex-wrap:wrap;margin-top:16px;}
+.gr-form input{flex:1 1 220px;min-width:0;background:var(--bg);
+  border:1px solid var(--border);border-radius:var(--r-sm);padding:11px 14px;
+  color:var(--fg);font:inherit;font-size:15px;}
+.gr-form input:focus{outline:2px solid var(--accent-bright);outline-offset:1px;
+  border-color:transparent;}
+.gr-form .btn{flex:0 0 auto;}
+
+.gr-msg{margin:12px 0 0;font-size:14px;line-height:1.55;min-height:1em;}
+.gr-msg.ok{color:var(--ok);}
+.gr-msg.bad{color:var(--nc);}
+
+.gr-tablewrap{overflow-x:auto;margin-top:20px;}
+.gr-table{width:100%;border-collapse:collapse;font-size:14px;min-width:520px;}
+.gr-table th,.gr-table td{text-align:left;padding:9px 12px;
+  border-bottom:1px solid var(--border);}
+.gr-table th{font-size:11.5px;text-transform:uppercase;letter-spacing:.06em;
+  color:var(--fg-faint);font-weight:650;}
+.gr-table td{color:var(--fg-muted);}
+.gr-mail{font-family:var(--font-mono);font-size:12.5px;color:var(--fg);}
+
+/* Deliberately quiet. It removes something from somebody, so it should not be the
+   easiest thing on the panel to hit by accident. */
+.gr-revoke{background:transparent;border:1px solid var(--border);color:var(--fg-faint);
+  border-radius:var(--r-sm);padding:5px 12px;font:inherit;font-size:12.5px;cursor:pointer;}
+.gr-revoke:hover{color:var(--nc);border-color:var(--nc);}
+.gr-revoke:disabled{opacity:.5;cursor:default;}
+.gr-revoke:focus-visible{outline:2px solid var(--accent-bright);outline-offset:2px;}
+
+@media (max-width:560px){
+  .gr-form .btn{flex:1 1 100%;}
+}
