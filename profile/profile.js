@@ -247,6 +247,22 @@
         return;
       }
 
+      /* COMPLIMENTARY ACCOUNTS HAVE NO SUBSCRIPTION RECORD, AND THE PANEL HAS TO SAY SO
+         PROPERLY. billing.js answers { active: true, reason: "complimentary" } without a
+         record, because their access is granted by a list rather than bought. The active
+         branch further down requires st.active AND st.record, so without this a person
+         with lifetime access fell past every case to the fallback and was told "No active
+         subscription — view plans". That is the platform asking someone to pay for what
+         it had already given them, on the one page they would check to confirm it. */
+      if (st.reason === "complimentary") {
+        host.innerHTML = '<div class="pf-sub pf-sub-owner"><div class="pf-sub-row">' +
+          "<span>Plan</span><b>Complimentary — full access</b></div>" +
+          '<div class="pf-sub-row"><span>Renews</span><b>Never expires</b></div>' +
+          '<p class="pf-sub-note">Access was granted directly by AQcredix. There is ' +
+          "nothing to pay and nothing to renew.</p></div>";
+        return;
+      }
+
       if (st.reason === "unavailable") {
         host.innerHTML = '<div class="pf-sub pf-sub-warn"><b>Subscription details unavailable.</b>' +
           "<p>The billing record could not be read just now. Your access is unaffected if " +
