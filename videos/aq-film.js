@@ -151,13 +151,67 @@
       for (var i = 0; i < 6 && bar; i++) {
         var r = bar.getBoundingClientRect();
         if (r.width >= 640 && r.height > 0 && r.height <= 70 && r.top >= 720 * 0.8) {
-          bar.style.display = "none";
+          /* HIDDEN WITH opacity, NOT display, AND THE DIFFERENCE MATTERS.
+             display:none takes the strip out of layout, and with it the seek track's
+             width — and the width is what our own scrubber needs to convert "62% along"
+             into a coordinate to click. Kept laid out but invisible and inert, the strip
+             is still measurable while being neither seen nor touchable. */
+          bar.style.opacity = "0";
+          bar.style.pointerEvents = "none";
           return;
         }
         if (r.height > 70) return;                 // gone past it; leave well alone
         bar = bar.parentElement;
       }
     } catch (e) { /* the film matters more than the tidying */ }
+  }
+
+  /* ------------------------------------------------------------------ *
+   * TALKING TO THE FILM'S OWN TRANSPORT.
+   *
+   * The bundle carries a working transport — play/pause, return to start, a live
+   * timecode and a seek track — laid out as one strip. We hide the strip (it is an
+   * editing timeline, and it offers a download of the film) and drive it from a control
+   * bar of our own that belongs to this site.
+   *
+   * Everything is located by title text and by SHAPE, never by class name or coordinate:
+   * the strip is the row holding the two labelled buttons, the readouts are its children
+   * that look like a timecode, and the track is the child with three parts and a pointer
+   * cursor. Compiled class names change on every export; this description does not.
+   *
+   * Seeking uses MouseEvent built from the FRAME'S OWN window. PointerEvents do not move
+   * it — the track listens for mouse events — and an event constructed from the parent
+   * window is not accepted either. That is the one non-obvious detail here, and it was
+   * found by trying all three and watching the readout.
+   * ------------------------------------------------------------------ */
+  function filmParts(doc) {
+    try {
+      var seed = doc.querySelector('[title^="Return to start"],[aria-label^="Return to start"]');
+      if (!seed || !seed.parentElement) return null;
+      var bar = seed.parentElement;
+      var kids = [].slice.call(bar.children);
+      var TIME = /^\d+:\d\d\.\d\d$/;
+      var times = kids.filter(function (e) { return TIME.test((e.textContent || "").trim()); });
+      var track = kids.filter(function (e) {
+        return e.tagName === "DIV" && e.children.length === 3;
+      })[0];
+      return {
+        bar: bar,
+        track: track || null,
+        cur: times[0] || null,          // left readout: where the film is now
+        dur: times[1] || null,          // right readout: how long it runs
+        play: bar.querySelector('[title^="Play/pause"],[aria-label^="Play/pause"]'),
+        toStart: seed
+      };
+    } catch (e) { return null; }
+  }
+
+  /* "0:21.60" -> 21.6 */
+  function parseClock(el) {
+    if (!el) return null;
+    var m = /^(\d+):(\d\d)\.(\d\d)$/.exec((el.textContent || "").trim());
+    if (!m) return null;
+    return (+m[1]) * 60 + (+m[2]) + (+m[3]) / 100;
   }
 
   function startFromZero(doc) {
@@ -211,7 +265,19 @@
           '<span>Watch it again</span>' +
         '</button>' +
       '</div>' +
-      '<div class="aqf-ui">' +
+      /* Our own transport. The film's is hidden; this one belongs to the site, sits
+         outside the frame so it cannot interfere with scrolling, and is sized for a
+         thumb as readily as a mouse. */
+      '<div class="aqf-bar">' +
+        '<button type="button" data-pp aria-label="Play or pause" title="Play / pause (space)">' +
+          '<span data-pp-ic>&#10074;&#10074;</span></button>' +
+        '<button type="button" data-back aria-label="Back 10 seconds" title="Back 10 seconds">&#8630;10</button>' +
+        '<button type="button" data-fwd aria-label="Forward 10 seconds" title="Forward 10 seconds">10&#8631;</button>' +
+        '<div class="aqf-seek" data-seek role="slider" tabindex="0" aria-label="Seek"' +
+          ' aria-valuemin="0" aria-valuemax="100" aria-valuenow="0">' +
+          '<div class="aqf-seek-track"><div class="aqf-seek-fill" data-fill></div></div>' +
+        '</div>' +
+        '<span class="aqf-time" data-time>0:00 / 0:43</span>' +
         '<button type="button" data-restart aria-label="Start again" title="Start again">&#8635;</button>' +
         '<button type="button" data-full aria-label="Full screen" title="Full screen">&#9974;</button>' +
       '</div>' +
@@ -268,23 +334,154 @@
 
     function showEnd() {
       if (finished) return;
-      /* THE FLOOR THAT MAKES THIS SAFE. An end card that can appear early is worse than
-         no end card at all, because it hides a film that is still running. Whatever the
-         clocks claim, nothing is shown until the film has genuinely had time to play. */
-      if (elapsed < Math.min(total, 8)) return;
       finished = true;
-      stopClock();
       endCard.hidden = false;
       host.classList.add("ended");
     }
 
-    /* Ticks only while the page is VISIBLE, because the film animates on
-       requestAnimationFrame and that stops in a background tab. A plain wall clock would
-       run on and call the film finished while its picture sat frozen on one frame. */
+    /* WHAT DECIDES THAT THE FILM HAS FINISHED — and what used to get it wrong.
+     *
+     * This used to count seconds itself and call the film over when the count reached
+     * its running time. Three things made that count run ahead of the picture: the
+     * bundle takes a second or two to boot after the frame loads, the count kept running
+     * while the film was paused for being scrolled off screen, and it kept running if
+     * the film stalled. Each one brought "Watch it again" up over a film that was still
+     * playing — which is what you saw.
+     *
+     * It now reads the film's OWN timecode, the same number its transport shows. That is
+     * the picture's position by definition, so it cannot drift from it. The counter
+     * survives only as a fallback for the case where that readout cannot be found, and
+     * in that case it keeps its old floor so it can still never fire early. */
     function tick() {
+      var P = parts();
+      if (P && P.cur && parseClock(P.cur) !== null) { paintTransport(); return; }
       if (!document.hidden) elapsed += 0.25;
-      if (elapsed >= total) showEnd();
+      if (elapsed >= total && elapsed >= Math.min(total, 8)) showEnd();
     }
+
+    /* ---------------- our transport, wired to the film's ---------------- */
+
+    var ppIcon  = host.querySelector("[data-pp-ic]");
+    var fillEl  = host.querySelector("[data-fill]");
+    var seekEl  = host.querySelector("[data-seek]");
+    var timeEl  = host.querySelector("[data-time]");
+
+    function doc0() {
+      try { return frame.contentDocument; } catch (e) { return null; }
+    }
+    /* Cached per document. This is consulted four times a second to repaint the bar, and
+       re-walking the frame's DOM each time would be needless work on the main thread —
+       which is the thread the page scrolls on. Re-resolved whenever the frame loads a new
+       document, or if the strip we found has been detached. */
+    var partsCache = null, partsDoc = null;
+    function parts() {
+      var d = doc0();
+      if (!d) return null;
+      if (d !== partsDoc || !partsCache || !partsCache.bar || !partsCache.bar.isConnected) {
+        partsDoc = d;
+        partsCache = filmParts(d);
+      }
+      return partsCache;
+    }
+
+    function isPlaying() {
+      var m = mediaEl();
+      if (m) return !m.paused;
+      return host.classList.contains("playing") && !finished;
+    }
+
+    function togglePlay() {
+      var P = parts();
+      if (!P || !P.play) return;
+      try { P.play.click(); } catch (e) {}
+      pausedByScroll = false;              // a deliberate press overrides the auto-pause
+      setTimeout(paintTransport, 60);
+    }
+
+    /* Seek by clicking the film's own track at the right fraction along it. The film
+       listens for mouse events, and only for ones built from its own window — see
+       filmParts() above. */
+    function seekFraction(frac) {
+      var P = parts(), d = doc0(), w;
+      try { w = frame.contentWindow; } catch (e) { return false; }
+      if (!P || !P.track || !d || !w || !w.MouseEvent) return false;
+      var r = P.track.getBoundingClientRect();
+      if (!r.width) return false;
+      frac = Math.max(0, Math.min(1, frac));
+      var x = r.left + r.width * frac, y = r.top + r.height / 2;
+      var o = { bubbles: true, cancelable: true, composed: true,
+                clientX: x, clientY: y, button: 0, buttons: 1, view: w };
+      ["mousedown", "mousemove", "mouseup", "click"].forEach(function (t) {
+        try { P.track.dispatchEvent(new w.MouseEvent(t, o)); } catch (e) {}
+      });
+      finished = false;                    // seeking backwards un-ends the film
+      endCard.hidden = true;
+      host.classList.remove("ended");
+      setTimeout(paintTransport, 60);
+      return true;
+    }
+
+    function nudge(seconds) {
+      var P = parts();
+      var now = P ? parseClock(P.cur) : null;
+      var len = P ? parseClock(P.dur) : null;
+      if (now === null || !len) return;
+      seekFraction((now + seconds) / len);
+    }
+
+    function fmt(s) {
+      s = Math.max(0, Math.floor(s || 0));
+      return Math.floor(s / 60) + ":" + ("0" + (s % 60)).slice(-2);
+    }
+
+    /* Repaint the bar from the film's own readout, which is the truth for the PICTURE.
+       Everything else — the narration clock, a wall clock — can drift away from what is
+       actually on screen. */
+    function paintTransport() {
+      var P = parts();
+      var now = P ? parseClock(P.cur) : null;
+      var len = (P ? parseClock(P.dur) : null) || total;
+      if (now !== null && len) {
+        var pct = Math.max(0, Math.min(100, (now / len) * 100));
+        fillEl.style.width = pct + "%";
+        seekEl.setAttribute("aria-valuenow", Math.round(pct));
+        timeEl.textContent = fmt(now) + " / " + fmt(len);
+        if (now >= len - 0.12) showEnd();
+      }
+      ppIcon.innerHTML = isPlaying() ? "&#10074;&#10074;" : "&#9654;";
+    }
+
+    host.querySelector("[data-pp]").addEventListener("click", togglePlay);
+    host.querySelector("[data-back]").addEventListener("click", function () { nudge(-10); });
+    host.querySelector("[data-fwd]").addEventListener("click", function () { nudge(10); });
+
+    function seekFromEvent(e) {
+      var r = seekEl.getBoundingClientRect();
+      if (!r.width) return;
+      var cx = (e.touches && e.touches[0] ? e.touches[0].clientX : e.clientX);
+      seekFraction((cx - r.left) / r.width);
+    }
+    seekEl.addEventListener("click", seekFromEvent);
+    seekEl.addEventListener("keydown", function (e) {
+      if (e.key === "ArrowLeft")  { e.preventDefault(); nudge(-5); }
+      if (e.key === "ArrowRight") { e.preventDefault(); nudge(5); }
+    });
+
+    /* SPACE PAUSES THE FILM INSTEAD OF SCROLLING THE PAGE — but only while the film is
+       on screen and running, and never while someone is typing. Swallowing the space bar
+       site-wide would break every form on it. */
+    addEventListener("keydown", function (e) {
+      if (e.key !== " " && e.key !== "Spacebar" && e.code !== "Space") return;
+      if (!host.isConnected || !host.classList.contains("playing")) return;
+      var t = e.target;
+      if (t && (t.isContentEditable ||
+                /^(INPUT|TEXTAREA|SELECT|BUTTON|A)$/.test(t.tagName))) return;
+      var r = host.getBoundingClientRect();
+      var onScreen = r.bottom > 0 && r.top < innerHeight && r.height > 0;
+      if (!onScreen) return;
+      e.preventDefault();                  // this is what stops the page jumping
+      togglePlay();
+    });
 
     function watchFilm() {
       var doc, win;

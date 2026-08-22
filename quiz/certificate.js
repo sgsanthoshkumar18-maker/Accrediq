@@ -39,7 +39,7 @@ window.AQCert = (function () {
    * platform. Kept as data so the drawing code never has to guess. */
   var SIGNATORY = {
     name: "Dr Santhoshkumar SG",
-    title: "Founder & Chief Quality Officer",
+    title: "Founder & CEO",
     image: "assets/signature.png"
   };
 

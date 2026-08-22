@@ -513,3 +513,66 @@
     initScrollReveal();
   });
 })();
+
+/* ---------------------------------------------------------------------------
+ * PHONE TIP — "the full layout is on a larger screen".
+ *
+ * A NOTE ON THE WORDING, because the obvious phrasing would cost more than it gains.
+ * "Turn on desktop view for the best experience" tells a visitor two things: that the
+ * site does not work properly on their phone, and that the fix is their problem. Neither
+ * is true — every page here is responsive and has been checked at 375px — and desktop
+ * view on a phone renders 15px body text at about 5px, which is worse, not better. A
+ * hospital director who reads that on their commute concludes the product is unfinished.
+ *
+ * So it says what is actually true: the mesh diagrams, the globe and the film are built
+ * for a wide screen and are worth coming back to on one. That is an invitation rather
+ * than an apology, and it does not ask anyone to fight their browser settings.
+ *
+ * Shown once per device, dismissible, and never on a page the person is trying to read
+ * in a hurry — it waits until they have been on the page for a moment.
+ * --------------------------------------------------------------------------- */
+(function () {
+  "use strict";
+  var KEY = "aq-phone-tip-v1";
+
+  function isPhone() {
+    try {
+      return matchMedia("(max-width: 820px)").matches &&
+             matchMedia("(pointer: coarse)").matches;
+    } catch (e) { return false; }
+  }
+
+  function show() {
+    if (document.getElementById("aqPhoneTip")) return;
+    var el = document.createElement("div");
+    el.id = "aqPhoneTip";
+    el.className = "aq-tip";
+    el.setAttribute("role", "status");
+    el.innerHTML =
+      '<span class="aq-tip-ic" aria-hidden="true">&#128421;</span>' +
+      '<span class="aq-tip-t"><b>Best on a larger screen.</b> Everything works on your ' +
+        'phone — but the standards mesh, the globe and the film are built wide, and are ' +
+        'worth a second look on a laptop.</span>' +
+      '<button type="button" class="aq-tip-x" aria-label="Dismiss">&#10005;</button>';
+    document.body.appendChild(el);
+    requestAnimationFrame(function () { el.classList.add("in"); });
+
+    function close() {
+      el.classList.remove("in");
+      try { localStorage.setItem(KEY, "1"); } catch (e) {}
+      setTimeout(function () { el.remove(); }, 300);
+    }
+    el.querySelector(".aq-tip-x").addEventListener("click", close);
+    /* Goes away on its own. A notice that has to be dismissed is a notice that gets in
+       the way of the thing it was recommending. */
+    setTimeout(close, 9000);
+  }
+
+  function init() {
+    if (!isPhone()) return;
+    try { if (localStorage.getItem(KEY) === "1") return; } catch (e) {}
+    setTimeout(show, 2200);
+  }
+  if (document.readyState === "loading") document.addEventListener("DOMContentLoaded", init);
+  else init();
+})();

@@ -61,6 +61,15 @@
   border-left:3px solid var(--warn);border-radius:0 8px 8px 0;padding:12px 14px;margin-top:12px;}
 .icd-warn b{color:var(--warn);}
 
+/* Homepage "Want a Code?" entry.
+   The strip carried an inline padding:0 28px, which zeroed the VERTICAL padding — so the
+   pill sat hard against the bottom edge of the section above it and read as part of that
+   section's border rather than as its own invitation. .wrap already supplies the 28px
+   sides; all this needs to add is room above and below, on the same 72px rhythm every
+   other section uses, halved because this is a single control rather than a block. */
+.icd-cta-strip{padding-top:36px;padding-bottom:36px;text-align:center;}
+@media (max-width:700px){ .icd-cta-strip{padding-top:26px;padding-bottom:26px;} }
+
 /* Homepage "Want a Code?" entry */
 .icd-cta{display:inline-flex;align-items:center;gap:9px;background:var(--bg-elevated);
   border:1px solid var(--border);border-radius:999px;padding:10px 20px;text-decoration:none;

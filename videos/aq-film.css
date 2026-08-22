@@ -95,22 +95,49 @@
 .aqf-again-ic{font-size:1.25em;line-height:1;}
 
 /* ---------- chrome ---------- */
-/* VISIBLE WHENEVER THE FILM IS PLAYING, ON EVERY DEVICE.
- *
- * These used to appear on hover. There is no hover on a phone, so the full-screen button
- * was simply not there for the people most likely to want it — which is how it came to be
- * reported as "not working". A (hover:none) media query would in principle cover that,
- * but reveal-on-hover buys nothing here anyway: two small buttons in a corner of a film
- * are not clutter, and a control nobody can find is worse than one nobody needed. */
-.aqf-ui{position:absolute;right:14px;bottom:14px;z-index:5;display:flex;gap:9px;
-  opacity:0;transition:opacity .3s;pointer-events:none;}
-.aqf-mount.playing .aqf-ui,.aqf-mount.is-full .aqf-ui,
-.aqf-mount:fullscreen .aqf-ui{opacity:1;pointer-events:auto;}
-.aqf-ui button{width:42px;height:42px;border-radius:999px;cursor:pointer;
-  background:rgba(4,16,14,.72);border:1px solid rgba(244,242,236,.28);color:#F4F2EC;
-  font-size:15px;display:flex;align-items:center;justify-content:center;}
-.aqf-ui button:focus-visible,.aqf-close:focus-visible,
-.aqf-again:focus-visible{outline:2px solid #5EEAD4;outline-offset:2px;}
+/* ---------- our transport bar ----------
+ * The bundle's own strip is an editing timeline with an export button; it is hidden and
+ * driven from here instead. This one lives OUTSIDE the frame, so it can be pressed
+ * without the frame having to accept pointer events — which is what was catching the
+ * scroll. Sized for a thumb first: nothing here is smaller than 34px.
+ */
+.aqf-bar{position:absolute;left:0;right:0;bottom:0;z-index:6;
+  display:flex;align-items:center;gap:clamp(5px,.7vw,10px);
+  padding:clamp(7px,1vw,12px) clamp(9px,1.2vw,16px);
+  background:linear-gradient(to top,rgba(2,10,9,.92),rgba(2,10,9,.6) 62%,transparent);
+  opacity:0;transition:opacity .25s;pointer-events:none;
+  font-family:var(--font-mono,ui-monospace,monospace);}
+.aqf-mount.playing .aqf-bar,.aqf-mount.is-full .aqf-bar,
+.aqf-mount:fullscreen .aqf-bar{opacity:1;pointer-events:auto;}
+
+.aqf-bar button{flex:none;min-width:34px;height:34px;padding:0 8px;cursor:pointer;
+  border-radius:8px;background:rgba(244,242,236,.09);
+  border:1px solid rgba(244,242,236,.2);color:#F4F2EC;
+  font:inherit;font-size:12px;line-height:1;
+  display:flex;align-items:center;justify-content:center;}
+.aqf-bar button:hover{background:rgba(94,234,212,.22);border-color:#5EEAD4;}
+.aqf-bar button:focus-visible,.aqf-seek:focus-visible{outline:2px solid #5EEAD4;outline-offset:2px;}
+
+/* The hit area is deliberately much taller than the visible line, so the bar can be
+   grabbed with a thumb without demanding precision. */
+.aqf-seek{flex:1 1 auto;min-width:50px;height:34px;display:flex;align-items:center;
+  cursor:pointer;}
+.aqf-seek-track{width:100%;height:5px;border-radius:999px;
+  background:rgba(244,242,236,.26);overflow:hidden;}
+.aqf-seek-fill{height:100%;width:0;background:#5EEAD4;border-radius:999px;}
+
+.aqf-time{flex:none;color:#CFE0DB;font-size:clamp(10px,1.05vw,12.5px);
+  letter-spacing:.02em;white-space:nowrap;}
+
+/* On a narrow screen the two skip buttons are the first thing to go — play, seek, time
+   and full screen are what a phone actually needs. */
+@media (max-width:600px){
+  .aqf-bar [data-back],.aqf-bar [data-fwd]{display:none;}
+}
+
+/* The corner buttons this replaces are gone: restart and full screen now live in the
+   transport bar above, where a video's controls are expected to be. */
+.aqf-close:focus-visible,.aqf-again:focus-visible{outline:2px solid #5EEAD4;outline-offset:2px;}
 
 .aqf-close{position:absolute;right:18px;top:18px;z-index:8;width:44px;height:44px;
   border-radius:50%;background:rgba(4,16,14,.72);border:1px solid rgba(244,242,236,.3);

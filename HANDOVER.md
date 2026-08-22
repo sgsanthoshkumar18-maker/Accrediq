@@ -6,7 +6,7 @@ Paste this at the start of a new chat and upload `AQcredix-files.zip` alongside 
 
 ## Who and what
 
-Dr Santhoshkumar SG, Founder & Chief Quality Officer of **AQcredix** — a NABH
+Dr Santhoshkumar SG, Founder & CEO of **AQcredix** — a NABH
 accreditation and quality-implementation platform.
 
 - Live at `accrediq.vercel.app`, repo `github.com/sgsanthoshkumar18-maker/Accrediq`

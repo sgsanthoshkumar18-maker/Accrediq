@@ -16,7 +16,7 @@ window.FOUNDER = {
   linkedin: "https://www.linkedin.com/in/dr-santhoshkumar-sg-pharm-d-rph-420333260",
   email: "s.g.santhoshkumar18@gmail.com",
 
-  roleLine: "Infectious Disease Clinical Pharmacologist · Fellow of ISQua · Founder & Chief Quality Officer, AQcredix",
+  roleLine: "Infectious Disease Clinical Pharmacologist · Fellow of ISQua · Founder & CEO, AQcredix",
   affiliation: "Department of Clinical Pharmacy, The Voluntary Health Services Multispecialty Hospital, Chennai",
 
   headline: [
@@ -80,7 +80,7 @@ window.FOUNDER = {
 
   /* Reverse-chronological. `current: true` draws the live marker on the timeline. */
   experience: [
-    { role: "Founder & Chief Quality Officer", org: "AQcredix",
+    { role: "Founder & CEO", org: "AQcredix",
       type: "Sole proprietorship · Chennai",
       from: "2026", to: "Present", current: true,
       note: "An accreditation platform for Indian hospitals: all 639 NABH objective " +

@@ -1497,3 +1497,44 @@ end; $$;
 drop trigger if exists attachments_path_trg on public.attachments;
 create trigger attachments_path_trg before insert or update on public.attachments
   for each row execute function public.aq_guard_attachment_path();
+
+-- ============================================================================
+-- CLASS INTEREST POLL
+--
+-- One question on the home page: would you want AQcredix to run real-time NABH
+-- implementation classes at your organisation? The answer is worth knowing before any
+-- money is spent building that service.
+--
+-- WHY THE TABLE IS UNREADABLE TO EVERYONE.
+-- There is no select policy below, and that is deliberate rather than an omission. RLS is
+-- enabled and no policy grants select, so an anon or authenticated client can read
+-- NOTHING here — not their own row, not the totals. Every read goes through
+-- /api/interest, which runs with the service key and checks the caller is the owner.
+-- A visitor must not be able to see that most people answered no; that is a fact about
+-- the business, not about them.
+--
+-- WHY INSERT IS ALLOWED AND UPDATE IS NOT.
+-- Anyone may record an answer. Nobody may change one afterwards, including the person
+-- who gave it — a vote that can be edited is a vote that can be farmed. One address, one
+-- answer, enforced by the unique index rather than by the application, so a race between
+-- two tabs cannot slip a second row through.
+-- ============================================================================
+
+create table if not exists public.class_interest (
+  id          uuid primary key default gen_random_uuid(),
+  email       text not null,
+  answer      boolean not null,           -- true = yes, wants classes
+  organisation text,
+  created_at  timestamptz not null default now()
+);
+
+-- Case-insensitive uniqueness: Ravi@x.com and ravi@x.com are one person.
+create unique index if not exists class_interest_email_uniq
+  on public.class_interest (lower(email));
+
+alter table public.class_interest enable row level security;
+
+-- Insert only. No select, no update, no delete policy exists, so none is permitted.
+drop policy if exists class_interest_insert on public.class_interest;
+create policy class_interest_insert on public.class_interest
+  for insert to anon, authenticated with check (true);

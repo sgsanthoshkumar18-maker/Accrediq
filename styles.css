@@ -1670,3 +1670,21 @@ body.aq-locked{
   .aqs-actions{margin-top:16px;}
   .aqs-actions .btn{flex:1 1 auto;}
 }
+
+/* Phone tip — see the block at the end of app.js for why it says what it says. */
+.aq-tip{position:fixed;left:12px;right:12px;bottom:12px;z-index:9000;
+  display:flex;align-items:flex-start;gap:11px;
+  padding:13px 14px;border-radius:var(--r-md);
+  background:var(--bg-elevated);border:1px solid var(--border);
+  box-shadow:var(--shadow-2);
+  transform:translateY(140%);opacity:0;transition:transform .32s ease,opacity .32s ease;}
+.aq-tip.in{transform:translateY(0);opacity:1;}
+.aq-tip-ic{font-size:17px;line-height:1.35;flex:none;}
+.aq-tip-t{font-size:13px;line-height:1.55;color:var(--fg-muted);}
+.aq-tip-t b{color:var(--fg);}
+.aq-tip-x{flex:none;width:30px;height:30px;border-radius:50%;cursor:pointer;
+  background:transparent;border:1px solid var(--border);color:var(--fg-muted);
+  font-size:13px;line-height:1;display:flex;align-items:center;justify-content:center;}
+.aq-tip-x:hover{color:var(--fg);border-color:var(--border-strong);}
+.aq-tip-x:focus-visible{outline:2px solid var(--accent-bright);outline-offset:2px;}
+@media (prefers-reduced-motion:reduce){ .aq-tip{transition:none;} }
