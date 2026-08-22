@@ -32,6 +32,50 @@ window.HealthData = (function () {
   const cache = new Map();
   let namesPromise = null;
 
+  /* ---------------------------------------------------------------------------
+   * LAST KNOWN GOOD — survives a WHO outage.
+   *
+   * WHO's API goes down. Not slowly: three separate endpoints answering nothing at all
+   * for twenty-five seconds each, while every other host on the internet was fine. When
+   * that happens every indicator for every country reads "Unavailable", and the panel a
+   * hospital director is looking at goes blank through no fault of ours.
+   *
+   * So every figure WHO successfully returns is kept, with the date it was captured. If a
+   * later request fails, the stored figure is shown instead of an empty row — labelled as
+   * stored, and never presented as fresh.
+   *
+   * WHAT THIS DELIBERATELY DOES NOT DO: invent, interpolate or estimate anything. A
+   * stored figure is a real number WHO published, being shown a second time. Nothing here
+   * ever produces a number WHO did not give us — on a platform hospitals use to prepare
+   * for assessment, a plausible-looking figure of unknown origin is worse than a blank.
+   * ------------------------------------------------------------------------- */
+  const STORE = "aq-who-lkg-v1";
+  const STORE_MAX = 400;               // keys; roughly forty countries' worth
+
+  function readStore() {
+    try { return JSON.parse(localStorage.getItem(STORE) || "{}"); }
+    catch (e) { return {}; }
+  }
+  function remember(key, payload) {
+    try {
+      const db = readStore();
+      db[key] = { v: payload.value, y: payload.year, at: Date.now() };
+      const keys = Object.keys(db);
+      if (keys.length > STORE_MAX) {
+        keys.sort((a, b) => (db[a].at || 0) - (db[b].at || 0))
+            .slice(0, keys.length - STORE_MAX)
+            .forEach(k => delete db[k]);
+      }
+      localStorage.setItem(STORE, JSON.stringify(db));
+    } catch (e) { /* private mode, or the quota is full; not worth failing over */ }
+  }
+  function recall(key) {
+    const hit = readStore()[key];
+    if (!hit || hit.v == null) return null;
+    return { value: hit.v, year: hit.y, storedAt: hit.at,
+             source: "WHO Global Health Observatory", stale: true };
+  }
+
   /* A FAILURE MUST NOT BE CACHED AS THOUGH IT WERE AN ANSWER.
    *
    * A thrown request already un-caches itself, but { unavailable: true } RESOLVES — so it
@@ -102,14 +146,14 @@ window.HealthData = (function () {
         await sleep(600);
         r = await fetch(url).catch(() => null);
       }
-      if (!r) return { unavailable: true };
+      if (!r) return recall(`who:${iso3}:${code}`) || { unavailable: true };
       /* A FAILED REQUEST IS NOT THE SAME AS NO FIGURE, and the panel must not say it is.
          Both used to return null, so a WHO outage rendered as "No data" against every
          indicator — which reads as WHO publishing nothing for that country. On a platform
          hospitals use, stating that WHO has no maternal mortality figure for India when it
          does is exactly the kind of confident wrongness this file exists to avoid.
          `unavailable` travels through to the panel so it can say which happened. */
-      if (!r.ok) return { unavailable: true };
+      if (!r.ok) return recall(`who:${iso3}:${code}`) || { unavailable: true };
       const j = await r.json();
       const rows = (j && j.value) || [];
       if (!rows.length) return null;
@@ -120,7 +164,9 @@ window.HealthData = (function () {
       const newest = pool.reduce((a, b) => (Number(b.TimeDim || 0) > Number(a.TimeDim || 0) ? b : a));
       const v = newest.NumericValue != null ? Number(newest.NumericValue) : null;
       if (v == null || isNaN(v)) return null;
-      return { value: v, year: newest.TimeDim, source: "WHO Global Health Observatory" };
+      const fresh = { value: v, year: newest.TimeDim, source: "WHO Global Health Observatory" };
+      remember(`who:${iso3}:${code}`, fresh);
+      return fresh;
     });
   }
 
@@ -153,6 +199,8 @@ window.HealthData = (function () {
             value: got && !down ? got.value : null,
             year: got && !down ? got.year : null,
             unavailable: down,
+            stale: !!(got && got.stale),
+            storedAt: (got && got.storedAt) || null,
             source: "WHO Global Health Observatory"
           };
           try { onRow(n, row); } catch (e) {}
@@ -180,6 +228,8 @@ window.HealthData = (function () {
           value: got && !down ? got.value : null,
           year: got && !down ? got.year : null,
           unavailable: down,
+          stale: !!(got && got.stale),
+          storedAt: (got && got.storedAt) || null,
           source: "WHO Global Health Observatory"
         };
       });

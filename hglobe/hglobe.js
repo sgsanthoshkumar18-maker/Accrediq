@@ -591,13 +591,22 @@
            and had nothing. When the request itself failed, say so instead, or an outage
            on their side gets reported to a hospital as a gap in WHO's data. */
         const empty = val ? "" : (item.unavailable ? "Unavailable" : "No data");
+        /* A stored figure is shown as the number it is, with a mark saying it was not
+           fetched just now. Four states in total: fresh, stored, genuinely-no-data, and
+           service-down — collapsing any two of them tells the reader something untrue. */
+        const when = item.storedAt ? new Date(item.storedAt).toLocaleDateString() : "";
         const title = item.unavailable
           ? ' title="WHO&#39;s data service did not respond. Close the panel and open it again — it usually works on the second try."'
-          : "";
+          : (item.stale
+              ? ' title="WHO&#39;s service is not responding, so this is the figure they last gave us' +
+                (when ? ", saved on " + when : "") + '."'
+              : "");
         li.innerHTML =
           `<span class="hg-field-lbl">${esc(item.label)}</span>
-           <span class="hg-field-val ${val ? "" : "is-empty"}"${title}>${val ? esc(val) : empty}${
-             val && item.year ? ` <em class="hg-yr">${esc(item.year)}</em>` : ""}</span>`;
+           <span class="hg-field-val ${val ? "" : "is-empty"}${item.stale ? " is-stored" : ""}"${title}>${
+             val ? esc(val) : empty}${
+             val && item.year ? ` <em class="hg-yr">${esc(item.year)}</em>` : ""}${
+             item.stale ? ' <em class="hg-stored">stored</em>' : ""}</span>`;
       }).catch(() => { /* individual rows already report their own state */ });
     })();
 
