@@ -32,9 +32,34 @@ window.HealthData = (function () {
   const cache = new Map();
   let namesPromise = null;
 
+  /* A FAILURE MUST NOT BE CACHED AS THOUGH IT WERE AN ANSWER.
+   *
+   * A thrown request already un-caches itself, but { unavailable: true } RESOLVES — so it
+   * was stored like any other value and returned for the rest of the visit. One slow
+   * response on the first tap therefore turned into "Unavailable" against that indicator
+   * permanently, no matter how many times the panel was reopened. Only a reload cleared
+   * it, which is exactly why this looked like a device problem rather than a timing one:
+   * whichever view happened to load first got the failure and kept it, and the other view
+   * — opened afterwards, against a warm edge cache — worked.
+   *
+   * Now a failed result is dropped as soon as it is seen, so the next open genuinely
+   * asks again. */
   function cached(key, producer) {
     if (cache.has(key)) return cache.get(key);
-    const p = producer().catch(err => { cache.delete(key); throw err; });
+    const p = producer()
+      .then(v => {
+        /* Two shapes reach here and both can carry a failure: a single indicator, which
+           is { unavailable: true }, and the assembled list for a country, which is an
+           array whose entries each carry the flag. Checking only the first left the list
+           cached with its gaps intact, so reopening the panel redisplayed the same
+           "Unavailable" rows without asking again — the outer cache quietly undoing the
+           inner one. */
+        const failed = v && (v.unavailable ||
+          (Array.isArray(v) && v.some(x => x && x.unavailable)));
+        if (failed) cache.delete(key);
+        return v;
+      })
+      .catch(err => { cache.delete(key); throw err; });
     cache.set(key, p);
     return p;
   }
@@ -50,9 +75,25 @@ window.HealthData = (function () {
   }
 
   /** Newest value for one WHO indicator, for one country. */
+  const sleep = ms => new Promise(r => setTimeout(r, ms));
+
+  /** Newest value for one WHO indicator, for one country.
+   *
+   *  TRIED TWICE, because the first attempt for a country is the expensive one: nothing
+   *  is in the edge cache yet, and the panel asks for eleven indicators at the same
+   *  moment. A single slow answer among eleven cold requests is ordinary, and giving up
+   *  on it after one try reported an outage that did not exist. The second attempt is
+   *  nearly always served from the cache the first one filled. */
   function whoValue(iso3, code) {
     return cached(`who:${iso3}:${code}`, async () => {
-      const r = await fetch(`/api/who?indicator=${encodeURIComponent(code)}&country=${encodeURIComponent(iso3)}`);
+      let r = await fetch(`/api/who?indicator=${encodeURIComponent(code)}&country=${encodeURIComponent(iso3)}`)
+        .catch(() => null);
+      if (!r || !r.ok) {
+        await sleep(1200);
+        r = await fetch(`/api/who?indicator=${encodeURIComponent(code)}&country=${encodeURIComponent(iso3)}`)
+          .catch(() => null);
+      }
+      if (!r) return { unavailable: true };
       /* A FAILED REQUEST IS NOT THE SAME AS NO FIGURE, and the panel must not say it is.
          Both used to return null, so a WHO outage rendered as "No data" against every
          indicator — which reads as WHO publishing nothing for that country. On a platform
