@@ -367,8 +367,8 @@ window.AQPreview = (function () {
       '<div class="pv-grid">' +
         '<div><b>Your own hospital</b><p>Every figure above becomes your data — your ' +
           "equipment, your committees, your findings.</p></div>" +
-        '<div><b>Everyone in your hospital</b><p>Unlimited accounts, every department, ' +
-          "no per-user charge.</p></div>" +
+        '<div><b>Every department, one account</b><p>Your subscription covers you, ' +
+          "across all 45 departments — nothing in the platform is held back.</p></div>" +
         '<div><b>It tells you</b><p>Weekly email and in-app alerts for what is overdue, ' +
           "by department.</p></div>" +
         '<div><b>Evidence an assessor accepts</b><p>Certificates attached to records, ' +

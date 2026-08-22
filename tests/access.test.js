@@ -101,7 +101,11 @@ eq(/localStorage.setItem\("aq-palette", "default"\)/.test(gate), false,
   eq(/function justifyText/.test(pw), true, 'the paywall drafts an approval request to forward');
   eq(/Not the person who approves spending/.test(pw), true, 'and says plainly who it is for');
   eq(/several lakhs/.test(pw), true, 'the draft compares against consulting cost, not features');
-  eq(/no per-user/.test(pw), true, 'and makes clear it is not charged per seat');
+  /* Was: asserted the paywall said "no per-user charge". It did, and it was not true —
+     billing.js matches a subscription by user_id or email, so a colleague of a paying
+     subscriber gets no row and is blocked. The claim has been corrected across the site;
+     this now holds the honest version in place. */
+  eq(/per person/.test(pw), true, 'the approval request states the price is per person');
 }
 
 /* ==================== ACCOUNT SHARING: DEVICES, NOT IPs ====================
@@ -194,7 +198,9 @@ eq(/localStorage.setItem\("aq-palette", "default"\)/.test(gate), false,
   eq(/Today&rsquo;s quiz/.test(plans) || /Today\u2019s quiz/.test(plans) || /quiz/.test(plans), true,
      'the free tier names the quiz');
   eq(/certificate/i.test(plans), true, 'and the certificate');
-  eq(/Unlimited accounts/.test(plans), true, 'the paid tier states it is not per-user');
+  eq(/Every department/.test(plans), true, 'the paid tier states nothing is held back');
+  eq(/Yes. One subscription is one account/.test(plans), true,
+     'and the FAQ answers the per-user question truthfully');
   eq(/not affiliated with NABH/i.test(plans), true,
      'and the page repeats that AQcredix is not an accrediting body');
   /* The annual saving is computed from the config, never typed — a hardcoded figure goes
