@@ -35,7 +35,15 @@ module.exports = async (req, res) => {
 
   const SECRET = process.env.RAZORPAY_KEY_SECRET;
   const SB_URL = process.env.SUPABASE_URL;
-  const SB_SERVICE = process.env.SUPABASE_SERVICE_ROLE_KEY;
+  /* EITHER NAME. Supabase calls this the "service_role" key, and the two obvious
+     variable names for it were each used by different functions here — this one and the
+     poll read SUPABASE_SERVICE_ROLE_KEY, the weekly digest read SUPABASE_SERVICE_KEY.
+     Only one was ever set, so this function answered 503 to every payment: the customer
+     was charged by Razorpay and their subscription was never written. Accepting both
+     names means one key in Vercel serves everything, and there is no second place to
+     forget. */
+  const SB_SERVICE = process.env.SUPABASE_SERVICE_ROLE_KEY ||
+                     process.env.SUPABASE_SERVICE_KEY;
   if (!SECRET || !SB_URL || !SB_SERVICE) {
     res.status(503).json({ error: "Payment verification is not configured." });
     return;

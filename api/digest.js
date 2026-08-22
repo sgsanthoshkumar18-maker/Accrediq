@@ -19,7 +19,8 @@ const K = require("../calendar/schedule.js");
 const D = require("../workspace/digest.js");
 
 const SB = process.env.SUPABASE_URL;
-const KEY = process.env.SUPABASE_SERVICE_KEY;
+/* Either name — see the note in api/verify-payment.js. */
+const KEY = process.env.SUPABASE_SERVICE_KEY || process.env.SUPABASE_SERVICE_ROLE_KEY;
 const RESEND = process.env.RESEND_API_KEY;
 const FROM = process.env.DIGEST_FROM || "AQcredix <noreply@aqcredix.com>";
 const SITE = process.env.SITE_URL || "https://aqcredix.com";
