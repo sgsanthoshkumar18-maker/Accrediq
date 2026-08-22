@@ -258,6 +258,30 @@ window.HealthData = (function () {
   }
 
   /** Hospitals near a point from OpenStreetMap — names and locations only. */
+  /* ONLY http AND https SURVIVE THIS, AND THAT IS THE ENTIRE POINT.
+   *
+   * OpenStreetMap is edited by the public. A website tag is a string a stranger typed,
+   * and it lands in an href on our page — so "javascript:..." in a tag on some hospital
+   * in Chennai would become a script running on aqcredix.com for whoever clicked it.
+   * Parsing with URL() and admitting exactly two protocols closes that: anything else,
+   * including a blank or a malformed entry, yields null and the name simply is not
+   * linked. A missing link is a small disappointment; an executable one is not.
+   *
+   * Nothing is ever constructed here — no guessed domain, no search-engine fallback. A
+   * hospital is linked only where OSM holds an address for it, because a link that sends
+   * somebody to the WRONG hospital is worse than no link at all. */
+  function safeUrl(raw) {
+    if (!raw) return null;
+    const t = String(raw).trim();
+    if (!t) return null;
+    try {
+      const u = new URL(/^https?:\/\//i.test(t) ? t : "https://" + t);
+      if (u.protocol !== "http:" && u.protocol !== "https:") return null;
+      if (!u.hostname || u.hostname.indexOf(".") < 0) return null;
+      return u.href;
+    } catch (e) { return null; }
+  }
+
   function fetchHospitals(lat, lon, radiusMeters = 25000, limit = 8) {
     return cached(`osm:${lat}:${lon}`, async () => {
       const query = `[out:json][timeout:20];(node["amenity"="hospital"](around:${radiusMeters},${lat},${lon});way["amenity"="hospital"](around:${radiusMeters},${lat},${lon}););out center ${limit};`;
@@ -272,6 +296,7 @@ window.HealthData = (function () {
         beds: el.tags.beds ? Number(el.tags.beds) : null,
         operator: el.tags.operator || null,
         type: el.tags["operator:type"] || el.tags.healthcare || null,
+        website: safeUrl(el.tags.website || el.tags["contact:website"] || el.tags.url),
         source: "OpenStreetMap contributors (ODbL)"
       }));
     });

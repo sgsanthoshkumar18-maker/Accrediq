@@ -62,21 +62,48 @@ module.exports = async function handler(req, res) {
     }
     try {
       const r = await fetch(
-        SB_URL + "/rest/v1/class_interest?select=answer,organisation,created_at&order=created_at.desc",
+        SB_URL + "/rest/v1/class_interest?select=email,answer,organisation,created_at&order=created_at.desc",
         { headers: sbHeaders() }
       );
       if (!r.ok) return res.status(502).json({ error: "Could not read the responses." });
       const rows = await r.json();
       const yes = rows.filter(function (x) { return x.answer === true; }).length;
       const no = rows.length - yes;
+
+      /* Names, where we already have one. A poll answer only carries an address — the
+         question sits on the public home page and needs no account — so most respondents
+         will have no name on file, and the panel shows a dash rather than guessing. This
+         is a lookup of records we already hold, not an attempt to identify anybody. */
+      let names = {};
+      try {
+        const m = await fetch(SB_URL + "/rest/v1/members?select=email,name", { headers: sbHeaders() });
+        if (m.ok) {
+          (await m.json()).forEach(function (x) {
+            if (x && x.email && x.name) names[String(x.email).trim().toLowerCase()] = x.name;
+          });
+        }
+      } catch (e) { /* a missing name is not worth failing the whole panel over */ }
+
       return res.status(200).json({
         total: rows.length,
         yes: yes,
         no: no,
         yesPct: rows.length ? Math.round((yes / rows.length) * 100) : 0,
-        recent: rows.slice(0, 20).map(function (x) {
-          return { answer: x.answer, organisation: x.organisation || null, at: x.created_at };
-        })
+        /* The full list, owner only. Sent so the panel can show who said what and offer a
+           reply — it is the whole point of having asked. */
+        respondents: rows.map(function (x) {
+          const e = String(x.email || "").trim();
+          return {
+            email: e,
+            name: names[e.toLowerCase()] || null,
+            answer: x.answer,
+            organisation: x.organisation || null,
+            at: x.created_at
+          };
+        }),
+        yesEmails: rows.filter(function (x) { return x.answer === true; })
+                       .map(function (x) { return String(x.email || "").trim(); })
+                       .filter(Boolean)
       });
     } catch (e) {
       return res.status(502).json({ error: "Could not read the responses." });

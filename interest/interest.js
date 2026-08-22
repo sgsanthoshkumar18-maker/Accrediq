@@ -174,8 +174,74 @@
     return (document.body && document.body.getAttribute("data-base")) || "";
   }
 
+  function esc2(x) {
+    return String(x == null ? "" : x).replace(/[&<>"]/g, function (c) {
+      return { "&": "&amp;", "<": "&lt;", ">": "&gt;", '"': "&quot;" }[c];
+    });
+  }
+
+  /* THE ADDRESSES OF EVERY OTHER RESPONDENT GO IN BCC, NEVER IN To.
+   *
+   * Putting them all in To would show each person the address of every other hospital
+   * that answered. That is disclosing personal data to third parties without their
+   * consent — a reportable breach under the DPDP Act, and irreversible the moment Send is
+   * pressed. It is also commercially foolish: it hands anyone on the list the contact
+   * details of every hospital interested in the same training.
+   *
+   * So the mail is addressed TO the sender and everyone else is BCC'd. Each recipient
+   * sees a message addressed to AQcredix and to themselves alone. */
+  var SUPPORT = "support.aqcredix@gmail.com";
+
+  function gmailCompose(opts) {
+    var q = "view=cm&fs=1" +
+      "&to=" + encodeURIComponent(opts.to || "") +
+      (opts.bcc ? "&bcc=" + encodeURIComponent(opts.bcc) : "") +
+      "&su=" + encodeURIComponent(opts.subject || "") +
+      "&body=" + encodeURIComponent(opts.body || "");
+    return "https://mail.google.com/mail/?" + q;
+  }
+
   function render(host, d) {
     var pct = d.total ? Math.round((d.yes / d.total) * 100) : 0;
+    var people = d.respondents || [];
+    var yesList = (d.yesEmails || []).join(",");
+
+    /* Built from an array so the newlines are unambiguous. */
+    var bulkBody = [
+      "Dear colleague,", "",
+      "You told us on aqcredix.com that you would want real-time NABH implementation",
+      "classes at your organisation. Thank you — that is what we needed to know.", "",
+      "", "",
+      "Dr S. G. Santhoshkumar",
+      "Founder & CEO, AQcredix",
+      "https://aqcredix.com"
+    ].join("\n");
+
+    var bulkHref = gmailCompose({
+      to: SUPPORT,
+      bcc: yesList,
+      subject: "AQcredix — the NABH implementation classes you asked about",
+      body: bulkBody
+    });
+
+    var rows = people.map(function (p) {
+      var one = gmailCompose({
+        to: p.email,
+        subject: "AQcredix — your answer about NABH implementation classes",
+        body: ["Dear " + (p.name || "colleague") + ",", "", "", "",
+               "Dr S. G. Santhoshkumar", "Founder & CEO, AQcredix",
+               "https://aqcredix.com"].join("\n")
+      });
+      return '<tr>' +
+        '<td>' + esc2(p.name || "—") + '</td>' +
+        '<td class="aqi-mail">' + esc2(p.email) + '</td>' +
+        '<td><span class="aqi-tag ' + (p.answer ? "yes" : "no") + '">' +
+          (p.answer ? "Yes" : "No") + '</span></td>' +
+        '<td>' + esc2(p.at ? new Date(p.at).toLocaleDateString() : "") + '</td>' +
+        '<td><a class="aqi-reply" href="' + one + '" target="_blank" rel="noopener">Reply</a></td>' +
+      '</tr>';
+    }).join("");
+
     host.innerHTML =
       '<h2>Class interest</h2>' +
       '<p class="muted">Answers to the question on the home page. Visible to you only — ' +
@@ -186,7 +252,25 @@
         '<div class="aqi-stat"><b>' + d.yes + '</b><span>yes</span></div>' +
         '<div class="aqi-stat"><b>' + d.no + '</b><span>no</span></div>' +
         '<div class="aqi-stat"><b>' + pct + '%</b><span>interested</span></div>' +
-      '</div>';
+      '</div>' +
+      (d.yes ?
+        '<div class="aqi-actions">' +
+          '<a class="btn btn-accent" href="' + bulkHref + '" target="_blank" rel="noopener">' +
+            'Email all ' + d.yes + ' who said yes</a>' +
+          '<p class="aqi-bcc">Opens Gmail with everyone in <b>Bcc</b> and the message addressed ' +
+            'to <b>' + SUPPORT + '</b>. Sign in to Gmail as that account first, or it will send ' +
+            'from whichever account is active. Recipients never see each other&#8217;s addresses ' +
+            '&mdash; putting them in To would disclose every hospital&#8217;s address to all the ' +
+            'others.</p>' +
+        '</div>' : "") +
+      (people.length ?
+        '<div class="aqi-tablewrap"><table class="aqi-table">' +
+          '<thead><tr><th>Name</th><th>Email</th><th>Answer</th><th>When</th><th></th></tr></thead>' +
+          '<tbody>' + rows + '</tbody></table></div>' +
+          '<p class="aqi-bcc">A name appears only where that address already belongs to an ' +
+            'account here. The poll is on the public home page and needs no sign-in, so most ' +
+            'rows will show a dash.</p>'
+        : '<p class="muted">No answers yet.</p>');
     host.hidden = false;
   }
 

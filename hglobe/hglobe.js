@@ -578,7 +578,7 @@
       host.innerHTML = '<ul class="hg-field-list">' + metas.map((m, n) =>
         `<li data-ind="${n}">
             <span class="hg-field-lbl">${esc(m.fallback)}</span>
-            <span class="hg-field-val is-empty" aria-busy="true">…</span>
+            <span class="hg-field-val is-loading" aria-busy="true">Loading&#8230;</span>
           </li>`).join("") + "</ul>";
 
       HD.fetchIndicatorsProgressive(d.iso3, function (n, item) {

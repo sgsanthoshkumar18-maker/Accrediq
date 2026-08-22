@@ -162,3 +162,15 @@
 .hg-stored{font-style:normal;font-size:10px;letter-spacing:.08em;text-transform:uppercase;
   color:var(--fg-faint);border:1px solid var(--border);border-radius:4px;
   padding:1px 5px;margin-left:6px;vertical-align:middle;}
+
+/* A row still waiting on WHO. It says "Loading…" rather than showing an ellipsis or a
+   blank: an empty value beside a label reads as a fault in the site, and someone who
+   thinks the page is broken stops waiting. Saying what is happening buys the patience
+   the slower indicators need. The pulse is subtle on purpose — it should suggest work in
+   progress, not demand attention. */
+.hg-field-val.is-loading{color:var(--fg-faint);font-style:italic;
+  animation:hg-wait 1.5s ease-in-out infinite;}
+@keyframes hg-wait{0%,100%{opacity:.45;}50%{opacity:.85;}}
+@media (prefers-reduced-motion:reduce){
+  .hg-field-val.is-loading{animation:none;opacity:.7;}
+}
