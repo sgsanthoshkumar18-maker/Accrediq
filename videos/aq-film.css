@@ -38,7 +38,23 @@
    grows to the 1280px content, so "centred in the track" is not centred on screen. */
 .aqf-scaler{position:absolute;left:50%;top:50%;width:1280px;height:720px;
   transform-origin:center center;transform:translate(-50%,-50%) scale(1);}
-.aqf-frame-el{width:1280px;height:720px;border:0;display:block;background:#04100E;}
+
+/* pointer-events:none IS WHAT LETS THE PAGE SCROLL PAST THE FILM.
+ *
+ * A wheel or a swipe that lands on an iframe is hit-tested INTO that document first. The
+ * film's player registers its own wheel and pointer handlers for scrubbing, so the
+ * browser had to wait on them before it would move the page — which is felt as the scroll
+ * sticking for a moment over the video and then lurching free. Nothing inside the frame
+ * needs to be clicked any more: its own controls are hidden, and ours (restart, full
+ * screen, watch again) are siblings ABOVE the frame with their own pointer-events, so
+ * they keep working. The frame becomes purely something to look at.
+ *
+ * contain tells the browser that nothing inside the frame can affect layout or painting
+ * outside it, so a 60fps animation cannot force the rest of the page to re-render while
+ * it scrolls past. */
+.aqf-frame-el{width:1280px;height:720px;border:0;display:block;background:#04100E;
+  pointer-events:none;contain:layout paint style;}
+.aqf-stage{contain:layout paint style;}
 
 /* ---------- poster ---------- */
 .aqf-poster{position:absolute;inset:0;z-index:6;cursor:pointer;
@@ -59,9 +75,13 @@
  * genuinely had time to run, so it can never cover a film that is still playing.
  * Translucent rather than opaque: the closing card stays readable behind it, which is
  * where the price and the tagline are. */
+/* No backdrop-filter here, deliberately. A blur over a live backdrop is one of the most
+   expensive things a page can carry: the compositor has to re-sample and re-blur
+   everything behind it on every frame, including every frame of a scroll. This card sits
+   over the film exactly where the page was stalling. A flat wash costs nothing and reads
+   the same. */
 .aqf-end{position:absolute;inset:0;z-index:7;display:flex;align-items:center;
-  justify-content:center;background:rgba(4,16,14,.62);
-  -webkit-backdrop-filter:blur(2px);backdrop-filter:blur(2px);
+  justify-content:center;background:rgba(4,16,14,.74);
   animation:aqf-end-in .35s ease both;}
 .aqf-end[hidden]{display:none;}
 @keyframes aqf-end-in{from{opacity:0;}to{opacity:1;}}

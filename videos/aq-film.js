@@ -233,7 +233,7 @@
        BACKGROUND tab does no layout at all, so every measurement is 0 — and rAF does not
        run in a hidden tab, so an rAF retry parks for ever and the film sits unscaled
        until something happens to resize the window. */
-    var tries = 0;
+    var tries = 0, lastScale = -1;
     function fit() {
       var w = stage.clientWidth, h = stage.clientHeight;
       if (!w || !h) {
@@ -242,6 +242,13 @@
       }
       tries = 0;
       var s = Math.min(w / W, h / H);
+      /* Only write when the number actually changes. On a phone, scrolling shows and
+         hides the address bar, which fires resize on every flick; each write to this
+         style attribute wakes the site-wide MutationObserver in aq-scroll-lock.js, which
+         then re-examines every overlay on the page. Doing that repeatedly during a scroll
+         is exactly the wrong moment to be doing it. */
+      if (s === lastScale) return;
+      lastScale = s;
       scaler.style.transform = "translate(-50%,-50%) scale(" + s + ")";
     }
     addEventListener("resize", fit);
@@ -330,6 +337,53 @@
     poster.addEventListener("click", play);
     host.querySelector(".aqf-again").addEventListener("click", play);
     host.querySelector("[data-restart]").addEventListener("click", play);
+
+    /* HOLD THE FILM STILL WHILE IT IS OFF SCREEN.
+     *
+     * The scene animates on requestAnimationFrame and does not stop when it scrolls out
+     * of view — so once someone had pressed play, a 1280x720 animation kept running for
+     * the rest of their visit, behind whatever they were reading. That is wasted battery
+     * on a phone and wasted frames everywhere, and it is paid for exactly when the page
+     * is being scrolled.
+     *
+     * Only what we paused do we resume, and only if the film has not finished, so this
+     * can never start a film nobody asked for. If the player's button cannot be found
+     * nothing happens and the old behaviour stands. */
+    var pausedByScroll = false;
+
+    function filmButton(sel) {
+      try {
+        var d = frame.contentDocument;
+        return d ? d.querySelector(sel) : null;
+      } catch (e) { return null; }
+    }
+    function mediaEl() {
+      try { var d = frame.contentDocument; return d ? d.querySelector("video, audio") : null; }
+      catch (e) { return null; }
+    }
+    function setPlaying(want) {
+      var btn = filmButton('[title^="Play/pause"],[aria-label^="Play/pause"]');
+      if (!btn) return false;
+      var m = mediaEl();
+      var isPlaying = m ? !m.paused : null;
+      if (isPlaying === null || isPlaying === want) return false;
+      try { btn.click(); } catch (e) {}
+      return true;
+    }
+
+    try {
+      new IntersectionObserver(function (entries) {
+        var e = entries[0];
+        if (!e) return;
+        if (!e.isIntersecting) {
+          if (!finished && host.classList.contains("playing")) {
+            pausedByScroll = setPlaying(false) || pausedByScroll;
+          }
+        } else if (pausedByScroll && !finished) {
+          if (setPlaying(true)) pausedByScroll = false;
+        }
+      }, { threshold: 0.01 }).observe(host);
+    } catch (e) {}
 
     /* ---------------- full screen ---------------- */
 
