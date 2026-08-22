@@ -1337,7 +1337,8 @@ create policy subscriptions_delete on public.subscriptions
 create or replace function public.aq_is_comp() returns boolean
 language sql stable security definer set search_path = public, auth as $$
   select public.aq_norm_email(public.aq_jwt_email()) in (
-    public.aq_norm_email('mavissneha@gmail.com')
+    public.aq_norm_email('mavissneha@gmail.com'),
+    public.aq_norm_email('ganesharun66@gmail.com')
   );
 $$;
 
@@ -1372,6 +1373,20 @@ on conflict (id) do update
       expires_at = excluded.expires_at,
       amount_paise = 0,
       method = 'complimentary';
+
+-- Second complimentary account. A separate id, because reusing one would overwrite the
+-- row above rather than adding a person.
+insert into public.subscriptions
+  (id, user_id, email, name, plan, months, amount_paise, method, status,
+   requested_at, activated_at, expires_at, approved_by, note)
+values
+  ('sub_comp_ganesharun', null, 'ganesharun66@gmail.com', 'Complimentary',
+   'complimentary', 1200, 0, 'complimentary', 'active',
+   now(), now(), now() + interval '100 years', 'owner',
+   'Lifetime complimentary access granted by the owner.')
+on conflict (id) do update
+  set email = excluded.email, status = 'active',
+      expires_at = excluded.expires_at, updated_at = now();
 
 -- Bind the complimentary row to the account the first time that person signs in, so the
 -- normal user_id lookups find it. Without this the row is matched by email only, which
