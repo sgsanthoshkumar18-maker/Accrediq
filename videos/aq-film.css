@@ -8,8 +8,26 @@
 
 .aqf-mount{position:relative;width:100%;aspect-ratio:16/9;background:#04100E;
   border-radius:14px;overflow:hidden;}
+
+/* FULL SCREEN COMES IN TWO FLAVOURS AND BOTH HAVE TO BE DRESSED.
+ *
+ * The real one is the browser's: aq-film.js calls requestFullscreen(), the element is
+ * promoted out of the page, and :fullscreen matches. On a handset the script also asks
+ * for a landscape lock, so a 16:9 film fills a phone held sideways instead of sitting as
+ * a letterboxed strip across the middle of a portrait screen.
+ *
+ * The fallback is .is-full, a fixed box over the page. iOS Safari refuses
+ * requestFullscreen for anything but a <video>, so on an iPhone that is all there is.
+ * It keeps the browser chrome and cannot rotate the screen, but it never fails.
+ *
+ * Both are listed on every rule. is-full is also what aq-scroll-lock.js watches, and
+ * onFsChange() in the script keeps it applied while the browser's own full screen is
+ * active — so the page behind holds still in either mode. */
 .aqf-mount.is-full{position:fixed;inset:0;width:100vw;height:100vh;height:100dvh;
   aspect-ratio:auto;border-radius:0;z-index:9999;}
+.aqf-mount:fullscreen{width:100%;height:100%;aspect-ratio:auto;border-radius:0;
+  background:#04100E;}
+.aqf-mount:-webkit-full-screen{width:100%;height:100%;border-radius:0;background:#04100E;}
 
 .aqf-stage{position:absolute;inset:0;overflow:hidden;}
 
@@ -36,19 +54,51 @@
   font-size:clamp(20px,3.4vw,40px);letter-spacing:-.02em;}
 .aqf-poster p{margin:0;color:#8FA39D;font-size:clamp(12px,1.5vw,17px);}
 
+/* ---------- watch again ----------
+ * Shown when the film reaches its end. The script will not reveal it until the film has
+ * genuinely had time to run, so it can never cover a film that is still playing.
+ * Translucent rather than opaque: the closing card stays readable behind it, which is
+ * where the price and the tagline are. */
+.aqf-end{position:absolute;inset:0;z-index:7;display:flex;align-items:center;
+  justify-content:center;background:rgba(4,16,14,.62);
+  -webkit-backdrop-filter:blur(2px);backdrop-filter:blur(2px);
+  animation:aqf-end-in .35s ease both;}
+.aqf-end[hidden]{display:none;}
+@keyframes aqf-end-in{from{opacity:0;}to{opacity:1;}}
+
+.aqf-again{display:inline-flex;align-items:center;gap:11px;cursor:pointer;
+  background:#5EEAD4;color:#04241F;border:0;border-radius:999px;
+  font:inherit;font-weight:700;letter-spacing:.01em;
+  font-size:clamp(13px,1.5vw,17px);padding:clamp(11px,1.3vw,15px) clamp(20px,2.4vw,30px);
+  box-shadow:0 0 46px -10px rgba(94,234,212,.85);}
+.aqf-again:hover{background:#2DD4BF;}
+.aqf-again-ic{font-size:1.25em;line-height:1;}
+
 /* ---------- chrome ---------- */
-.aqf-ui{position:absolute;right:14px;bottom:14px;z-index:5;opacity:0;transition:opacity .3s;}
-.aqf-mount.playing:hover .aqf-ui,.aqf-mount.is-full .aqf-ui{opacity:1;}
+/* VISIBLE WHENEVER THE FILM IS PLAYING, ON EVERY DEVICE.
+ *
+ * These used to appear on hover. There is no hover on a phone, so the full-screen button
+ * was simply not there for the people most likely to want it — which is how it came to be
+ * reported as "not working". A (hover:none) media query would in principle cover that,
+ * but reveal-on-hover buys nothing here anyway: two small buttons in a corner of a film
+ * are not clutter, and a control nobody can find is worse than one nobody needed. */
+.aqf-ui{position:absolute;right:14px;bottom:14px;z-index:5;display:flex;gap:9px;
+  opacity:0;transition:opacity .3s;pointer-events:none;}
+.aqf-mount.playing .aqf-ui,.aqf-mount.is-full .aqf-ui,
+.aqf-mount:fullscreen .aqf-ui{opacity:1;pointer-events:auto;}
 .aqf-ui button{width:42px;height:42px;border-radius:999px;cursor:pointer;
   background:rgba(4,16,14,.72);border:1px solid rgba(244,242,236,.28);color:#F4F2EC;
   font-size:15px;display:flex;align-items:center;justify-content:center;}
-.aqf-ui button:focus-visible,.aqf-close:focus-visible{outline:2px solid #5EEAD4;outline-offset:2px;}
+.aqf-ui button:focus-visible,.aqf-close:focus-visible,
+.aqf-again:focus-visible{outline:2px solid #5EEAD4;outline-offset:2px;}
 
 .aqf-close{position:absolute;right:18px;top:18px;z-index:8;width:44px;height:44px;
   border-radius:50%;background:rgba(4,16,14,.72);border:1px solid rgba(244,242,236,.3);
   color:#F4F2EC;font-size:19px;cursor:pointer;display:none;
   align-items:center;justify-content:center;}
-.aqf-mount.is-full .aqf-close{display:flex;}
+/* The way out. Escape works in the browser's own full screen, but there is no keyboard on
+   a phone and nothing on screen would otherwise say how to get back. */
+.aqf-mount.is-full .aqf-close,.aqf-mount:fullscreen .aqf-close{display:flex;}
 
 /* The launcher used in the footer and anywhere else the film is offered. */
 .aqf-launch{display:inline-flex;align-items:center;gap:11px;cursor:pointer;}
