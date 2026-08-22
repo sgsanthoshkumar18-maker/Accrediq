@@ -43,7 +43,8 @@ window.AQ_BILLING = {
   complimentaryEmails: [
     "mavissneha@gmail.com",
     "ganesharun66@gmail.com",
-    "arthigopi1709@gmail.com"
+    "arthigopi1709@gmail.com",
+    "snjohnfelixpharmd@gmail.com"
   ],
 
   /* ---------------------------------------------------------------

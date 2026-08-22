@@ -1339,7 +1339,8 @@ language sql stable security definer set search_path = public, auth as $$
   select public.aq_norm_email(public.aq_jwt_email()) in (
     public.aq_norm_email('mavissneha@gmail.com'),
     public.aq_norm_email('ganesharun66@gmail.com'),
-    public.aq_norm_email('arthigopi1709@gmail.com')
+    public.aq_norm_email('arthigopi1709@gmail.com'),
+    public.aq_norm_email('snjohnfelixpharmd@gmail.com')
   );
 $$;
 
@@ -1395,6 +1396,19 @@ insert into public.subscriptions
    requested_at, activated_at, expires_at, approved_by, note)
 values
   ('sub_comp_arthigopi', null, 'arthigopi1709@gmail.com', 'Complimentary',
+   'complimentary', 1200, 0, 'complimentary', 'active',
+   now(), now(), now() + interval '100 years', 'owner',
+   'Lifetime complimentary access granted by the owner.')
+on conflict (id) do update
+  set email = excluded.email, status = 'active',
+      expires_at = excluded.expires_at, updated_at = now();
+
+-- Fourth complimentary account.
+insert into public.subscriptions
+  (id, user_id, email, name, plan, months, amount_paise, method, status,
+   requested_at, activated_at, expires_at, approved_by, note)
+values
+  ('sub_comp_johnfelix', null, 'snjohnfelixpharmd@gmail.com', 'Complimentary',
    'complimentary', 1200, 0, 'complimentary', 'active',
    now(), now(), now() + interval '100 years', 'owner',
    'Lifetime complimentary access granted by the owner.')
