@@ -1,0 +1,145 @@
+/* AQcredix — styling for the three modules added together: Evidence, Training and
+ * Accreditation.
+ *
+ * ONE FILE FOR THREE PAGES, because they were built together and share the same handful
+ * of new pieces — a stat strip, a status pill, a filter row and a scrolling table wrapper.
+ * Three near-identical stylesheets would have drifted apart within a month.
+ *
+ * Everything reuses the existing workspace classes where they exist: .ws-table, .ws-empty,
+ * .ws-modal-in, .ws-form, .ws-f and .cal-tabs are all defined elsewhere and are not
+ * redefined here. Only what is genuinely new is below.
+ *
+ * Palette tokens only — no literal colours — so all three follow light, dark and neon
+ * without a second definition anywhere.
+ */
+
+/* ---------- shared: a horizontally scrolling table on a phone ----------
+   A register with seven columns cannot shrink to 375px and stay readable. It scrolls
+   inside its own box rather than making the whole page scroll sideways, which is the
+   thing that makes a site feel broken on a phone. */
+.ws-tablewrap{overflow-x:auto;-webkit-overflow-scrolling:touch;}
+.ws-tablewrap .ws-table{min-width:640px;}
+
+/* ---------- shared: the stat strip ---------- */
+.reg-stats{display:flex;gap:12px;flex-wrap:wrap;}
+.reg-stat{flex:1 1 150px;border:1px solid var(--border);border-radius:var(--r-md);
+  padding:14px 16px;background:var(--bg-elevated);}
+.reg-stat b{display:block;font-family:var(--font-mono);font-size:26px;line-height:1.15;
+  color:var(--fg);}
+.reg-stat span{font-size:12px;text-transform:uppercase;letter-spacing:.05em;
+  color:var(--fg-faint);}
+/* Only two states get a colour, and only when the number is not zero — a strip where
+   everything is coloured tells you nothing about where to look. */
+.reg-stat.bad b{color:var(--nc);}
+.reg-stat.warn b{color:var(--warn);}
+.reg-stat.ok b{color:var(--ok);}
+
+/* ---------- shared: filter row ---------- */
+.reg-filters{display:flex;gap:10px;flex-wrap:wrap;align-items:center;margin:18px 0;}
+.reg-filters select{background:var(--bg);border:1px solid var(--border);
+  border-radius:var(--r-sm);padding:9px 12px;color:var(--fg);font:inherit;font-size:14px;}
+.reg-filters select:focus{outline:2px solid var(--accent-bright);outline-offset:1px;}
+
+/* ---------- training: status pills ---------- */
+.tr-tag{display:inline-block;font-size:11.5px;font-weight:700;padding:2px 9px;
+  border-radius:999px;letter-spacing:.02em;white-space:nowrap;
+  background:var(--bg);color:var(--fg-faint);border:1px solid var(--border);}
+.tr-tag.ok{background:var(--ok-tint,rgba(46,160,120,.16));color:var(--ok);border-color:transparent;}
+.tr-tag.warn{background:var(--warn-tint);color:var(--warn);border-color:transparent;}
+.tr-tag.bad{background:var(--nc-tint,rgba(190,60,60,.16));color:var(--nc);border-color:transparent;}
+.tr-sub{display:block;font-size:12px;color:var(--fg-faint);margin-top:2px;}
+.tr-hint,.ac-hint{font-size:12.5px;line-height:1.6;color:var(--fg-faint);margin:6px 0 0;}
+.tr-edit{background:transparent;border:1px solid var(--border);color:var(--fg-muted);
+  border-radius:var(--r-sm);padding:4px 11px;font:inherit;font-size:12.5px;cursor:pointer;}
+.tr-edit:hover{color:var(--accent-bright);border-color:var(--accent-bright);}
+
+/* ---------- evidence ---------- */
+.ev-form{display:flex;gap:10px;flex-wrap:wrap;align-items:flex-end;}
+.ev-form label{font-size:12px;font-weight:700;color:var(--fg-muted);
+  display:block;margin-bottom:5px;}
+.ev-form input{background:var(--bg);border:1px solid var(--border);
+  border-radius:var(--r-sm);padding:11px 14px;color:var(--fg);font:inherit;
+  font-family:var(--font-mono);font-size:16px;letter-spacing:.04em;width:180px;}
+.ev-form input:focus{outline:2px solid var(--accent-bright);outline-offset:1px;
+  border-color:transparent;}
+.ev-hint{font-size:12.5px;color:var(--fg-faint);margin:10px 0 0;}
+
+.ev-head{margin:28px 0 18px;}
+.ev-head h2{font-size:clamp(19px,2.2vw,25px);line-height:1.3;margin:8px 0 6px;
+  max-width:70ch;}
+.ev-ctx{font-size:13px;color:var(--fg-faint);margin:0;}
+.ev-unknown{color:var(--fg-muted);}
+
+/* The one-line answer, before any of the detail. Someone standing beside an assessor
+   needs to know instantly whether there is anything to show at all. */
+.ev-summary{padding:13px 16px;border-radius:var(--r-md);font-size:14.5px;
+  border:1px solid var(--border);margin-bottom:22px;}
+.ev-summary.has{background:var(--ok-tint,rgba(46,160,120,.12));border-color:transparent;}
+.ev-summary.none{background:var(--warn-tint);border-color:transparent;color:var(--warn);}
+
+.ev-actions{margin-bottom:20px;}
+.ev-block{margin-bottom:24px;}
+.ev-block h3{font-size:14px;text-transform:uppercase;letter-spacing:.06em;
+  color:var(--fg-faint);margin:0 0 10px;font-weight:650;}
+.ev-count{display:inline-block;margin-left:6px;font-family:var(--font-mono);
+  font-size:12px;color:var(--fg-muted);background:var(--bg-elevated);
+  border:1px solid var(--border);border-radius:999px;padding:1px 8px;letter-spacing:0;}
+.ev-rows{border:1px solid var(--border);border-radius:var(--r-md);overflow:hidden;}
+.ev-row{display:flex;align-items:center;gap:12px;padding:11px 14px;
+  border-bottom:1px solid var(--border);background:var(--bg-elevated);}
+.ev-row:last-child{border-bottom:0;}
+.ev-main{flex:1 1 auto;min-width:0;font-size:14.5px;color:var(--fg);}
+.ev-sub{color:var(--fg-faint);font-size:13px;}
+.ev-meta{flex:0 1 auto;font-size:12.5px;color:var(--fg-faint);text-align:right;}
+.ev-tag{flex:none;font-size:11px;font-weight:700;padding:2px 9px;border-radius:999px;
+  background:var(--bg);color:var(--fg-faint);border:1px solid var(--border);}
+.ev-tag.ok{background:var(--ok-tint,rgba(46,160,120,.16));color:var(--ok);border-color:transparent;}
+.ev-tag.warn{background:var(--warn-tint);color:var(--warn);border-color:transparent;}
+.ev-tag.nc{background:var(--nc-tint,rgba(190,60,60,.16));color:var(--nc);border-color:transparent;}
+.ev-none{font-size:13.5px;color:var(--fg-faint);margin:0;padding:10px 0;line-height:1.6;}
+
+@media (max-width:620px){
+  .ev-row{flex-wrap:wrap;}
+  .ev-meta{text-align:left;flex-basis:100%;}
+  .ev-form input{width:100%;}
+}
+
+/* Printed straight from the page during an assessment, so the chrome goes and the
+   evidence stays. Nobody is going to export a PDF while somebody waits. */
+@media print{
+  .ws-nav,.ws-topbar,.ev-form,.ev-hint,.ev-actions,#site-header,#site-footer{display:none !important;}
+  .ev-rows{border-color:#999;}
+  .ev-row{background:#fff;break-inside:avoid;}
+  .ev-block{break-inside:avoid;}
+}
+
+/* ---------- accreditation ---------- */
+.ac-hero{border:1px solid var(--border);border-radius:var(--r-lg);
+  padding:clamp(22px,3vw,34px);background:var(--bg-elevated);}
+.ac-hero h2{font-size:clamp(24px,3vw,34px);margin:6px 0 6px;letter-spacing:-.02em;}
+.ac-desc{color:var(--fg-muted);font-size:14.5px;margin:0 0 16px;}
+.ac-next{font-size:clamp(15px,1.8vw,19px);margin:0;color:var(--fg);}
+.ac-cert{font-family:var(--font-mono);font-size:12.5px;color:var(--fg-faint);margin:12px 0 0;}
+.ac-hero.ok .ac-next{color:var(--ok);}
+.ac-hero.warn .ac-next{color:var(--warn);}
+.ac-hero.bad .ac-next{color:var(--nc);}
+.ac-hero.none{border-style:dashed;}
+
+/* A vertical line rather than a horizontal one: seven stages will not fit across a phone,
+   and a timeline that has to scroll sideways is a timeline nobody reads to the end. */
+.ac-timeline{margin:8px 0 30px;padding-left:6px;}
+.ac-step{display:flex;gap:14px;align-items:flex-start;padding:12px 0 12px 18px;
+  position:relative;border-left:2px solid var(--border);}
+.ac-step:last-child{border-left-color:transparent;}
+.ac-dot{position:absolute;left:-7px;top:16px;width:12px;height:12px;border-radius:50%;
+  background:var(--bg);border:2px solid var(--border);}
+.ac-step.past .ac-dot{background:var(--ok);border-color:var(--ok);}
+.ac-step.soon .ac-dot{background:var(--warn);border-color:var(--warn);}
+.ac-step.future .ac-dot{background:var(--bg);border-color:var(--fg-faint);}
+.ac-step.empty{opacity:.55;}
+.ac-step b{display:block;font-size:14.5px;color:var(--fg);}
+.ac-when{display:block;font-size:12.5px;color:var(--fg-faint);margin-top:2px;}
+
+.ac-editor{border:1px solid var(--border);border-radius:var(--r-lg);
+  padding:clamp(20px,2.6vw,30px);background:var(--bg-elevated);}
+.ac-editor h3{font-size:17px;margin:0 0 16px;}

@@ -1656,3 +1656,131 @@ insert into public.complimentary_access (email, note, granted_by) values
   ('snjohnfelixpharmd@gmail.com', 'Granted before the grant page existed.', 'owner'),
   ('bk11022001@gmail.com',        'Granted before the grant page existed.', 'owner')
 on conflict (email) do nothing;
+
+-- ############################################################################
+-- ASSESSOR-DAY EVIDENCE, TRAINING RECORDS, AND THE ACCREDITATION CYCLE
+-- Added together because they answer the three questions a quality manager is asked and
+-- this platform could not previously answer: "show me the evidence for this element",
+-- "show me your training records", and "when is your next assessment".
+-- ############################################################################
+
+-- ---------------------------------------------------------------------------
+-- 1. INCIDENTS GAIN AN ELEMENT CODE.
+--
+-- Every other record type already carries one — capa, compliance_tasks, assets,
+-- checklists, and documents through its comma-separated `elements`. Incidents and audits
+-- did not, which meant the two record types an assessor asks about most could not be
+-- found from the element they relate to. Audits are covered: their per-element findings
+-- already ride in payload->'findings'. Incidents needed a column.
+--
+-- Nullable on purpose. Someone filing an incident at 2am must not be made to choose a
+-- standard code before they can report a fall; the quality manager attaches it later.
+-- ---------------------------------------------------------------------------
+alter table public.incidents add column if not exists element_code text;
+create index if not exists incidents_element_idx on public.incidents (org_id, element_code);
+
+-- ---------------------------------------------------------------------------
+-- 2. TRAINING AND COMPETENCY — the Human Resource Management chapter.
+--
+-- HRM is one of the ten chapters and had no module at all, so induction, fire safety,
+-- BLS validity and competency assessment lived in a spreadsheet that falls apart on
+-- assessment day. This is deliberately the same shape as assets/asset_schedules: a thing
+-- with an expiry, an owner and a department, because that is what a training record is —
+-- BLS certification expires exactly as a calibration certificate does.
+--
+-- One row per PERSON per TRAINING. Not one row per person: a nurse has induction, fire
+-- safety, BLS and hand hygiene, each with its own date and its own validity.
+-- ---------------------------------------------------------------------------
+create table if not exists public.training_records (
+  id             text primary key,
+  org_id         uuid references public.orgs(id) on delete cascade,
+  person_name    text not null,
+  employee_id    text,
+  designation    text,
+  department     text,
+  training_type  text not null,
+    -- induction | fire_safety | bls | acls | infection_control | bmw | hand_hygiene
+    -- | code_blue | patient_safety | competency | other
+  training_name  text,
+  provider       text,          -- who delivered it: internal, or a named body
+  completed_on   date,
+  valid_until    date,          -- null where the training does not expire
+  score          text,          -- pass/fail, a percentage, or a competency grade
+  assessed_by    text,
+  element_code   text,          -- the NABH element this evidences, where there is one
+  status         text not null default 'valid',   -- valid | expiring | expired | waived
+  notes          text,
+  created_by     uuid,
+  created_at     timestamptz not null default now(),
+  updated_at     timestamptz not null default now()
+);
+create index if not exists training_org_idx     on public.training_records (org_id);
+create index if not exists training_dept_idx    on public.training_records (department);
+create index if not exists training_expiry_idx  on public.training_records (org_id, valid_until);
+create index if not exists training_element_idx on public.training_records (org_id, element_code);
+
+-- ---------------------------------------------------------------------------
+-- 3. THE ACCREDITATION CYCLE.
+--
+-- NABH is not an event, it is a three-year loop: application, desktop review,
+-- pre-assessment, final assessment, surveillance at around eighteen months, then
+-- re-accreditation. The calendar tracked committee meetings and equipment renewals but
+-- not the accreditation itself, so the question a quality manager is asked most often by
+-- their director — "when is the next one" — had no answer here.
+--
+-- ONE ROW PER ORGANISATION. A hospital is at one point in one cycle; modelling it as many
+-- rows invites two disagreeing answers to a question that has only one.
+-- ---------------------------------------------------------------------------
+create table if not exists public.accreditation (
+  org_id            uuid primary key references public.orgs(id) on delete cascade,
+  programme         text not null default 'NABH Hospital (Full)',
+  edition           text default '6th Edition',
+  stage             text not null default 'preparing',
+    -- preparing | applied | desktop_review | pre_assessment | final_assessment
+    -- | accredited | surveillance_due | re_accreditation_due | lapsed
+  certificate_no    text,
+  applied_on        date,
+  desktop_review_on date,
+  pre_assessment_on date,
+  final_assessment_on date,
+  accredited_from   date,
+  accredited_until  date,        -- the certificate expiry; drives everything below
+  surveillance_due  date,        -- usually around 18 months after accredited_from
+  notes             text,
+  updated_by        uuid,
+  created_at        timestamptz not null default now(),
+  updated_at        timestamptz not null default now()
+);
+
+-- ---------------------------------------------------------------------------
+-- RLS for the two new tables. training_records is DEPARTMENT-SCOPED — a training record
+-- names a person and their competency result, which is exactly the kind of personal file
+-- biomedical has no business reading about HR's staff. accreditation is org-wide and
+-- read-only to everyone but an admin: it is a statement of fact about the hospital, and a
+-- viewer changing the certificate expiry would be a quiet disaster.
+-- ---------------------------------------------------------------------------
+alter table public.training_records enable row level security;
+alter table public.accreditation    enable row level security;
+
+drop policy if exists training_records_read on public.training_records;
+create policy training_records_read on public.training_records
+  for select using (org_id = public.my_org() and public.dept_visible(department));
+
+drop policy if exists training_records_write on public.training_records;
+create policy training_records_write on public.training_records
+  for all using (org_id = public.my_org() and public.dept_visible(department) and public.can_edit())
+      with check (org_id = public.my_org() and public.dept_visible(department) and public.can_edit());
+
+drop policy if exists accreditation_read on public.accreditation;
+create policy accreditation_read on public.accreditation
+  for select using (org_id = public.my_org());
+
+drop policy if exists accreditation_write on public.accreditation;
+create policy accreditation_write on public.accreditation
+  for all using (org_id = public.my_org() and public.is_admin())
+      with check (org_id = public.my_org() and public.is_admin());
+
+-- Same author stamping and org defaulting the other tables get.
+drop trigger if exists training_records_author_trg on public.training_records;
+create trigger training_records_author_trg before insert on public.training_records
+  for each row execute function public.aq_stamp_author();
