@@ -1876,7 +1876,7 @@ language sql stable security definer set search_path = public as $$
     select 1 from public.members
      where user_id = auth.uid()
        and (role in ('owner','admin','quality_manager','director')
-            or coalesce(all_depts,false))
+            or all_departments = true)
   );
 $$;
 
