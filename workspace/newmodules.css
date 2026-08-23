@@ -143,3 +143,37 @@
 .ac-editor{border:1px solid var(--border);border-radius:var(--r-lg);
   padding:clamp(20px,2.6vw,30px);background:var(--bg-elevated);}
 .ac-editor h3{font-size:17px;margin:0 0 16px;}
+
+/* ---------- team: module permissions ---------- */
+.tm-modhint{font-size:12.5px;color:var(--fg-faint);margin:4px 0 8px;line-height:1.55;}
+.tm-modgrid{display:grid;grid-template-columns:repeat(auto-fill,minmax(150px,1fr));gap:6px;}
+.tm-modgrid .tm-check{display:flex;align-items:center;gap:8px;font-size:13.5px;
+  padding:5px 8px;border-radius:var(--r-sm);cursor:pointer;}
+.tm-modgrid .tm-check:hover{background:var(--bg);}
+.tm-modgrid input{flex:none;}
+
+/* ---------- incidents: the response thread ---------- */
+.inc-thread-to{font-size:12px;font-weight:600;text-transform:none;letter-spacing:0;
+  margin-left:8px;padding:2px 9px;border-radius:999px;
+  background:var(--warn-tint);color:var(--warn);}
+.inc-thread-empty{font-size:13.5px;color:var(--fg-faint);margin:6px 0 14px;}
+
+.inc-msg{border-left:2px solid var(--border);padding:8px 0 8px 14px;margin-bottom:14px;}
+.inc-msg-head{display:flex;align-items:baseline;gap:9px;flex-wrap:wrap;margin-bottom:3px;}
+.inc-msg-head b{font-size:14px;color:var(--fg);}
+.inc-msg-dept{font-size:11.5px;text-transform:uppercase;letter-spacing:.05em;
+  color:var(--fg-faint);border:1px solid var(--border);border-radius:999px;padding:1px 8px;}
+.inc-msg-when{font-size:12px;color:var(--fg-faint);margin-left:auto;}
+.inc-msg-body{margin:0;font-size:14.5px;line-height:1.6;color:var(--fg-muted);}
+
+.inc-reply{display:flex;gap:10px;flex-wrap:wrap;align-items:flex-end;margin-top:14px;}
+.inc-reply textarea{flex:1 1 260px;min-width:0;background:var(--bg);
+  border:1px solid var(--border);border-radius:var(--r-sm);padding:11px 13px;
+  color:var(--fg);font:inherit;font-size:14.5px;line-height:1.55;resize:vertical;}
+.inc-reply textarea:focus{outline:2px solid var(--accent-bright);outline-offset:1px;
+  border-color:transparent;}
+@media (max-width:560px){ .inc-reply .btn{flex:1 1 100%;} }
+
+/* ---------- role pills for the two master roles ---------- */
+.role-pill.role-quality_manager,.role-pill.role-director{
+  background:var(--accent-tint,rgba(94,234,212,.16));color:var(--accent-bright);}

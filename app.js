@@ -16,7 +16,11 @@
         { key: "value", href: "value.html", label: "What Your Department Gets" },
       ]
     },
-    { key: "workspace", href: "workspace/start.html", label: "Workspace" },
+    /* "Workspace" described the software; "Enter your hospital" describes what the
+       person is about to do. Everything behind this link is their own hospital's records
+       rather than the public standards library, and the label is the only place that
+       distinction is made before they click. */
+    { key: "workspace", href: "workspace/start.html", label: "Enter your hospital" },
     {
       key: "toolsgroup", label: "Tools", dropdown: [
         { key: "todaysquiz", href: "quiz.html", label: "Today's Quiz" },
@@ -144,7 +148,7 @@
           <div class="footer-col"><h4>Learn</h4>
             <a href="${base}plans.html">Plans &amp; pricing</a><a href="${base}index.html#aqFilmHome" id="aqFilmBtn">Wanna know about AQcredix?</a><a href="${base}value.html">What your department gets</a><a href="${base}standards.html">Standards</a>
             <a href="${base}departments.html">Departments</a>
-            <a href="${base}workspace/start.html">Workspace</a>
+            <a href="${base}workspace/start.html">Enter your hospital</a>
             <a href="${base}clinical-areas.html">Clinical Areas</a>
             <a href="${base}nonclinical-areas.html">Non-Clinical Areas</a>
             <a href="${base}dashboard.html">Quality Dashboard</a>

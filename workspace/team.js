@@ -3,16 +3,41 @@
   "use strict";
   var S = window.AQStore, W = window.AQWorkspace, esc;
 
+  /* TWO ROLES SEE THE WHOLE HOSPITAL, AND ONLY ONE PERSON MAY HOLD EACH.
+     A hospital has one quality manager and one director. Letting several accounts hold
+     either would quietly turn "sees every department" into "everybody sees everything",
+     which is the isolation the hospital was sold. The limit is a unique index in the
+     database — checked here too, but only so the refusal is polite rather than a raw
+     Postgres error. */
   var ROLES = [
-    { k: "owner",  label: "Owner",  desc: "Full control, including billing and removing admins" },
+    { k: "quality_manager", label: "Quality Manager", solo: true,
+      desc: "Sees and edits every department. One per hospital." },
+    { k: "director", label: "Director", solo: true,
+      desc: "Sees and edits every department. One per hospital." },
     { k: "admin",  label: "Admin",  desc: "Manages the team and every record" },
-    { k: "editor", label: "Editor", desc: "Records status, findings and documents" },
-    { k: "viewer", label: "Viewer", desc: "Reads everything, changes nothing" }
+    { k: "editor", label: "Editor", desc: "Records status, findings and documents in their own department" },
+    { k: "viewer", label: "Viewer", desc: "Reads their own department, changes nothing" }
   ];
+
+  /* The parts of the workspace a member may open. Empty means all of it, which is what
+     the two master roles get. Biomedical has no use for Gate Pass; Security has none for
+     the Apex manual. */
+  var MODULES = [
+    ["readiness","Readiness"], ["evidence","Evidence"], ["audits","Internal Audit"],
+    ["incidents","Incidents"], ["calendar","Calendar"], ["register","Register"],
+    ["training","Training"], ["rounds","Rounds"], ["capa","NC & CAPA"],
+    ["library","Forms & Registers"], ["apex","Apex Manual"], ["gatepass","Gate Pass"],
+    ["accreditation","Accreditation"], ["documents","Documents"], ["import","Bulk Import"]
+  ];
+
+  var SEATS = 15;
   var rows = [];
 
   function render() {
-    var seats = (window.AQ_CONFIG || {}).includedSeats || 5;
+    /* Fifteen, and enforced by a trigger in the database rather than by this number —
+       a cap the browser checks is a cap anybody lifts with developer tools, and this one
+       is what a subscription actually buys. */
+    var seats = SEATS;
     var active = rows.filter(function (r) { return r.status !== "removed"; });
 
     document.getElementById("teamStats").innerHTML =
@@ -74,7 +99,7 @@
   }
 
   function openForm(row) {
-    row = row || { role: "editor", status: "invited" };
+    row = row || { role: "editor", status: "invited", modules: [] };
     var m = document.getElementById("teamModal");
     m.innerHTML = '<div class="ws-modal-in"><h3>' + (row.id ? "Edit member" : "Invite member") + "</h3>" +
       '<div class="ws-form">' +
@@ -92,6 +117,30 @@
           W.DEPARTMENTS.map(function (d) {
             return '<option value="' + esc(d) + '"' + (row.department === d ? " selected" : "") + ">" + esc(d) + "</option>";
           }).join("") + "</select></div>" +
+        /* What they are called on the ward. Kept separate from role because a hospital's
+           own words for a job and this software's permission model are different things —
+           "Biomedical Engineer" is a designation, "editor" is what they may change. */
+        '<div class="ws-f ws-f-wide"><label>Designation</label>' +
+          '<input data-k="designation" type="text" placeholder="e.g. Biomedical Engineer, Nursing Superintendent" value="' +
+          esc(row.designation || "") + '"></div>' +
+
+        /* WHICH PARTS OF THE WORKSPACE THIS PERSON OPENS.
+           Department scoping answers "whose records may I see". This answers a different
+           question the hospital actually asks: which sections they need at all. Ticking
+           nothing means everything, so an existing member's access is unchanged until
+           somebody deliberately narrows it — a default that silently locked people out of
+           modules they used yesterday would be the wrong one by a long way. */
+        '<div class="ws-f ws-f-wide tm-modules" id="tmModules"><label>Sections they can open</label>' +
+          '<p class="tm-modhint">Leave all unticked for full access. The Quality Manager ' +
+          "and Director always see everything, whatever is ticked here.</p>" +
+          '<div class="tm-modgrid">' +
+          MODULES.map(function (m) {
+            var on = (row.modules || []).indexOf(m[0]) > -1;
+            return '<label class="tm-check"><input type="checkbox" data-mod="' + m[0] + '"' +
+              (on ? " checked" : "") + "><span>" + esc(m[1]) + "</span></label>";
+          }).join("") +
+          "</div></div>" +
+
         /* The visibility flag, kept apart from role.
            Role says what you may DO; this says what you may SEE. A biomedical editor and
            a biomedical viewer look at the same records and one can change them. Quality
@@ -116,7 +165,35 @@
       m.querySelectorAll("[data-k]").forEach(function (i) {
         data[i.getAttribute("data-k")] = i.type === "checkbox" ? i.checked : i.value;
       });
+      data.modules = [].slice.call(m.querySelectorAll("[data-mod]"))
+        .filter(function (c) { return c.checked; })
+        .map(function (c) { return c.getAttribute("data-mod"); });
+
       if (!data.email) { W.toast("An email address is needed", "bad"); return; }
+
+      /* Refused here as well as by the unique index, so the message is one a person can
+         act on rather than a raw constraint violation. The index is still what makes it
+         true — two browsers saving at the same moment both pass this check. */
+      var solo = ROLES.filter(function (r) { return r.k === data.role && r.solo; })[0];
+      if (solo) {
+        var taken = rows.filter(function (r) {
+          return r.role === data.role && r.id !== data.id && r.status !== "removed";
+        })[0];
+        if (taken) {
+          W.toast("Only one " + solo.label + " per hospital — " +
+                  (taken.name || taken.email) + " holds it. Change theirs first.", "bad");
+          return;
+        }
+      }
+
+      /* The cap, said plainly before the database says it rudely. */
+      if (!data.id) {
+        var used = rows.filter(function (r) { return r.status !== "removed"; }).length;
+        if (used >= SEATS) {
+          W.toast("All " + SEATS + " accounts are in use. Remove someone first.", "bad");
+          return;
+        }
+      }
       /* Refused rather than defaulted. A seat with no department would be invisible to
          the department filter, and the tempting default -- show them everything -- is
          exactly the leak this whole feature exists to prevent. */

@@ -185,6 +185,15 @@
       field("Date & time of occurrence", "f_occurred", "datetime-local", inc.occurred_at ? inc.occurred_at.slice(0, 16) : "", { req: true }) +
       field("Department where it occurred", "f_dept", "text", inc.department, { req: true, ph: "e.g. Emergency" }) +
       field("Specific location", "f_loc", "text", inc.location, { ph: "e.g. Triage bay 2" }) +
+      /* WHO HAS TO ANSWER FOR IT — usually not the department that spotted it.
+         A ward reports a defective infusion pump; biomedical has to reply. Until this
+         field was surfaced, the department that had to act found out at the next meeting,
+         if at all. Tagging it here is what fires the notification. Optional, because
+         somebody filing at 2am should not be blocked by a question they cannot answer;
+         the quality manager can assign it afterwards. */
+      field("Department responsible for responding", "f_rescdept", "text",
+            inc.responsible_department,
+            { ph: "e.g. Biomedical — they will be notified" }) +
       "</div>";
 
     h += '<div class="inc-sub2">Incident occurred to <i class="req">required</i></div><div class="inc-checks">' +
@@ -238,7 +247,8 @@
       // No patient-identifier fields here by design — they exist only as ruled blanks on
       // the printed form, so nothing identifiable reaches the database.
       ["f_details", "details"], ["f_immediate", "immediate_action"],
-      ["f_witness", "witnesses"], ["f_rname", "reporter_name"], ["f_rdept", "reporter_dept"]];
+      ["f_witness", "witnesses"], ["f_rname", "reporter_name"], ["f_rdept", "reporter_dept"],
+      ["f_rescdept", "responsible_department"]];
     map.forEach(function (m) {
       var n = el(m[0]);
       if (!n) return;
@@ -318,6 +328,77 @@
     current = I.hydrate(r);
     renderDetail();
     view("incDetail");
+  }
+
+  /* ------------------------------------------------------------------ *
+   * Incident replies.
+   *
+   * A separate table rather than another field on the incident, because a reply is
+   * written by a different person at a different moment — appending to a JSON blob means
+   * two people answering at once lose one of the answers.
+   * ------------------------------------------------------------------ */
+  /* Line breaks a person typed are meaningful in a reply; without this a three-paragraph
+     answer arrives as one run-on sentence. */
+  function nl2br(t) { return String(t).split("\n").join("<br>"); }
+
+  function wireThread(inc) {
+    var S = window.AQStore, W = window.AQWorkspace;
+    var box = el("incThread");
+    if (!box || !S || !S.adapter) return;
+
+    function draw(list) {
+      if (!list.length) {
+        box.innerHTML = '<p class="inc-thread-empty">No replies yet' +
+          (inc.responsible_department
+            ? " — " + esc(inc.responsible_department) + " has been notified."
+            : ".") + "</p>";
+        return;
+      }
+      box.innerHTML = list
+        .sort(function (a, b) { return new Date(a.created_at) - new Date(b.created_at); })
+        .map(function (r) {
+          return '<div class="inc-msg"><div class="inc-msg-head"><b>' +
+            esc(r.author_name || "—") + "</b>" +
+            (r.author_dept ? '<span class="inc-msg-dept">' + esc(r.author_dept) + "</span>" : "") +
+            '<span class="inc-msg-when">' + I.fmtDateTime(r.created_at) + "</span></div>" +
+            '<p class="inc-msg-body">' + nl2br(esc(r.body)) + "</p></div>";
+        }).join("");
+    }
+
+    function load() {
+      S.adapter.list("incident_replies")
+        .then(function (all) {
+          draw((all || []).filter(function (r) { return r.incident_id === inc.id; }));
+        })
+        .catch(function () {
+          /* Said plainly rather than shown as an empty thread, which would read as "nobody
+             has answered" when the truth is "we could not ask". */
+          box.innerHTML = '<p class="inc-thread-empty">Replies could not be loaded.</p>';
+        });
+    }
+
+    var send = el("incReplySend");
+    if (send) send.addEventListener("click", function () {
+      var ta = el("incReplyBody");
+      var body = (ta.value || "").trim();
+      if (!body) return;
+      send.disabled = true;
+      var me = (W && W.user) || {};
+      S.adapter.put("incident_replies", {
+        id: "rep_" + Math.random().toString(36).slice(2, 11),
+        incident_id: inc.id,
+        author_name: me.name || me.email || "—",
+        author_dept: me.department || null,
+        body: body
+      }).then(function () {
+        ta.value = ""; send.disabled = false; load();
+      }).catch(function (e) {
+        send.disabled = false;
+        if (W && W.toast) W.toast("Could not send: " + (e && e.message || e), "bad");
+      });
+    });
+
+    load();
   }
 
   function renderDetail() {
@@ -404,7 +485,25 @@
         : '<div class="inc-note ok">All closure requirements are met.</div>') +
       "</div>";
 
+    /* THE THREAD. An incident is raised by one department about another, and until now
+       the answer happened in a corridor. This is where the tagged department replies, in
+       writing, against the incident it belongs to.
+
+       Readable by the whole hospital rather than only the two parties: an exchange the
+       quality manager cannot see is one nobody learns from, and learning from incidents
+       is the entire point of reporting them. */
+    h += '<div class="inc-card no-print" id="incThreadCard"><h3>Response' +
+      (inc.responsible_department
+        ? ' <span class="inc-thread-to">' + esc(inc.responsible_department) + " to answer</span>"
+        : "") + "</h3>" +
+      '<div id="incThread"><p class="inc-thread-empty">Loading…</p></div>' +
+      '<div class="inc-reply"><textarea id="incReplyBody" rows="3" ' +
+        'placeholder="Reply to this incident…"></textarea>' +
+        '<button type="button" class="btn btn-accent" id="incReplySend">Send reply</button>' +
+      "</div></div>";
+
     el("incDetailBody").innerHTML = h;
+    wireThread(inc);
 
     // wiring
     [["a_rca", "root_cause"], ["a_ca", "corrective"], ["a_pa", "preventive"]].forEach(function (m) {

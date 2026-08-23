@@ -1784,3 +1784,310 @@ create policy accreditation_write on public.accreditation
 drop trigger if exists training_records_author_trg on public.training_records;
 create trigger training_records_author_trg before insert on public.training_records
   for each row execute function public.aq_stamp_author();
+
+-- ############################################################################
+-- ONE HOSPITAL, FIFTEEN ACCOUNTS — AND A PAYWALL THE DATABASE ENFORCES
+--
+-- Four things, added together because they only make sense together:
+--   1. has_access()  — a subscription now gates DATA, not just the screen
+--   2. a seat cap    — fifteen accounts per hospital, enforced by a trigger
+--   3. two masters   — exactly one Quality Manager and one Director per hospital
+--   4. per-module    — Biomedical does not open Gate Pass; Security does not open Apex
+-- ############################################################################
+
+-- ---------------------------------------------------------------------------
+-- 1. THE PAYWALL MOVES INTO THE DATABASE. This was a real hole.
+--
+-- Every policy read `org_id = my_org()` and NOT ONE mentioned a subscription. The paywall
+-- lived entirely in page-gate.js — that is, in the browser. So a hospital whose
+-- subscription lapsed kept a valid token and a members row, and while the screen was
+-- blocked, the REST API was not: anyone able to open developer tools could read and write
+-- their hospital's data indefinitely without paying. With fifteen accounts to a
+-- subscription that stops being a curiosity and becomes the business model leaking.
+--
+-- has_access() is true when the caller is the platform owner, holds complimentary access,
+-- or belongs to a hospital where SOMEBODY holds a live subscription. The last clause is
+-- the important one: the subscription belongs to the HOSPITAL, so a nurse who never paid
+-- is admitted because her quality manager did, and is shut out the day that lapses.
+-- ---------------------------------------------------------------------------
+create or replace function public.has_access() returns boolean
+language sql stable security definer set search_path = public, auth as $$
+  select
+    public.aq_is_owner()
+    or public.aq_is_comp()
+    or exists (
+      select 1
+        from public.subscriptions s
+        join public.members m on m.org_id = public.my_org()
+       where s.status = 'active'
+         and s.expires_at > now()
+         and (s.user_id = m.user_id
+              or public.aq_norm_email(s.email) = public.aq_norm_email(m.email))
+    );
+$$;
+grant execute on function public.has_access() to anon, authenticated;
+
+-- ---------------------------------------------------------------------------
+-- 2. FIFTEEN SEATS. Enforced by a trigger rather than by the browser, because a limit
+-- the client checks is a limit anybody can lift with developer tools — and this one is
+-- what a subscription actually buys.
+--
+-- Counted on INSERT only. An existing row being edited must never be refused for a cap
+-- it is already inside; that would strand a hospital that somehow got to sixteen, unable
+-- to fix any of them.
+-- ---------------------------------------------------------------------------
+create or replace function public.aq_seat_cap() returns trigger
+language plpgsql security definer set search_path = public as $$
+declare used int; cap int := 15;
+begin
+  select count(*) into used
+    from public.members
+   where org_id = new.org_id and coalesce(status,'active') <> 'removed';
+  if used >= cap then
+    raise exception 'AQ_SEATS: this subscription covers % accounts and all of them are in use. Remove someone first, or contact AQcredix.', cap
+      using errcode = 'check_violation';
+  end if;
+  return new;
+end; $$;
+
+drop trigger if exists members_seat_cap_trg on public.members;
+create trigger members_seat_cap_trg before insert on public.members
+  for each row execute function public.aq_seat_cap();
+
+-- ---------------------------------------------------------------------------
+-- 3. EXACTLY ONE QUALITY MANAGER AND ONE DIRECTOR.
+--
+-- These two roles see every department, so "how many people hold them" is the whole
+-- access model. A unique index is used rather than an application check because two
+-- browsers saving at the same moment would both pass a check and both write; an index
+-- refuses the second one whatever the timing.
+-- ---------------------------------------------------------------------------
+alter table public.members add column if not exists designation text;
+
+create unique index if not exists members_one_qm_idx
+  on public.members (org_id) where role = 'quality_manager';
+create unique index if not exists members_one_director_idx
+  on public.members (org_id) where role = 'director';
+
+-- Both roles see everything, so they join the list sees_all_depts() already honours.
+create or replace function public.sees_all_depts() returns boolean
+language sql stable security definer set search_path = public as $$
+  select exists (
+    select 1 from public.members
+     where user_id = auth.uid()
+       and (role in ('owner','admin','quality_manager','director')
+            or coalesce(all_depts,false))
+  );
+$$;
+
+create or replace function public.is_admin() returns boolean
+language sql stable security definer set search_path = public as $$
+  select exists (
+    select 1 from public.members
+     where user_id = auth.uid()
+       and role in ('owner','admin','quality_manager','director')
+  );
+$$;
+
+create or replace function public.can_edit() returns boolean
+language sql stable security definer set search_path = public as $$
+  select exists (
+    select 1 from public.members
+     where user_id = auth.uid()
+       and role in ('owner','admin','quality_manager','director','editor')
+  );
+$$;
+
+-- ---------------------------------------------------------------------------
+-- 4. PER-MODULE PERMISSION.
+--
+-- Department scoping already answers "whose records may I see". This answers a different
+-- question the hospital actually asked: which PARTS of the workspace this person opens at
+-- all. Biomedical has no use for Gate Pass; Security has none for the Apex manual.
+--
+-- An empty list means everything, which is what the two master roles get and what an
+-- existing member keeps — so adding this column changes nobody's access until somebody
+-- deliberately narrows it. A migration that silently locked people out of modules they
+-- were using yesterday would be the wrong default by a long way.
+-- ---------------------------------------------------------------------------
+alter table public.members add column if not exists modules text[];
+
+create or replace function public.can_open(module_key text) returns boolean
+language sql stable security definer set search_path = public as $$
+  select exists (
+    select 1 from public.members
+     where user_id = auth.uid()
+       and (role in ('owner','admin','quality_manager','director')
+            or modules is null
+            or cardinality(modules) = 0
+            or module_key = any(modules))
+  );
+$$;
+grant execute on function public.can_open(text) to anon, authenticated;
+
+-- ---------------------------------------------------------------------------
+-- 5. APPLYING has_access() TO EVERY TABLE.
+--
+-- Rewritten in a loop rather than by hand, thirty-nine times over. A hand-written list is
+-- a list somebody adds a table to and forgets, and the forgotten one is the one that leaks.
+--
+-- WHAT IS DELIBERATELY LEFT OPEN. `members`, `orgs` and `subscriptions` keep reading
+-- without a subscription check. Otherwise a hospital whose subscription lapsed could not
+-- open the page it needs in order to renew — my_org() itself reads members, so gating it
+-- would leave the whole system unable to answer "who are you", including for the person
+-- trying to pay. None of those three holds hospital records; they hold who and whether,
+-- which is exactly what a renewal screen is made of.
+-- ---------------------------------------------------------------------------
+do $$
+declare t text;
+begin
+  -- Org-wide tables: visible to the whole hospital, now only while it is paid up.
+  foreach t in array array['elements','document_versions','audits','incidents',
+                        'committees','committee_meetings',
+                        'asset_schedules','asset_events','checklist_items','rounds',
+                        'notifications','onboarding','attachments','apex_manual',
+                        'training_records','accreditation'] loop
+    execute format('drop policy if exists %I_read on public.%I', t, t);
+    execute format(
+      'create policy %I_read on public.%I for select
+         using (org_id = public.my_org() and public.has_access())', t, t);
+
+    execute format('drop policy if exists %I_write on public.%I', t, t);
+    execute format(
+      'create policy %I_write on public.%I for all
+         using (org_id = public.my_org() and public.has_access() and public.can_edit())
+         with check (org_id = public.my_org() and public.has_access() and public.can_edit())', t, t);
+  end loop;
+
+  -- Department-scoped tables: the same, plus the department wall that was already there.
+  foreach t in array array['capa','documents','compliance_tasks',
+                        'assets','checklists','gate_passes'] loop
+    execute format('drop policy if exists %I_read on public.%I', t, t);
+    execute format(
+      'create policy %I_read on public.%I for select
+         using (org_id = public.my_org() and public.has_access()
+                and public.dept_visible(department))', t, t);
+
+    execute format('drop policy if exists %I_write on public.%I', t, t);
+    execute format(
+      'create policy %I_write on public.%I for all
+         using (org_id = public.my_org() and public.has_access()
+                and public.dept_visible(department) and public.can_edit())
+         with check (org_id = public.my_org() and public.has_access()
+                and public.dept_visible(department) and public.can_edit())', t, t);
+  end loop;
+end $$;
+
+-- ############################################################################
+-- INCIDENTS: TAG A DEPARTMENT, TELL THEM, LET THEM ANSWER
+--
+-- An incident is raised BY one department and is usually ABOUT another. Until now the
+-- responsible department was a column nobody was told about — the ward filed a report and
+-- the department that had to act on it found out at the next meeting, if at all.
+-- ############################################################################
+
+-- Where the conversation happens. Separate from incidents.payload because a reply is
+-- appended by a different person at a different time, and rewriting a JSON blob to add one
+-- reply means two people answering at once lose one of the answers.
+create table if not exists public.incident_replies (
+  id           text primary key,
+  org_id       uuid references public.orgs(id) on delete cascade,
+  incident_id  text not null references public.incidents(id) on delete cascade,
+  author_id    uuid,
+  author_name  text,
+  author_dept  text,
+  body         text not null,
+  created_at   timestamptz not null default now()
+);
+create index if not exists incident_replies_idx
+  on public.incident_replies (org_id, incident_id, created_at);
+
+alter table public.incident_replies enable row level security;
+
+-- Readable by the whole hospital, like the incident it belongs to. A conversation only its
+-- two parties can see is one the quality manager cannot learn from, and learning from them
+-- is the entire point of reporting.
+drop policy if exists incident_replies_read on public.incident_replies;
+create policy incident_replies_read on public.incident_replies
+  for select using (org_id = public.my_org() and public.has_access());
+
+drop policy if exists incident_replies_write on public.incident_replies;
+create policy incident_replies_write on public.incident_replies
+  for all using (org_id = public.my_org() and public.has_access() and public.can_edit())
+      with check (org_id = public.my_org() and public.has_access() and public.can_edit());
+
+drop trigger if exists incident_replies_author_trg on public.incident_replies;
+create trigger incident_replies_author_trg before insert on public.incident_replies
+  for each row execute function public.aq_stamp_author();
+
+-- ---------------------------------------------------------------------------
+-- Telling the tagged department. Addressed to the DEPARTMENT rather than to a person,
+-- because whoever should answer may be on leave and the incident still needs answering.
+-- ---------------------------------------------------------------------------
+create or replace function public.aq_notify_incident() returns trigger
+language plpgsql security definer set search_path = public as $$
+begin
+  if new.responsible_department is null then return new; end if;
+  -- Only when newly tagged, or re-tagged to somebody else. Editing the narrative of an
+  -- incident must not re-notify a department that already knows about it.
+  if tg_op = 'UPDATE'
+     and old.responsible_department is not distinct from new.responsible_department then
+    return new;
+  end if;
+
+  insert into public.notifications (id, org_id, kind, title, body, href, department)
+  values ('ntf_' || replace(gen_random_uuid()::text, '-', ''), new.org_id, 'finding',
+          'An incident needs your response',
+          coalesce(new.reference, 'An incident') || ' has been assigned to ' ||
+            new.responsible_department ||
+            coalesce(' by ' || new.department, '') || '.',
+          'incidents.html?id=' || new.id,
+          new.responsible_department);
+  return new;
+end; $$;
+
+drop trigger if exists incidents_notify_trg on public.incidents;
+create trigger incidents_notify_trg after insert or update on public.incidents
+  for each row execute function public.aq_notify_incident();
+
+-- ---------------------------------------------------------------------------
+-- Telling a department that one of the two masters changed its record.
+--
+-- The Quality Manager and the Director can edit anything, which is right — but a
+-- department finding its own gate pass altered with no idea by whom is how trust in a
+-- shared system dies. Every such edit now leaves a notice naming who made it.
+--
+-- Fires only when the editor sees all departments AND the record belongs to a different
+-- one, so a department editing its own records stays quiet.
+-- ---------------------------------------------------------------------------
+create or replace function public.aq_notify_master_edit() returns trigger
+language plpgsql security definer set search_path = public as $$
+declare who text; mydept text;
+begin
+  if new.department is null then return new; end if;
+  select m.name, m.department into who, mydept
+    from public.members m where m.user_id = auth.uid() limit 1;
+  if who is null then return new; end if;
+  if not public.sees_all_depts() then return new; end if;
+  if mydept is not distinct from new.department then return new; end if;
+
+  insert into public.notifications (id, org_id, kind, title, body, href, department)
+  values ('ntf_' || replace(gen_random_uuid()::text, '-', ''), new.org_id, 'system',
+          'A record in your department was changed',
+          who || coalesce(' (' || mydept || ')', '') || ' edited a ' || tg_table_name ||
+            ' record belonging to ' || new.department || '.',
+          tg_table_name || '.html', new.department);
+  return new;
+end; $$;
+
+do $$
+declare t text;
+begin
+  foreach t in array array['gate_passes','assets','capa','documents',
+                        'checklists','compliance_tasks'] loop
+    execute format('drop trigger if exists %I_master_edit_trg on public.%I', t, t);
+    execute format(
+      'create trigger %I_master_edit_trg after update on public.%I
+         for each row execute function public.aq_notify_master_edit()', t, t);
+  end loop;
+end $$;

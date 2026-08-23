@@ -261,8 +261,8 @@ window.AQPaywall = (function () {
       "• Produces the evidence exports an assessor asks for, in one press.\n\n" +
       "Cost\n" +
       B.rupees(plan.inr) + " " + (plan.months > 1 ? "per year" : "per month") +
-      " per person, for one account with access to every department and every " +
-      "feature listed above.\n" +
+      " for the hospital — up to 15 accounts, one per department, with no " +
+      "per-user charge beyond that.\n" +
       (B.CFG.introductory
         ? "This is an introductory rate. The standard price will be " +
           B.rupees(B.CFG.standardMonthlyInr || 399900) +

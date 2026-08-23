@@ -84,6 +84,26 @@
       W._tt = setTimeout(function () { t.className = "ws-toast"; }, 2600);
     },
 
+    /* WHICH SECTIONS THIS PERSON MAY OPEN.
+     *
+     * Mirrors can_open() in the database, and is presentation only — the policies are what
+     * actually stop a biomedical account reading a gate pass, and they are enforced
+     * whatever this returns. Hiding the tab is a courtesy: a menu full of links that
+     * answer "not permitted" teaches people the software is broken.
+     *
+     * An empty or absent list means everything, so nobody's access narrows until an admin
+     * deliberately narrows it. The two master roles ignore the list entirely. */
+    canOpen: function (key) {
+      var u = W.user;
+      if (!u) return true;
+      if (["owner", "admin", "quality_manager", "director"].indexOf(u.role) > -1) return true;
+      var mods = u.modules;
+      if (!mods || !mods.length) return true;
+      /* Start is the way back to everything else, so it is never hidden. */
+      if (key === "start" || key === "dashboard") return true;
+      return mods.indexOf(key) > -1;
+    },
+
     /* ---------- sub-navigation ---------- */
     renderNav: function (activeKey) {
       var el = document.getElementById("wsNav");
@@ -99,8 +119,10 @@
               // Owner-only tabs are hidden from everyone else. This is presentation, not
               // security — access.html enforces it again server-side via RLS, because a
               // hidden link is not a locked door.
-              if (!p.ownerOnly) return true;
-              return window.AQBilling && window.AQBilling.isOwner(W.user);
+              if (p.ownerOnly) {
+                return window.AQBilling && window.AQBilling.isOwner(W.user);
+              }
+              return W.canOpen(p.key);
             }).map(function (p) {
               return '<a href="' + p.href + '" class="ws-nav-link' +
                 (p.key === activeKey ? " active" : "") + '">' + esc(p.label) + "</a>";
