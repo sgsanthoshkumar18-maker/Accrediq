@@ -134,6 +134,15 @@
           "</div>" +
         "</div>";
 
+      /* The row scrolls sideways on a phone, so the tab for the page you are on can sit
+         off the right edge. Bringing it into view is the difference between a menu and a
+         menu you can orient yourself in. Harmless on a wide screen, where nothing
+         overflows and there is nothing to scroll. */
+      var act = el.querySelector(".ws-nav-link.active");
+      if (act && act.scrollIntoView) {
+        try { act.scrollIntoView({ inline: "center", block: "nearest" }); } catch (e) {}
+      }
+
       var so = document.getElementById("wsSignOut");
       if (so) so.addEventListener("click", async function () {
         await S.signOut();

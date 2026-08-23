@@ -1038,7 +1038,12 @@ a:focus-visible,button:focus-visible,input:focus-visible,select:focus-visible,te
    the host box, so the same component fills a 90px hero slot and a 380px About panel
    without a single hardcoded pixel.
    ============================================================ */
-.aq-orbit{--aqo-in:15px;--aqo-out:17px;--aqo-ring-dim:var(--border);position:relative;display:block;aspect-ratio:1;}
+/* overflow:clip because the orbiting arms are drawn on a square slightly larger than the
+   ring so the icons sit ON the line rather than inside it. At 375px that square is 396px
+   wide, which pushed the page 3px sideways — the small horizontal wobble that makes a
+   site feel unfinished on a phone. The arms are decoration; clipping them costs nothing
+   and the page stops moving. clip rather than hidden so no scroll container is created. */
+.aq-orbit{--aqo-in:15px;--aqo-out:17px;--aqo-ring-dim:var(--border);position:relative;display:block;aspect-ratio:1;overflow:clip;}
 .hero .aq-orbit,.acc-band .aq-orbit{--aqo-ring-dim:rgba(255,255,255,.22);}
 .aqo-stage{position:absolute;inset:0;display:block;}
 
