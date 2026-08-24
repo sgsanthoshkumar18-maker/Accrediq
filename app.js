@@ -16,11 +16,13 @@
         { key: "value", href: "value.html", label: "What Your Department Gets" },
       ]
     },
-    /* "Workspace" described the software; "Enter your hospital" describes what the
-       person is about to do. Everything behind this link is their own hospital's records
-       rather than the public standards library, and the label is the only place that
-       distinction is made before they click. */
-    { key: "workspace", href: "workspace/start.html", label: "Enter your hospital" },
+    /* "Enter your hospital" is NOT in this list any more, though it was, and the label is
+       still the right one — it describes what the person is about to do rather than naming
+       the software. The problem was the shape: three words among single-word items, in a
+       nav that lays out horizontally, so it wrapped onto three stacked lines and dragged
+       the whole bar out of true. It is now a button in the actions group to the right,
+       where a multi-word label is normal, plus a prominent one on the home page. It also
+       remains in the mobile nav and the footer, so it is reachable from every page. */
     {
       key: "toolsgroup", label: "Tools", dropdown: [
         { key: "todaysquiz", href: "quiz.html", label: "Today's Quiz" },
@@ -109,12 +111,16 @@
         <a href="${base}index.html" class="brand brand-nomark">
           <span class="brand-stack">AQcredix<span class="full-name">Accreditation &amp; Quality Implementation Guidance Platform</span></span>
         </a>
-        <nav class="main-nav" id="mainNav">${links}<a href="${base}dashboard.html" class="nav-mobile-only">Quality Dashboard</a></nav>
+        <nav class="main-nav" id="mainNav">${links}<a href="${base}workspace/start.html" class="nav-workspace-menu">Enter your hospital</a><a href="${base}dashboard.html" class="nav-mobile-only">Quality Dashboard</a></nav>
         <div class="nav-actions">
           <button type="button" class="aq-search-btn" id="aqSearchBtn" aria-label="Search the site">
             <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="11" cy="11" r="7"/><path d="M21 21l-4.3-4.3" stroke-linecap="round"/></svg>
             <span>Search</span><kbd>Ctrl K</kbd>
           </button>
+          <!-- Secondary to the dashboard, not equal to it: two filled buttons side by side
+               argue with each other and neither reads as the main action. Hidden on narrow
+               screens by nav-wide-only, where the mobile nav carries it instead. -->
+          <a class="btn btn-ghost btn-sm nav-wide-only" href="${base}workspace/start.html">Enter your hospital</a>
           <a class="btn btn-primary btn-sm" href="${base}dashboard.html">Quality Dashboard</a>
           <a class="profile-btn" id="profileBtn" href="${base}profile.html" aria-label="My progress and subscription" title="My progress">
             <svg width="17" height="17" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="8" r="3.6"/><path d="M4.8 20a7.2 7.2 0 0 1 14.4 0"/></svg>

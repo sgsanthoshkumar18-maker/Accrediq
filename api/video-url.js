@@ -36,6 +36,10 @@ const crypto = require("crypto");
 
 const SB_URL = process.env.SUPABASE_URL;
 const SB_ANON = process.env.SUPABASE_ANON_KEY;
+/* Either spelling: the live deployment was set up with SUPABASE_SERVICE_KEY before the
+   longer name became the convention, and payments once broke for a week over exactly this. */
+const SB_SERVICE = process.env.SUPABASE_SERVICE_ROLE_KEY || process.env.SUPABASE_SERVICE_KEY;
+const OWNER = (process.env.OWNER_EMAIL || "").trim().toLowerCase();
 
 const R2_ACCOUNT = process.env.R2_ACCOUNT_ID;
 const R2_BUCKET = process.env.R2_BUCKET;
@@ -129,20 +133,83 @@ function presign(bucket, key) {
   });
 }
 
-/* Asked of the database rather than taken from the request. has_access() reads the caller's
-   identity from the token itself, so a browser cannot claim to have paid. */
-async function callerHasAccess(token) {
-  const r = await fetch(SB_URL + "/rest/v1/rpc/has_access", {
-    method: "POST",
-    headers: {
-      apikey: SB_ANON,
-      Authorization: "Bearer " + token,
-      "Content-Type": "application/json"
-    },
-    body: "{}"
-  });
-  if (!r.ok) return false;
-  return (await r.json()) === true;
+/* Gmail ignores dots and anything after a + in the local part, so one mailbox has many
+   spellings. Same normalisation grant.js uses, so an address granted there matches here. */
+function normalise(raw) {
+  const e = String(raw || "").trim().toLowerCase();
+  const at = e.lastIndexOf("@");
+  if (at < 1) return e;
+  let local = e.slice(0, at), domain = e.slice(at + 1);
+  const plus = local.indexOf("+");
+  if (plus > -1) local = local.slice(0, plus);
+  if (domain === "gmail.com" || domain === "googlemail.com") local = local.split(".").join("");
+  return local + "@" + domain;
+}
+
+/* Who is this token, really? Asked of Supabase rather than read from the request, which
+   would let anyone claim any address by typing it. */
+async function emailOf(token) {
+  try {
+    const r = await fetch(SB_URL + "/auth/v1/user", {
+      headers: { apikey: SB_SERVICE || SB_ANON, Authorization: "Bearer " + token }
+    });
+    if (!r.ok) return null;
+    const u = await r.json();
+    return u && u.email ? String(u.email) : null;
+  } catch (e) { return null; }
+}
+
+/* The same table the owner's grant page writes to. Read here directly rather than through
+   has_access(), so that a complimentary account keeps working even if the rest of the
+   subscription schema has not been applied to this database yet. */
+async function isComplimentary(email) {
+  if (!SB_SERVICE) return false;
+  try {
+    const r = await fetch(SB_URL + "/rest/v1/complimentary_access?select=email", {
+      headers: { apikey: SB_SERVICE, Authorization: "Bearer " + SB_SERVICE }
+    });
+    if (!r.ok) return false;
+    const rows = await r.json();
+    const want = normalise(email);
+    return Array.isArray(rows) && rows.some(function (row) {
+      return normalise(row && row.email) === want;
+    });
+  } catch (e) { return false; }
+}
+
+/* The general rule for everybody else: does this person's hospital hold a live
+   subscription? has_access() reads the caller's identity from the token itself, so a
+   browser cannot claim to have paid.
+
+   Returns true, false, or null — and null is the point. Before, any failure of this call
+   was read as "no", so a missing function or an unreachable database was shown to a paying
+   customer as "this needs a subscription". A broken check and a genuine refusal are not
+   the same answer and must not produce the same sentence. */
+async function subscriptionSaysYes(token) {
+  let r;
+  try {
+    r = await fetch(SB_URL + "/rest/v1/rpc/has_access", {
+      method: "POST",
+      headers: {
+        apikey: SB_ANON,
+        Authorization: "Bearer " + token,
+        "Content-Type": "application/json"
+      },
+      body: "{}"
+    });
+  } catch (e) {
+    console.error("video-url: has_access() unreachable", e);
+    return null;
+  }
+  if (!r.ok) {
+    /* 404 here means the function is not in this database — the subscription block of
+       workspace/schema.sql has not been run. That is a deployment fault, not a refusal. */
+    console.error("video-url: has_access() returned " + r.status +
+                  (r.status === 404 ? " — the function is missing; run the subscription "
+                                    + "block of workspace/schema.sql" : ""));
+    return null;
+  }
+  try { return (await r.json()) === true; } catch (e) { return null; }
 }
 
 module.exports = async function handler(req, res) {
@@ -168,13 +235,27 @@ module.exports = async function handler(req, res) {
   const key = safeKey(req.query && req.query.key);
   if (!key) return res.status(400).json({ error: "bad video name" });
 
-  let allowed = false;
-  try {
-    allowed = await callerHasAccess(token);
-  } catch (e) {
-    console.error("video-url: access check failed", e);
-    return res.status(503).json({ error: "could not check your subscription" });
+  /* Three ways in, checked cheapest and most certain first. The owner and the
+     complimentary accounts are settled without touching the subscription machinery at all,
+     so neither can be locked out of their own videos by a schema that has not been applied
+     or a subscription table that is empty. */
+  const email = await emailOf(token);
+  if (!email) return res.status(401).json({ error: "sign in to watch this" });
+
+  let allowed = (OWNER && normalise(email) === normalise(OWNER)) ||
+                (await isComplimentary(email));
+
+  if (!allowed) {
+    const answer = await subscriptionSaysYes(token);
+    if (answer === null) {
+      /* The check itself failed. Say so, rather than telling a paying customer to go and
+         pay again — which is what the previous version did, and is both wrong and the
+         kind of wrong that loses a subscriber. */
+      return res.status(503).json({ error: "we could not check your subscription just now" });
+    }
+    allowed = answer;
   }
+
   if (!allowed) return res.status(403).json({ error: "this needs a subscription" });
 
   /* Never cached by a proxy on the way back: the link inside is personal and timed, and a

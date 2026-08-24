@@ -460,6 +460,19 @@ p{margin:0 0 0;}
 @media (max-width:640px){
   .nav-mobile-only{display:flex;color:var(--brand-2);font-weight:600;}
 }
+/* "Enter your hospital" is three words in a bar that is already full. Measured: the button
+   adds 162px to the actions group, which then needs a 1319px viewport — below that the
+   header overflows and the whole page scrolls sideways, which is the single most obvious
+   way a site looks broken. So it appears in the header only where it genuinely fits, and
+   in the drop-down menu below 980px where the panel is vertical and width costs nothing.
+   Between the two it is reached from the home page and the footer. */
+.nav-wide-only{display:none;}
+@media (min-width:1360px){ .nav-wide-only{display:inline-flex;} }
+
+.nav-workspace-menu{display:none;}
+@media (max-width:980px){
+  .nav-workspace-menu{display:flex;color:var(--brand-2);font-weight:600;}
+}
 
 @media (max-width:980px){
   /* Anchored to the header with position:absolute, NOT fixed.
@@ -570,6 +583,14 @@ p{margin:0 0 0;}
 
 .hero .lead{color:rgba(255,255,255,.72);}
 .hero-cta{display:flex;gap:12px;margin-top:30px;flex-wrap:wrap;}
+/* The workspace entry, under the figures. Wraps to its own line on a phone rather than
+   squeezing the note against the button, and the note drops away entirely there — it is
+   reassurance for someone deciding, not instruction, and it is not worth a line of its own
+   on a small screen. */
+.hero-workspace{display:flex;align-items:center;gap:16px;flex-wrap:wrap;margin-top:30px;}
+.hero-workspace-note{font-size:12.5px;line-height:1.5;color:rgba(255,255,255,.56);max-width:34ch;}
+@media (max-width:720px){ .hero-workspace-note{display:none;} }
+
 .hero-meta{display:flex;gap:30px;margin-top:44px;flex-wrap:wrap;}
 .hero-meta .n{display:block;font-family:var(--font-display);font-size:30px;font-weight:700;color:var(--accent-bright);}
 .hero-meta .l{display:block;font-size:12.5px;color:rgba(255,255,255,.56);margin-top:2px;}

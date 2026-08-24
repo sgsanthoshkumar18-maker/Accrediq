@@ -98,8 +98,44 @@
         : '<p class="ws-auth-msg">Roles are enforced by row-level security in the database, so a viewer cannot write records even by calling the API directly.</p>');
   }
 
+  /* Same normalisation the server uses, so "A.Nair+ward@gmail.com" and "anair@gmail.com"
+     are recognised as one mailbox on both sides and an edit that only changes the spelling
+     does not trigger a fresh account check. */
+  function normalise(raw) {
+    var e = String(raw || "").trim().toLowerCase();
+    var at = e.lastIndexOf("@");
+    if (at < 1) return e;
+    var local = e.slice(0, at), domain = e.slice(at + 1);
+    var plus = local.indexOf("+");
+    if (plus > -1) local = local.slice(0, plus);
+    if (domain === "gmail.com" || domain === "googlemail.com") local = local.split(".").join("");
+    return local + "@" + domain;
+  }
+
+  /* "here" | "missing" | "unknown" — three answers, not two. Treating a failed check as
+     "missing" would tell a Quality Manager their colleague has no account when in fact we
+     simply could not reach the server, and they would go and chase that person for
+     nothing. In local mode there is no server and no second user, so nothing to check. */
+  async function accountCheck(email) {
+    if (S.mode === "local") return "here";
+    var s = null;
+    try { s = JSON.parse(localStorage.getItem("aq-sb-session") || "null"); } catch (e) {}
+    if (!s || !s.access_token) return "unknown";
+    try {
+      var r = await fetch("/api/account-exists?email=" + encodeURIComponent(email), {
+        headers: { Authorization: "Bearer " + s.access_token }
+      });
+      if (!r.ok) return "unknown";
+      var j = await r.json();
+      return j && j.exists === true ? "here" : "missing";
+    } catch (e) { return "unknown"; }
+  }
+
+  var originalEmail = "";
+
   function openForm(row) {
     row = row || { role: "editor", status: "invited", modules: [] };
+    originalEmail = row.email || "";       // so an edit that leaves the address alone is not re-checked
     var m = document.getElementById("teamModal");
     m.innerHTML = '<div class="ws-modal-in"><h3>' + (row.id ? "Edit member" : "Invite member") + "</h3>" +
       '<div class="ws-form">' +
@@ -154,7 +190,10 @@
           "see everything.</small></span></label></div>" +
       "</div>" +
       (S.mode === "supabase"
-        ? '<p class="ws-auth-msg">This records the seat. The person still needs to create an account with the same email address — sending the invitation email itself needs a server-side function, which is noted in the setup guide.</p>'
+        /* Says the requirement BEFORE they fill the form in, not only when the save is
+           refused. Being told the order of operations up front is guidance; being told it
+           after typing six fields is a telling-off. */
+        ? '<p class="ws-auth-msg">The person must already have an AQcredix account under this exact email address. Ask them to sign up first — the seat is then matched to them the next time they sign in.</p>'
         : "") +
       '<div class="ws-modal-actions"><button type="button" class="btn btn-ghost" id="tmCancel">Cancel</button>' +
       '<button type="button" class="btn btn-accent" id="tmSave">Save</button></div></div>';
@@ -198,6 +237,26 @@
          the department filter, and the tempting default -- show them everything -- is
          exactly the leak this whole feature exists to prevent. */
       if (!data.department) { W.toast("Choose a department for this person", "bad"); return; }
+
+      /* A seat is matched to a person when they sign in with this address. Creating one
+         for an address that has never signed up saves a row, says "Saved", and does
+         nothing — the colleague is never let in and nobody finds out for weeks. So the
+         account is confirmed to exist first, and only when the address is new to this
+         hospital: an existing seat being edited has already been through this. */
+      if (!data.id || normalise(data.email) !== normalise(originalEmail)) {
+        var check = await accountCheck(data.email);
+        if (check === "missing") {
+          W.toast(data.email + " has not created an AQcredix account yet. Ask them to sign " +
+                  "up with this exact address first, then add them here.", "bad");
+          return;
+        }
+        if (check === "unknown") {
+          W.toast("We could not confirm that account just now. Please try again in a moment.",
+                  "bad");
+          return;
+        }
+      }
+
       var saved = await S.saveMember(data);
       var i = rows.findIndex(function (r) { return r.id === saved.id; });
       if (i >= 0) rows[i] = saved; else rows.push(saved);

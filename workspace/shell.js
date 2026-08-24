@@ -47,8 +47,11 @@
       desc: "Subscriptions and payment approvals" },
     { key: "import", href: "import.html", label: "Bulk Import",
       desc: "Bring in existing spreadsheets — equipment, obligations, committees, team" },
-    { key: "team", href: "team.html", label: "Team",
-      desc: "Seats, roles and departments" }
+    /* "Team" is NOT in this row any more. It is administration — who has a seat, what
+       they may open — not one of the jobs somebody comes here to do, and sitting among
+       fifteen daily tasks it both lengthened the row and read as one of them. It is now a
+       button beside the page heading, which is where the settings for a place usually
+       live. Still reachable from every workspace page, still the same page. */
   ];
 
   var ROLE_RANK = { owner: 4, admin: 3, editor: 2, viewer: 1 };
@@ -128,7 +131,14 @@
                 (p.key === activeKey ? " active" : "") + '">' + esc(p.label) + "</a>";
             }).join("") +
           "</div>" +
+          /* Team sits here with the account, not in the row of jobs above: it is who may
+             come in, which belongs beside who you are signed in as. Only shown to people
+             who can actually act on it — for everyone else it is a door that opens onto a
+             refusal, which is worse than no door. */
           '<div class="ws-nav-right">' + modeChip +
+            (W.user && W.canOpen("team")
+              ? '<a href="team.html" class="ws-team-link' +
+                (activeKey === "team" ? " active" : "") + '">Team</a>' : "") +
             (W.user ? '<span class="ws-who">' + esc(W.user.name || W.user.email) + "</span>" +
                       '<button type="button" class="ws-signout" id="wsSignOut">Sign out</button>' : "") +
           "</div>" +
@@ -142,6 +152,13 @@
       if (act && act.scrollIntoView) {
         try { act.scrollIntoView({ inline: "center", block: "nearest" }); } catch (e) {}
       }
+
+      /* The Start page carries its own Team button beside the heading. It ships hidden and
+         is revealed here, rather than shipping visible and being taken away, so a slow or
+         failed sign-in never flashes an administration button at somebody who turns out
+         not to be allowed to use it. */
+      var teamBtn = document.getElementById("wsTeamBtn");
+      if (teamBtn) teamBtn.hidden = !(W.user && W.canOpen("team"));
 
       var so = document.getElementById("wsSignOut");
       if (so) so.addEventListener("click", async function () {

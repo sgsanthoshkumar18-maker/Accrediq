@@ -114,7 +114,11 @@
   var MESSAGES = {
     401: ["Sign in to watch this.", "Sign in", "dashboard.html"],
     403: ["This video comes with a subscription.", "See what it costs", "plans.html"],
-    503: ["This video is not ready yet.", "", ""],
+    /* Deliberately not "you need to subscribe". A 503 means WE could not check — the
+       database was unreachable or the subscription function is missing — and telling a
+       paying customer to go and pay again over our own fault is the worst thing this
+       screen could say. "Try again" is honest and costs them nothing. */
+    503: ["We could not check your access just now. Please try again in a moment.", "", ""],
     0:   ["The video could not be loaded. Please try again.", "", ""]
   };
 

@@ -607,3 +607,16 @@
   .ws-nav-link{white-space:nowrap;flex:none;scroll-snap-align:start;}
   .ws-nav-right{flex:none;}
 }
+
+/* ---------- the heading row on Start, and Team in the account bar ----------
+   Team is administration rather than one of the day's jobs, so it sits beside the account
+   in the bar and beside the heading on Start — never in the row of fifteen tasks, where it
+   both lengthened the row and read as another task. */
+.ws-head-row{display:flex;align-items:flex-start;justify-content:space-between;gap:18px;flex-wrap:wrap;}
+.ws-head-row h1{margin:0;}
+.ws-head-action{flex:none;margin-top:6px;}
+
+.ws-team-link{font-size:13px;font-weight:600;color:var(--fg-muted);text-decoration:none;
+  border:1px solid var(--border);border-radius:999px;padding:4px 13px;white-space:nowrap;}
+.ws-team-link:hover{color:var(--accent-bright);border-color:var(--accent-bright);}
+.ws-team-link.active{color:var(--accent-bright);border-color:var(--accent-bright);}
