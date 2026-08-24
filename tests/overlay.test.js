@@ -113,6 +113,16 @@ eq(/e\.ctrlKey \|\| e\.metaKey \|\| e\.altKey/.test(pbare), true,
 eq(/e\.preventDefault\(\);\s*\n\s*if \(v\.paused\)/.test(pbare), true,
    'the page is stopped from scrolling only when we actually handle the key');
 
+// --- only one video may run at a time ------------------------------------
+/* The videos page carries several players. Each minded its own business, so pressing play
+   on a second left the first still running: two people talking over each other from one
+   page, with no way to tell which control belonged to which voice. */
+eq(/querySelectorAll\("video"\)/.test(pbare), true,
+   'starting a video looks at every other video on the page');
+eq(/other !== v && !other\.paused/.test(pbare), true,
+   'it pauses only the others, and only the ones actually playing');
+eq(/other\.pause\(\)/.test(pbare), true, 'and it does pause them');
+
 // --- credentials must not break mid-qualification ------------------------
 /* "Pharm D." split across two lines as "Pharm" / "D., RPh." — text-wrap:balance found the
    most even break, which is not the most meaningful one. Non-breaking spaces bind each

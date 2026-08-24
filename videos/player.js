@@ -201,6 +201,22 @@
 
       /* The overlay was attached at page load but has no video to listen to, because there
          was none until now. Drive it from here. */
+      /* ONE VIDEO AT A TIME.
+         The page carries several players and each was minding its own business, so pressing
+         play on a second one left the first still running — two people talking over each
+         other out of the same page, and no obvious way to tell which control belonged to
+         which voice. Starting any video therefore pauses every other one.
+
+         Bound to the ELEMENT rather than tracked in a shared variable, because a variable
+         holding "the video that is playing" has to be kept correct through pause, ended,
+         removal and error, and gets it wrong the first time one of those is missed. Asking
+         the document what is actually playing cannot go stale. */
+      v.addEventListener("play", function () {
+        [].forEach.call(document.querySelectorAll("video"), function (other) {
+          if (other !== v && !other.paused) { try { other.pause(); } catch (e) {} }
+        });
+      });
+
       /* THE CAPTION FOLLOWS THE VIDEO'S CLOCK, NOT A TIMER.
          It used to be set going by a pair of setTimeouts when play was pressed. That is the
          only option for a player we cannot see inside, and it is wrong here in two ways a
