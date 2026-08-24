@@ -1,0 +1,6 @@
+
+# Video files are hosted externally, never committed. GitHub rejects >100MB
+# and video does not belong in a git history regardless.
+videos/media/
+*.mov
+*.MOV

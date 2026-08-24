@@ -1,0 +1,83 @@
+/* AQcredix — the private-bucket video player.
+ *
+ * Palette tokens only, no literal colours, so this follows light, dark and neon without a
+ * second definition. The one exception is the poster image itself, which is a photograph.
+ */
+
+/* The poster fills the frame behind the play button. object-fit:cover rather than a
+   background-image so the browser treats it as a real image — it can be lazily loaded,
+   it carries alt text, and it is sized by the same rules as every other picture here. */
+.vp-poster{
+  position:absolute;inset:0;width:100%;height:100%;
+  object-fit:cover;display:block;
+}
+
+/* The whole frame is the target, not just the 56px circle — people aim at the picture. */
+[data-video-key]:not(.vp-playing){cursor:pointer;}
+[data-video-key]:not(.vp-playing):hover .play{transform:scale(1.08);}
+
+.vp-video{
+  position:relative;z-index:1;
+  width:100%;height:100%;display:block;
+  background:var(--bg-deep);
+  object-fit:contain;      /* letterbox rather than crop — never cut off a speaker's head */
+}
+
+/* ---------- fullscreen ----------
+   The HOST goes fullscreen, not the video — see the note in player.js. That makes the host
+   the size of the screen, so the video inside has to be told to fill it, and the container
+   query the overlay is sized against now reports the full screen width, which is what
+   brings the speaker's roles back at a size worth reading. */
+.aqv-host:fullscreen,
+.aqv-host:-webkit-full-screen{
+  width:100vw;height:100vh;max-width:none;aspect-ratio:auto;
+  background:var(--bg-deep);
+  display:flex;align-items:center;justify-content:center;
+  border:none;border-radius:0;
+}
+.aqv-host:fullscreen .vp-video,
+.aqv-host:-webkit-full-screen .vp-video{
+  width:100%;height:100%;object-fit:contain;
+}
+
+/* ---------- waiting for the signed link ----------
+   A spinner rather than a frozen play button, because the wait is a real network round
+   trip: the server has to check the subscription before it will sign anything. */
+.vp-loading .play{opacity:.35;pointer-events:none;}
+.vp-loading::after{
+  content:"";position:absolute;z-index:2;
+  width:34px;height:34px;border-radius:50%;
+  border:2px solid var(--border);
+  border-top-color:var(--accent-bright);
+  animation:vp-spin .7s linear infinite;
+}
+@keyframes vp-spin{to{transform:rotate(360deg);}}
+
+/* Someone who has asked for less motion still needs to know it is working, so the ring
+   pulses in place instead of turning. */
+@media (prefers-reduced-motion:reduce){
+  .vp-loading::after{animation:vp-pulse 1.4s ease-in-out infinite;}
+  @keyframes vp-pulse{0%,100%{opacity:.35;}50%{opacity:1;}}
+}
+
+/* ---------- refused, and why ----------
+   Sits over the poster rather than replacing it: the picture is what made them want to
+   watch, and taking it away to deliver bad news makes the refusal feel like a dead end. */
+.vp-msg{
+  position:absolute;inset:0;z-index:3;
+  display:flex;flex-direction:column;align-items:center;justify-content:center;
+  gap:14px;padding:24px;text-align:center;
+  background:linear-gradient(0deg,var(--bg-deep),transparent);
+  backdrop-filter:blur(3px);
+}
+.vp-msg p{
+  margin:0;max-width:34ch;
+  font-size:clamp(14.5px,1.6vw,17px);line-height:1.5;
+  color:var(--fg);
+  text-shadow:0 1px 10px var(--bg-deep);
+}
+.vp-msg .btn{flex:none;}
+
+@media (max-width:560px){
+  .vp-msg{gap:11px;padding:18px;}
+}
