@@ -50,6 +50,22 @@
   .face-loading .spin{animation:none;}
 }
 
+/* THE STAGE MUST NOT BE STRETCHED BY THE COLUMN BESIDE IT.
+   The hero is a two-column grid and this stage used to stretch to whatever height the text
+   column reached. That makes the canvas a different shape every time a line of copy is
+   added on the left — and the camera framing is computed from that shape. Adding one
+   button to the hero took the canvas from roughly square to 527x603, and at that aspect
+   the tuned distance of 3.4 cuts the widest organ at the sides. The camera would then have
+   to pull back by half to compensate, shrinking a hero that was never the problem.
+
+   Held to a square instead, and centred rather than stretched, so the framing stays what
+   it was tuned to be no matter what is written next to it. */
+@media (min-width:901px){
+  .badge-stage.face-stage{align-self:center;}
+  .face-stage{height:auto;aspect-ratio:1/1;max-height:600px;margin:0 auto;}
+  .face-wrap{height:100%;}
+}
+
 @media (max-width:1100px){
   .face-stage{min-height:440px;}
 }

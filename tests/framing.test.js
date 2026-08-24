@@ -19,8 +19,35 @@ const fitDist = (r, aspect) => {
 
 // --- hero organs: desktop distance must stay exactly 3.4
 const face = fs.readFileSync(path.join(__dirname, '../face/face.js'), 'utf8');
-eq(/if \(window\.innerWidth > 900\) return 3\.4;/.test(face), true,
-   'desktop hero distance is unchanged at 3.4');
+
+/* This used to assert that the literal line `if (window.innerWidth > 900) return 3.4;`
+   was present — the implementation rather than the promise. The promise is that an
+   ordinary desktop hero is framed exactly where it was tuned, and that nothing is ever
+   cut off; the window width was only ever a proxy for "the canvas is roomy", and a wrong
+   one, because the hero's right column is as tall as its left column and reshapes when
+   content is added beside it with no window resize to notice. So the distance function is
+   now run, and the promise is checked directly. */
+const maxExtent = 1.24;                       // the widest shape, as measured in face.js
+function cameraDistance(aspect) {
+  const vFov = FOV * Math.PI / 180;
+  const hFov = 2 * Math.atan(Math.tan(vFov / 2) * (aspect || 1));
+  const halfFov = Math.min(vFov, hFov) / 2;
+  if (Math.tan(halfFov) * 3.4 >= maxExtent * 1.04) return 3.4;
+  return Math.max(3.4, (maxExtent * 1.28) / Math.sin(halfFov));
+}
+eq(/Math\.tan\(halfFov\) \* 3\.4 >= maxExtent \* 1\.04/.test(face), true,
+   'the code asks whether 3.4 already frames THIS canvas');
+eq(/window\.innerWidth > 900/.test(face), false,
+   'framing no longer keys off the window, which is not the canvas');
+eq(cameraDistance(1.6), 3.4, 'a desktop hero is framed at 3.4, exactly as before');
+eq(cameraDistance(1.33), 3.4, 'a 4:3 canvas is also unchanged');
+eq(cameraDistance(0.85) > 3.4, true, 'a canvas taller than it is wide pulls the camera back');
+eq(fits(1.24, cameraDistance(0.85), 0.85), true, 'and the shape then fits');
+eq(fits(1.24, cameraDistance(0.7), 0.7), true, 'a very narrow canvas fits too');
+
+/* The box, not the window: every earlier fix here guessed at which event to listen for. */
+eq(/\.observe\(wrapEl\)/.test(face), true,
+   'the hero re-frames whenever its own box changes, not only on window resize');
 eq(/maxExtent/.test(face) && /Math\.sin\(halfFov\)/.test(face), true,
    'hero distance is measured from the shapes, not guessed per breakpoint');
 eq(/Math\.max\(3\.4, fit\)/.test(face), true, 'hero only ever pulls back, never closer');

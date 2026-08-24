@@ -49,6 +49,33 @@
   width:100%;height:100%;object-fit:contain;display:block;
 }
 
+/* ---------- our own fullscreen button ----------
+   Bottom right, clear of the video's own control bar on the left. It is the one thing in
+   this frame besides the video that takes a click; the branded overlay above it stays
+   pointer-events:none. */
+.vp-fs{
+  /* 52px up, to clear the browser's own control bar rather than sit on top of it. */
+  position:absolute;z-index:5;right:10px;bottom:52px;
+  width:34px;height:34px;padding:0;
+  display:flex;align-items:center;justify-content:center;
+  border-radius:8px;cursor:pointer;
+  background:rgba(4,16,14,.62);border:1px solid rgba(255,255,255,.22);
+  color:#F4F2EC;
+  -webkit-backdrop-filter:blur(4px);backdrop-filter:blur(4px);
+  opacity:0;transition:opacity .2s ease, background .2s ease, border-color .2s ease;
+}
+.vp-fs svg{width:17px;height:17px;}
+/* Appears when the frame is touched or hovered, like any player control, so it does not
+   sit permanently over the picture. Always visible to the keyboard. */
+.vp-playing:hover .vp-fs,
+.vp-playing:focus-within .vp-fs,
+.vp-fs:focus-visible{opacity:1;}
+.vp-fs:hover{background:rgba(4,16,14,.85);border-color:var(--accent-bright);}
+.vp-fs.is-on svg{transform:scale(-1);}
+
+/* A coarse pointer has no hover, so there is nothing to reveal it with — it stays up. */
+@media (pointer:coarse){ .vp-playing .vp-fs{opacity:1;} }
+
 /* ---------- waiting for the signed link ----------
    A spinner rather than a frozen play button, because the wait is a real network round
    trip: the server has to check the subscription before it will sign anything. */

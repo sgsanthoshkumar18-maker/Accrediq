@@ -76,19 +76,34 @@
    * fields of view is narrower — on a square or portrait canvas that is the horizontal
    * one, which is exactly the axis that was clipping. */
   function cameraDistance(aspect) {
-    if (window.innerWidth > 900) return 3.4;      // desktop: leave exactly as it was
+    /* Decided by the CANVAS, not by window.innerWidth.
+       This used to return a fixed 3.4 whenever the window was wider than 900px, on the
+       reasoning that a desktop is always roomy. The window is not the box: the hero is a
+       two-column grid whose right column is as tall as the left column happens to be, so
+       adding one line of content on the left — a button, a longer sentence — makes this
+       canvas taller and narrower on a wide screen while innerWidth never moves at all.
+       A narrow canvas crops on the horizontal axis, and 3.4 then cuts the shape.
 
+       So the question asked is the honest one: does 3.4 actually frame the shapes on THIS
+       canvas? Where it does — which is every ordinary desktop — 3.4 is returned unchanged
+       and the tuned hero looks exactly as it did. Where it does not, the camera pulls back
+       far enough that it fits. Never closer than 3.4 in either case. */
     const vFov = camera.fov * Math.PI / 180;
     const hFov = 2 * Math.atan(Math.tan(vFov / 2) * (aspect || 1));
     const halfFov = Math.min(vFov, hFov) / 2;
-    /* 1.12 leaves a margin so the sprites — which have width of their own and pulse —
-       and the label under the canvas do not touch the edge. Without it the outermost
-       points sit exactly on the boundary and read as clipped. */
-    /* 1.28, raised from 1.12. The old margin framed the point cloud but not what grows
-       out of it: the sprites have width of their own and pulse, the widest shapes are
-       broader than the one maxExtent was tuned against, and a phone in portrait crops on
-       the horizontal axis where that extra width lands. Reported as shapes cut off at the
-       edges on a real handset, which is the only test that counts. */
+    /* TWO MARGINS, DELIBERATELY DIFFERENT.
+       1.04 here is the "does it clear the edge at all" test. At 3.4 the desktop hero has
+       about five per cent of room and always has, so asking for the generous margin below
+       would fail every desktop and pull the camera back by a third — shrinking a hero
+       nobody complained about. */
+    if (Math.tan(halfFov) * 3.4 >= maxExtent * 1.04) return 3.4;
+
+    /* 1.28 is what a canvas gets once we have decided to move at all, raised from 1.12
+       after shapes were reported cut off on a real handset. The point cloud was framed but
+       not what grows out of it: the sprites have width of their own and pulse, the widest
+       shapes are broader than the one maxExtent was tuned against, and a phone in portrait
+       crops on exactly the axis where that extra width lands. */
+
     const fit = (maxExtent * 1.28) / Math.sin(halfFov);
     // Never come closer than the desktop framing; only ever pull back.
     return Math.max(3.4, fit);
@@ -160,6 +175,19 @@
   // The phone address bar collapsing changes the viewport height and therefore the
   // aspect the fit was computed from; re-frame when the layout settles.
   window.addEventListener("orientationchange", () => setTimeout(sizeRenderer, 200));
+
+  /* Watch the BOX, not just the window. A window resize is only one of the ways this
+     canvas changes shape: a web font arriving, an image settling, the hero's other column
+     gaining a line, the address bar sliding away on a phone. Each reflows this element
+     with no resize event to hear, and the camera then frames a box that no longer exists.
+     Every previous fix here has been another guess at which event to listen for; the
+     element itself is the thing that actually knows. */
+  try {
+    new ResizeObserver(function () { sizeRenderer(); }).observe(wrapEl);
+  } catch (e) {
+    /* No ResizeObserver: the resize and orientationchange listeners above still cover the
+       common cases, and the 3.4 floor means the framing is never tighter than it was. */
+  }
 
   const COLORS = [0x5eead4, 0x38bdf8, 0x818cf8, 0xa78bfa, 0xf472b6, 0x34d399, 0x60a5fa, 0xc084fc];
   function glowTexture(hex) {

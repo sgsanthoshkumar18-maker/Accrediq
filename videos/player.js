@@ -162,6 +162,13 @@
       v.controls = true;
       v.playsInline = true;
       v.setAttribute("playsinline", "");        // older iOS reads the attribute, not the property
+      /* Takes the FULLSCREEN button out of the browser's own control bar, so the video can
+         never become the fullscreen element and there is nothing to correct afterwards.
+         Our own button below fullscreens the whole frame instead, from a real click, which
+         is the only way the browser reliably grants it. Chrome, Edge and Android honour
+         this; Firefox and Safari ignore it, which is what the swap further down is for. */
+      v.setAttribute("controlsList", "nofullscreen");
+      v.disablePictureInPicture = true;        // picture-in-picture strips the overlay too
       if (poster) v.poster = poster;
       v.preload = "auto";
       v.src = res.url;
@@ -210,7 +217,54 @@
          On an iPhone this cannot be fixed. Safari there hands video fullscreen to the
          operating system's own player, which no web page can draw on top of. The video
          plays correctly; it just plays without the caption. */
+      /* OUR OWN FULLSCREEN BUTTON.
+         It lives in the frame rather than in the video's control bar, because a control in
+         the video's bar can only ever fullscreen the video. This one fullscreens the frame,
+         which contains the video AND the overlay — so the logo and the speaker's name are
+         part of what goes fullscreen instead of being left behind on the page.
+
+         It is the only thing in this layer that takes a click. Everything else stays
+         pointer-events:none, because a transparent layer over a video that accepts input
+         swallows the page's scrolling — a bug this codebase has already paid for once. */
+      var fsBtn = document.createElement("button");
+      fsBtn.type = "button";
+      fsBtn.className = "vp-fs";
+      fsBtn.setAttribute("aria-label", "Full screen");
+      fsBtn.title = "Full screen";
+      fsBtn.innerHTML =
+        '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" ' +
+        'stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">' +
+        '<path d="M8 3H5a2 2 0 0 0-2 2v3M16 3h3a2 2 0 0 1 2 2v3' +
+        'M8 21H5a2 2 0 0 1-2-2v-3M16 21h3a2 2 0 0 0 2-2v-3"/></svg>';
+      host.appendChild(fsBtn);
+
+      function inFullscreen() {
+        return document.fullscreenElement === host ||
+               document.webkitFullscreenElement === host;
+      }
+      fsBtn.addEventListener("click", function (e) {
+        e.preventDefault();
+        e.stopPropagation();                    // the frame's own click starts playback
+        if (inFullscreen()) {
+          try { (document.exitFullscreen || document.webkitExitFullscreen).call(document); }
+          catch (err) {}
+          return;
+        }
+        /* An iPhone cannot fullscreen anything but a video: Safari there hands the job to
+           the operating system's own player, and no page can draw on top of it. So on that
+           one device the video goes fullscreen bare rather than not at all — a caption
+           missing is better than a button that does nothing. Everywhere else, including
+           iPad and Android, the whole frame goes and the overlay comes with it. */
+        var req = host.requestFullscreen || host.webkitRequestFullscreen;
+        if (req) {
+          try { var p = req.call(host); if (p && p.catch) p.catch(function () {}); return; }
+          catch (err) {}
+        }
+        if (v.webkitEnterFullscreen) { try { v.webkitEnterFullscreen(); } catch (err) {} }
+      });
+
       document.addEventListener("fullscreenchange", function () {
+        fsBtn.classList.toggle("is-on", inFullscreen());
         var fs = document.fullscreenElement;
 
         if (fs === v && host.requestFullscreen) {
@@ -228,8 +282,17 @@
           return;
         }
 
-        if (fs === host) { lockLandscape(); }
-        else if (!fs) { unlockOrientation(); }
+        if (fs === host) {
+          lockLandscape();
+          /* Run the introduction again. Going fullscreen is a fresh look at the video —
+             usually a much bigger one, and often minutes after the caption came and went
+             at thumbnail size where the roles are hidden anyway. Re-introducing the
+             speaker at the size where his credentials are actually legible is the whole
+             point of having them. */
+          if (ov) { ov.stop(); setTimeout(ov.start, 80); }
+        } else if (!fs) {
+          unlockOrientation();
+        }
       });
 
       /* A dead link looks exactly like a corrupt file from here, and after two hours the
