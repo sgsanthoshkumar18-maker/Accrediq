@@ -50,12 +50,15 @@
          drop-shadow(0 2px 12px rgba(0,18,22,.65));
 }
 .aqv-bug svg{width:2.6cqw;height:2.6cqw;min-width:16px;min-height:16px;}
+/* The name is always shown. It used to be dropped below 420px on the reasoning that the
+   mark alone would carry it — which is true for a mark people already recognise, and this
+   one is new. A stranger seeing a circled A learns nothing; the point of putting it on the
+   video at all is that they read the word. So it shrinks to a floor instead of vanishing,
+   and the floor is a size that can still be read rather than merely detected. */
 .aqv-bug-word{
   font-family:Georgia,"Iowan Old Style",serif;
-  font-size:2.1cqw;letter-spacing:.01em;line-height:1;
-  /* Below about 420px the word crowds the frame and the mark alone carries it. */
+  font-size:max(11px,2.1cqw);letter-spacing:.01em;line-height:1;white-space:nowrap;
 }
-@container (max-width: 420px){ .aqv-bug-word{display:none;} }
 
 /* ---------- the lower third ----------
    Bottom left, above where a player puts its scrubber, so the two never overlap. */

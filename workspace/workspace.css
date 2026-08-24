@@ -612,9 +612,20 @@
    Team is administration rather than one of the day's jobs, so it sits beside the account
    in the bar and beside the heading on Start — never in the row of fifteen tasks, where it
    both lengthened the row and read as another task. */
-.ws-head-row{display:flex;align-items:flex-start;justify-content:space-between;gap:18px;flex-wrap:wrap;}
+/* align-items:center, not flex-start. Pinned to the top the button hung level with the cap
+   height of a heading three times its size, which read as floating in the corner rather
+   than as belonging to the row. Centred, it sits on the heading's optical middle. */
+.ws-head-row{display:flex;align-items:center;justify-content:space-between;gap:18px;flex-wrap:wrap;}
 .ws-head-row h1{margin:0;}
-.ws-head-action{flex:none;margin-top:6px;}
+.ws-head-action{flex:none;}
+
+/* On a phone the two stack, and a button stranded on the right under a full-width heading
+   looks like a mistake. Once stacked it goes back to the left, under the words it belongs
+   to, reading as part of the same block. */
+@media (max-width:560px){
+  .ws-head-row{align-items:flex-start;}
+  .ws-head-action{margin-top:4px;}
+}
 
 .ws-team-link{font-size:13px;font-weight:600;color:var(--fg-muted);text-decoration:none;
   border:1px solid var(--border);border-radius:999px;padding:4px 13px;white-space:nowrap;}

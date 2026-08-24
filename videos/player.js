@@ -214,13 +214,17 @@
         var fs = document.fullscreenElement;
 
         if (fs === v && host.requestFullscreen) {
-          /* The native button promoted the bare video. Swap it for the whole frame, then
-             let the branch below run again for the host and turn the phone. */
-          try {
-            document.exitFullscreen().then(function () {
-              host.requestFullscreen().catch(function () {});
-            }).catch(function () {});
-          } catch (e) {}
+          /* Swapped by requesting the host DIRECTLY, without exiting first.
+             Exiting and then re-entering seems tidier and does not work: exitFullscreen()
+             is asynchronous, and by the time its promise settles the user gesture that
+             authorised fullscreen has expired, so the browser refuses the second request.
+             The viewer is dropped out of fullscreen and nothing replaces it — the button
+             simply appears broken. Requesting a different element while already fullscreen
+             is allowed and swaps the target in one step, inside the same gesture.
+
+             If it is refused anyway, the video stays fullscreen on its own, which is the
+             plain browser behaviour and no worse than having never tried. */
+          try { host.requestFullscreen().catch(function () {}); } catch (e) {}
           return;
         }
 

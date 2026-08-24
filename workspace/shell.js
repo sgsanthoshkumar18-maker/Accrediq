@@ -136,7 +136,10 @@
              who can actually act on it — for everyone else it is a door that opens onto a
              refusal, which is worse than no door. */
           '<div class="ws-nav-right">' + modeChip +
-            (W.user && W.canOpen("team")
+            /* Suppressed where the page already offers Team beside its own heading —
+               Start does. Two identical controls a few centimetres apart make a reader
+               stop and work out whether they do different things. */
+            (W.user && W.canOpen("team") && !document.getElementById("wsTeamBtn")
               ? '<a href="team.html" class="ws-team-link' +
                 (activeKey === "team" ? " active" : "") + '">Team</a>' : "") +
             (W.user ? '<span class="ws-who">' + esc(W.user.name || W.user.email) + "</span>" +
