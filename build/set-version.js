@@ -23,11 +23,39 @@ const ROOT = path.join(__dirname, "..");
 
 /* Change this when you want every browser to refetch. Date-based so it is obvious from
    the page source how stale a deployment is. */
+/* THE DEFAULT CONTINUES THE SEQUENCE; IT DOES NOT RESET TO "a".
+   It used to always append "a" for today's date, which is worse than useless twice over.
+   Run it a second time on the same day and the stamp does not change, so the fix you just
+   made never reaches a returning phone. Worse, if the stamp had been advanced by hand — it
+   had, as far as "i" — the default silently went BACKWARDS to "a", handing back a URL some
+   visitors already had cached from an earlier day, and their browsers kept the old file.
+
+   So the current stamp is read out of the site and the letter after it is used. An explicit
+   version still wins: `node build/set-version.js 20260901a`. */
+function currentStamp() {
+  try {
+    const html = fs.readFileSync(path.join(ROOT, "index.html"), "utf8");
+    const m = /\?v=(\d{8})([a-z]+)/.exec(html);
+    return m ? { date: m[1], letter: m[2] } : null;
+  } catch (e) { return null; }
+}
+function nextLetter(l) {
+  /* z rolls to aa rather than wrapping to a, so the sequence only ever moves forward. */
+  if (!l) return "a";
+  const last = l.charCodeAt(l.length - 1);
+  if (last < 122) return l.slice(0, -1) + String.fromCharCode(last + 1);
+  return l + "a";
+}
+
 const VERSION = process.argv[2] || (function () {
   const d = new Date();
-  return d.getFullYear() +
-         String(d.getMonth() + 1).padStart(2, "0") +
-         String(d.getDate()).padStart(2, "0") + "a";
+  const today = d.getFullYear() +
+                String(d.getMonth() + 1).padStart(2, "0") +
+                String(d.getDate()).padStart(2, "0");
+  const cur = currentStamp();
+  /* Same day: take the next letter. A new day: start at "a", since the date itself has
+     already changed the URL. */
+  return cur && cur.date === today ? today + nextLetter(cur.letter) : today + "a";
 })();
 
 const SKIP = new Set([

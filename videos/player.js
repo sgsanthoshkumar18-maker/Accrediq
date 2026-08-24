@@ -193,11 +193,18 @@
          Telling the host to take the video's own aspect ratio keeps the two the same shape,
          so the caption lands on the picture on any display. Read from the file rather than
          assumed, so a portrait or 4:3 video would work the same way. */
-      v.addEventListener("loadedmetadata", function () {
-        if (v.videoWidth && v.videoHeight) {
-          host.style.setProperty("--vp-ar", v.videoWidth + " / " + v.videoHeight);
-        }
-      }, { once: true });
+      function noteAspect() {
+        if (!v.videoWidth || !v.videoHeight) return;
+        host.style.setProperty("--vp-ar", v.videoWidth + " / " + v.videoHeight);
+        /* The same ratio as a plain number. The fullscreen rule has to multiply and divide
+           by it, and calc() cannot do that with a "1920 / 1080" ratio token. */
+        host.style.setProperty("--vp-arn", String(v.videoWidth / v.videoHeight));
+      }
+      v.addEventListener("loadedmetadata", noteAspect);
+      /* Called directly as well: if the browser already had the metadata — a cached file,
+         or a re-mount — loadedmetadata has fired before this listener existed and the frame
+         would keep the 16:9 fallback for a video that is not 16:9. */
+      noteAspect();
 
       /* The overlay was attached at page load but has no video to listen to, because there
          was none until now. Drive it from here. */

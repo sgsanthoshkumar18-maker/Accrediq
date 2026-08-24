@@ -72,6 +72,18 @@ cronFiles.forEach(f => {
      'redirect destination ":' + token[1] + '" is a group that exists in its source');
 });
 
+// --- the cache-busting stamp must only ever move forward ------------------
+/* build/set-version.js used to append "a" to today's date unconditionally. Run twice in a
+   day it produced the same stamp, so a CSS fix never reached a returning phone; and where
+   the stamp had been advanced by hand it went BACKWARDS, handing out a URL some browsers
+   already had cached. A fullscreen fix appeared not to have deployed at all because of it.
+   The default now reads the live stamp and takes the next letter. */
+const setver = fs.readFileSync(path.join(root, 'build/set-version.js'), 'utf8');
+eq(/currentStamp\(\)/.test(setver) && /nextLetter\(/.test(setver), true,
+   'the default version continues the sequence rather than resetting');
+eq(/String\(d\.getDate\(\)\)\.padStart\(2, "0"\) \+ "a";/.test(setver), false,
+   'it no longer hardcodes "a" as the same-day default');
+
 // --- hobby crons may run at most once per day -----------------------------
 /* "Cron jobs can only run once per day. Expressions that would run more frequently will
    fail deployment." A minute or hour field of * means more often than daily. */

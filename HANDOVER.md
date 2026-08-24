@@ -37,6 +37,11 @@ Paste this whole file into a new chat to pick up where the last one left off.
 - **Shell escaping mangles `\n`, `\d`, `\s` in heredocs.** Use the Edit tool or line-based
   node scripts for anything with regexes.
 - **Windows: `path.join` gives backslashes**; a forward-slash root fails `startsWith`.
+- **RUN `node build/set-version.js` AFTER ANY CSS OR JS CHANGE, BEFORE PUSHING.** Mobile
+  browsers hold cached CSS far harder than desktop, so a fix looks like it never deployed —
+  which is exactly what happened with the fullscreen frame. The stamp had been stuck at
+  `20260824i` through a dozen changes. The default now continues the sequence; it used to
+  reset to "a" and could hand back a URL a phone already had cached.
 - **Vercel Hobby allows 12 Serverless Functions per deployment.** api/ is AT the limit. A
   thirteenth `.js` file there fails the BUILD — the site keeps serving the last good
   version and silently stops updating. Put new server logic in a module outside api/ and
