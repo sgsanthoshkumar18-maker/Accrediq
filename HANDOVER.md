@@ -76,11 +76,22 @@ card — *not* the featured slot.
 `SUPABASE_ANON_KEY`, plus the existing `SUPABASE_URL`, service key, `OWNER_EMAIL`.
 All **Production only**.
 
-### Caption text currently on screen
+### Speakers currently captioned
 
+Featured slot — `john-felix-web.mp4`:
 > **Dr. John Felix S.N. Pharm D., RPh. (AMSP Certified)**
 > Ex - Clinical Pharmacologist, Aster DM Healthcare and MIOT Hospital
 > Currently a PhD Scholar, JSS AHER
+
+Medication card — `high-alert-drugs.mp4` ("High alert drugs: the look-alike, sound-alike trap"):
+> **Dr. Bala Krishnan Pharm D., RPh.**
+> Ex - Clinical Pharmacologist, Madras Medical Mission and Rela Hospital
+> Currently a PhD Scholar, JSS AHER
+
+Both say **Clinical Pharmacologist** at the owner's instruction, though LinkedIn shows
+"Clinical Pharmacist" for some of these posts. The generic role references in
+`department-data.js`, `mom-explain.js` and the value pages were deliberately NOT changed —
+those describe the hospital role, and the two are different professions.
 
 Shown between **0:03 and 0:09 of the video itself**, not on a timer — it holds while paused,
 vanishes if you scrub past, returns if you scrub back. Below a 480px frame the two role
