@@ -161,8 +161,14 @@
         designation2: d.aqvRole2 || "",
         org: d.aqvOrg || "",
         logo: d.aqvLogo !== "off",
-        showAt: d.aqvShowAt ? +d.aqvShowAt : undefined,
-        hideAt: d.aqvHideAt ? +d.aqvHideAt : undefined
+        /* Set ONLY when the markup actually carries a timing. Passing `undefined` here
+           instead looks harmless and is not: Object.assign copies an undefined value over
+           the default rather than skipping it, so both timings became undefined, and
+           setTimeout treats undefined as zero. The caption was added and removed in the
+           same instant and never appeared at all — while the logo, which is a separate
+           class, kept working and made it look like the overlay was fine. */
+        showAt: d.aqvShowAt ? +d.aqvShowAt : DEFAULTS.showAt,
+        hideAt: d.aqvHideAt ? +d.aqvHideAt : DEFAULTS.hideAt
       });
       if (!ov) return;
       host.__aqv = ov;                      // reachable later without re-querying

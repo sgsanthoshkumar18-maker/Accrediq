@@ -84,6 +84,33 @@
     } catch (e) { return { status: 0 }; }
   }
 
+  /* Turn the phone, but only a phone. A laptop is already wider than it is tall, so
+     rotating there would be absurd — fullscreen just means the whole screen at its own
+     shape. Same two tests the film uses, for the same reason: a narrow window on a desktop
+     is not a handset, and a coarse pointer alone is not either. */
+  function isHandset() {
+    try {
+      return matchMedia("(max-width: 900px)").matches &&
+             matchMedia("(pointer: coarse)").matches;
+    } catch (e) { return false; }
+  }
+  function lockLandscape() {
+    if (!isHandset()) return;
+    try {
+      if (screen.orientation && screen.orientation.lock) {
+        var p = screen.orientation.lock("landscape");
+        /* Refused on iOS, and on a phone its owner has locked to portrait. Nothing to do
+           and nothing to report — the video still fills whatever it is given, and the
+           caption is sized against the frame rather than the screen, so it stays right. */
+        if (p && p.catch) p.catch(function () {});
+      }
+    } catch (e) {}
+  }
+  function unlockOrientation() {
+    try { if (screen.orientation && screen.orientation.unlock) screen.orientation.unlock(); }
+    catch (e) {}
+  }
+
   var MESSAGES = {
     401: ["Sign in to watch this.", "Sign in", "dashboard.html"],
     403: ["This video comes with a subscription.", "See what it costs", "plans.html"],
@@ -147,6 +174,20 @@
       host.classList.remove("vp-loading");
       host.classList.add("vp-playing");
 
+      /* THE FRAME MUST BE THE PICTURE, NOT THE SCREEN.
+         Fullscreen hands us the whole display, and phones today are 19.5:9 or 20:9 while
+         this video is 16:9 — so the picture is letterboxed with black down either side. The
+         overlay is positioned against its host, so if the host were the screen, the caption
+         would sit out on the black bar with the speaker's face somewhere off to the right.
+         Telling the host to take the video's own aspect ratio keeps the two the same shape,
+         so the caption lands on the picture on any display. Read from the file rather than
+         assumed, so a portrait or 4:3 video would work the same way. */
+      v.addEventListener("loadedmetadata", function () {
+        if (v.videoWidth && v.videoHeight) {
+          host.style.setProperty("--vp-ar", v.videoWidth + " / " + v.videoHeight);
+        }
+      }, { once: true });
+
       /* The overlay was attached at page load but has no video to listen to, because there
          was none until now. Drive it from here. */
       var ov = host.__aqv;
@@ -166,13 +207,21 @@
          operating system's own player, which no web page can draw on top of. The video
          plays correctly; it just plays without the caption. */
       document.addEventListener("fullscreenchange", function () {
-        if (document.fullscreenElement !== v) return;
-        if (!host.requestFullscreen) return;
-        try {
-          document.exitFullscreen().then(function () {
-            host.requestFullscreen().catch(function () {});
-          }).catch(function () {});
-        } catch (e) {}
+        var fs = document.fullscreenElement;
+
+        if (fs === v && host.requestFullscreen) {
+          /* The native button promoted the bare video. Swap it for the whole frame, then
+             let the branch below run again for the host and turn the phone. */
+          try {
+            document.exitFullscreen().then(function () {
+              host.requestFullscreen().catch(function () {});
+            }).catch(function () {});
+          } catch (e) {}
+          return;
+        }
+
+        if (fs === host) { lockLandscape(); }
+        else if (!fs) { unlockOrientation(); }
       });
 
       /* A dead link looks exactly like a corrupt file from here, and after two hours the
