@@ -614,10 +614,19 @@
    both lengthened the row and read as another task. */
 /* align-items:center, not flex-start. Pinned to the top the button hung level with the cap
    height of a heading three times its size, which read as floating in the corner rather
-   than as belonging to the row. Centred, it sits on the heading's optical middle. */
-.ws-head-row{display:flex;align-items:center;justify-content:space-between;gap:18px;flex-wrap:wrap;}
-.ws-head-row h1{margin:0;}
-.ws-head-action{flex:none;}
+   than as belonging to the row. Centred, it sits on the heading's optical middle.
+
+   margin-inline:auto rather than justify-content:space-between. A flex item with auto side
+   margins takes the free space equally on both sides, so the button lands in the MIDDLE of
+   whatever room the heading leaves instead of hard against the right edge — where, next to
+   a wide empty column, it looked like something that had slipped out of the layout. */
+/* column-gap:0 because the auto margins already do the spacing, and a column gap on top of
+   them lands entirely on one side — leaving the button 18px off centre. The row gap stays,
+   for when the two stack on a phone. */
+.ws-head-row{display:flex;align-items:center;column-gap:0;row-gap:12px;flex-wrap:wrap;}
+.ws-head-row h1{margin:0;flex:0 1 auto;}
+.ws-head-action{flex:none;margin-inline:auto;min-width:132px;justify-content:center;
+  font-size:15px;padding:12px 26px;}
 
 /* On a phone the two stack, and a button stranded on the right under a full-width heading
    looks like a mistake. Once stacked it goes back to the left, under the words it belongs
