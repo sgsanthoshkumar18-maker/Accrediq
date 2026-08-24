@@ -45,6 +45,33 @@ cronFiles.forEach(f => {
   eq(rejectsGet, false, 'api/' + f + ' does not refuse the GET that a cron sends');
 });
 
+// --- a cron must not be answered by a redirect ----------------------------
+/* "Cron jobs do not follow redirects. When a cron-triggered endpoint returns a 3xx
+   redirect status code, the job completes without further requests." Vercel triggers the
+   job against the production deployment URL, and this project redirects everything on the
+   accrediq.vercel.app host to aqcredix.com. That catch-all used to match /api/* as well,
+   so a cron would have been handed a 308 and finished having done nothing — with a green
+   tick in the dashboard and no email. The redirect now excludes /api/. */
+(vercel.redirects || []).forEach(r => {
+  if (!/:path|\*/.test(r.source)) return;              // not a catch-all
+  const body = r.source.replace(/^\/:?[a-z]*/i, '');
+  const re = new RegExp('^/(' + (body || '.*').replace(/^\(|\)$/g, '') + ')$');
+  (vercel.crons || []).forEach(c => {
+    const p = c.path.split('?')[0];
+    let caught = false;
+    try { caught = re.test(p); } catch (e) { caught = false; }
+    eq(caught, false, 'catch-all redirect "' + r.source + '" does not swallow cron ' + p);
+  });
+});
+/* And the substitution token in the destination must exist in the source, or the rewritten
+   URL loses the path entirely. */
+(vercel.redirects || []).forEach(r => {
+  const token = /:([a-z]+)/i.exec(r.destination.replace(/^https?:\/\/[^/]+/, ''));
+  if (!token) return;
+  eq(r.source.indexOf(':' + token[1]) > -1, true,
+     'redirect destination ":' + token[1] + '" is a group that exists in its source');
+});
+
 // --- hobby crons may run at most once per day -----------------------------
 /* "Cron jobs can only run once per day. Expressions that would run more frequently will
    fail deployment." A minute or hour field of * means more often than daily. */

@@ -21,14 +21,14 @@
       "permanent": true
     },
     {
-      "source": "/:path*",
+      "source": "/:path((?!api/).*)",
       "has": [
         {
           "type": "host",
           "value": "accrediq.vercel.app"
         }
       ],
-      "destination": "https://aqcredix.com/:path*",
+      "destination": "https://aqcredix.com/:path",
       "permanent": true
     }
   ],
@@ -43,7 +43,7 @@
     },
     {
       "path": "/api/digest?scope=crashcart",
-      "schedule": "0 2 1 * *"
+      "schedule": "0 2 * * 1"
     }
   ]
 }

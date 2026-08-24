@@ -44,8 +44,8 @@ window.FOUNDER = {
             "antimicrobial stewardship at Apollo Proton Cancer Centre. Every standard on " +
             "this platform was read first as someone who had to follow it on a ward.",
       points: [
-        "ID Clinical Pharmacist, Voluntary Health Services",
-        "AMSP Clinical Pharmacist, Apollo Proton Cancer Centre",
+        "ID Clinical Pharmacologist, Voluntary Health Services",
+        "AMSP Clinical Pharmacologist, Apollo Proton Cancer Centre",
         "Internship, Stanley Medical College & Hospital"
       ]
     },
@@ -100,7 +100,7 @@ window.FOUNDER = {
             "on the usage of co-amoxiclav and cefuroxime in clinical practice: A cross-sectional " +
             "survey from Indian settings”." },
 
-    { role: "ID Clinical Pharmacist", org: "Voluntary Health Services",
+    { role: "ID Clinical Pharmacologist", org: "Voluntary Health Services",
       type: "Full-time · Chennai · On-site",
       from: "Dec 2025", to: "Present", current: true,
       note: "Consultant — Documentation Designer (NABH), Communication and more." },
@@ -109,17 +109,17 @@ window.FOUNDER = {
       type: "Part-time · Chennai · Hybrid",
       from: "Aug 2018", to: "Present", current: true, note: "Web content writing." },
 
-    { role: "AMSP Clinical Pharmacist", org: "Apollo Proton Cancer Centre",
+    { role: "AMSP Clinical Pharmacologist", org: "Apollo Proton Cancer Centre",
       type: "Chennai · On-site", from: "Aug 2025", to: "Dec 2025" },
 
-    { role: "Clinical Pharmacist", org: "Apollo Proton Cancer Centre",
+    { role: "Clinical Pharmacologist", org: "Apollo Proton Cancer Centre",
       type: "Full-time", from: "Feb 2025", to: "Dec 2025" },
 
     { role: "Internship Trainee",
       org: "Stanley Medical College & Hospital, Chennai",
       type: "Full-time · On-site", from: "Jan 2024", to: "Dec 2025" },
 
-    { role: "Clinical Pharmacist", org: "Voluntary Health Services",
+    { role: "Clinical Pharmacologist", org: "Voluntary Health Services",
       type: "Internship · Chennai", from: "Feb 2023", to: "Sep 2023",
       note: "Pharmacy and pharmacy practice." }
   ],

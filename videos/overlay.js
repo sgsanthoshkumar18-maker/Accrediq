@@ -169,7 +169,11 @@
        myPlayButton.addEventListener("click", ov.start);
   */
   function autoAttach(root) {
-    var hosts = (root || document).querySelectorAll("[data-aqv-name]");
+    /* Any video gets the branding; only a video with a name gets the caption.
+       This used to select [data-aqv-name] alone, which meant a video whose speaker we had
+       not been told about carried no logo either — the mark is about whose platform this
+       is, not about who is talking, and it belongs on every frame regardless. */
+    var hosts = (root || document).querySelectorAll("[data-aqv-name], [data-video-key]");
     [].forEach.call(hosts, function (host) {
       if (host.__aqvDone) return;          // never build two overlays on one host
       host.__aqvDone = true;

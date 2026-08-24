@@ -44,10 +44,37 @@ const SITE = process.env.SITE_URL || "https://aqcredix.com";
    job they cannot record having done. */
 const RESTOCK_ROLES = ["owner", "admin", "quality_manager", "director", "editor"];
 
+/* A copy goes to the platform's own inbox, the same address api/support.js and
+   api/new-user.js already use. Set CRASH_ALERT_TO to "off" to stop it.
+
+   BE DELIBERATE ABOUT LEAVING THIS ON AS HOSPITALS SIGN UP. It means one shared inbox
+   receives every hospital's crash cart contents every week. That is right today, when the
+   only hospital is our own and the alternative is nobody noticing the mail never arrived.
+   It is a vendor reading customer operational data once there are real subscribers, which
+   is a decision to make on purpose rather than to inherit from a debugging convenience. */
+const COPY_TO = (process.env.CRASH_ALERT_TO ||
+                 process.env.SUPPORT_TO ||
+                 "support.aqcredix@gmail.com").trim();
+
 function esc(s) {
   return String(s == null ? "" : s).replace(/[&<>"]/g, function (c) {
     return { "&": "&amp;", "<": "&lt;", ">": "&gt;", '"': "&quot;" }[c];
   });
+}
+
+/* Gmail ignores dots and anything after a + in the local part, so one mailbox has several
+   spellings. Same normalisation api/grant.js and api/video-url.js use — here only to
+   de-duplicate recipients, so nobody is sent the same alert twice under two spellings. */
+function normalise(raw) {
+  const e = String(raw == null ? "" : raw).trim().toLowerCase();
+  const at = e.lastIndexOf("@");
+  if (at < 1) return e;
+  let local = e.slice(0, at);
+  const domain = e.slice(at + 1);
+  const plus = local.indexOf("+");
+  if (plus > -1) local = local.slice(0, plus);
+  if (domain === "gmail.com" || domain === "googlemail.com") local = local.split(".").join("");
+  return local + "@" + domain;
 }
 
 async function table(name, select) {
@@ -204,12 +231,24 @@ async function run(req, res) {
     /* Addressed to the person who restocks: the address set for this hospital if there is
        one, otherwise everyone who could actually act on it. Bcc, never To — a To line
        would show every recipient each other's address. */
-    const recipients = s.alert_email
+    const atTheHospital = s.alert_email
       ? [s.alert_email]
       : members.filter(function (m) {
           return m.org_id === org && m.email &&
                  RESTOCK_ROLES.indexOf(String(m.role || "").toLowerCase()) > -1;
         }).map(function (m) { return m.email; });
+
+    /* De-duplicated on the normalised address, so somebody who is both the hospital's
+       named contact and a member does not get the same mail twice — and so the support
+       copy is not a second delivery when support IS the named contact. */
+    const seen = {};
+    const recipients = atTheHospital.concat(COPY_TO && COPY_TO !== "off" ? [COPY_TO] : [])
+      .filter(function (e) {
+        const k = normalise(e);
+        if (!k || seen[k]) return false;
+        seen[k] = true;
+        return true;
+      });
 
     report.push({
       org: orgName[org] || org, months: review.months,

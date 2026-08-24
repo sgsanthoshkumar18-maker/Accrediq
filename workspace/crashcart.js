@@ -212,8 +212,15 @@
         esc(i.batch || "") + '"></div>' +
       '<p class="tr-hint">If the pack shows only a month, use the LAST day of it &mdash; ' +
         "stock printed 11/2026 is usable to 30 November.</p>" +
+      '<p class="cc-added" id="ccAdded" hidden></p>' +
       '<div class="ws-modal-actions">' +
         (item ? '<button type="button" class="btn btn-ghost" id="ccItemDel">Delete</button>' : "") +
+        /* Stocking a cart is thirty or forty ampoules in one sitting. Closing the dialog
+           after each one, then reopening it and choosing the same trolley again, turns a
+           single job into thirty. This keeps the dialog open and the cart selected, and
+           clears only the fields that differ between items. */
+        (item ? "" : '<button type="submit" class="btn btn-ghost" id="ccItemAgain">' +
+                     "Save &amp; add another</button>") +
         '<button type="button" class="btn btn-ghost" id="ccCancel">Cancel</button>' +
         '<button class="btn btn-accent" type="submit">Save</button></div></form>');
   }
@@ -340,9 +347,14 @@
 
     /* One submit handler for all three forms: they live in the same modal and only one is
        ever open, so three listeners would be three chances to leak one. */
+    var addedThisSitting = 0;
+
     document.getElementById("ccModal").addEventListener("submit", async function (e) {
       e.preventDefault();
       var f = e.target;
+      /* Which button was pressed. e.submitter is the direct answer; the fallback covers
+         a form submitted with Enter, which reports no submitter at all. */
+      var again = (e.submitter && e.submitter.id === "ccItemAgain");
       try {
         if (f.id === "ccCartForm") await saveCart(f);
         else if (f.id === "ccItemForm") await saveItem(f);
@@ -351,6 +363,32 @@
         W.toast("Could not save: " + (err && err.message || err), "bad");
         return;
       }
+
+      if (again && f.id === "ccItemForm") {
+        addedThisSitting++;
+        var cartSel = f.querySelector('[name="cart_id"]');
+        var cartName = cartSel.options[cartSel.selectedIndex].textContent;
+        /* The cart stays chosen — every item in this sitting is going into the same
+           trolley. Everything that differs per item is cleared, and quantity goes back to
+           1 rather than keeping the last number, which would silently multiply an entry
+           somebody forgot to look at. */
+        ["name", "strength", "expires_on", "batch"].forEach(function (k) {
+          var el = f.querySelector('[name="' + k + '"]');
+          if (el) el.value = "";
+        });
+        f.querySelector('[name="quantity"]').value = "1";
+
+        var note = document.getElementById("ccAdded");
+        note.hidden = false;
+        note.textContent = addedThisSitting + " item" + (addedThisSitting === 1 ? "" : "s") +
+                           " added to " + cartName + ". Add the next one, or press Cancel " +
+                           "when the cart is done.";
+        await refresh();                       // the page behind updates as you go
+        f.querySelector('[name="name"]').focus();
+        return;
+      }
+
+      addedThisSitting = 0;
       close();
       await refresh();
     });

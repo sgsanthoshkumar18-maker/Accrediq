@@ -42,6 +42,11 @@ Paste this whole file into a new chat to pick up where the last one left off.
   version and silently stops updating. Put new server logic in a module outside api/ and
   dispatch to it from an existing endpoint (`workspace/crashcart-alert.js` does this).
   Cron paths are not functions; 100 are allowed.
+- **Cron jobs do not follow redirects.** The catch-all that sends accrediq.vercel.app to
+  aqcredix.com used to match /api/* too, so a cron would get a 308, finish having done
+  nothing, and show a green tick. The redirect now excludes /api/ via
+  `/:path((?!api/).*)`. Note the destination token must exist as a named group in the
+  source, or the path is dropped.
 - **Vercel invokes crons with GET, not POST.** `api/digest.js` was POST-only, so every
   scheduled digest since the cron was added answered 405 and no email was ever sent — while
   testing it by hand with POST worked perfectly. `tests/deploy-limits.test.js` guards both.
@@ -93,8 +98,7 @@ with ffmpeg — which is also the only fix for iPhone fullscreen.
 ## Short expiry calendar (crash carts)
 
 `workspace/crashcart.html` + `crashcart.js`, rule in `workspace/shortexpiry.js`, alert in
-`workspace/crashcart-alert.js` reached via `/api/digest?scope=crashcart`, monthly cron on
-the 1st at 02:00. It is a module rather than its own api/ route because of the 12-function
+`workspace/crashcart-alert.js` reached via `/api/digest?scope=crashcart`, a **weekly** cron, Mondays 02:00 UTC (07:30 IST). It is a module rather than its own api/ route because of the 12-function
 limit above.
 
 - The rule module is **shared by the screen and the email** — required by both, never copied,
@@ -111,6 +115,10 @@ limit above.
 - After a code blue: pick the cart, tick the items used, give the replacement expiry. The
   item row is updated in place and the event is logged with both dates, because "why did
   this expiry change" is a question an assessor asks.
+- A copy of every alert goes to `CRASH_ALERT_TO` / `SUPPORT_TO` / support.aqcredix@gmail.com,
+  alongside the hospital's own contacts, de-duplicated on the normalised address. Set
+  `CRASH_ALERT_TO=off` to stop it — **revisit this once there are real subscribers**, as it
+  puts every hospital's crash cart contents in one shared inbox.
 - Tables: `crash_carts`, `crash_cart_items`, `crash_cart_settings`, `code_blue_events` —
   all with `set_org_id()` triggers and the standard my_org() + has_access() policies.
   **The schema block must be run in Supabase before the page will save anything.**

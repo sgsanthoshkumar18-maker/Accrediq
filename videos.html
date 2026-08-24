@@ -92,7 +92,23 @@
 </section>
 
 <section class="section wrap">
-  <div class="video-embed" style="aspect-ratio:16/6;margin-bottom:22px;"><button class="play" aria-label="Play featured video"><svg width="24" height="24" viewBox="0 0 24 24" fill="currentColor"><path d="M8 5v14l11-7z"/></svg></button><div class="cap"><b>"The first 90 seconds on a ward"</b><span>An assessor walks a ward and narrates every red flag in real time · 14:20</span></div></div>
+  <!-- THE FEATURED SLOT HOLDS A REAL VIDEO, so it is the real video that sits here.
+       It was a placeholder for a film nobody has made while an actual interview sat in a
+       thumbnail below it — advertising the thing that does not exist over the thing that
+       does. No video address appears in this markup: the file is in a private R2 bucket
+       and videos/player.js asks the server for a signed, expiring link only after the
+       viewer's subscription has been checked. -->
+  <div class="video-embed aqv-host" id="recordVideo"
+       style="aspect-ratio:16/9;margin-bottom:22px;"
+       data-video-key="john-felix-web.mp4"
+       data-poster="videos/posters/john-felix.jpg"
+       data-aqv-name="Dr. John Felix S.N. Pharm&nbsp;D., RPh. (AMSP&nbsp;Certified)"
+       data-aqv-role="Ex - Clinical Pharmacologist, Aster DM Healthcare and MIOT Hospital"
+       data-aqv-role2="Currently a PhD Scholar, JSS AHER">
+    <img class="vp-poster" src="videos/posters/john-felix.jpg" alt="" width="1280" height="720" loading="lazy" decoding="async">
+    <button class="play" aria-label="Play: Show me the record"><svg width="24" height="24" viewBox="0 0 24 24" fill="currentColor"><path d="M8 5v14l11-7z"/></svg></button>
+    <div class="cap"><b>&quot;Show me the record&quot;</b><span>Dr. John Felix S.N. on documentation &middot; 1:59</span></div>
+  </div>
 
   <div class="grid-3">
     <div class="tile" style="padding:0;overflow:hidden;">
@@ -100,25 +116,21 @@
       <div style="padding:16px 18px;"><span class="pill">Infection control</span><h3 style="font-size:17px;margin-top:10px;">The dispenser test</h3><p style="font-size:13.5px;">Why an empty hand-rub beats a 92% report · 6:12</p></div>
     </div>
     <div class="tile" style="padding:0;overflow:hidden;">
-      <div class="video-embed" style="aspect-ratio:16/9;border-radius:0;border:none;"><button class="play" aria-label="Play"><svg width="20" height="20" viewBox="0 0 24 24" fill="currentColor"><path d="M8 5v14l11-7z"/></svg></button></div>
-      <div style="padding:16px 18px;"><span class="pill">Medication</span><h3 style="font-size:17px;margin-top:10px;">High-alert drugs</h3><p style="font-size:13.5px;">The look-alike, sound-alike trap · 8:40</p></div>
+      <!-- No data-aqv-name, so this carries the AQcredix mark but NO speaker caption: we
+           have not been told who is on camera, and a caption is worse invented than absent.
+           Add data-aqv-name / -role / -role2 when the name is known and it appears. -->
+      <div class="video-embed aqv-host" id="lasaVideo"
+           style="aspect-ratio:16/9;border-radius:0;border:none;"
+           data-video-key="high-alert-drugs.mp4"
+           data-poster="videos/posters/high-alert-drugs.jpg">
+        <img class="vp-poster" src="videos/posters/high-alert-drugs.jpg" alt="" width="1280" height="720" loading="lazy" decoding="async">
+        <button class="play" aria-label="Play: High alert drugs"><svg width="20" height="20" viewBox="0 0 24 24" fill="currentColor"><path d="M8 5v14l11-7z"/></svg></button>
+      </div>
+      <div style="padding:16px 18px;"><span class="pill">Medication</span><h3 style="font-size:17px;margin-top:10px;">High alert drugs</h3><p style="font-size:13.5px;">The look-alike, sound-alike trap &middot; 1:20</p></div>
     </div>
     <div class="tile" style="padding:0;overflow:hidden;">
-      <!-- THE REAL VIDEO. No video address appears here on purpose: the file sits in a
-           private R2 bucket with no public URL at all, and videos/player.js asks the server
-           for a signed link that expires, only after the viewer's subscription has been
-           checked. The poster is a still taken from the video's own opening frame. -->
-      <div class="video-embed aqv-host" id="recordVideo"
-           style="aspect-ratio:16/9;border-radius:0;border:none;"
-           data-video-key="john-felix-web.mp4"
-           data-poster="videos/posters/john-felix.jpg"
-           data-aqv-name="Dr. John Felix S.N. Pharm&nbsp;D., RPh. (AMSP&nbsp;Certified)"
-           data-aqv-role="Ex - Clinical Pharmacologist, Aster DM Healthcare and MIOT Hospital"
-           data-aqv-role2="Currently a PhD Scholar, JSS AHER">
-        <img class="vp-poster" src="videos/posters/john-felix.jpg" alt="" width="1280" height="720" loading="lazy" decoding="async">
-        <button class="play" aria-label="Play: Show me the record"><svg width="20" height="20" viewBox="0 0 24 24" fill="currentColor"><path d="M8 5v14l11-7z"/></svg></button>
-      </div>
-      <div style="padding:16px 18px;"><span class="pill">Documentation</span><h3 style="font-size:17px;margin-top:10px;">"Show me the record"</h3><p style="font-size:13.5px;">Dr. John Felix S.N. · 1:59</p></div>
+      <div class="video-embed" style="aspect-ratio:16/9;border-radius:0;border:none;"><button class="play" aria-label="Play"><svg width="20" height="20" viewBox="0 0 24 24" fill="currentColor"><path d="M8 5v14l11-7z"/></svg></button></div>
+      <div style="padding:16px 18px;"><span class="pill">Mock audits</span><h3 style="font-size:17px;margin-top:10px;">"The first 90 seconds on a ward"</h3><p style="font-size:13.5px;">An assessor narrates every red flag in real time · 14:20</p></div>
     </div>
     <div class="tile" style="padding:0;overflow:hidden;">
       <div class="video-embed" style="aspect-ratio:16/9;border-radius:0;border:none;"><button class="play" aria-label="Play"><svg width="20" height="20" viewBox="0 0 24 24" fill="currentColor"><path d="M8 5v14l11-7z"/></svg></button></div>
