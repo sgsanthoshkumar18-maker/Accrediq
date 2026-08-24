@@ -74,5 +74,38 @@ eq(/font-size:max\(11px,1\.75cqw\)/.test(css), true, 'the role has a pixel floor
 eq(/@container \(max-width: 480px\)\{[^}]*font-size/.test(css.replace(/\s+/g, ' ')), false,
    'no breakpoint re-sets the type and undercuts the floor');
 
+// --- the caption must follow the VIDEO's clock, not a wall clock ---------
+/* Third failure of this caption's timing, and the most visible: driven by setTimeout from
+   the moment play was pressed, it kept counting while the video was PAUSED — sliding in
+   over a frozen frame and leaving again — and dragging the scrubber resynced nothing, so
+   it reappeared in the middle of the video with no relation to anything on screen. For a
+   real <video> the element's own currentTime is the truth and there is no reason not to
+   use it. The timer path stays for players we cannot see inside, like the film's bundle. */
+const player = fs.readFileSync(path.join(__dirname, '../videos/player.js'), 'utf8');
+const pbare = player.replace(/\/\*[\s\S]*?\*\//g, '').replace(/\/\/[^\n]*/g, '');
+
+eq(/addEventListener\("timeupdate", syncCaption\)/.test(pbare), true,
+   'the caption is resynced as the video plays');
+eq(/addEventListener\("seeked", syncCaption\)/.test(pbare), true,
+   'and immediately after the scrubber is dragged');
+eq(/v\.currentTime/.test(pbare) && /SHOW_AT/.test(pbare) && /HIDE_AT/.test(pbare), true,
+   'visibility is decided by where we are in the video');
+eq(/setTimeout\([^)]*showCaption/.test(pbare), false,
+   'no timer decides when the caption appears');
+eq(/ov\.start\b/.test(pbare), false,
+   'the player never starts the wall-clock sequence for a real video element');
+eq(/showCaption:\s*showCaption/.test(src.replace(/\/\*[\s\S]*?\*\//g, '')), true,
+   'the overlay exposes showCaption for a caller that has a real clock');
+
+// --- credentials must not break mid-qualification ------------------------
+/* "Pharm D." split across two lines as "Pharm" / "D., RPh." — text-wrap:balance found the
+   most even break, which is not the most meaningful one. Non-breaking spaces bind each
+   qualification into a single unbreakable unit. */
+const videosHtml = fs.readFileSync(path.join(__dirname, '../videos.html'), 'utf8');
+const nameAttr = /data-aqv-name="([^"]*)"/.exec(videosHtml);
+eq(!!nameAttr, true, 'the speaker name is on the video block');
+eq(/Pharm&nbsp;D\./.test(nameAttr[1]), true, '"Pharm D." cannot break across lines');
+eq(/AMSP&nbsp;Certified/.test(nameAttr[1]), true, '"AMSP Certified" cannot break either');
+
 console.log(pass + ' passed, ' + fail + ' failed');
 process.exit(fail ? 1 : 0);

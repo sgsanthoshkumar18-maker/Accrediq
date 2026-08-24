@@ -69,8 +69,16 @@ All **Production only**.
 > Ex - Clinical Pharmacologist, Aster DM Healthcare and MIOT Hospital
 > Currently a PhD Scholar, JSS AHER
 
-Appears at 3s, leaves at 9s. Below a 480px frame the two role lines hide and only the name
-shows, because at thumbnail size the caption was covering 52% of the picture.
+Shown between **0:03 and 0:09 of the video itself**, not on a timer — it holds while paused,
+vanishes if you scrub past, returns if you scrub back. Below a 480px frame the two role
+lines hide and only the name shows, because at thumbnail size the caption covered 52% of
+the picture. Non-breaking spaces bind "Pharm D." and "AMSP Certified" so a line never
+breaks mid-qualification.
+
+Going fullscreen **re-syncs but does not replay** the caption. An earlier build restarted it
+on entering fullscreen and that read as yet another caption arriving unbidden. If you want
+the credentials visible at any point in the video, the answer is burning them into the file
+with ffmpeg — which is also the only fix for iPhone fullscreen.
 
 ---
 

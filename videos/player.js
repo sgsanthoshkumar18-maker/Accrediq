@@ -201,10 +201,36 @@
 
       /* The overlay was attached at page load but has no video to listen to, because there
          was none until now. Drive it from here. */
+      /* THE CAPTION FOLLOWS THE VIDEO'S CLOCK, NOT A TIMER.
+         It used to be set going by a pair of setTimeouts when play was pressed. That is the
+         only option for a player we cannot see inside, and it is wrong here in two ways a
+         viewer notices immediately: the timers keep running while the video is PAUSED, so
+         the introduction slides over a frozen frame and leaves again; and dragging the
+         scrubber does not resync anything, so the caption appears halfway through the video
+         out of nowhere. Held against currentTime instead, it belongs to a moment in the
+         film — pause and it holds, scrub past and it is gone, scrub back and it returns. */
       var ov = host.__aqv;
+      var SHOW_AT = 3, HIDE_AT = 9;                 // seconds into the video
+      var captionOn = null;                         // only touch the DOM when it changes
+      function syncCaption() {
+        if (!ov) return;
+        var t = v.currentTime || 0;
+        var want = t >= SHOW_AT && t < HIDE_AT;
+        if (want === captionOn) return;
+        captionOn = want;
+        ov.showCaption(want);
+      }
       if (ov) {
-        v.addEventListener("play", ov.start);
-        v.addEventListener("ended", ov.stop);
+        /* timeupdate fires about four times a second, which is close enough for a caption
+           and costs nothing; seeked covers the jump the scrubber makes, which timeupdate
+           can otherwise report a beat late. */
+        v.addEventListener("timeupdate", syncCaption);
+        v.addEventListener("seeked", syncCaption);
+        v.addEventListener("play", function () { ov.live(true); syncCaption(); });
+        v.addEventListener("loadedmetadata", function () { ov.live(true); syncCaption(); });
+        v.addEventListener("ended", function () { ov.showCaption(false); captionOn = false; });
+        ov.live(true);
+        syncCaption();
       }
 
       /* FULLSCREEN HAS TO BE THE WHOLE FRAME, NOT THE VIDEO.
@@ -284,12 +310,13 @@
 
         if (fs === host) {
           lockLandscape();
-          /* Run the introduction again. Going fullscreen is a fresh look at the video —
-             usually a much bigger one, and often minutes after the caption came and went
-             at thumbnail size where the roles are hidden anyway. Re-introducing the
-             speaker at the size where his credentials are actually legible is the whole
-             point of having them. */
-          if (ov) { ov.stop(); setTimeout(ov.start, 80); }
+          /* Re-synced, NOT replayed. An earlier version restarted the introduction on
+             entering fullscreen, on the reasoning that this is a fresh and much larger
+             look at the video. In practice that is one more caption arriving unbidden in
+             the middle of a film, which is precisely the thing that made the overlay feel
+             broken. The caption belongs to 0:03–0:09 and nowhere else; going fullscreen at
+             0:40 shows the logo and no caption, which is what a broadcast would do. */
+          if (ov) { ov.live(true); syncCaption(); }
         } else if (!fs) {
           unlockOrientation();
         }

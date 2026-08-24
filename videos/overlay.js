@@ -127,10 +127,32 @@
       if (third) third.classList.remove("in");
     }
 
-    /* Shown for as long as the page is being looked at, then reset — so someone coming
-       back to a paused video and pressing play again sees the introduction again rather
-       than a caption that already ran while they were in another tab. */
-    return { start: start, stop: stop, el: el };
+    /* ---------- driving it from the video's own clock ----------
+       start()/stop() above run on a wall clock, which is right for a player whose insides
+       we cannot read — a YouTube iframe, the film's bundle. It is wrong for a real <video>,
+       and visibly so: the timer keeps counting while the video is PAUSED, so the caption
+       appears and leaves over a still frame; and dragging the scrubber does not resync it,
+       so it turns up in the middle of the video with no relation to anything.
+
+       showCaption() and live() let the caller hold the overlay against the video's actual
+       currentTime instead. Then the caption belongs to a MOMENT IN THE FILM rather than to
+       a moment in the viewer's afternoon: pause and it holds, scrub past and it is gone,
+       scrub back and it returns. */
+    function live(on) {
+      el.classList.toggle("is-live", !!on);
+      if (!on) {
+        var t = el.querySelector(".aqv-third");
+        if (t) t.classList.remove("in");
+      }
+    }
+    function showCaption(on) {
+      var third = el.querySelector(".aqv-third");
+      if (!third) return;
+      if (on && reduce) third.classList.add("no-motion");
+      third.classList.toggle("in", !!on);
+    }
+
+    return { start: start, stop: stop, live: live, showCaption: showCaption, el: el };
   }
 
   /* ---------- wiring it up from the markup ----------
