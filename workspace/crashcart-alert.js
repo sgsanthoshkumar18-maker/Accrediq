@@ -1,7 +1,14 @@
 /* AQcredix — CRASH CART MEDICINE EXPIRY ALERT.
  *
- * GET/POST /api/crash-cart-alert          send to every hospital that is due
- *          ?dry=1                         compute and report, send nothing
+ * Reached as /api/digest?scope=crashcart  send to every hospital that is due
+ *            &dry=1                       compute and report, send nothing
+ *
+ * WHY THIS IS A MODULE AND NOT ITS OWN api/ ROUTE.
+ * Vercel Hobby allows twelve Serverless Functions per deployment and this project already
+ * has twelve. A thirteenth file in api/ fails the BUILD outright — not the request, the
+ * whole deployment, taking the working site down with it. So the scheduled jobs share one
+ * endpoint and dispatch on ?scope=, which costs nothing: a cron path is not a function,
+ * and Hobby allows a hundred of those.
  *
  * Run monthly by cron. One mail per hospital, listing every crash cart medicine at or
  * inside that hospital's short-expiry window, grouped by the trolley it sits in.
@@ -25,7 +32,7 @@
  * REQUIRED ENVIRONMENT
  *   SUPABASE_URL, SUPABASE_SERVICE_ROLE_KEY (or SUPABASE_SERVICE_KEY), RESEND_API_KEY
  */
-const E = require("../workspace/shortexpiry.js");
+const E = require("./shortexpiry.js");
 
 const SB = process.env.SUPABASE_URL;
 const KEY = process.env.SUPABASE_SERVICE_ROLE_KEY || process.env.SUPABASE_SERVICE_KEY;
@@ -141,7 +148,7 @@ function render(review, orgName) {
     '</div>';
 }
 
-module.exports = async function handler(req, res) {
+async function run(req, res) {
   const dry = String((req.query && req.query.dry) || "") === "1";
 
   if (!SB || !KEY) {
@@ -246,4 +253,4 @@ module.exports = async function handler(req, res) {
   });
 };
 
-module.exports.render = render;
+module.exports = { run: run, render: render };

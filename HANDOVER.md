@@ -37,6 +37,14 @@ Paste this whole file into a new chat to pick up where the last one left off.
 - **Shell escaping mangles `\n`, `\d`, `\s` in heredocs.** Use the Edit tool or line-based
   node scripts for anything with regexes.
 - **Windows: `path.join` gives backslashes**; a forward-slash root fails `startsWith`.
+- **Vercel Hobby allows 12 Serverless Functions per deployment.** api/ is AT the limit. A
+  thirteenth `.js` file there fails the BUILD — the site keeps serving the last good
+  version and silently stops updating. Put new server logic in a module outside api/ and
+  dispatch to it from an existing endpoint (`workspace/crashcart-alert.js` does this).
+  Cron paths are not functions; 100 are allowed.
+- **Vercel invokes crons with GET, not POST.** `api/digest.js` was POST-only, so every
+  scheduled digest since the cron was added answered 405 and no email was ever sent — while
+  testing it by hand with POST worked perfectly. `tests/deploy-limits.test.js` guards both.
 
 ---
 
@@ -85,7 +93,9 @@ with ffmpeg — which is also the only fix for iPhone fullscreen.
 ## Short expiry calendar (crash carts)
 
 `workspace/crashcart.html` + `crashcart.js`, rule in `workspace/shortexpiry.js`, alert in
-`api/crash-cart-alert.js`, monthly cron on the 1st at 02:00.
+`workspace/crashcart-alert.js` reached via `/api/digest?scope=crashcart`, monthly cron on
+the 1st at 02:00. It is a module rather than its own api/ route because of the 12-function
+limit above.
 
 - The rule module is **shared by the screen and the email** — required by both, never copied,
   so they cannot disagree about which ampoules are short.

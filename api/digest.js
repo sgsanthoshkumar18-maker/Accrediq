@@ -82,9 +82,19 @@ function render(digest, name) {
 }
 
 module.exports = async function handler(req, res) {
-  if (req.method !== "POST") {
-    res.setHeader("Allow", "POST");
-    return res.status(405).json({ error: "POST only" });
+  /* GET IS ACCEPTED, AND HAS TO BE.
+     This was POST only, and Vercel invokes a cron job with a GET — "Vercel makes an HTTP
+     GET request to your project's production deployment URL". So every scheduled run since
+     the cron was added has been answered with 405 and no digest has ever actually been
+     sent by it. The endpoint worked perfectly whenever it was tested by hand with POST,
+     which is exactly why it went unnoticed.
+
+     POST still works, for triggering a run manually. The shared-secret check below is
+     unchanged and is what actually guards this route — Vercel sends it as a bearer token
+     on cron requests when CRON_SECRET is set. */
+  if (req.method !== "POST" && req.method !== "GET") {
+    res.setHeader("Allow", "GET, POST");
+    return res.status(405).json({ error: "GET or POST only" });
   }
 
   /* Guarded by a shared secret as well as the method. A digest endpoint that anyone can
@@ -98,6 +108,18 @@ module.exports = async function handler(req, res) {
   /* ?scope=expiry selects the monthly certificate run. Anything else is the weekly
      all-items digest, so an unrecognised value degrades to the existing behaviour rather
      than sending nothing. */
+  /* ?scope=crashcart is a different mail entirely — the crash cart short-expiry alert —
+     and is handed straight to its own module.
+
+     It lives here rather than at /api/crash-cart-alert because Vercel's Hobby plan allows
+     twelve Serverless Functions per deployment and this project already has twelve. A
+     thirteenth file in api/ does not fail that one route, it fails the BUILD, which takes
+     the whole site down with it. Scheduled jobs therefore share this endpoint and dispatch
+     on scope. A cron path is not a function, so the separate schedule costs nothing. */
+  if (String((req.query && req.query.scope) || "") === "crashcart") {
+    return require("../workspace/crashcart-alert.js").run(req, res);
+  }
+
   const EXPIRY_ONLY = String((req.query && req.query.scope) || "") === "expiry";
 
   if (!SB || !KEY) {
