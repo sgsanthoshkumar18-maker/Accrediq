@@ -29,6 +29,8 @@
       desc: "Equipment, licences, contracts and staff registrations with their renewal cycles" },
     { key: "training", href: "training.html", label: "Training",
       desc: "Induction, fire safety, BLS and competency — who has it and when it lapses" },
+    { key: "crashcart", href: "crashcart.html", label: "Short Expiry",
+      desc: "Crash cart medicines and their expiry dates" },
     { key: "rounds", href: "rounds.html", label: "Rounds",
       desc: "Recurring checks that produce a score, trended against your target" },
     { key: "capa", href: "capa.html", label: "NC & CAPA",

@@ -11,13 +11,23 @@
   "redirects": [
     {
       "source": "/",
-      "has": [{ "type": "host", "value": "accrediq.vercel.app" }],
+      "has": [
+        {
+          "type": "host",
+          "value": "accrediq.vercel.app"
+        }
+      ],
       "destination": "https://aqcredix.com/",
       "permanent": true
     },
     {
       "source": "/:path*",
-      "has": [{ "type": "host", "value": "accrediq.vercel.app" }],
+      "has": [
+        {
+          "type": "host",
+          "value": "accrediq.vercel.app"
+        }
+      ],
       "destination": "https://aqcredix.com/:path*",
       "permanent": true
     }
@@ -30,6 +40,10 @@
     {
       "path": "/api/digest?scope=expiry",
       "schedule": "0 4 1 * *"
+    },
+    {
+      "path": "/api/crash-cart-alert",
+      "schedule": "0 2 1 * *"
     }
   ]
 }

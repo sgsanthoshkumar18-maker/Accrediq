@@ -2091,3 +2091,124 @@ begin
          for each row execute function public.aq_notify_master_edit()', t, t);
   end loop;
 end $$;
+
+-- ===========================================================================
+-- SHORT EXPIRY CALENDAR — crash cart medicines
+--
+-- WHY A SEPARATE REGISTER AND NOT THE EQUIPMENT ONE.
+-- An infusion pump is calibrated and goes on being the same pump. An adrenaline ampoule
+-- is CONSUMED, and the moment it is consumed the thing that replaces it has a different
+-- expiry date. A register built around a durable asset models that as an edit; a crash
+-- cart needs it modelled as the normal course of events, because a code blue at 3am is
+-- exactly when the batch changes and exactly when nobody updates a spreadsheet.
+--
+-- THE SHORT-EXPIRY WINDOW IS A HOSPITAL-LEVEL POLICY, NOT A PER-ITEM ONE.
+-- Pharmacies set one rule — three months, or six — and apply it to everything. Storing
+-- it per item would let two ampoules in the same drawer be judged differently, which is
+-- how a cart passes its own check and fails an assessor's.
+-- ===========================================================================
+
+create table if not exists public.crash_carts (
+  id          text primary key,
+  org_id      uuid references public.orgs(id) on delete cascade,
+  name        text not null,        -- the location: "ICU bed 4", "Casualty resus bay"
+  department  text,
+  notes       text,
+  created_by  uuid,
+  created_at  timestamptz not null default now(),
+  updated_at  timestamptz not null default now()
+);
+create index if not exists crash_carts_org_idx on public.crash_carts (org_id);
+
+create table if not exists public.crash_cart_items (
+  id          text primary key,
+  org_id      uuid references public.orgs(id) on delete cascade,
+  cart_id     text references public.crash_carts(id) on delete cascade,
+  name        text not null,        -- "Adrenaline 1mg/ml"
+  strength    text,
+  quantity    int  not null default 1,
+  expires_on  date not null,
+  batch       text,
+  notes       text,
+  created_by  uuid,
+  created_at  timestamptz not null default now(),
+  updated_at  timestamptz not null default now()
+);
+create index if not exists crash_items_org_idx    on public.crash_cart_items (org_id);
+create index if not exists crash_items_cart_idx   on public.crash_cart_items (cart_id);
+-- The alert query is "everything in this hospital expiring before a date", every month.
+create index if not exists crash_items_expiry_idx on public.crash_cart_items (org_id, expires_on);
+
+-- One row per hospital. months is 3 or 6; anything else is refused rather than silently
+-- treated as one of them, because a wrong window here means expired drugs in a cart.
+create table if not exists public.crash_cart_settings (
+  org_id       uuid primary key references public.orgs(id) on delete cascade,
+  months       int  not null default 3 check (months in (3, 6)),
+  alert_email  text,               -- null: fall back to the quality manager's address
+  last_sent_on date,               -- so a cron that fires twice does not mail twice
+  updated_at   timestamptz not null default now()
+);
+
+-- The event log. Kept even though the replacement is just an edit to the item, because
+-- "why did this expiry change" is a question an assessor asks and a hospital cannot
+-- answer from the item row alone.
+create table if not exists public.code_blue_events (
+  id           text primary key,
+  org_id       uuid references public.orgs(id) on delete cascade,
+  cart_id      text references public.crash_carts(id) on delete cascade,
+  happened_on  date not null,
+  items_used   jsonb not null default '[]'::jsonb,   -- [{item_id, name, qty, old_expiry, new_expiry}]
+  recorded_by  uuid,
+  notes        text,
+  created_at   timestamptz not null default now()
+);
+create index if not exists code_blue_org_idx  on public.code_blue_events (org_id);
+create index if not exists code_blue_cart_idx on public.code_blue_events (cart_id);
+
+alter table public.crash_carts         enable row level security;
+alter table public.crash_cart_items    enable row level security;
+alter table public.crash_cart_settings enable row level security;
+alter table public.code_blue_events    enable row level security;
+
+-- Same shape as every other hospital table: your own org, and only while the
+-- subscription is live. Written as a loop so a policy cannot drift between the four.
+do $$
+declare t text;
+begin
+  foreach t in array array['crash_carts','crash_cart_items','code_blue_events']
+  loop
+    execute format('drop policy if exists %I_read on public.%I', t, t);
+    execute format($f$create policy %I_read on public.%I for select to authenticated
+       using (org_id = public.my_org() and public.has_access())$f$, t, t);
+
+    execute format('drop policy if exists %I_write on public.%I', t, t);
+    execute format($f$create policy %I_write on public.%I for all to authenticated
+       using (org_id = public.my_org() and public.has_access() and public.can_edit())
+       with check (org_id = public.my_org() and public.has_access() and public.can_edit())$f$,
+       t, t);
+  end loop;
+end $$;
+
+drop policy if exists crash_settings_read on public.crash_cart_settings;
+create policy crash_settings_read on public.crash_cart_settings for select to authenticated
+  using (org_id = public.my_org() and public.has_access());
+drop policy if exists crash_settings_write on public.crash_cart_settings;
+create policy crash_settings_write on public.crash_cart_settings for all to authenticated
+  using (org_id = public.my_org() and public.has_access() and public.can_edit())
+  with check (org_id = public.my_org() and public.has_access() and public.can_edit());
+
+-- org_id is stamped by the database from the caller's own session, exactly as it is for
+-- every other hospital table. Without this the browser would have to send org_id itself,
+-- which means the browser could send SOMEBODY ELSE'S — and the row-level policies would
+-- then be checking a number the client chose.
+do $$
+declare t text;
+begin
+  foreach t in array array['crash_carts','crash_cart_items','code_blue_events']
+  loop
+    execute format('drop trigger if exists set_org_%I on public.%I', t, t);
+    execute format(
+      'create trigger set_org_%I before insert on public.%I
+         for each row execute function public.set_org_id()', t, t);
+  end loop;
+end $$;

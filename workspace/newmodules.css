@@ -177,3 +177,44 @@
 /* ---------- role pills for the two master roles ---------- */
 .role-pill.role-quality_manager,.role-pill.role-director{
   background:var(--accent-tint,rgba(94,234,212,.16));color:var(--accent-bright);}
+
+/* ---------- short expiry calendar (crash carts) ----------
+   Palette tokens only, as everywhere else here. */
+.cc-policybar{display:flex;align-items:center;gap:14px;flex-wrap:wrap;
+  border:1px solid var(--border);border-radius:var(--r-md);
+  padding:12px 16px;background:var(--bg-elevated);margin-bottom:18px;}
+.cc-policy{display:flex;align-items:center;gap:10px;font-size:13.5px;font-weight:600;
+  color:var(--fg);white-space:nowrap;}
+.cc-policy select{background:var(--bg);border:1px solid var(--border);
+  border-radius:var(--r-sm);padding:8px 12px;color:var(--fg);font:inherit;font-size:14px;}
+.cc-policy select:focus{outline:2px solid var(--accent-bright);outline-offset:1px;}
+.cc-policybar .tr-hint{margin:0;flex:1 1 240px;}
+
+.cc-actions{display:flex;gap:10px;flex-wrap:wrap;margin-bottom:20px;}
+.cc-cartactions{display:flex;gap:8px;flex-wrap:wrap;margin:0 0 10px;}
+
+/* The code blue picker. One row per item: tick it, then say how many went and what the
+   replacement expires. The two fields stay disabled until the tick, so nobody fills in a
+   date for stock nobody touched. */
+.cc-used{display:flex;flex-direction:column;gap:2px;max-height:320px;overflow-y:auto;
+  border:1px solid var(--border);border-radius:var(--r-sm);padding:6px;}
+.cc-used-row{display:flex;align-items:center;gap:10px;padding:8px 9px;
+  border-radius:var(--r-sm);cursor:pointer;}
+.cc-used-row:hover{background:var(--bg);}
+.cc-used-row input[type=checkbox]{flex:none;}
+.cc-used-name{flex:1 1 auto;min-width:0;font-size:14px;color:var(--fg);}
+.cc-used-name small{display:block;font-size:12px;color:var(--fg-faint);margin-top:1px;}
+.cc-used-fields{flex:none;display:flex;gap:6px;}
+.cc-used-fields input{background:var(--bg);border:1px solid var(--border);
+  border-radius:var(--r-sm);padding:6px 8px;color:var(--fg);font:inherit;font-size:13px;}
+.cc-used-fields input[type=number]{width:64px;}
+.cc-used-fields input:disabled{opacity:.4;}
+.cc-used-fields input:focus{outline:2px solid var(--accent-bright);outline-offset:1px;}
+
+/* On a phone the fields drop under the item name rather than squeezing it to nothing. */
+@media (max-width:620px){
+  .cc-used-row{flex-wrap:wrap;}
+  .cc-used-fields{flex-basis:100%;padding-left:26px;}
+  .cc-used-fields input[type=date]{flex:1 1 auto;}
+  .cc-actions .btn{flex:1 1 100%;}
+}

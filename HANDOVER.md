@@ -82,6 +82,29 @@ with ffmpeg — which is also the only fix for iPhone fullscreen.
 
 ---
 
+## Short expiry calendar (crash carts)
+
+`workspace/crashcart.html` + `crashcart.js`, rule in `workspace/shortexpiry.js`, alert in
+`api/crash-cart-alert.js`, monthly cron on the 1st at 02:00.
+
+- The rule module is **shared by the screen and the email** — required by both, never copied,
+  so they cannot disagree about which ampoules are short.
+- The window is **"at most N months of shelf life left"**, not "expiring in the Nth month".
+  Asked for as "in August, alert me about November"; read literally that skips a September
+  expiry, which is nearer and worse. The report is grouped by month so the N-months-out
+  cohort still appears under its own heading. **If the narrow reading was actually wanted,
+  it is one line in `classify()`.**
+- **Expired is a separate state from short**, and is said first. An expired drug in a resus
+  trolley is an incident, not a reorder.
+- A pack printed `11/2026` is usable to **30 November**, not the 1st.
+- Policy is 3 or 6 months, per hospital. Anything else falls back to 3 — never quietly laxer.
+- After a code blue: pick the cart, tick the items used, give the replacement expiry. The
+  item row is updated in place and the event is logged with both dates, because "why did
+  this expiry change" is a question an assessor asks.
+- Tables: `crash_carts`, `crash_cart_items`, `crash_cart_settings`, `code_blue_events` —
+  all with `set_org_id()` triggers and the standard my_org() + has_access() policies.
+  **The schema block must be run in Supabase before the page will save anything.**
+
 ## Open items
 
 1. **Never tested against live R2.** Nobody has pressed play on the deployed site with the
@@ -98,7 +121,8 @@ with ffmpeg — which is also the only fix for iPhone fullscreen.
    `-- ONE HOSPITAL, FIFTEEN ACCOUNTS` to the end of `workspace/schema.sql`.
 7. **A real ₹500 Razorpay payment from a non-owner email has never been completed.**
 8. **0 of 639 NABH summaries written** — the owner is writing these.
-9. **Untick Preview** on `RAZORPAY_KEY_SECRET` and `SUPABASE_SERVICE_ROLE_KEY` in Vercel.
+9. **The crash cart schema has not been run in Supabase.** Until it is, the page loads but saves nothing.
+10. **Untick Preview** on `RAZORPAY_KEY_SECRET` and `SUPABASE_SERVICE_ROLE_KEY` in Vercel.
 
 ## Recent decisions worth not re-litigating
 
