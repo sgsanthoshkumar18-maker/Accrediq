@@ -289,6 +289,29 @@
         if (v.webkitEnterFullscreen) { try { v.webkitEnterFullscreen(); } catch (err) {} }
       });
 
+      /* SPACE PAUSES THE VIDEO INSTEAD OF SCROLLING THE PAGE.
+         Same guards as the film in videos/aq-film.js, deliberately, so the two players
+         behave identically — a visitor who learns the habit on one should not find it
+         missing on the other.
+
+         The guards are the whole job here. Space is the page-down key and it is also how a
+         keyboard user activates a focused button or link, so swallowing it site-wide would
+         break every form and every control on it. It is taken only when this video is
+         actually the thing being watched: mounted, playing, on screen, and with the focus
+         somewhere that is not expecting a space of its own. */
+      addEventListener("keydown", function (e) {
+        if (e.key !== " " && e.key !== "Spacebar" && e.code !== "Space") return;
+        if (e.ctrlKey || e.metaKey || e.altKey) return;
+        if (!host.isConnected || !host.classList.contains("vp-playing")) return;
+        var t = e.target;
+        if (t && (t.isContentEditable ||
+                  /^(INPUT|TEXTAREA|SELECT|BUTTON|A)$/.test(t.tagName))) return;
+        var r = host.getBoundingClientRect();
+        if (!(r.height > 0 && r.bottom > 0 && r.top < innerHeight)) return;
+        e.preventDefault();                 // this is what stops the page jumping down
+        if (v.paused) { v.play().catch(function () {}); } else { v.pause(); }
+      });
+
       document.addEventListener("fullscreenchange", function () {
         fsBtn.classList.toggle("is-on", inFullscreen());
         var fs = document.fullscreenElement;

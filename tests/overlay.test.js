@@ -97,6 +97,22 @@ eq(/ov\.start\b/.test(pbare), false,
 eq(/showCaption:\s*showCaption/.test(src.replace(/\/\*[\s\S]*?\*\//g, '')), true,
    'the overlay exposes showCaption for a caller that has a real clock');
 
+// --- space pauses the video, and nothing else ----------------------------
+/* Space is the page-down key AND the key that activates a focused button or link. A
+   handler that takes it unconditionally breaks every form and every control on the site,
+   which is a far worse bug than the convenience it adds. The guards are the feature. */
+eq(/e\.key !== " " && e\.key !== "Spacebar" && e\.code !== "Space"/.test(pbare), true,
+   'space is recognised by key and by code');
+eq(/INPUT\|TEXTAREA\|SELECT\|BUTTON\|A/.test(pbare), true,
+   'space is left alone on inputs, selects, buttons and links');
+eq(/isContentEditable/.test(pbare), true, 'and inside anything contenteditable');
+eq(/vp-playing/.test(pbare) && /r\.top < innerHeight/.test(pbare), true,
+   'only taken while this player is mounted and actually on screen');
+eq(/e\.ctrlKey \|\| e\.metaKey \|\| e\.altKey/.test(pbare), true,
+   'a modifier combination is left to the browser');
+eq(/e\.preventDefault\(\);\s*\n\s*if \(v\.paused\)/.test(pbare), true,
+   'the page is stopped from scrolling only when we actually handle the key');
+
 // --- credentials must not break mid-qualification ------------------------
 /* "Pharm D." split across two lines as "Pharm" / "D., RPh." — text-wrap:balance found the
    most even break, which is not the most meaningful one. Non-breaking spaces bind each
