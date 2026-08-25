@@ -135,14 +135,33 @@ limit above.
   alongside the hospital's own contacts, de-duplicated on the normalised address. Set
   `CRASH_ALERT_TO=off` to stop it — **revisit this once there are real subscribers**, as it
   puts every hospital's crash cart contents in one shared inbox.
+- **One row per BATCH.** Several rows sharing name+strength are one item; shortexpiry.js
+  judges each batch separately, which is what short expiry means to a pharmacist.
+- **"Was the crash cart opened?"** replaces the code-blue-only flow. Reason is Code Blue or
+  Other; Other asks for the reason and whether anything was used. A drill that takes nothing
+  is still recorded and the stock is untouched.
+- **The restock is a real stock adjustment**: the used quantity comes off its batch (the row
+  is removed if the batch is finished), the replacement is added as its own batch, merged if
+  that exact batch+expiry is already there. The register is therefore always what is in the
+  trolley now, and the export never needs reconciling against the log.
+- **Tag/seal numbers** are optional on the cart, pre-filled as "tag broken" when a cart is
+  opened, and the new seal becomes the cart tag.
+- **Excel export** (`workspace/crashcart-excel.js`, raw OOXML through JSZip, same approach as
+  `audit/audit-excel.js`): two sheets per cart — contents, then openings — in that order, for
+  all carts or a chosen subset. Sheet names are de-duplicated, capped at 31 characters and
+  stripped of the characters Excel refuses; the cart name is shortened BEFORE " openings" is
+  appended so the word always survives on a long ward name.
 - Tables: `crash_carts`, `crash_cart_items`, `crash_cart_settings`, `code_blue_events` —
   all with `set_org_id()` triggers and the standard my_org() + has_access() policies.
-  **The schema block must be run in Supabase before the page will save anything.**
+  **The schema block must be run in Supabase before the page will save anything** — and there
+  is now a SECOND block further down the file adding `tag_number`, `reason`, `other_reason`,
+  `items_used_flag`, `tag_before` and `tag_after`. Both are needed.
 
 ## Open items
 
 1. **Never tested against live R2.** Nobody has pressed play on the deployed site with the
    real keys. This is the first thing to check.
+   *(Both videos are now uploaded to the bucket; only playback remains unverified.)*
 2. **Real fullscreen and phone rotation are unverified.** The code paths are tested; no
    device has run them.
 3. **iPhone cannot show the overlay in fullscreen.** Safari hands fullscreen to the OS
@@ -153,7 +172,9 @@ limit above.
 6. **Schema may not be fully applied.** If `has_access()` is missing from the database, the
    subscription path 503s (owner and complimentary still work). Run the block from
    `-- ONE HOSPITAL, FIFTEEN ACCOUNTS` to the end of `workspace/schema.sql`.
-7. **A real ₹500 Razorpay payment from a non-owner email has never been completed.**
+7. ~~A real Razorpay payment has never been completed.~~ **DONE — 22 Aug 2026, first paying
+   subscriber. Payment captured, subscription written, access granted. The whole chain
+   (Razorpay → api/verify-payment.js → Supabase → paywall) is proven in production.**
 8. **0 of 639 NABH summaries written** — the owner is writing these.
 9. **The crash cart schema has not been run in Supabase.** Until it is, the page loads but saves nothing.
 10. **Untick Preview** on `RAZORPAY_KEY_SECRET` and `SUPABASE_SERVICE_ROLE_KEY` in Vercel.

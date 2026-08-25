@@ -1,20 +1,27 @@
 /* AQcredix — Short expiry calendar: crash cart medicines.
  *
  * WHY A CRASH CART IS NOT AN EQUIPMENT REGISTER.
- * A defibrillator is calibrated and goes on being that defibrillator. An adrenaline
- * ampoule is CONSUMED — and the moment it is used, the thing that replaces it has a
- * different expiry date and usually a different batch. A register that treats that as an
- * unusual edit is wrong about the normal case, because the normal case is a code blue at
- * three in the morning followed by nobody updating a spreadsheet.
+ * A defibrillator is calibrated and goes on being that defibrillator. An adrenaline ampoule
+ * is CONSUMED — and the moment it is used, the thing that replaces it has a different expiry
+ * and a different batch. A register that treats that as an unusual edit is wrong about the
+ * normal case, because the normal case is a cart opened at three in the morning followed by
+ * nobody updating a spreadsheet.
  *
- * So restocking is a first-class action here, not a correction: "there was a code blue"
- * asks which trolley, which items, and what the new dates are, writes them into the cart,
- * and re-judges them against the hospital's short-expiry rule immediately.
+ * ONE ROW PER BATCH.
+ * Ten ampoules of adrenaline in a trolley are usually two deliveries with two printed dates.
+ * Storing the item once forces somebody to choose which date to type, and the batch they did
+ * not type is the one that expires unnoticed. So a row here is a BATCH, several rows sharing
+ * a name are one item, and shortexpiry.js already judges each row separately — which is what
+ * a pharmacist means by short expiry.
  *
- * THE RULE ITSELF IS IN shortexpiry.js AND IS SHARED WITH THE ALERT EMAIL.
- * Whatever this screen calls short, the monthly mail calls short. A second copy of that
- * arithmetic would drift, and a pharmacist shown four ampoules on screen and three in the
- * inbox stops trusting both.
+ * OPENING A CART IS AN EVENT; A CODE BLUE IS ONE KIND OF IT.
+ * Drills, monthly checks and broken seals open carts too. Filing them all under "code blue"
+ * makes the count useless for the audit this register exists to survive.
+ *
+ * THE RESTOCK IS A STOCK ADJUSTMENT, NOT A NOTE.
+ * What was used is decremented — the row disappears if the batch is finished — and the
+ * replacement batch is added. So the register is always what is in the trolley now, and the
+ * export never needs reconciling against the event log.
  */
 (function () {
   "use strict";
@@ -23,13 +30,32 @@
   var CARTS = "crash_carts", ITEMS = "crash_cart_items";
   var SETTINGS = "crash_cart_settings", EVENTS = "code_blue_events";
 
-  var carts = [], items = [], settings = { months: 3 }, tab = "action";
+  var carts = [], items = [], events = [], settings = { months: 3 }, tab = "action";
 
-  function id(prefix) { return prefix + "_" + Math.random().toString(36).slice(2, 11); }
+  function id(p) { return p + "_" + Math.random().toString(36).slice(2, 11); }
   function today() { return new Date().toISOString().slice(0, 10); }
-
   function months() { return E.normaliseMonths(settings && settings.months); }
   function review() { return E.review(carts, items, { today: today(), months: months() }); }
+  function cartById(cid) { return carts.filter(function (c) { return c.id === cid; })[0]; }
+  function itemsOf(cid) { return items.filter(function (i) { return i.cart_id === cid; }); }
+
+  /* An "item" is a name plus a strength; its batches are the rows that share both. */
+  function groupItems(list) {
+    var g = {}, order = [];
+    list.forEach(function (i) {
+      var k = (i.name || "") + "|" + (i.strength || "");
+      if (!g[k]) { g[k] = { key: k, name: i.name, strength: i.strength, batches: [] }; order.push(k); }
+      g[k].batches.push(i);
+    });
+    order.sort();
+    return order.map(function (k) {
+      g[k].batches.sort(function (a, b) {
+        return String(a.expires_on) < String(b.expires_on) ? -1 : 1;
+      });
+      g[k].total = g[k].batches.reduce(function (n, b) { return n + (Number(b.quantity) || 0); }, 0);
+      return g[k];
+    });
+  }
 
   /* ---------------- rendering ---------------- */
 
@@ -41,53 +67,47 @@
     return '<div class="reg-stats">' +
       box(r.expired.length ? "bad" : "", r.expired.length, "Expired &mdash; remove now") +
       box(r.short.length ? "warn" : "ok", r.short.length, "Short expiry") +
-      box("", items.length, "Items tracked") +
-      box("", carts.length, "Crash carts") +
-      "</div>";
+      box("", items.length, "Batches tracked") +
+      box("", carts.length, "Crash carts") + "</div>";
   }
 
-  function itemRow(f) {
+  function flaggedRow(f) {
     var left = f.daysLeft < 0
       ? '<span class="tr-tag bad">Expired ' + Math.abs(f.daysLeft) + "d ago</span>"
       : '<span class="tr-tag ' + (f.state === "short" ? "warn" : "ok") + '">' +
         f.daysLeft + " days left</span>";
-    return "<tr>" +
-      "<td><b>" + esc(f.name) + "</b>" +
-        (f.strength ? " " + esc(f.strength) : "") +
-        (f.batch ? '<span class="tr-sub">batch ' + esc(f.batch) + "</span>" : "") + "</td>" +
-      "<td>" + esc(f.cart) + (f.department ? '<span class="tr-sub">' + esc(f.department) +
-        "</span>" : "") + "</td>" +
-      "<td>" + esc(f.quantity) + "</td>" +
-      "<td>" + esc(f.expiry) + "</td>" +
-      "<td>" + left + "</td>" +
+    return "<tr><td><b>" + esc(f.name) + "</b>" +
+      (f.strength ? " " + esc(f.strength) : "") +
+      (f.batch ? '<span class="tr-sub">batch ' + esc(f.batch) + "</span>" : "") + "</td>" +
+      "<td>" + esc(f.cart) + "</td><td>" + esc(f.quantity) + "</td>" +
+      "<td>" + esc(f.expiry) + "</td><td>" + left + "</td>" +
       '<td><button class="tr-edit" data-edit="' + esc(f.id) + '">Edit</button></td></tr>';
   }
 
-  function table(list) {
+  function flaggedTable(list) {
     if (!list.length) return "";
     return '<div class="ws-tablewrap"><table class="ws-table">' +
-      "<tr><th>Item</th><th>Crash cart</th><th>Qty</th><th>Expires</th>" +
-      "<th>&nbsp;</th><th>&nbsp;</th></tr>" +
-      list.map(itemRow).join("") + "</table></div>";
+      "<tr><th>Item &amp; batch</th><th>Crash cart</th><th>Qty</th><th>Expires</th>" +
+      "<th>&nbsp;</th><th>&nbsp;</th></tr>" + list.map(flaggedRow).join("") + "</table></div>";
   }
 
   function actionPanel(r) {
     if (r.empty) {
       return '<div class="ws-empty"><p>Nothing is expiring inside your ' + r.months +
-        "-month window. Everything in " + carts.length + " crash cart" +
+        "-month window. Every batch in " + carts.length + " crash cart" +
         (carts.length === 1 ? "" : "s") + " is in date.</p></div>";
     }
     var out = "";
     if (r.expired.length) {
-      out += '<div class="ev-summary none"><b>' + r.expired.length + " item" +
-        (r.expired.length === 1 ? " has" : "s have") + " already expired.</b> " +
+      out += '<div class="ev-summary none"><b>' + r.expired.length + " batch" +
+        (r.expired.length === 1 ? " has" : "es have") + " already expired.</b> " +
         "Remove from the trolley now &mdash; this is not a reorder.</div>" +
-        '<div class="ev-block"><h3>Expired</h3>' + table(r.expired) + "</div>";
+        '<div class="ev-block"><h3>Expired</h3>' + flaggedTable(r.expired) + "</div>";
     }
     if (r.short.length) {
       out += '<div class="ev-block"><h3>Short expiry &mdash; within ' + r.months +
-        " months<span class=\"ev-count\">" + r.short.length + "</span></h3>" +
-        table(r.short) + "</div>";
+        ' months<span class="ev-count">' + r.short.length + "</span></h3>" +
+        flaggedTable(r.short) + "</div>";
     }
     return out;
   }
@@ -98,45 +118,86 @@
     return groups.map(function (g) {
       return '<div class="ev-block"><h3>' + esc(E.monthLabel(g.month)) +
         '<span class="ev-count">' + g.items.length + "</span></h3>" +
-        table(g.items) + "</div>";
+        flaggedTable(g.items) + "</div>";
     }).join("");
   }
 
   function cartPanel() {
     if (!carts.length) {
-      return '<div class="ws-empty"><p>No crash carts yet. Add the first one &mdash; ' +
-        "name it the way the ward does, so somebody can walk to it.</p></div>";
+      return '<div class="ws-empty"><p>No crash carts yet. Add the first one &mdash; name it ' +
+        "the way the ward does, so somebody can walk to it.</p></div>";
     }
     return carts.map(function (c) {
-      var own = items.filter(function (i) { return i.cart_id === c.id; });
+      var own = itemsOf(c.id);
+      var groups = groupItems(own);
       var flagged = E.review([c], own, { today: today(), months: months() });
+      var evs = events.filter(function (e) { return e.cart_id === c.id; });
       return '<div class="ev-block"><h3>' + esc(c.name) +
         (c.department ? " &middot; " + esc(c.department) : "") +
-        '<span class="ev-count">' + own.length + " item" + (own.length === 1 ? "" : "s") +
+        (c.tag_number ? '<span class="cc-tag">Tag ' + esc(c.tag_number) + "</span>" : "") +
+        '<span class="ev-count">' + groups.length + " item" + (groups.length === 1 ? "" : "s") +
         "</span>" +
         (flagged.all.length ? '<span class="ev-count">' + flagged.all.length +
-          " need attention</span>" : "") + "</h3>" +
+          " need attention</span>" : "") +
+        (evs.length ? '<span class="ev-count">' + evs.length + " opening" +
+          (evs.length === 1 ? "" : "s") + "</span>" : "") + "</h3>" +
         '<div class="cc-cartactions">' +
           '<button class="btn btn-ghost btn-sm" data-additem="' + esc(c.id) + '">Add item</button> ' +
-          '<button class="btn btn-ghost btn-sm" data-editcart="' + esc(c.id) + '">Rename</button>' +
+          '<button class="btn btn-ghost btn-sm" data-editcart="' + esc(c.id) + '">Edit cart</button>' +
         "</div>" +
-        (own.length
+        (groups.length
           ? '<div class="ws-tablewrap"><table class="ws-table">' +
-            "<tr><th>Item</th><th>Qty</th><th>Expires</th><th>Status</th><th>&nbsp;</th></tr>" +
-            own.map(function (i) {
-              var c2 = E.classify(i, { today: today(), months: months() });
-              var tag = c2.state === "expired" ? '<span class="tr-tag bad">Expired</span>'
-                : c2.state === "short" ? '<span class="tr-tag warn">Short</span>'
-                : c2.state === "unknown" ? '<span class="tr-tag">No date</span>'
-                : '<span class="tr-tag ok">In date</span>';
-              return "<tr><td><b>" + esc(i.name) + "</b>" +
-                (i.strength ? " " + esc(i.strength) : "") + "</td>" +
-                "<td>" + esc(i.quantity) + "</td><td>" + esc(i.expires_on || "&mdash;") +
-                "</td><td>" + tag + "</td>" +
-                '<td><button class="tr-edit" data-edit="' + esc(i.id) + '">Edit</button></td></tr>';
+            "<tr><th>Item</th><th>Batch</th><th>Qty</th><th>Expires</th><th>Status</th><th>&nbsp;</th></tr>" +
+            groups.map(function (g) {
+              return g.batches.map(function (i, n) {
+                var c2 = E.classify(i, { today: today(), months: months() });
+                var tag = c2.state === "expired" ? '<span class="tr-tag bad">Expired</span>'
+                  : c2.state === "short" ? '<span class="tr-tag warn">Short</span>'
+                  : c2.state === "unknown" ? '<span class="tr-tag">No date</span>'
+                  : '<span class="tr-tag ok">In date</span>';
+                return "<tr" + (n ? ' class="cc-batchrow"' : "") + "><td>" +
+                  (n === 0 ? "<b>" + esc(g.name) + "</b>" +
+                    (g.strength ? " " + esc(g.strength) : "") +
+                    (g.batches.length > 1 ? '<span class="tr-sub">' + g.batches.length +
+                      " batches &middot; " + g.total + " in cart</span>" : "")
+                   : "") + "</td>" +
+                  "<td>" + esc(i.batch || "—") + "</td>" +
+                  "<td>" + esc(i.quantity) + "</td>" +
+                  "<td>" + esc(i.expires_on || "—") + "</td><td>" + tag + "</td>" +
+                  '<td><button class="tr-edit" data-edit="' + esc(i.id) + '">Edit</button></td></tr>';
+              }).join("");
             }).join("") + "</table></div>"
-          : '<p class="tr-hint">No items recorded in this cart yet.</p>') +
-        "</div>";
+          : '<p class="tr-hint">No items recorded in this cart yet.</p>') + "</div>";
+    }).join("");
+  }
+
+  function openingsPanel() {
+    if (!events.length) {
+      return '<div class="ws-empty"><p>No cart has been recorded as opened yet.</p></div>';
+    }
+    return events.slice().sort(function (a, b) {
+      return String(a.happened_on) < String(b.happened_on) ? 1 : -1;
+    }).map(function (ev) {
+      var c = cartById(ev.cart_id) || {};
+      var used = Array.isArray(ev.items_used) ? ev.items_used : [];
+      return '<div class="ev-block"><h3>' + esc(c.name || "Unknown cart") +
+        '<span class="ev-count">' + esc(ev.happened_on) + "</span>" +
+        '<span class="ev-count">' + (ev.reason === "other"
+          ? esc(ev.other_reason || "Other") : "Code Blue") + "</span></h3>" +
+        '<p class="tr-hint">Tag ' + esc(ev.tag_before || "—") + " &rarr; " +
+        esc(ev.tag_after || "—") + "</p>" +
+        (used.length
+          ? '<div class="ws-tablewrap"><table class="ws-table">' +
+            "<tr><th>Item</th><th>Batch used</th><th>Qty</th><th>Replaced with</th></tr>" +
+            used.map(function (u) {
+              return "<tr><td>" + esc(u.name || "") + "</td><td>" + esc(u.old_batch || "—") +
+                "</td><td>" + esc(u.qty || 0) + "</td><td>" +
+                (u.new_batch ? esc(u.new_batch) + " &middot; exp " + esc(u.new_expiry || "—") +
+                  (u.new_qty ? " (" + esc(u.new_qty) + ")" : "") : "not replaced") +
+                "</td></tr>";
+            }).join("") + "</table></div>"
+          : '<p class="tr-hint">Opened, nothing taken.</p>') +
+        (ev.notes ? '<p class="tr-hint">' + esc(ev.notes) + "</p>" : "") + "</div>";
     }).join("");
   }
 
@@ -144,45 +205,57 @@
     var r = review();
     document.getElementById("ccStats").innerHTML = stats(r);
     document.getElementById("ccPolicy").innerHTML =
-      '<label class="cc-policy">Short expiry protocol' +
-      '<select id="ccMonths">' +
+      '<label class="cc-policy">Short expiry protocol<select id="ccMonths">' +
         E.ALLOWED_MONTHS.map(function (m) {
           return '<option value="' + m + '"' + (m === r.months ? " selected" : "") + ">" +
                  m + " months</option>";
         }).join("") + "</select></label>" +
-      '<span class="tr-hint">Anything expiring on or before <b>' + esc(r.windowEnds) +
-      "</b> is flagged. Applies to every item in every cart.</span>";
+      '<span class="tr-hint">Any batch expiring on or before <b>' + esc(r.windowEnds) +
+      "</b> is flagged. Applies to every batch in every cart.</span>";
 
-    var panel = document.getElementById("ccPanel");
-    panel.innerHTML = tab === "action" ? actionPanel(r)
-                    : tab === "month" ? monthPanel(r)
-                    : cartPanel();
+    document.getElementById("ccPanel").innerHTML =
+        tab === "action" ? actionPanel(r)
+      : tab === "month"  ? monthPanel(r)
+      : tab === "open"   ? openingsPanel()
+      : cartPanel();
 
     [].forEach.call(document.querySelectorAll("#ccTabs .cal-tab"), function (b) {
       b.classList.toggle("is-on", b.getAttribute("data-tab") === tab);
     });
   }
 
-  /* ---------------- forms ---------------- */
+  /* ---------------- modal plumbing ---------------- */
 
   function modal(html) {
     var m = document.getElementById("ccModal");
     m.innerHTML = '<div class="ws-modal-in">' + html + "</div>";
     m.classList.add("open");
-    m.addEventListener("click", function (e) { if (e.target === m) close(); });
     return m;
   }
   function close() { document.getElementById("ccModal").classList.remove("open"); }
 
+  function cartOptions(sel) {
+    return carts.map(function (c) {
+      return '<option value="' + esc(c.id) + '"' + (sel === c.id ? " selected" : "") + ">" +
+             esc(c.name) + "</option>";
+    }).join("");
+  }
+
+  /* ---------------- cart form ---------------- */
+
   function cartForm(cart) {
     var c = cart || {};
-    modal("<h3>" + (cart ? "Rename crash cart" : "Add a crash cart") + "</h3>" +
-      '<form id="ccCartForm" class="ws-form"' + (cart ? ' data-id="' + esc(c.id) + '"' : "") + '>' +
+    modal("<h3>" + (cart ? "Edit crash cart" : "Add a crash cart") + "</h3>" +
+      '<form id="ccCartForm" class="ws-form"' + (cart ? ' data-id="' + esc(c.id) + '"' : "") + ">" +
       '<div class="ws-f ws-f-wide"><label>Location *</label>' +
         '<input name="name" required value="' + esc(c.name || "") +
         '" placeholder="ICU bed 4, Casualty resus bay"></div>' +
       '<div class="ws-f"><label>Department</label><input name="department" value="' +
         esc(c.department || "") + '"></div>' +
+      /* Optional on purpose: plenty of hospitals seal a cart and plenty do not, and a
+         required field would have the ones that do not typing "NA" forever. */
+      '<div class="ws-f"><label>Tag / seal number</label><input name="tag_number" value="' +
+        esc(c.tag_number || "") + '" placeholder="leave blank if not used"></div>' +
       '<p class="tr-hint">Name it the way the ward says it out loud. Somebody reading the ' +
         "alert at 7am has to walk to this trolley.</p>" +
       '<div class="ws-modal-actions">' +
@@ -191,100 +264,280 @@
         '<button class="btn btn-accent" type="submit">Save</button></div></form>');
   }
 
-  function itemForm(item, cartId) {
-    var i = item || {};
-    modal("<h3>" + (item ? "Edit item" : "Add an item") + "</h3>" +
-      '<form id="ccItemForm" class="ws-form"' + (item ? ' data-id="' + esc(i.id) + '"' : "") + '>' +
-      '<div class="ws-f ws-f-wide"><label>Crash cart *</label><select name="cart_id" required>' +
-        carts.map(function (c) {
-          var sel = (i.cart_id || cartId) === c.id ? " selected" : "";
-          return '<option value="' + esc(c.id) + '"' + sel + ">" + esc(c.name) + "</option>";
-        }).join("") + "</select></div>" +
-      '<div class="ws-f ws-f-wide"><label>Item *</label><input name="name" required value="' +
-        esc(i.name || "") + '" placeholder="Adrenaline 1mg/ml"></div>' +
-      '<div class="ws-f"><label>Strength / form</label><input name="strength" value="' +
-        esc(i.strength || "") + '"></div>' +
-      '<div class="ws-f"><label>Quantity *</label><input name="quantity" type="number" min="0" ' +
-        'required value="' + esc(i.quantity == null ? 1 : i.quantity) + '"></div>' +
-      '<div class="ws-f"><label>Expiry *</label><input name="expires_on" type="date" required ' +
-        'value="' + esc(i.expires_on || "") + '"></div>' +
-      '<div class="ws-f"><label>Batch</label><input name="batch" value="' +
-        esc(i.batch || "") + '"></div>' +
-      '<p class="tr-hint">If the pack shows only a month, use the LAST day of it &mdash; ' +
-        "stock printed 11/2026 is usable to 30 November.</p>" +
-      '<p class="cc-added" id="ccAdded" hidden></p>' +
-      '<div class="ws-modal-actions">' +
-        (item ? '<button type="button" class="btn btn-ghost" id="ccItemDel">Delete</button>' : "") +
-        /* Stocking a cart is thirty or forty ampoules in one sitting. Closing the dialog
-           after each one, then reopening it and choosing the same trolley again, turns a
-           single job into thirty. This keeps the dialog open and the cart selected, and
-           clears only the fields that differ between items. */
-        (item ? "" : '<button type="submit" class="btn btn-ghost" id="ccItemAgain">' +
-                     "Save &amp; add another</button>") +
-        '<button type="button" class="btn btn-ghost" id="ccCancel">Cancel</button>' +
-        '<button class="btn btn-accent" type="submit">Save</button></div></form>');
+  /* ---------------- item form, with batches ---------------- */
+
+  function batchFields(n, b) {
+    b = b || {};
+    return '<div class="cc-batch" data-batch>' +
+      '<span class="cc-batch-n">Batch ' + n + "</span>" +
+      '<div class="ws-f"><label>Batch number</label><input data-b="batch" value="' +
+        esc(b.batch || "") + '"></div>' +
+      '<div class="ws-f"><label>Quantity *</label><input data-b="quantity" type="number" ' +
+        'min="0" required value="' + esc(b.quantity == null ? 1 : b.quantity) + '"></div>' +
+      '<div class="ws-f"><label>Expiry *</label><input data-b="expires_on" type="date" ' +
+        'required value="' + esc(b.expires_on || "") + '"></div>' +
+      (n > 1 ? '<button type="button" class="cc-batch-x" data-rmbatch>Remove</button>' : "") +
+      "</div>";
   }
 
-  /* THE CODE BLUE FLOW.
-     Asked as a question rather than presented as a form, because the person opening this
-     has just been told "we used the cart" and is not yet thinking in fields. Answering
-     yes narrows to one trolley, then to the items actually used, and asks only for what
-     changed: how many were used, and the new expiry of what replaced them. */
-  function codeBlueForm() {
-    if (!carts.length) { W.toast("Add a crash cart first", "bad"); return; }
-    modal("<h3>Was there a code blue?</h3>" +
-      '<p class="tr-hint">Recording it here replaces the expiry dates of the items you ' +
-        "used, so the short-expiry window is applied to the new stock rather than to the " +
-        "stock that has gone.</p>" +
-      '<form id="ccBlueForm" class="ws-form">' +
-      '<div class="ws-f"><label>Date of the event *</label>' +
-        '<input name="happened_on" type="date" required value="' + today() + '"></div>' +
-      '<div class="ws-f"><label>Which crash cart *</label><select name="cart_id" required id="ccBlueCart">' +
-        carts.map(function (c) {
-          return '<option value="' + esc(c.id) + '">' + esc(c.name) + "</option>";
+  function itemForm(item, cartId) {
+    var i = item || {};
+    /* Editing touches ONE batch row. Adding offers as many as the pharmacist has in hand,
+       because a delivery arrives as several batches and closing the dialog between each is
+       the difference between a five-minute job and a half-hour one. */
+    modal("<h3>" + (item ? "Edit batch" : "Add an item") + "</h3>" +
+      '<form id="ccItemForm" class="ws-form"' + (item ? ' data-id="' + esc(i.id) + '"' : "") + ">" +
+      '<div class="ws-f ws-f-wide"><label>Crash cart *</label><select name="cart_id" required>' +
+        cartOptions(i.cart_id || cartId) + "</select></div>" +
+      '<div class="ws-f ws-f-wide"><label>Item *</label><input name="name" required value="' +
+        esc(i.name || "") + '" placeholder="Adrenaline"></div>' +
+      '<div class="ws-f ws-f-wide"><label>Strength / form</label><input name="strength" value="' +
+        esc(i.strength || "") + '" placeholder="1mg/ml ampoule"></div>' +
+      '<div id="ccBatches">' + batchFields(1, item ? i : null) + "</div>" +
+      (item ? "" : '<button type="button" class="btn btn-ghost btn-sm" id="ccAddBatch">' +
+                   "+ Add another batch</button>") +
+      '<p class="tr-hint">One item, one strength, and a row for each batch you hold. ' +
+        "If the pack shows only a month, use the LAST day of it &mdash; stock printed " +
+        "11/2026 is usable to 30 November.</p>" +
+      '<p class="cc-added" id="ccAdded" hidden></p>' +
+      '<div class="ws-modal-actions">' +
+        (item ? '<button type="button" class="btn btn-ghost" id="ccItemDel">Delete batch</button>' : "") +
+        (item ? "" : '<button type="submit" class="btn btn-ghost" id="ccItemAgain">' +
+                     "Save &amp; add another item</button>") +
+        '<button type="button" class="btn btn-ghost" id="ccCancel">Cancel</button>' +
+        '<button class="btn btn-accent" type="submit">Save</button></div></form>');
+
+    var box = document.getElementById("ccBatches");
+    var add = document.getElementById("ccAddBatch");
+    if (add) {
+      add.addEventListener("click", function () {
+        var n = box.querySelectorAll("[data-batch]").length + 1;
+        box.insertAdjacentHTML("beforeend", batchFields(n));
+        var last = box.lastElementChild;
+        last.querySelector('[data-b="batch"]').focus();
+      });
+    }
+    box.addEventListener("click", function (e) {
+      if (!e.target.closest("[data-rmbatch]")) return;
+      e.target.closest("[data-batch]").remove();
+      [].forEach.call(box.querySelectorAll(".cc-batch-n"), function (el, n) {
+        el.textContent = "Batch " + (n + 1);
+      });
+    });
+  }
+
+  /* ---------------- "was the crash cart opened?" ---------------- */
+
+  function usedItemBlock(n, cartId) {
+    var groups = groupItems(itemsOf(cartId));
+    return '<div class="cc-used-item" data-useditem>' +
+      '<div class="cc-used-head"><b>Item ' + n + "</b>" +
+        (n > 1 ? '<button type="button" class="cc-batch-x" data-rmitem>Remove</button>' : "") +
+      "</div>" +
+      '<div class="ws-f ws-f-wide"><label>Item used *</label>' +
+        '<select data-u="key" required><option value="">Choose an item&hellip;</option>' +
+        groups.map(function (g) {
+          return '<option value="' + esc(g.key) + '">' + esc(g.name) +
+                 (g.strength ? " " + esc(g.strength) : "") +
+                 " &mdash; " + g.total + " in cart</option>";
         }).join("") + "</select></div>" +
-      '<div class="ws-f ws-f-wide"><label>Items used</label>' +
-        '<div id="ccBlueItems" class="cc-used"></div></div>' +
-      '<div class="ws-f ws-f-wide"><label>Notes</label><textarea name="notes" rows="2"></textarea></div>' +
+      '<div class="cc-stockshow" data-stock hidden></div>' +
+      '<div class="cc-usedbatches" data-usedbatches></div>' +
+      '<button type="button" class="btn btn-ghost btn-sm" data-addusedbatch hidden>' +
+        "+ Another batch of this item</button>" +
+      '<div class="cc-repl" data-repl hidden>' +
+        '<div class="cc-repl-head">Replaced with</div>' +
+        '<div class="cc-replbatches" data-replbatches></div>' +
+        '<button type="button" class="btn btn-ghost btn-sm" data-addreplbatch>' +
+          "+ Another replacement batch</button>" +
+      "</div></div>";
+  }
+
+  function usedBatchRow(g) {
+    return '<div class="cc-usedrow" data-usedrow>' +
+      '<div class="ws-f"><label>Batch used *</label><select data-u="batch" required>' +
+        '<option value="">Choose&hellip;</option>' +
+        g.batches.map(function (b) {
+          return '<option value="' + esc(b.id) + '">' + esc(b.batch || "no batch number") +
+                 " &middot; exp " + esc(b.expires_on) + " &middot; " + b.quantity +
+                 " in cart</option>";
+        }).join("") + "</select></div>" +
+      '<div class="ws-f"><label>Quantity used *</label>' +
+        '<input data-u="qty" type="number" min="1" value="1" required></div>' +
+      '<button type="button" class="cc-batch-x" data-rmusedrow>Remove</button></div>';
+  }
+
+  function replBatchRow() {
+    return '<div class="cc-usedrow" data-replrow>' +
+      '<div class="ws-f"><label>New batch</label><input data-r="batch"></div>' +
+      '<div class="ws-f"><label>Quantity *</label>' +
+        '<input data-r="qty" type="number" min="1" value="1" required></div>' +
+      '<div class="ws-f"><label>New expiry *</label>' +
+        '<input data-r="expiry" type="date" required></div>' +
+      '<button type="button" class="cc-batch-x" data-rmreplrow>Remove</button></div>';
+  }
+
+  function openedForm() {
+    if (!carts.length) { W.toast("Add a crash cart first", "bad"); return; }
+    modal("<h3>Was the crash cart opened?</h3>" +
+      '<p class="tr-hint">Recording it here adjusts the stock: what was taken comes off, ' +
+        "what replaced it goes on with its own batch and expiry. The register then stays " +
+        "what is actually in the trolley.</p>" +
+      '<form id="ccOpenForm" class="ws-form">' +
+      '<div class="ws-f"><label>Date opened *</label>' +
+        '<input name="happened_on" type="date" required value="' + today() + '"></div>' +
+      '<div class="ws-f"><label>Which crash cart *</label>' +
+        '<select name="cart_id" required id="ccOpenCart">' + cartOptions() + "</select></div>" +
+      '<p class="cc-tagline" id="ccTagLine"></p>' +
+      '<div class="ws-f ws-f-wide"><label>Reason for opening *</label>' +
+        '<select name="reason" required id="ccReason">' +
+          '<option value="code_blue">Code Blue event</option>' +
+          '<option value="other">Other</option></select></div>' +
+      '<div class="ws-f ws-f-wide" id="ccOtherWrap" hidden><label>What was the reason? *</label>' +
+        '<input name="other_reason" placeholder="Mock drill, monthly check, seal found broken"></div>' +
+      '<div class="ws-f ws-f-wide" id="ccUsedWrap" hidden><label>Was anything used? *</label>' +
+        '<select name="items_used_flag"><option value="yes">Yes</option>' +
+        '<option value="no">No — opened, nothing taken</option></select></div>' +
+
+      '<div id="ccUsedSection">' +
+        '<div class="cc-section">Items used</div>' +
+        '<div id="ccUsedItems"></div>' +
+        '<button type="button" class="btn btn-ghost btn-sm" id="ccAddUsedItem">' +
+          "+ Add another item</button>" +
+      "</div>" +
+
+      '<div class="ws-f"><label>Tag / seal broken</label>' +
+        '<input name="tag_before" id="ccTagBefore" placeholder="the seal you cut"></div>' +
+      '<div class="ws-f"><label>New tag / seal applied</label>' +
+        '<input name="tag_after" placeholder="the seal on closing"></div>' +
+      '<div class="ws-f ws-f-wide"><label>Notes</label>' +
+        '<textarea name="notes" rows="2"></textarea></div>' +
       '<div class="ws-modal-actions">' +
         '<button type="button" class="btn btn-ghost" id="ccCancel">Cancel</button>' +
         '<button class="btn btn-accent" type="submit">Record and restock</button>' +
       "</div></form>");
 
-    function fillItems() {
-      var cartId = document.getElementById("ccBlueCart").value;
-      var own = items.filter(function (i) { return i.cart_id === cartId; });
-      var box = document.getElementById("ccBlueItems");
-      box.innerHTML = own.length
-        ? own.map(function (i) {
-            return '<label class="cc-used-row">' +
-              '<input type="checkbox" data-used="' + esc(i.id) + '">' +
-              '<span class="cc-used-name">' + esc(i.name) +
-                '<small>' + esc(i.quantity) + " in cart &middot; expires " +
-                esc(i.expires_on || "—") + "</small></span>" +
-              '<span class="cc-used-fields">' +
-                '<input type="number" min="1" max="' + esc(i.quantity) +
-                  '" value="1" data-qty="' + esc(i.id) + '" disabled title="How many were used">' +
-                '<input type="date" data-newexp="' + esc(i.id) +
-                  '" disabled title="Expiry of the replacement">' +
-              "</span></label>";
-          }).join("")
-        : '<p class="tr-hint">This cart has no items recorded yet.</p>';
+    var cartSel = document.getElementById("ccOpenCart");
+    var reason = document.getElementById("ccReason");
+    var otherWrap = document.getElementById("ccOtherWrap");
+    var usedWrap = document.getElementById("ccUsedWrap");
+    var usedSection = document.getElementById("ccUsedSection");
+    var usedItems = document.getElementById("ccUsedItems");
 
-      /* The two fields only wake up once the item is ticked. Enabled from the start they
-         invite someone to fill in a date for stock nobody touched. */
-      [].forEach.call(box.querySelectorAll("[data-used]"), function (cb) {
-        cb.addEventListener("change", function () {
-          var k = cb.getAttribute("data-used");
-          box.querySelector('[data-qty="' + k + '"]').disabled = !cb.checked;
-          var d = box.querySelector('[data-newexp="' + k + '"]');
-          d.disabled = !cb.checked;
-          if (cb.checked) d.required = true; else { d.required = false; d.value = ""; }
-        });
-      });
+    function showTag() {
+      var c = cartById(cartSel.value) || {};
+      document.getElementById("ccTagLine").innerHTML = c.tag_number
+        ? "Current tag on this cart: <b>" + esc(c.tag_number) + "</b>"
+        : '<span class="cc-tagline-none">No tag recorded for this cart.</span>';
+      /* Pre-filled, because the seal being broken is almost always the one on the cart —
+         and a field that is right by default is one nobody mistypes. */
+      var tb = document.getElementById("ccTagBefore");
+      if (tb && !tb.dataset.touched) tb.value = c.tag_number || "";
+      usedItems.innerHTML = "";
+      addUsedItem();
     }
-    document.getElementById("ccBlueCart").addEventListener("change", fillItems);
-    fillItems();
+    function addUsedItem() {
+      var n = usedItems.querySelectorAll("[data-useditem]").length + 1;
+      usedItems.insertAdjacentHTML("beforeend", usedItemBlock(n, cartSel.value));
+    }
+    function syncReason() {
+      var other = reason.value === "other";
+      otherWrap.hidden = !other;
+      usedWrap.hidden = !other;
+      otherWrap.querySelector("input").required = other;
+      var anyUsed = !other || usedWrap.querySelector("select").value === "yes";
+      usedSection.hidden = !anyUsed;
+    }
+    cartSel.addEventListener("change", showTag);
+    reason.addEventListener("change", syncReason);
+    usedWrap.querySelector("select").addEventListener("change", syncReason);
+    document.getElementById("ccTagBefore").addEventListener("input", function () {
+      this.dataset.touched = "1";
+    });
+    document.getElementById("ccAddUsedItem").addEventListener("click", addUsedItem);
+
+    /* One delegated listener for the whole repeating structure. Binding per row would leak
+       a listener every time somebody added and removed a batch. */
+    usedItems.addEventListener("change", function (e) {
+      var sel = e.target.closest('[data-u="key"]');
+      if (!sel) return;
+      var block = sel.closest("[data-useditem]");
+      var g = groupItems(itemsOf(cartSel.value)).filter(function (x) {
+        return x.key === sel.value;
+      })[0];
+      var stock = block.querySelector("[data-stock]");
+      var ub = block.querySelector("[data-usedbatches]");
+      var addUB = block.querySelector("[data-addusedbatch]");
+      var repl = block.querySelector("[data-repl]");
+      if (!g) { stock.hidden = true; ub.innerHTML = ""; addUB.hidden = true; repl.hidden = true; return; }
+
+      /* What is in the trolley right now, shown BEFORE anything is chosen — the question a
+         nurse is answering is "which of these did we use", and they cannot answer it from
+         a dropdown they have to open to read. */
+      stock.hidden = false;
+      stock.innerHTML = "<b>In the cart now:</b><ul>" + g.batches.map(function (b) {
+        var c2 = E.classify(b, { today: today(), months: months() });
+        return "<li>" + esc(b.batch || "no batch number") + " &middot; " + b.quantity +
+               " &middot; expires " + esc(b.expires_on) +
+               (c2.state === "expired" ? ' <span class="tr-tag bad">expired</span>'
+                : c2.state === "short" ? ' <span class="tr-tag warn">short</span>' : "") +
+               "</li>";
+      }).join("") + "</ul>";
+      ub.innerHTML = usedBatchRow(g);
+      addUB.hidden = false;
+      repl.hidden = false;
+      if (!repl.querySelector("[data-replrow]")) {
+        repl.querySelector("[data-replbatches]").innerHTML = replBatchRow();
+      }
+    });
+
+    usedItems.addEventListener("click", function (e) {
+      var block = e.target.closest("[data-useditem]");
+      if (e.target.closest("[data-rmitem]")) { block.remove(); return; }
+      if (e.target.closest("[data-addusedbatch]")) {
+        var sel = block.querySelector('[data-u="key"]');
+        var g = groupItems(itemsOf(cartSel.value)).filter(function (x) { return x.key === sel.value; })[0];
+        if (g) block.querySelector("[data-usedbatches]").insertAdjacentHTML("beforeend", usedBatchRow(g));
+        return;
+      }
+      if (e.target.closest("[data-rmusedrow]")) { e.target.closest("[data-usedrow]").remove(); return; }
+      if (e.target.closest("[data-addreplbatch]")) {
+        block.querySelector("[data-replbatches]").insertAdjacentHTML("beforeend", replBatchRow());
+        return;
+      }
+      if (e.target.closest("[data-rmreplrow]")) { e.target.closest("[data-replrow]").remove(); }
+    });
+
+    showTag();
+    syncReason();
+  }
+
+  /* ---------------- download ---------------- */
+
+  function downloadForm() {
+    if (!carts.length) { W.toast("There is nothing to download yet", "bad"); return; }
+    modal("<h3>Download the crash cart register</h3>" +
+      '<p class="tr-hint">An Excel workbook. Each cart gets a sheet of its own contents, ' +
+        "followed by a sheet of every time it was opened and what changed.</p>" +
+      '<form id="ccDlForm" class="ws-form">' +
+      '<div class="ws-f ws-f-wide"><label>Which carts?</label>' +
+        '<label class="tm-check"><input type="radio" name="scope" value="all" checked> ' +
+          "All " + carts.length + " crash cart" + (carts.length === 1 ? "" : "s") + "</label>" +
+        '<label class="tm-check"><input type="radio" name="scope" value="some"> ' +
+          "Choose which ones</label></div>" +
+      '<div class="tm-modgrid" id="ccDlPick" hidden>' +
+        carts.map(function (c) {
+          return '<label class="tm-check"><input type="checkbox" data-cart="' + esc(c.id) +
+                 '"> ' + esc(c.name) + "</label>";
+        }).join("") + "</div>" +
+      '<div class="ws-modal-actions">' +
+        '<button type="button" class="btn btn-ghost" id="ccCancel">Cancel</button>' +
+        '<button class="btn btn-accent" type="submit">Download</button></div></form>');
+
+    var pick = document.getElementById("ccDlPick");
+    [].forEach.call(document.querySelectorAll('#ccDlForm [name="scope"]'), function (r) {
+      r.addEventListener("change", function () { pick.hidden = r.value !== "some" || !r.checked; });
+    });
   }
 
   /* ---------------- saving ---------------- */
@@ -293,14 +546,153 @@
     try {
       carts = (await S.adapter.list(CARTS)) || [];
       items = (await S.adapter.list(ITEMS)) || [];
+      events = (await S.adapter.list(EVENTS)) || [];
       var s = (await S.adapter.list(SETTINGS)) || [];
       settings = s[0] || { months: 3 };
-    } catch (e) {
-      carts = carts || []; items = items || [];
-    }
+    } catch (e) { /* keep whatever we had rather than blanking the screen */ }
     carts.sort(function (a, b) { return String(a.name) < String(b.name) ? -1 : 1; });
     render();
   }
+
+  async function saveCart(f) {
+    var fd = new FormData(f);
+    var rid = f.getAttribute("data-id");
+    var row = { id: rid || id("cart"),
+                name: String(fd.get("name") || "").trim(),
+                department: String(fd.get("department") || "").trim() || null,
+                tag_number: String(fd.get("tag_number") || "").trim() || null };
+    if (!row.name) throw new Error("a location is needed");
+    await S.adapter.put(CARTS, row);
+  }
+
+  async function saveItem(f) {
+    var fd = new FormData(f);
+    var rid = f.getAttribute("data-id");
+    var name = String(fd.get("name") || "").trim();
+    var strength = String(fd.get("strength") || "").trim() || null;
+    var cartId = fd.get("cart_id");
+    if (!name) throw new Error("an item name is needed");
+
+    var rows = [].slice.call(f.querySelectorAll("[data-batch]"));
+    if (!rows.length) throw new Error("at least one batch is needed");
+    for (var n = 0; n < rows.length; n++) {
+      var b = rows[n];
+      var expiry = b.querySelector('[data-b="expires_on"]').value;
+      if (!expiry) throw new Error("every batch needs an expiry date");
+      await S.adapter.put(ITEMS, {
+        id: rid && rows.length === 1 ? rid : id("cci"),
+        cart_id: cartId, name: name, strength: strength,
+        batch: String(b.querySelector('[data-b="batch"]').value || "").trim() || null,
+        quantity: Math.max(0, Number(b.querySelector('[data-b="quantity"]').value) || 0),
+        expires_on: expiry
+      });
+    }
+  }
+
+  /* THE STOCK ADJUSTMENT.
+     Used quantity comes off the batch it came from; a batch reduced to nothing is removed
+     rather than left as a zero row, because a zero row is stock that reads as present. The
+     replacement is added as its own batch, merged if that exact batch and expiry is already
+     in the cart — two deliveries of the same batch are one batch. */
+  async function saveOpened(f) {
+    var fd = new FormData(f);
+    var cartId = fd.get("cart_id");
+    var cart = cartById(cartId) || {};
+    var reason = fd.get("reason");
+    var anyUsed = reason !== "other" || fd.get("items_used_flag") === "yes";
+
+    var used = [];
+    if (anyUsed) {
+      var blocks = [].slice.call(f.querySelectorAll("[data-useditem]"));
+      for (var n = 0; n < blocks.length; n++) {
+        var block = blocks[n];
+        var key = block.querySelector('[data-u="key"]').value;
+        if (!key) continue;
+        var g = groupItems(itemsOf(cartId)).filter(function (x) { return x.key === key; })[0];
+        if (!g) continue;
+
+        var repls = [].slice.call(block.querySelectorAll("[data-replrow]")).map(function (r) {
+          return { batch: String(r.querySelector('[data-r="batch"]').value || "").trim() || null,
+                   qty: Math.max(0, Number(r.querySelector('[data-r="qty"]').value) || 0),
+                   expiry: r.querySelector('[data-r="expiry"]').value };
+        }).filter(function (r) { return r.expiry; });
+
+        var rows = [].slice.call(block.querySelectorAll("[data-usedrow]"));
+        for (var k = 0; k < rows.length; k++) {
+          var batchId = rows[k].querySelector('[data-u="batch"]').value;
+          var qty = Math.max(0, Number(rows[k].querySelector('[data-u="qty"]').value) || 0);
+          if (!batchId || !qty) continue;
+          var src = items.filter(function (i) { return i.id === batchId; })[0];
+          if (!src) continue;
+          if (qty > (Number(src.quantity) || 0)) {
+            throw new Error("only " + src.quantity + " of batch " +
+                            (src.batch || "that item") + " are in the cart");
+          }
+          var left = (Number(src.quantity) || 0) - qty;
+          if (left > 0) await S.adapter.put(ITEMS, Object.assign({}, src, { quantity: left }));
+          else await S.adapter.remove(ITEMS, src.id);
+
+          var r0 = repls[k] || repls[0] || null;
+          used.push({ item_id: src.id, name: (g.name || "") + (g.strength ? " " + g.strength : ""),
+                      qty: qty, old_batch: src.batch, old_expiry: src.expires_on,
+                      new_batch: r0 && r0.batch, new_expiry: r0 && r0.expiry,
+                      new_qty: r0 && r0.qty });
+        }
+
+        for (var r = 0; r < repls.length; r++) {
+          var rep = repls[r];
+          if (!rep.qty) continue;
+          var same = itemsOf(cartId).filter(function (i) {
+            return i.name === g.name && (i.strength || null) === (g.strength || null) &&
+                   (i.batch || null) === rep.batch && i.expires_on === rep.expiry;
+          })[0];
+          if (same) {
+            await S.adapter.put(ITEMS, Object.assign({}, same,
+              { quantity: (Number(same.quantity) || 0) + rep.qty }));
+          } else {
+            await S.adapter.put(ITEMS, { id: id("cci"), cart_id: cartId, name: g.name,
+              strength: g.strength || null, batch: rep.batch, quantity: rep.qty,
+              expires_on: rep.expiry });
+          }
+        }
+      }
+      if (!used.length) throw new Error("choose what was used, or set 'Was anything used' to No");
+    }
+
+    var tagAfter = String(fd.get("tag_after") || "").trim() || null;
+    await S.adapter.put(EVENTS, {
+      id: id("cb"), cart_id: cartId,
+      happened_on: fd.get("happened_on") || today(),
+      reason: reason,
+      other_reason: reason === "other" ? String(fd.get("other_reason") || "").trim() || null : null,
+      items_used_flag: anyUsed,
+      items_used: used,
+      tag_before: String(fd.get("tag_before") || "").trim() || null,
+      tag_after: tagAfter,
+      notes: String(fd.get("notes") || "").trim() || null
+    });
+    /* The new seal becomes the cart's tag, so the register shows the seal that is on it. */
+    if (tagAfter) await S.adapter.put(CARTS, Object.assign({}, cart, { tag_number: tagAfter }));
+
+    W.toast(anyUsed ? used.length + " batch" + (used.length === 1 ? "" : "es") + " adjusted"
+                    : "Opening recorded");
+  }
+
+  async function doDownload(f) {
+    var scope = f.querySelector('[name="scope"]:checked').value;
+    var chosen = carts;
+    if (scope === "some") {
+      var ids = [].slice.call(f.querySelectorAll("[data-cart]:checked"))
+                  .map(function (c) { return c.getAttribute("data-cart"); });
+      if (!ids.length) throw new Error("choose at least one crash cart");
+      chosen = carts.filter(function (c) { return ids.indexOf(c.id) > -1; });
+    }
+    var name = await window.AQCrashCartExcel.download(chosen, items, events,
+      { today: today(), months: months() });
+    W.toast("Downloaded " + name);
+  }
+
+  /* ---------------- wiring ---------------- */
 
   function wire() {
     document.getElementById("ccAddCart").addEventListener("click", function () { cartForm(); });
@@ -308,7 +700,8 @@
       if (!carts.length) { W.toast("Add a crash cart first", "bad"); return; }
       itemForm();
     });
-    document.getElementById("ccCodeBlue").addEventListener("click", codeBlueForm);
+    document.getElementById("ccCodeBlue").addEventListener("click", openedForm);
+    document.getElementById("ccDownload").addEventListener("click", downloadForm);
 
     document.getElementById("ccTabs").addEventListener("click", function (e) {
       var b = e.target.closest("[data-tab]");
@@ -340,25 +733,22 @@
       if (ai) { itemForm(null, ai.getAttribute("data-additem")); return; }
       var ec = e.target.closest("[data-editcart]");
       if (ec) {
-        var c = carts.filter(function (x) { return x.id === ec.getAttribute("data-editcart"); })[0];
+        var c = cartById(ec.getAttribute("data-editcart"));
         if (c) cartForm(c);
       }
     });
 
-    /* One submit handler for all three forms: they live in the same modal and only one is
-       ever open, so three listeners would be three chances to leak one. */
     var addedThisSitting = 0;
 
     document.getElementById("ccModal").addEventListener("submit", async function (e) {
       e.preventDefault();
       var f = e.target;
-      /* Which button was pressed. e.submitter is the direct answer; the fallback covers
-         a form submitted with Enter, which reports no submitter at all. */
       var again = (e.submitter && e.submitter.id === "ccItemAgain");
       try {
         if (f.id === "ccCartForm") await saveCart(f);
         else if (f.id === "ccItemForm") await saveItem(f);
-        else if (f.id === "ccBlueForm") await saveCodeBlue(f);
+        else if (f.id === "ccOpenForm") await saveOpened(f);
+        else if (f.id === "ccDlForm") { await doDownload(f); close(); return; }
       } catch (err) {
         W.toast("Could not save: " + (err && err.message || err), "bad");
         return;
@@ -368,22 +758,14 @@
         addedThisSitting++;
         var cartSel = f.querySelector('[name="cart_id"]');
         var cartName = cartSel.options[cartSel.selectedIndex].textContent;
-        /* The cart stays chosen — every item in this sitting is going into the same
-           trolley. Everything that differs per item is cleared, and quantity goes back to
-           1 rather than keeping the last number, which would silently multiply an entry
-           somebody forgot to look at. */
-        ["name", "strength", "expires_on", "batch"].forEach(function (k) {
-          var el = f.querySelector('[name="' + k + '"]');
-          if (el) el.value = "";
-        });
-        f.querySelector('[name="quantity"]').value = "1";
-
+        f.querySelector('[name="name"]').value = "";
+        f.querySelector('[name="strength"]').value = "";
+        document.getElementById("ccBatches").innerHTML = batchFields(1);
         var note = document.getElementById("ccAdded");
         note.hidden = false;
         note.textContent = addedThisSitting + " item" + (addedThisSitting === 1 ? "" : "s") +
-                           " added to " + cartName + ". Add the next one, or press Cancel " +
-                           "when the cart is done.";
-        await refresh();                       // the page behind updates as you go
+          " added to " + cartName + ". Add the next one, or press Cancel when the cart is done.";
+        await refresh();
         f.querySelector('[name="name"]').focus();
         return;
       }
@@ -394,11 +776,12 @@
     });
 
     document.getElementById("ccModal").addEventListener("click", async function (e) {
+      if (e.target === e.currentTarget) { close(); return; }
       if (e.target.id === "ccCancel") { close(); return; }
       if (e.target.id === "ccItemDel") {
         var f = document.getElementById("ccItemForm");
         var rid = f.getAttribute("data-id");
-        if (rid && confirm("Delete this item from the cart?")) {
+        if (rid && confirm("Delete this batch from the cart?")) {
           await S.adapter.remove(ITEMS, rid); close(); await refresh();
         }
         return;
@@ -407,74 +790,12 @@
         var cf = document.getElementById("ccCartForm");
         var cid = cf.getAttribute("data-id");
         if (!cid) return;
-        var n = items.filter(function (i) { return i.cart_id === cid; }).length;
-        if (!confirm(n ? "Delete this cart and its " + n + " item" + (n === 1 ? "" : "s") + "?"
+        var n = itemsOf(cid).length;
+        if (!confirm(n ? "Delete this cart and its " + n + " batch" + (n === 1 ? "" : "es") + "?"
                        : "Delete this cart?")) return;
         await S.adapter.remove(CARTS, cid); close(); await refresh();
       }
     });
-  }
-
-  async function saveCart(f) {
-    var fd = new FormData(f);
-    var rid = f.getAttribute("data-id");
-    var row = { id: rid || id("cart"),
-                name: String(fd.get("name") || "").trim(),
-                department: String(fd.get("department") || "").trim() || null };
-    if (!row.name) throw new Error("a location is needed");
-    await S.adapter.put(CARTS, row);
-  }
-
-  async function saveItem(f) {
-    var fd = new FormData(f);
-    var rid = f.getAttribute("data-id");
-    var row = { id: rid || id("cci"),
-                cart_id: fd.get("cart_id"),
-                name: String(fd.get("name") || "").trim(),
-                strength: String(fd.get("strength") || "").trim() || null,
-                quantity: Math.max(0, Number(fd.get("quantity")) || 0),
-                expires_on: String(fd.get("expires_on") || "").trim() || null,
-                batch: String(fd.get("batch") || "").trim() || null };
-    if (!row.name) throw new Error("an item name is needed");
-    if (!row.expires_on) throw new Error("an expiry date is needed");
-    await S.adapter.put(ITEMS, row);
-  }
-
-  /* The restock. Each ticked item has its expiry replaced with the new stock's date, and
-     the event is logged with both dates — "why did this change" is a question an assessor
-     asks, and the item row alone cannot answer it. */
-  async function saveCodeBlue(f) {
-    var fd = new FormData(f);
-    var cartId = fd.get("cart_id");
-    var box = document.getElementById("ccBlueItems");
-    var used = [];
-
-    var boxes = [].slice.call(box.querySelectorAll("[data-used]"));
-    for (var n = 0; n < boxes.length; n++) {
-      var cb = boxes[n];
-      if (!cb.checked) continue;
-      var key = cb.getAttribute("data-used");
-      var it = items.filter(function (i) { return i.id === key; })[0];
-      if (!it) continue;
-      var newExp = box.querySelector('[data-newexp="' + key + '"]').value;
-      var qty = Number(box.querySelector('[data-qty="' + key + '"]').value) || 0;
-      if (!newExp) throw new Error("give the replacement expiry for " + it.name);
-      used.push({ item_id: it.id, name: it.name, qty: qty,
-                  old_expiry: it.expires_on, new_expiry: newExp });
-    }
-    if (!used.length) throw new Error("tick the items that were used");
-
-    for (var u = 0; u < used.length; u++) {
-      var t = items.filter(function (i) { return i.id === used[u].item_id; })[0];
-      await S.adapter.put(ITEMS, Object.assign({}, t, { expires_on: used[u].new_expiry }));
-    }
-    await S.adapter.put(EVENTS, {
-      id: id("cb"), cart_id: cartId,
-      happened_on: fd.get("happened_on") || today(),
-      items_used: used,
-      notes: String(fd.get("notes") || "").trim() || null
-    });
-    W.toast(used.length + " item" + (used.length === 1 ? "" : "s") + " restocked");
   }
 
   async function init() {

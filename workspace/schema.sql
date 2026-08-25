@@ -2212,3 +2212,35 @@ begin
          for each row execute function public.set_org_id()', t, t);
   end loop;
 end $$;
+
+-- ===========================================================================
+-- SHORT EXPIRY CALENDAR — batches, tag numbers, and why a cart was opened
+--
+-- ONE ROW PER BATCH, NOT PER ITEM.
+-- Adrenaline in a trolley is not one thing with one expiry: it is ten ampoules from two
+-- deliveries, each batch with its own printed date. Storing an item as a single row with
+-- one expiry forces somebody to pick which date to type, and the batch they did not type
+-- is the one that expires unnoticed. crash_cart_items was already shaped this way — name,
+-- strength, batch, quantity, expires_on — so several rows sharing a name ARE the batches
+-- of one item, and the short-expiry rule already judges each one separately, which is the
+-- behaviour a pharmacist expects.
+--
+-- WHY A CART IS OPENED IS NOT ALWAYS A CODE BLUE.
+-- It is also a mock drill, a monthly check, a tamper seal found broken. Recording all of
+-- them against one label called "code blue" makes the count useless for the very audit the
+-- register exists to survive, so the reason is stored and only some reasons involve stock.
+-- ===========================================================================
+
+alter table public.crash_carts
+  add column if not exists tag_number text;          -- the tamper seal; not every hospital uses one
+
+alter table public.code_blue_events
+  add column if not exists reason       text,        -- code_blue | other
+  add column if not exists other_reason text,        -- free text, only when reason = other
+  add column if not exists items_used_flag boolean not null default true,
+  add column if not exists tag_before   text,        -- the seal broken to get in
+  add column if not exists tag_after    text;        -- the seal applied on closing
+
+comment on column public.code_blue_events.items_used_flag is
+  'A cart can be opened without anything being taken — a drill, or a seal replaced. The '
+  'event is still worth recording, and the stock is not touched.';
