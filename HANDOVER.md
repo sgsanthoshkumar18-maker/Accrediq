@@ -127,35 +127,44 @@ with ffmpeg — which is also the only fix for iPhone fullscreen.
   turns it off back to default. It SETS rather than cycles — with three palettes a toggle
   means the word you type no longer tells you what you get.
 - `?neon=1` / `?blood=1` / `?blood=0` also work, owner only.
-- **BLOOD** is the arterial palette, taken from an anatomical heart: red and blue leading,
-  gold as the shine, on a NEUTRAL black `#08070A`. The name is kept because it is the word
-  the owner types and the value every test and the `site_settings` row already holds.
-      `--red #E23E4E`  `--accent-bright #3FA9E0`  `--gold #F2C14E`  `--nc #FF5C6E`
-- **NEVER WARM THE FIELD.** This palette replaced a cyan one that laid
-  `rgba(201,68,55,.10)` over a warm `#10110E`. Composited that is `rgb(35,22,18)` — brown —
-  and the whole site read as brownish gold. Red at low opacity over a warm dark ALWAYS silts
-  into brown, because the green channel lands *between* red and blue instead of below both.
-  The field is neutral and the atmosphere red is saturated, so it composites to
-  `rgb(45,16,22)`: blue above green, which reads as wine. `tests/palette.test.js`
-  composites it and asserts the hue, so warming the base or desaturating the red fails.
-- **Red is the identity; blue is the action.** A saturated red button reads as destructive
-  in every interface anyone has used, and this platform has real destructive controls. Red
-  carries atmosphere, glow, hero and hairline borders and never appears as a control. Blue
-  is what you click. Gold is achievement.
-- **The red ramp — three reds, and they are not interchangeable.**
-  `--red-deep #8E1B2C` surfaces only (2.1:1, never text) · `--red #E23E4E` brand ·
-  `--nc #FF5C6E` NON-CONFORMITY, status only. Putting `--red` on a status chip or `--nc` on
-  decoration is the failure mode; both are asserted. A CORE category keeps the brand red
-  because it is a category, not a finding.
-- **The glow IS the theme.** Every accent is a fill, a translucent border and a layered
-  bloom from the `--glow-*` / `--text-glow-*` tokens; a single box-shadow is not a bloom.
-  Surfaces are glass — `rgba(22,19,24,.72)` over a `backdrop-filter` — and the body is
-  three radial light sources rather than a flat fill. This structure came from a spec that
-  was replaced; the colours changed, the structure was right and was kept.
-- **Contrast is measured, not eyeballed.** On `#08070A` and the panel `#161318`: blue 7.0,
-  gold 11.0, amber 9.2, green 9.6, magenta 5.5, violet 6.4, alarm 6.1. Only `--red` fell
-  short at 4.41, and has one sibling lifted 2% toward white — `--red-text #E34252`, 4.53:1.
-  The raw value still does the work in fills, borders, glows and charts.
+- **BLOOD** is the violet palette: black and dark purple, every purple surface outlined in
+  a LIGHT purple. The key name is historical — it is what the owner types, what
+  `site_settings` holds and what every test asserts — and no longer describes the colours.
+      `--purple #8B5CF6`  `--accent-bright #A78BFA`  `--purple-light #C4B0F5`
+      field `#07050C`  panels `#150F24` / `#1E1533`
+- **THE BORDERS ARE THE DESIGN. Do not soften them.** `--border` is `#C4B0F5` at **.32**,
+  not a 6% hairline. Every earlier palette here separated surfaces by brightness; these do
+  not — panel `#150F24` against field `#07050C` differs by about 3% luminance, so the light
+  border is the only thing drawing the structure of the page. Drop the alpha back to
+  something "tasteful" and the site becomes an undifferentiated dark smear. The build's
+  border pass enforces a **.3 floor** on any purple border, and the test fails if a dark
+  purple appears on an edge.
+- **The purple ramp — only two of the five are safe as text.**
+  `--purple-deepest #3B1F6B` (1.4:1) and `--purple-deep #6D40CC` (2.9:1) are gradient and
+  fill colours only. `--purple #8B5CF6` measures **4.10:1** on the deepest panel and must
+  never carry a label — this caught the hero tint, which colours the italic emphasis in the
+  headline. Anything that was purple text resolves to `--purple-bright`.
+- **Red now means one thing.** There is no decorative red anywhere in this palette, so
+  `--nc #FF5C6E` is the only red on the site and always means non-conformity. The palette
+  before this one was arterial red and needed a three-step ramp to keep brand and alarm
+  apart; that whole problem is gone.
+- **The glow and the glass survived three palettes.** Layered `--glow-*` / `--text-glow-*`
+  blooms, `rgba(21,15,36,.72)` over a `backdrop-filter`, and a body of three radial light
+  sources. The structure has outlived every colour scheme put on it — when the next palette
+  arrives, change the colours and keep this.
+- **Purple over black cannot go muddy**, unlike the red palette it replaced: it composites
+  B > R > G at every opacity. The atmosphere lands on `rgb(28,19,49)`. The channel-order
+  assertion is kept anyway, because the brown failure was expensive and the guard is free.
+
+### Three palettes in one week — what actually cost the time
+
+Not the colours. Each rebuild was about two hours of mechanical remapping and twenty
+minutes of design. What cost time was **verifying work I cannot see**: this pane does not
+composite, so screenshots are unavailable and `getComputedStyle` returns *stale* values for
+elements that existed before `data-palette` changed. The reliable method, learned the hard
+way, is: create a fresh element with the class, read it, remove it. A new node has no
+cached style. Everything in `tests/palette.test.js` that asserts a composited colour exists
+because a screenshot could not.
 
 ### Twinned rules share a declaration block — correct them at the end, never in place
 

@@ -145,8 +145,8 @@ eq(/:root\[data-palette="neon"\] \.hero,\n:root\[data-palette="blood"\] \.hero\{
 /* The LAST blood .hero rule wins, and it is the one in the corrections block at the end.
    Matching the first would pass while the page rendered from a different rule entirely. */
 const heroRules = css.split("}").filter(r => /:root\[data-palette="blood"\] \.hero\{/.test(r));
-eq(/--hero-tint:#E23E4E/.test(heroRules[heroRules.length - 1] || ""), true,
-   'the last blood hero rule tints to arterial red, not to a leftover cyan');
+eq(/--hero-tint:#A78BFA/.test(heroRules[heroRules.length - 1] || ""), true,
+   'the last blood hero rule tints to the bright purple, not to a leftover from before');
 // It must be scoped to .hero — a bare override would repaint the whole site.
 // Check the global block itself (already isolated as neonBlock above), not a span of
 // the file that can run on into the hero rule.
@@ -197,82 +197,93 @@ const bloodBlock = /:root\[data-palette="blood"\]\{[\s\S]*?\n\}/g;
 let bm, bloodTokens = null;
 while ((bm = bloodBlock.exec(css))) bloodTokens = bm[0];   // the LAST one is the real block
 eq(!!bloodTokens, true, 'the blood palette declares its own token block');
-eq(/--accent-bright:#3FA9E0/.test(bloodTokens), true, 'the action colour is the venous blue');
-eq(/--brand-2:#E23E4E/.test(bloodTokens), true, 'the brand colour is the arterial red');
-eq(/--gold:#F2C14E/.test(bloodTokens), true, 'gold is the shine');
-eq(/--warn:#F2A93B/.test(bloodTokens), true, 'warning is amber');
+eq(/--purple:#8B5CF6/.test(bloodTokens), true, 'the brand purple is stated');
+eq(/--accent-bright:#A78BFA/.test(bloodTokens), true, 'the action colour is the bright purple');
+eq(/--purple-light:#C4B0F5/.test(bloodTokens), true, 'the light purple is stated');
+eq(/--bg:#07050C/.test(bloodTokens), true, 'the field is black with a violet cast');
+eq(/--bg-elevated:#150F24/.test(bloodTokens), true, 'panels are dark purple');
 eq(/--nc:#FF5C6E/.test(bloodTokens), true, 'non-conformity is the alarm red');
 eq(/--ok:#34D399/.test(bloodTokens), true, 'compliant is green, as in every other palette');
 
-/* THE BROWN BUG. This palette exists because the previous one laid a desaturated red at
-   10% over a WARM near-black and composited to rgb(35,22,18) — brown. Two things have to
-   stay true or the whole site silts up again: the field must be neutral, and the
-   atmosphere red must stay saturated. This is the single most important test in the file. */
-eq(/--bg:#08070A/.test(bloodTokens), true, 'the field is a neutral black');
-eq(/--bg:#10110E/.test(bloodTokens), false, 'the warm field that caused the brown is gone');
-/* Pick the rule by what it CONTAINS, not by position. There is an earlier one-line
-   `blood body{background:#000}` twinned with neon, and a non-greedy match anchored on
-   "\n}" runs straight past it and swallows half the file. */
+/* BORDERS ARE LIGHT PURPLE AND VISIBLE — the defining instruction for this palette.
+   These surfaces differ from the field by about 3% luminance, so unlike every earlier
+   palette here the border is not trim, it is the only thing separating a card from the
+   page. A "tasteful" 6% hairline turns the site into an undifferentiated smear. */
+eq(/--border:rgba\(196,176,245,\.32\)/.test(bloodTokens), true,
+   'the default border is the light purple');
+(function () {
+  const m = bloodTokens.match(/--border:rgba\(196,176,245,(\.\d+)\)/);
+  eq(m && parseFloat(m[1]) >= 0.3, true, 'the border alpha is at or above the .3 floor');
+})();
+/* No structural border may fall back to a purple that is not the light one. The build's
+   border pass rewrites them; this catches a hand-edit that puts --purple back on an edge. */
+(function () {
+  const blood = css.slice(css.indexOf("VIOLET PALETTE"));
+  const bad = (blood.match(/border[a-z-]*\s*:[^;{}]*rgba\((?:139,92,246|109,64,204|59,31,107)[^)]*\)/gi) || []);
+  eq(bad.length, 0, 'no border uses a dark purple instead of the light one' +
+     (bad.length ? ' — found ' + bad[0] : ''));
+})();
+eq(/:root\[data-palette="blood"\] \.btn-primary,\n:root\[data-palette="blood"\] \.btn-accent\{\n  border:1px solid rgba\(196,176,245,\.45\)/.test(css), true,
+   'purple buttons carry the light purple border too');
+
+/* THE ATMOSPHERE STAYS VIOLET. The palette before this one was red, and red at low opacity
+   over a dark field silts into brown because the green channel lands between red and blue.
+   Purple cannot do that — it composites B > R > G at every opacity — but the assertion is
+   kept because the failure was expensive and the guard costs nothing. */
 const atmo = css.split("}").filter(r =>
   /:root\[data-palette="blood"\] body\{/.test(r) && /background-attachment:fixed/.test(r))[0] || "";
-eq(/rgba\(226,62,78,\.1[5-9]\)/.test(atmo), true,
-   'the atmosphere red is saturated enough to read as red rather than as mud');
+eq(/rgba\(139,92,246,\.1[0-9]\)/.test(atmo), true, 'the atmosphere carries the brand purple');
 (function () {
-  /* composite the atmosphere red over the field and prove the hue, rather than trusting
-     that the hex "looks red". Brown is R>G>B; a true red keeps B above G. */
   const m = atmo.match(/rgba\((\d+),(\d+),(\d+),(\.\d+)\)/);
-  const a = parseFloat(m[4]), base = [8, 7, 10];
+  const a = parseFloat(m[4]), base = [7, 5, 12];
   const c = [1, 2, 3].map(k => Math.round(+m[k] * a + base[k - 1] * (1 - a)));
-  eq(c[2] > c[1], true,
-     'composited atmosphere rgb(' + c + ') keeps blue above green, so it reads wine not brown');
+  eq(c[2] > c[0] && c[0] > c[1], true,
+     'composited atmosphere rgb(' + c + ') is B>R>G, so it reads violet not mud');
 })();
 
-/* CONTRAST. Measured on the field #08070A and the panel #161318; AA small text is 4.5:1.
-   Only the arterial red fell short, at 4.41 against the panel, and it has one lifted
-   sibling. The others passed unchanged and are stated so downstream rules resolve.
-   If someone "tidies" --red-text back to #E23E4E, this fails. */
-eq(/--red-text:#E34252/.test(bloodTokens), true, '--red-text is the measured, text-safe red');
-["--blue-text:#3FA9E0", "--magenta-text:#E0637F", "--violet-text:#A78BD0"]
-  .forEach(v => eq(bloodTokens.includes(v), true, v.split(":")[0] + ' is stated and passes AA'));
-eq(/--fg-faint:#8D8791/.test(bloodTokens), true, 'tertiary text measures 5.3:1');
-eq(/--fg-muted:#C2BCC4/.test(bloodTokens), true, 'secondary text measures 9.9:1');
+/* CONTRAST. Measured on #07050C and the panels #150F24 / #1E1533; AA small text is 4.5:1.
+   --purple itself measures 4.10 on the deepest panel and is NOT safe as a label, which is
+   why anything that was purple text resolves to the bright. If someone binds --purple to a
+   text token, this fails. */
+eq(/--purple-text:#A78BFA/.test(bloodTokens), true, 'purple text resolves to the bright purple');
+eq(/--core-text:#E879F9/.test(bloodTokens), true, 'the CORE chip carries the orchid');
+eq(/--fg:#F5F2FB/.test(bloodTokens), true, 'body text measures 15.7:1');
+eq(/--fg-faint:#8F87A3/.test(bloodTokens), true, 'tertiary text measures 5.1:1');
+eq(/--purple-text:#8B5CF6/.test(bloodTokens), false, 'the unsafe purple is not bound to text');
 
-/* RED MEANS TWO THINGS HERE, AND THE RAMP IS WHAT KEEPS THEM APART.
-   --red is the brand; --nc is the alarm. If they collapse to one value, a page full of
-   brand colour reads as a page full of failures. */
-eq(bloodTokens.match(/--red:#E23E4E/) && bloodTokens.match(/--nc:#FF5C6E/) ? true : false, true,
-   'brand red and alarm red are two distinct values');
+/* RED IS SPENT ENTIRELY ON MEANING. There is no decorative red left in this palette, so
+   --nc is the only red on the site and always means non-conformity. */
 eq(/:root\[data-palette="blood"\] \.tr-tag\.bad[\s\S]{0,160}?color:var\(--nc\)/.test(css), true,
-   'the non-conformity chip takes the alarm red, not the brand red');
-eq(/:root\[data-palette="blood"\] \.cat-CORE[\s\S]{0,200}?var\(--red-text\)/.test(css), true,
-   'the CORE category keeps the brand red — it is a category, not a finding');
+   'the non-conformity chip takes the alarm red');
+(function () {
+  const blood = css.slice(css.indexOf("VIOLET PALETTE"));
+  const reds = (blood.match(/#E23E4E|226,62,78|#E34252/g) || []);
+  eq(reds.length, 0, 'no arterial red survives from the palette this replaced');
+})();
 
-/* RED IS NEVER A CONTROL. A saturated red button reads as destructive, and this platform
-   has real destructive controls. Primary buttons run blue into blue. */
-eq(/linear-gradient\(135deg,#2B7FB5,#3FA9E0\)/.test(css), true,
-   'primary buttons run deep venous blue into bright venous blue');
-eq(/background:linear-gradient\(135deg,#E23E4E/.test(css), false,
-   'no button is filled with the brand red');
+/* Primary buttons run deep purple into bright purple — a gradient, never a flat fill. */
+eq(/linear-gradient\(135deg,#6D40CC,#A78BFA\)/.test(css), true,
+   'primary buttons run deep purple into bright purple');
 
 /* THE GLOW IS THE THEME. Flat bright colour on dark is the thing this is not, so the
    token set has to exist and be layered — a single shadow is not a bloom. */
-["--glow-red-sm", "--glow-red-md", "--glow-red-lg",
- "--glow-blue-sm", "--glow-blue-md", "--glow-blue-lg",
- "--glow-nc-md", "--glow-gold-md", "--glow-amber-md",
- "--text-glow-red", "--text-glow-blue", "--text-glow-gold", "--text-glow-nc"]
+["--glow-purple-sm", "--glow-purple-md", "--glow-purple-lg",
+ "--glow-bright-sm", "--glow-bright-md", "--glow-bright-lg",
+ "--glow-light-md", "--glow-nc-md", "--glow-gold-md",
+ "--text-glow-purple", "--text-glow-bright", "--text-glow-nc"]
  .forEach(g => eq(bloodTokens.includes(g), true, 'glow token ' + g + ' exists'));
-eq(/--glow-red-lg:[^;]*,[^;]*,/.test(bloodTokens), true,
+eq(/--glow-purple-lg:[^;]*,[^;]*,/.test(bloodTokens), true,
    'the strong glow is layered, not a single shadow');
 
 /* The atmosphere: three light sources over the black, not a flat fill. */
 eq(/:root\[data-palette="blood"\] body\{[\s\S]*?radial-gradient[\s\S]*?radial-gradient[\s\S]*?radial-gradient/.test(css),
    true, 'the background is layered light rather than a flat dark fill');
 
-/* Surfaces are translucent glass, not solid cards. Kept from the spec this palette
-   replaced — the structure was right even though the colours were not. */
+/* Surfaces are translucent glass. Carried through three palettes now — the structure has
+   outlived every colour scheme that has been put on it. */
 const cardRule = css.split("}").filter(r =>
   /:root\[data-palette="blood"\][^{]*\.kpi-card/.test(r) &&
-  /rgba\(22,19,24,\.72\)/.test(r))[0] || "";
+  /rgba\(21,15,36,\.72\)/.test(r))[0] || "";
 eq(/backdrop-filter/.test(cardRule), true, 'cards are translucent with a backdrop blur');
 eq(/box-shadow:[^;]*inset/.test(cardRule), true,
    'cards carry an inner bloom, not just an outer shadow');

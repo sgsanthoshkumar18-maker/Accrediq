@@ -25,46 +25,42 @@ window.AQScenePalette = (function () {
     } catch (e) { return "default"; }
   }
 
-  /* THE ARTERIAL FAMILIES — the anatomical heart the palette is taken from.
+  /* THE VIOLET FAMILIES — black and dark purple.
      Kept under the key "BLOOD" because that is the palette name the site publishes, the
-     word the owner types and the value every test asserts — renaming it would churn the
-     plumbing to no benefit. Here the name is also literally right.
+     word the owner types and the value every test asserts. The name is historical; it is
+     the key, not a description.
 
      These have to agree with the CSS. A scene sits inside a shell whose background comes
      from styles.css, so if the particles drift from the surround the artwork and its frame
      meet at the canvas edge as two different pictures. */
   var BLOOD = {
-    /* The scene sequence, in order: red, blue, gold, magenta, violet, amber. A scene taking
-       only the first three gets red, blue and gold — which is the whole identity — and
-       nothing has to reach for a seventh colour and invent one. */
+    /* The scene sequence: the three purples first, then the accents. A scene that takes
+       only the first three gets the whole identity and nothing has to invent a colour. */
     chapters: {
-      AAC: 0xE23E4E,   // arterial red — brand identity
-      COP: 0x3FA9E0,   // venous blue  — clinical data
-      MOM: 0xF2C14E,   // gold         — achievement
-      PRE: 0xE0637F,   // magenta      — capillary
-      IPC: 0xA78BD0,   // violet       — analytics
-      PSQ: 0xF2A93B,   // amber        — attention
-      ROM: 0x1F5F8B,   // deep blue
-      FMS: 0x8E1B2C,   // burgundy
+      AAC: 0x8B5CF6,   // purple        — brand identity
+      COP: 0xA78BFA,   // bright purple — action, clinical data
+      MOM: 0xC4B0F5,   // light purple  — structure
+      PRE: 0xE879F9,   // orchid        — CORE
+      IPC: 0xF2C14E,   // gold          — achievement
+      PSQ: 0xF2A93B,   // amber         — attention
+      ROM: 0x6D40CC,   // deep purple
+      FMS: 0x3B1F6B,   // deepest purple
       HRM: 0xF7DEA0,   // pale gold
-      IMS: 0x1E2A3A    // navy
+      IMS: 0x241A3D    // panel violet
     },
-    cycle: [0xE23E4E, 0x3FA9E0, 0xF2C14E, 0xE0637F, 0xA78BD0, 0xF2A93B, 0x1F5F8B, 0x8E1B2C],
+    cycle: [0x8B5CF6, 0xA78BFA, 0xC4B0F5, 0xE879F9, 0xF2C14E, 0xF2A93B, 0x6D40CC, 0x3B1F6B],
     /* Category colours keep the semantic mapping the CSS uses, so a CORE element is the
-       same red in the galaxy as it is in a table. */
-    categories: { CORE: 0xE23E4E, Commitment: 0xF2A93B,
-                  Achievement: 0xF2C14E, Excellence: 0xA78BD0 },
-    /* Red leads here, unlike in the CSS where blue is the action colour. A scene has no
-       controls to be mistaken for, so the identity colour is free to be the dominant one —
-       and red particles on black are the picture this palette came from. */
-    accent: 0xE23E4E,
-    dim:    0x3FA9E0,
-    /* Cool ambient against warm accents. A warm key would pull the red toward orange, which
-       is the exact failure the CSS field was rebuilt to avoid. */
-    ambient: 0x9AB4CC,
-    key:     0xF7F5F6,
-    link:    0x1E2A3A,
-    deep:    0x08070A
+       same orchid in the galaxy as it is in a table. */
+    categories: { CORE: 0xE879F9, Commitment: 0xF2A93B,
+                  Achievement: 0xF2C14E, Excellence: 0xA78BFA },
+    accent: 0x8B5CF6,
+    dim:    0xA78BFA,
+    /* A near-white key with a faint violet cast. A warm key would push the purples toward
+       brown, which is the failure the palette before this one was rebuilt to escape. */
+    ambient: 0xB0A4D6,
+    key:     0xF5F2FB,
+    link:    0x241A3D,
+    deep:    0x07050C
   };
 
   var NEON = {
