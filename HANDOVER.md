@@ -118,92 +118,98 @@ with ffmpeg — which is also the only fix for iPhone fullscreen.
 
 ---
 
-## Three palettes: default, neon, blood
+## Three themes: light, blue (dark), neon
 
-`data-palette` on `<html>`. Absent = default. The owner publishes one for **everyone** via
-`site_settings`; subscribers only ever choose light or dark.
+These are the only three, and the list is deliberately closed.
 
-- **Type the word** to set it: `neon`, `blood`, `dark`. Typing the palette already showing
-  turns it off back to default. It SETS rather than cycles — with three palettes a toggle
-  means the word you type no longer tells you what you get.
-- `?neon=1` / `?blood=1` / `?blood=0` also work, owner only.
-- **BLOOD** is the violet palette: black and dark purple, every purple surface outlined in
-  a LIGHT purple. The key name is historical — it is what the owner types, what
-  `site_settings` holds and what every test asserts — and no longer describes the colours.
-      `--purple #8B5CF6`  `--accent-bright #A78BFA`  `--purple-light #C4B0F5`
-      field `#07050C`  panels `#150F24` / `#1E1533`
-- **THE BORDERS ARE THE DESIGN. Do not soften them.** `--border` is `#C4B0F5` at **.32**,
-  not a 6% hairline. Every earlier palette here separated surfaces by brightness; these do
-  not — panel `#150F24` against field `#07050C` differs by about 3% luminance, so the light
-  border is the only thing drawing the structure of the page. Drop the alpha back to
-  something "tasteful" and the site becomes an undifferentiated dark smear. The build's
-  border pass enforces a **.3 floor** on any purple border, and the test fails if a dark
-  purple appears on an edge.
-- **The purple ramp — only two of the five are safe as text.**
-  `--purple-deepest #3B1F6B` (1.4:1) and `--purple-deep #6D40CC` (2.9:1) are gradient and
-  fill colours only. `--purple #8B5CF6` measures **4.10:1** on the deepest panel and must
-  never carry a label — this caught the hero tint, which colours the italic emphasis in the
-  headline. Anything that was purple text resolves to `--purple-bright`.
-- **Red now means one thing.** There is no decorative red anywhere in this palette, so
-  `--nc #FF5C6E` is the only red on the site and always means non-conformity. The palette
-  before this one was arterial red and needed a three-step ramp to keep brand and alarm
-  apart; that whole problem is gone.
-- **The glow and the glass survived three palettes.** Layered `--glow-*` / `--text-glow-*`
-  blooms, `rgba(21,15,36,.72)` over a `backdrop-filter`, and a body of three radial light
-  sources. The structure has outlived every colour scheme put on it — when the next palette
-  arrives, change the colours and keep this.
-- **Purple over black cannot go muddy**, unlike the red palette it replaced: it composites
-  B > R > G at every opacity. The atmosphere lands on `rgb(28,19,49)`. The channel-order
-  assertion is kept anyway, because the brown failure was expensive and the guard is free.
+`data-theme` carries light/dark. `data-palette` carries neon; absent means the plain blue
+dark theme. The owner publishes the palette for **everyone** via `site_settings`;
+subscribers only ever choose light or dark for themselves.
 
-### Three palettes in one week — what actually cost the time
+| What the owner calls it | How it is expressed |
+|---|---|
+| **Light** | `data-theme` absent |
+| **Blue** | `data-theme="dark"`, no `data-palette` — indigo `#4F46E5` on `#0A0D1E` |
+| **Neon** | `data-theme="dark"` + `data-palette="neon"` — teal `#5EEAD4` |
 
-Not the colours. Each rebuild was about two hours of mechanical remapping and twenty
-minutes of design. What cost time was **verifying work I cannot see**: this pane does not
-composite, so screenshots are unavailable and `getComputedStyle` returns *stale* values for
-elements that existed before `data-palette` changed. The reliable method, learned the hard
-way, is: create a fresh element with the class, read it, remove it. A new node has no
-cached style. Everything in `tests/palette.test.js` that asserts a composited colour exists
-because a screenshot could not.
+- **Type the word** to switch: `neon` or `dark`. Typing the palette already showing turns
+  it off back to default. It SETS rather than cycles.
+- `?neon=1` / `?neon=0` also work, owner only.
+- The shipped default is **neon**. Falling back to "default" made the site open blue on a
+  cold load and only turn neon once `site_settings` had been fetched, which looked like
+  needing two or three refreshes.
 
-### Twinned rules share a declaration block — correct them at the end, never in place
+### A fourth palette was built and then removed — read this before adding another
 
-Many rules list neon and blood in ONE selector list, so blood starts from a complete set
-rather than a half-styled page. The cost is that those declarations carry neon's literal
-teal, and **editing them in place silently restyles neon too**. Every one that hard-codes a
-colour is re-stated in the `twinned-rule corrections` block at the very end of
-`styles.css` — same specificity, later in the file, so it wins.
+Three colour schemes were built on `data-palette="blood"` over one week (a circulatory
+red/gold, a bioluminescent cyan, an arterial red, then a black-and-purple) and the whole
+thing was removed on 25 August 2026. **The site is back to light / blue / neon and should
+stay there unless there is a real reason.**
 
-This is easy to miss because most twinned rules use `var()` and retint themselves; only
-the ~20 with literals need correcting. The one that caught me twice was a single card rule
-listing seventeen surfaces with one teal `box-shadow` — the glass rule re-shadows most of
-them, so only the handful it does not cover kept a teal lift under a red border.
-`tests/palette.test.js` asserts no neon literal appears after the corrections block.
+What the removal cost, so the next person can price it honestly:
 
-### The cascade trap — read this before adding a fourth palette
+- **251 rules in `styles.css`**, but almost none of them were standalone. 91 of the 92
+  references were *twinned* — the palette shared a selector list with neon, e.g.
+  `:root[data-palette="neon"] .tile,\n:root[data-palette="blood"] .tile{...}`. Unpicking
+  those means editing the selector list and keeping the neon half; deleting the rule
+  removes a neon surface with it. **Zero rules were blood-only.**
+- A first pass at this quietly did nothing to 65 of them, because it matched only lines
+  *ending* in `{` and every one-liner is `selector{decls}`. Check the count, not the exit
+  code.
+- `app.js` (5 places), `theme/scene-palette.js` (a whole families block), the boot snippet
+  in **all 65 HTML files**, and 54 test assertions.
+- **Migration is free and already done.** The boot snippet now reads
+  `if(q!=="default"){q="neon";}`, so a device whose `localStorage` still holds the old
+  value resolves to neon by itself, and `loadSitePalette` coerces a `site_settings` row
+  still naming it to neon too. No cleanup step, no stranded phones.
+- The `site_settings` row may still literally say the old palette name. It is inert.
+
+**`blood` also means blood.** `grep -ri blood` hits Blood Transfusion Committee, Blood
+Bank, blood gas analyser and blood component wastage across `committee-data.js`,
+`area-data.js`, `department-data.js`, `dashboard.html` and the audit engine. That is real
+NABH content. Never remove a palette with an untargeted grep.
+
+### The cascade trap — read this before adding a palette
 
 `:root[data-theme="dark"]:not([data-palette="neon"])` is **(0,3,0)**;
-`:root[data-palette="blood"]` is **(0,2,0)**. Naming neon there let the dark block outrank
-blood wherever it sat in the file — blood's backgrounds applied while its accents silently
-stayed indigo. The half-applied look, from the same cause, one palette later; the file's own
-comment had warned about it. It is now `:not([data-palette])` — any palette, so a fourth
-cannot repeat it. `tests/palette.test.js` asserts both halves.
+`:root[data-palette="x"]` is **(0,2,0)**. Naming neon there let the dark block outrank any
+other palette wherever it sat in the file — its backgrounds applied while its accents
+silently stayed indigo. It is now `:not([data-palette])` — any palette. That selector is
+kept even though neon is alone again, because it costs nothing and it is what stops the
+next one repeating this. `tests/palette.test.js` asserts both halves.
+
+### Verifying a palette when you cannot see it
+
+This pane does not composite, so screenshots are unavailable, and `getComputedStyle`
+returns **stale** values for elements that existed before `data-palette` changed — readings
+can lag a full step behind, which looks exactly like a cascade bug. Two reliable methods:
+
+- **Fresh element**: create a node with the class, read it, remove it. A new node has no
+  cached style.
+- **CSSOM walk**: iterate `document.styleSheets` and inspect `selectorText`. Not subject to
+  computed-style staleness — this is what proved the removal was complete.
+
+Check the rule count is non-zero before trusting either. A walk that runs before the sheets
+are reachable returns a confident, meaningless zero.
 
 ### Scene colours
 
-`theme/scene-palette.js`, loaded immediately before `app.js` on all 61 pages. A canvas cannot
+`theme/scene-palette.js`, loaded immediately before `app.js` on all 65 pages. A canvas cannot
 inherit a CSS variable, so the palette is handed to it. Every lookup takes the scene's
-original value as a fallback — `P.accent(0x5eead4)` — so a page without the module renders
-exactly as it always did. Wired into face, brain, dna, galaxy, helix, radar and qglobe.
-`app.js` fires an `aq:palette` event on change so a scene can re-tint without a reload.
+original as a fallback, so a scene on a page without the module still works.
+
+Nothing overrides the chapter, category or cycle colours any more — the removed palette was
+the only thing that did — so those three hand the fallback straight back. They are kept
+rather than deleted because every scene calls them, and because that is where a future
+palette would hook in. `app.js` fires an `aq:palette` event on change so a scene can
+re-tint without a reload.
 
 ### Adding a surface
 
-Every `:root[data-palette="neon"]` rule has a `blood` twin, so blood starts from a complete
-set and the blood block at the end of styles.css overrides only what carries a literal teal
-or navy. If you add a neon rule, add its blood twin, or the test's coverage check fails.
+Add the `:root[data-palette="neon"]` rule and the `:root[data-theme="dark"]` one. Both, or
+the surface is right in one theme and wrong in the other — which is exactly how the site
+ended up with indigo patches under neon.
 
----
 
 ## Short expiry calendar (crash carts)
 

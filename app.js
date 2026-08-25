@@ -403,15 +403,17 @@
          here let a stale "default" written by an earlier bug survive indefinitely: the
          boot snippet read it, nothing ever corrected it, and the device stayed blue.
          The published row is the only thing allowed to say "default". */
-      /* Three palettes now: default, neon, blood. Anything unrecognised becomes neon, which
-         is the shipped default — the same reasoning as before, and the reason a stale
-         "default" written by an old bug could not survive: only a published row may say it. */
+      /* Two palettes: default and neon. Anything unrecognised becomes neon, which is the
+         shipped default — the same reasoning as before, and the reason a stale "default"
+         written by an old bug could not survive: only a published row may say it.
+         This also self-heals every device left holding the removed third palette: the row
+         may still publish it, but it is no longer recognised, so it resolves to neon. */
       const raw = row && row.value && row.value.palette;
-      const want = (raw === "default" || raw === "blood") ? raw : "neon";
+      const want = raw === "default" ? raw : "neon";
       try { localStorage.setItem("aq-palette", want); } catch (err) {}
       const html = document.documentElement;
-      /* Neither neon nor blood may sit over the light theme: both are near-black palettes
-         whose foregrounds were measured against black, and on white they are unreadable. */
+      /* Neon may not sit over the light theme: it is a near-black palette whose
+         foregrounds were measured against black, and on white they are unreadable. */
       if (want !== "default" && html.getAttribute("data-theme") === "dark") {
         html.setAttribute("data-palette", want);
       } else {
@@ -423,11 +425,10 @@
 
   /* Set the palette outright rather than cycling.
    *
-   * Typing "neon" used to flip between neon and default, which worked while there were two.
-   * With three, a toggle means the word you type does not tell you what you will get — type
-   * "blood" while blood is on and you would land on default, which is not what the word
-   * says. So each word names its palette, and typing the one already showing turns it OFF
-   * back to default. The word is always either "this" or "not this", never "the other one".
+   * Each word names its palette, and typing the one already showing turns it OFF back to
+   * default. The word is always either "this" or "not this", never "the other one". That
+   * mattered when a third palette existed and is kept now that it does not, because it is
+   * the behaviour that stays correct if another is ever added.
    *
    * Silently ignored for anyone but the owner: no message, because a subscriber typing the
    * word by accident should not learn that a hidden switch exists.
@@ -477,9 +478,9 @@
   function initOwnerThemeToggle() {
     // Hidden, owner-only dark-mode switch — no visible UI.
     // Trigger: type the word "dark" anywhere on the page (not while focused in a field).
-    /* The buffer is as long as the longest word, not four characters. It was sliced to 4,
-       which is fine for "dark" and "neon" and silently makes any five-letter word
-       unmatchable — "blood" would only ever have been seen as "lood". */
+    /* The buffer is as long as the longest word, not four characters. It was once sliced
+       to 4, which is fine for "dark" and "neon" and silently makes any longer word
+       unmatchable — a five-letter word could only ever have been seen as its last four. */
     let typed = "";
     document.addEventListener("keydown", (e) => {
       const tag = (e.target && e.target.tagName) || "";
@@ -488,9 +489,6 @@
       typed = (typed + e.key.toLowerCase()).slice(-8);
       if (typed.endsWith("dark")) {
         toggleTheme();
-        typed = "";
-      } else if (typed.endsWith("blood")) {
-        setPalette("blood");
         typed = "";
       } else if (typed.endsWith("neon")) {
         setPalette("neon");
