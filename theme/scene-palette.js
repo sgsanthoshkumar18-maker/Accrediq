@@ -25,37 +25,39 @@ window.AQScenePalette = (function () {
     } catch (e) { return "default"; }
   }
 
-  /* THE BLOOD FAMILIES, taken from the same picture the CSS palette came from.
-     Arterial gold and orange for the lit vessels, venous blue for the great arteries,
-     capillary magenta, and an oxygenated green — five families that read as one body
-     rather than as a rainbow. Ordered so that a scene taking the first three colours gets
-     the three that carry the picture. */
+  /* THE BIOLUMINESCENT MEDICAL-TECH FAMILIES.
+     Kept under the key "BLOOD" because that is the palette name the site publishes, the
+     word the owner types and the value every test asserts — renaming it would churn the
+     plumbing to no benefit. */
   var BLOOD = {
+    /* The chart/scene sequence the theme specifies, in order: cyan, blue, violet, orange,
+       red, gold. A scene taking the first three gets the three that carry the identity, and
+       nothing has to reach for a seventh colour and invent one. */
     chapters: {
-      AAC: 0xFFB84D,   // arterial gold — the impulse
-      COP: 0xFF7A18,   // artery
-      MOM: 0xF472B6,   // capillary
-      PRE: 0x38BDF8,   // vein
-      IPC: 0xFF5C6E,   // arterial red
-      PSQ: 0xFFD166,   // plasma
-      ROM: 0xC084FC,   // deep vessel
-      FMS: 0x34D399,   // oxygenated
-      HRM: 0xFF9E2C,   // arteriole
-      IMS: 0x60A5FA    // venule
+      AAC: 0x36CFDB,   // cyan   — quality, technology
+      COP: 0x298BB0,   // blue   — clinical data
+      MOM: 0x8262AF,   // violet — analytics
+      PRE: 0xEB9345,   // orange — attention
+      IPC: 0xC94437,   // red    — critical
+      PSQ: 0xECB749,   // gold   — achievement
+      ROM: 0xB75B71,   // magenta
+      FMS: 0x335685,   // deep blue
+      HRM: 0xF5D69B,   // hot gold
+      IMS: 0x2C3355    // navy
     },
-    cycle: [0xFFB84D, 0xFF7A18, 0xF472B6, 0x38BDF8, 0xFF5C6E,
-            0xFFD166, 0xC084FC, 0x34D399, 0xFF9E2C, 0x60A5FA],
-    categories: { CORE: 0xFF5C6E, Commitment: 0xFF7A18,
-                  Achievement: 0xFFB84D, Excellence: 0x38BDF8 },
-    accent: 0xFFB84D,
-    dim:    0xFF7A18,
-    /* Light, not paint. The picture is lit from within, so the ambient carries warmth and
-       the key light stays close to white — a warm key would wash the cyan vessels out and
-       lose half the palette. */
-    ambient: 0xFFB499,
-    key:     0xFFF3E6,
-    link:    0x7A2230,
-    deep:    0x1A060B
+    cycle: [0x36CFDB, 0x298BB0, 0x8262AF, 0xEB9345, 0xC94437, 0xECB749, 0xB75B71, 0x335685],
+    /* Category colours keep the semantic mapping the CSS uses, so a CORE element is the
+       same red in the galaxy as it is in a table. */
+    categories: { CORE: 0xC94437, Commitment: 0xEB9345,
+                  Achievement: 0xECB749, Excellence: 0x8262AF },
+    accent: 0x36CFDB,
+    dim:    0x298BB0,
+    /* Cool ambient, near-white key. A warm key would wash the cyan out and cost half the
+       palette; the warmth in this theme comes from the accents, not from the lighting. */
+    ambient: 0x8FB8D9,
+    key:     0xF5F5F2,
+    link:    0x2C3355,
+    deep:    0x10110E
   };
 
   var NEON = {

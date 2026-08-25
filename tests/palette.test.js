@@ -142,8 +142,8 @@ eq(/:root\[data-palette="neon"\] \.hero,\n:root\[data-palette="blood"\] \.hero\{
    'home hero keeps its original cyan tone under neon');
 /* ...and blood overrides that same hero afterwards, or the one screen the whole palette
    was designed around would still be cyan. */
-eq(/:root\[data-palette="blood"\] \.hero\{[\s\S]*?--hero-tint:#FF9E2C/.test(css), true,
-   'blood re-tints the hero to arterial gold');
+eq(/:root\[data-palette="blood"\] \.hero\{[\s\S]*?--hero-tint:#36CFDB/.test(css), true,
+   'the theme re-tints the hero to neon cyan');
 // It must be scoped to .hero — a bare override would repaint the whole site.
 // Check the global block itself (already isolated as neonBlock above), not a span of
 // the file that can run on into the hero rule.
@@ -194,8 +194,59 @@ const bloodBlock = /:root\[data-palette="blood"\]\{[\s\S]*?\n\}/g;
 let bm, bloodTokens = null;
 while ((bm = bloodBlock.exec(css))) bloodTokens = bm[0];   // the LAST one is the real block
 eq(!!bloodTokens, true, 'the blood palette declares its own token block');
-eq(/--accent-bright:#FFB84D/.test(bloodTokens), true, 'blood accent is the arterial gold');
-eq(/--nc:#FF5C6E/.test(bloodTokens), true, 'blood keeps a distinct non-conformity red');
+eq(/--accent-bright:#36CFDB/.test(bloodTokens), true, 'the primary accent is the neon cyan');
+eq(/--warn:#EB9345/.test(bloodTokens), true, 'warning is the electric orange');
+eq(/--nc:#D56D63/.test(bloodTokens), true, 'non-conformity uses the text-safe red');
+
+/* CONTRAST IS NOT OPTIONAL HERE.
+   Four of the specified colours fail AA as small text on these surfaces — red at 3.9:1,
+   violet 3.9, magenta 4.3, muted 4.3. On a platform where red means NON-CONFORMITY, the
+   most important label would have been the least readable thing on the page. Each has a
+   sibling lifted just far enough to pass, and the spec value is kept for fills, borders,
+   glows and charts where it is doing the visual work.
+   If someone "tidies" these back to the raw spec values, this fails. */
+const lifted = { "--red-text": "#D56D63", "--violet-text": "#9B81BF",
+                 "--magenta-text": "#C37588", "--blue-text": "#3E97B8" };
+Object.entries(lifted).forEach(([tok, val]) => {
+  eq(new RegExp(tok + ":" + val).test(bloodTokens), true,
+     tok + ' is the measured, text-safe value');
+});
+eq(/--fg-faint:#878C95/.test(bloodTokens), true,
+   'tertiary text is lifted from #747984, which read 4.3:1');
+/* The raw values must NOT be the ones bound to text tokens. */
+eq(/--nc:#C94437/.test(bloodTokens), false, 'the raw red is not used as text');
+eq(/--info:#8262AF/.test(bloodTokens), false, 'the raw violet is not used as text');
+
+/* THE GLOW IS THE THEME. Flat bright colour on dark is the thing this is not, so the
+   token set has to exist and be layered — a single shadow is not a bloom. */
+["--glow-cyan-sm", "--glow-cyan-md", "--glow-cyan-lg",
+ "--text-glow-cyan", "--text-glow-red", "--text-glow-orange", "--text-glow-gold"]
+ .forEach(g => eq(bloodTokens.includes(g), true, 'glow token ' + g + ' exists'));
+eq(/--glow-cyan-lg:[^;]*,[^;]*,/.test(bloodTokens), true,
+   'the strong glow is layered, not a single shadow');
+
+/* The atmosphere: three light sources over the black, not a flat fill. */
+eq(/:root\[data-palette="blood"\] body\{[\s\S]*?radial-gradient[\s\S]*?radial-gradient[\s\S]*?radial-gradient/.test(css),
+   true, 'the background is layered light rather than a flat dark fill');
+
+/* Surfaces are translucent glass, not solid cards — the single change that most separates
+   this from an ordinary dark mode. */
+/* Find the rule the KPI card actually belongs to and test THAT.
+   A character window between the selector and the declaration silently stops matching the
+   moment one more selector joins the list — and several rules mention .kpi-card under
+   blood: the twinned neon one it inherits, and the glass rule that overrides it later.
+   The glass rule is identified by its surface, not by its position. */
+const cardRule = css.split("}").filter(r =>
+  /:root\[data-palette="blood"\][^{]*\.kpi-card/.test(r) &&
+  /rgba\(28,25,32,\.72\)/.test(r))[0] || "";
+eq(/backdrop-filter/.test(cardRule), true, 'cards are translucent with a backdrop blur');
+eq(/box-shadow:[^;]*inset/.test(cardRule), true,
+   'cards carry an inner bloom, not just an outer shadow');
+eq(/background:rgba\(28,25,32,\.72\)/.test(css), true, 'cards use the specified translucent surface');
+
+/* Primary buttons are a gradient into cyan, never flat cyan. */
+eq(/linear-gradient\(135deg,#298BB0,#36CFDB\)/.test(css), true,
+   'primary buttons run dark blue into cyan');
 /* Red is reserved. On a NABH platform --nc means "this is wrong" and must never also be
    the decorative accent, or a page full of brand colour reads as a page full of failures. */
 eq(/--accent-bright:#FF5C6E/.test(bloodTokens), false, 'the accent is not the NC red');

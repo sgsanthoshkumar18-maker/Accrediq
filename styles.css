@@ -1816,141 +1816,458 @@ body.aq-locked{
 
 
 /* ============================================================
-   BLOOD / CIRCULATORY PALETTE
-   data-palette="blood". Third palette alongside default and neon; published by the owner
-   for everyone, exactly as neon is. Typed trigger: "blood".
+   BIOLUMINESCENT MEDICAL-TECH PALETTE
+   data-palette="blood" — the attribute name is unchanged so the published setting, the
+   typed word and every test keep working. Third palette alongside default and neon.
 
-   TAKEN FROM ONE PICTURE, ON PURPOSE.
-   A glowing anatomical heart on near-black: arteries lit fiery orange and gold, the great
-   vessels electric cyan, capillaries magenta, and the whole thing sitting in a deep maroon
-   vignette rather than a neutral black. Those four families are the entire palette, and the
-   reason it reads as a circulatory system instead of "a dark theme with orange in it" is
-   that the BACKGROUND carries blood in it too — a neutral black behind warm accents looks
-   like a mistake, not a body.
+   THE IDEA. Dark almost everywhere, with saturated light behaving like electrical activity
+   emerging from it — the way an anatomical scan glows rather than the way a neon sign does.
+   The budget is roughly 70% dark surface, 15% cyan/blue, 7% violet/magenta, 5% orange/red,
+   3% gold. That ratio is the difference between "clinical intelligence platform" and "dark
+   mode with accent colours", and it is easy to lose one component at a time.
 
-   WHY THE ACCENT IS ARTERIAL ORANGE AND NOT RED.
-   Red is already spoken for: --nc is a non-conformity, and on a NABH platform that colour
-   has to mean one thing and never decorate. The impulse running through the picture is the
-   gold-orange of the coronary tree, which is both truer to the image and leaves red free to
-   go on meaning "this is wrong".
+   THE GLOW IS THE POINT, NOT THE HUE. Every accent here is a fill, a thin translucent
+   border and a layered bloom. Flat bright colour on dark is exactly what this is not.
 
-   CONTRAST: every foreground below was measured against both --bg and --bg-elevated. The
-   worst case in the set is 6.5:1 (--nc on a raised card), comfortably past AA; body text is
-   17:1 or better. Nothing here was chosen because it looked like the picture and left at
-   that.
+   ---------------------------------------------------------------------------
+   TWO VARIANTS OF SOME COLOURS, AND WHY.
+   The specified colours are correct for fills, borders, glows and chart strokes. Several
+   of them are NOT readable as small text on these surfaces, measured:
+
+       red     #C94437  3.9:1     violet  #8262AF  3.9:1
+       magenta #B75B71  4.3:1     muted   #747984  4.3:1
+
+   AA needs 4.5:1 for body text. On a platform where red means NON-CONFORMITY, shipping the
+   least readable colour on the most important label would be a genuine defect rather than a
+   stylistic one. So each of those has a text sibling lifted 10–22% toward white — enough to
+   pass, little enough that the hue is unchanged — and the spec value is kept for everything
+   that is not small text. Nothing was darkened and no colour was replaced.
    ============================================================ */
 :root[data-palette="blood"]{
-  --bg:#0A0406;              /* near-black, with blood under it rather than neutral grey */
-  --bg-elevated:#160A0E;     /* a card lifts, and warms as it lifts */
-  --bg-deep:#040103;
+  /* ---- raw palette, exactly as specified ---- */
+  --bio-black:#10110E;
+  --bio-warm:#1B1009;
+  --bio-burgundy:#340F0E;
+  --bio-panel:#1C1920;
+  --bio-panel-violet:#272238;
+  --bio-panel-navy:#2C3355;
 
-  --fg:#FFF0F1;              /* 18.4:1 */
-  --fg-muted:#E4B9BE;        /* 11.6:1 */
-  --fg-faint:#B98A92;        /*  6.9:1 — still readable, unlike a true grey at this weight */
+  --cyan:#36CFDB;
+  --blue:#298BB0;
+  --deep-blue:#335685;
+  --violet:#8262AF;
+  --magenta:#B75B71;
+  --red:#C94437;
+  --orange:#EB9345;
+  --gold:#ECB749;
+  --gold-light:#F5D69B;
 
-  --border:#3A1620;
-  --border-soft:#250E14;
+  /* ---- text-safe siblings (see the note above) ---- */
+  --red-text:#D56D63;
+  --violet-text:#9B81BF;
+  --magenta-text:#C37588;
+  --blue-text:#3E97B8;
 
-  /* The coronary tree: the lit vessels running over the muscle in the picture. */
-  --brand:#FF7A18;
-  --brand-2:#FF9E2C;         /*  9.9:1 */
-  --brand-tint:rgba(255,158,44,.14);
+  /* ---- glow tokens ----
+     Three intensities, so "make it glow" is a decision with three answers rather than one.
+     Subtle for ordinary UI, medium for hover and live indicators, strong for hero numbers
+     and the few things that should read as a light source. */
+  --glow-cyan-sm:0 0 6px rgba(54,207,219,.45);
+  --glow-cyan-md:0 0 10px rgba(54,207,219,.35), 0 0 26px rgba(54,207,219,.16);
+  --glow-cyan-lg:0 0 14px rgba(54,207,219,.45), 0 0 38px rgba(54,207,219,.22), 0 0 70px rgba(54,207,219,.10);
+  --glow-blue-md:0 0 10px rgba(41,139,176,.35), 0 0 26px rgba(41,139,176,.15);
+  --glow-violet-md:0 0 10px rgba(130,98,175,.35), 0 0 26px rgba(130,98,175,.16);
+  --glow-orange-md:0 0 10px rgba(235,147,69,.4), 0 0 26px rgba(235,147,69,.18);
+  --glow-red-md:0 0 10px rgba(201,68,55,.42), 0 0 26px rgba(201,68,55,.18);
+  --glow-gold-md:0 0 10px rgba(236,183,73,.4), 0 0 26px rgba(236,183,73,.18);
 
-  --accent:#FF7A18;
-  --accent-bright:#FFB84D;   /* 11.8:1 — the impulse itself, the brightest thing on screen */
-  --accent-bright-tint:rgba(255,184,77,.14);
+  --text-glow-cyan:0 0 6px rgba(54,207,219,.8), 0 0 18px rgba(54,207,219,.55), 0 0 40px rgba(54,207,219,.3);
+  --text-glow-orange:0 0 6px rgba(235,147,69,.85), 0 0 18px rgba(235,147,69,.6), 0 0 44px rgba(235,147,69,.3);
+  --text-glow-red:0 0 6px rgba(201,68,55,.85), 0 0 20px rgba(201,68,55,.6), 0 0 44px rgba(201,68,55,.3);
+  --text-glow-gold:0 0 6px rgba(236,183,73,.8), 0 0 18px rgba(236,183,73,.55), 0 0 40px rgba(236,183,73,.28);
+  --text-glow-violet:0 0 6px rgba(130,98,175,.75), 0 0 18px rgba(130,98,175,.5), 0 0 40px rgba(130,98,175,.26);
 
-  --ok:#34D399;              /* oxygenated */
-  --ok-tint:rgba(52,211,153,.15);
-  --warn:#FBBF24;
-  --warn-tint:rgba(251,191,36,.15);
-  --nc:#FF5C6E;              /* arterial red, reserved for non-conformity */
-  --nc-tint:rgba(255,92,110,.16);
-  --info:#38BDF8;            /* the great vessels: venous blue */
-  --info-tint:rgba(56,189,248,.15);
+  /* ---- mapped onto the tokens the site already uses ----
+     SEMANTICS, held to consistently:
+       cyan   primary action, navigation, quality, technology
+       blue   trust, clinical data, normal performance
+       violet analytics, AI, advanced insight
+       orange warning, attention needed
+       red    critical, non-conformity, safety risk
+       gold   achievement, excellence, accreditation success */
+  --bg:#10110E;
+  --bg-elevated:#1C1920;
+  --bg-deep:#1B1009;
+  --bg-deep-2:#340F0E;
 
-  /* Two shadows: a real one for depth, and a warm bloom so a raised surface looks lit from
-     within rather than cut out of the page. */
-  --shadow-1:0 1px 2px rgba(0,0,0,.85), 0 10px 30px -12px rgba(255,122,24,.30);
-  --shadow-2:0 4px 12px rgba(0,0,0,.8), 0 26px 60px -18px rgba(255,122,24,.42);
+  --fg:#F5F5F2;              /* 17.3:1 */
+  --fg-muted:#B8BCC4;        /*  9.9:1 */
+  --fg-faint:#878C95;        /*  4.5:1 — lifted from #747984, which read 4.3 */
 
-  --hero-tint:#FF9E2C;
+  /* Borders are translucent, never a flat bright line. */
+  --border:rgba(54,207,219,.18);
+  --border-soft:rgba(245,245,242,.07);
+  --border-strong:rgba(54,207,219,.65);
 
-  --deep-1:#4A0E14;          /* the lit corner: muscle catching the light */
-  --deep-2:#0A0406;          /* its far, darkest corner */
-  --border-strong:#FF7A18;
-  --on-deep:#FFF0F1;
+  --brand:#298BB0;
+  --brand-2:#36CFDB;         /* 10.0:1 */
+  --brand-tint:rgba(54,207,219,.12);
+
+  --accent:#298BB0;
+  --accent-bright:#36CFDB;
+  --accent-bright-tint:rgba(54,207,219,.12);
+
+  --ok:#3E97B8;              /* blue: normal performance, compliant */
+  --ok-tint:rgba(41,139,176,.14);
+  --warn:#EB9345;            /*  7.9:1 — the spec value passes as text unchanged */
+  --warn-tint:rgba(235,147,69,.14);
+  --nc:#D56D63;              /* the lifted red — see the note above */
+  --nc-tint:rgba(201,68,55,.16);
+  --info:#9B81BF;            /* violet: advanced / analytics */
+  --info-tint:rgba(130,98,175,.15);
+
+  --shadow-1:0 1px 2px rgba(0,0,0,.7), 0 10px 30px -12px rgba(54,207,219,.16);
+  --shadow-2:0 4px 14px rgba(0,0,0,.65), 0 26px 60px -18px rgba(54,207,219,.22);
+
+  --hero-tint:#36CFDB;
+  --deep-1:#2C3355;
+  --deep-2:#10110E;
+  --on-deep:#F5F5F2;
+}
+
+/* ---------- the atmosphere ----------
+   Three light sources at low opacity over the black, fixed so the page moves through them
+   rather than dragging them along. Nothing here should be noticeable as a gradient; it is
+   there to stop the dark reading as flat. */
+:root[data-palette="blood"] body{
+  background:
+    radial-gradient(circle at 20% 28%, rgba(201,68,55,.10), transparent 34%),
+    radial-gradient(circle at 76% 22%, rgba(54,207,219,.075), transparent 30%),
+    radial-gradient(circle at 50% 82%, rgba(130,98,175,.075), transparent 35%),
+    #10110E;
+  background-attachment:fixed;
+}
+/* A different light on the workspace than on the public pages, so moving between them feels
+   like moving somewhere rather than reloading. Same family, cooler and lower. */
+:root[data-palette="blood"] body[data-page="start"],
+:root[data-palette="blood"] body[data-page="workspace"]{
+  background:
+    radial-gradient(circle at 82% 18%, rgba(54,207,219,.09), transparent 32%),
+    radial-gradient(circle at 14% 72%, rgba(41,139,176,.08), transparent 34%),
+    radial-gradient(circle at 55% 100%, rgba(130,98,175,.06), transparent 30%),
+    #10110E;
+  background-attachment:fixed;
+}
+
+:root[data-palette="blood"] .page-head{
+  background:linear-gradient(180deg, rgba(54,207,219,.07), rgba(16,17,14,0) 88%);
+  border-bottom:1px solid rgba(54,207,219,.10);
+}
+
+/* ---------- header ----------
+   Glass, not a solid bar: the atmosphere behind it stays visible, which is most of what
+   makes the surface read as holographic rather than as a panel laid on top. */
+:root[data-palette="blood"] .site-header{
+  background:rgba(16,17,14,.72);
+  border-bottom:1px solid rgba(54,207,219,.16);
+  -webkit-backdrop-filter:blur(14px) saturate(1.3);
+  backdrop-filter:blur(14px) saturate(1.3);
+}
+:root[data-palette="blood"] .nav-link:hover,
+:root[data-palette="blood"] .main-nav a:hover{
+  color:var(--cyan);
+  text-shadow:var(--glow-cyan-sm);
+}
+:root[data-palette="blood"] .main-nav a.active{
+  color:var(--cyan);
+  text-shadow:var(--text-glow-cyan);
+}
+
+/* ---------- the hero ----------
+   The one place the light is allowed to be the subject. */
+:root[data-palette="blood"] .hero{
+  --brand:#298BB0;
+  --brand-2:#36CFDB;
+  --brand-tint:rgba(54,207,219,.14);
+  --accent:#298BB0;
+  --accent-bright:#36CFDB;
+  --accent-bright-tint:rgba(54,207,219,.14);
+  --hero-tint:#36CFDB;
+  background:
+    radial-gradient(70% 60% at 80% -6%, rgba(54,207,219,.16), transparent 58%),
+    radial-gradient(60% 55% at 10% 104%, rgba(130,98,175,.13), transparent 60%),
+    radial-gradient(120% 140% at 50% 30%, #1B1009 0%, #10110E 55%, #0B0C0A 100%);
+}
+:root[data-palette="blood"] .hero::after{
+  background:radial-gradient(60% 50% at 90% 100%, rgba(41,139,176,.16), transparent 70%);
+}
+:root[data-palette="blood"] .hero h1{
+  text-shadow:0 0 30px rgba(54,207,219,.18);
+}
+:root[data-palette="blood"] .hero-logo-arc{
+  stroke:var(--cyan);
+  filter:drop-shadow(0 0 6px rgba(54,207,219,.7));
+}
+:root[data-palette="blood"] .hero-meta .n{
+  text-shadow:var(--text-glow-cyan);
 }
 
 /* ---------- surfaces ----------
-   Each of these exists because the twinned neon rule underneath it carries a literal teal
-   or navy. Anything token-based needs no entry here and re-tints on its own. */
+   Translucent dark with a hairline cyan edge and an inner bloom, so a card looks lit from
+   within rather than cut out of the page. */
+:root[data-palette="blood"] .card,
+:root[data-palette="blood"] .panel,
+:root[data-palette="blood"] .tile,
+:root[data-palette="blood"] .dept-tile,
+:root[data-palette="blood"] .kpi-card,
+:root[data-palette="blood"] .quiz,
+:root[data-palette="blood"] .stat-card,
+:root[data-palette="blood"] .ws-stat,
+:root[data-palette="blood"] .reg-stat,
+:root[data-palette="blood"] .ac-hero,
+:root[data-palette="blood"] .ac-editor,
+:root[data-palette="blood"] .ws-std,
+:root[data-palette="blood"] .cc-policybar,
+:root[data-palette="blood"] .cc-used-item{
+  background:rgba(28,25,32,.72);
+  border:1px solid rgba(54,207,219,.16);
+  box-shadow:0 0 20px rgba(54,207,219,.05), inset 0 0 20px rgba(54,207,219,.022);
+  -webkit-backdrop-filter:blur(12px);
+  backdrop-filter:blur(12px);
+  transition:transform 250ms ease, border-color 250ms ease, box-shadow 250ms ease;
+}
+:root[data-palette="blood"] .card:hover,
+:root[data-palette="blood"] .tile:hover,
+:root[data-palette="blood"] .dept-tile:hover,
+:root[data-palette="blood"] .kpi-card:hover,
+:root[data-palette="blood"] .stat-card:hover{
+  transform:translateY(-2px);
+  border-color:rgba(54,207,219,.45);
+  box-shadow:0 0 18px rgba(54,207,219,.14), 0 0 40px rgba(54,207,219,.07),
+             inset 0 0 18px rgba(54,207,219,.03);
+}
+/* A lift of two pixels is cinematic; a lift plus a scale is a game. */
+@media (prefers-reduced-motion:reduce){
+  :root[data-palette="blood"] .card,
+  :root[data-palette="blood"] .tile,
+  :root[data-palette="blood"] .dept-tile,
+  :root[data-palette="blood"] .kpi-card,
+  :root[data-palette="blood"] .stat-card{transition:none;}
+  :root[data-palette="blood"] .card:hover,
+  :root[data-palette="blood"] .tile:hover,
+  :root[data-palette="blood"] .dept-tile:hover,
+  :root[data-palette="blood"] .kpi-card:hover,
+  :root[data-palette="blood"] .stat-card:hover{transform:none;}
+}
 
-/* The body is not flat. Two soft blooms — warm low, cool high — so scrolling feels like
-   moving through tissue rather than over a black sheet. fixed, so the light stays put and
-   the content passes through it. */
-:root[data-palette="blood"] body{
-  background:
-    radial-gradient(120% 90% at 78% -10%, rgba(255,92,110,.10) 0%, transparent 60%),
-    radial-gradient(90% 70% at 12% 110%, rgba(56,189,248,.07) 0%, transparent 62%),
-    #0A0406;
-  background-attachment:fixed;
+/* KPI numbers are the instrument reading — the one small thing that should look powered. */
+:root[data-palette="blood"] .ws-stat .n,
+:root[data-palette="blood"] .reg-stat b,
+:root[data-palette="blood"] .ws-ring-n{
+  color:var(--cyan);
+  text-shadow:var(--text-glow-cyan);
 }
-:root[data-palette="blood"] .page-head{
-  background:linear-gradient(180deg,rgba(255,122,24,.12),#0A0406 88%);
+:root[data-palette="blood"] .ws-stat-warn .n,
+:root[data-palette="blood"] .reg-stat.warn b{
+  color:var(--orange);
+  text-shadow:var(--text-glow-orange);
 }
-:root[data-palette="blood"] .site-header{
-  background:rgba(10,4,6,.92);border-bottom-color:var(--border);
+:root[data-palette="blood"] .ws-stat-bad .n,
+:root[data-palette="blood"] .ws-stat-core .n,
+:root[data-palette="blood"] .reg-stat.bad b{
+  color:var(--red-text);
+  text-shadow:var(--text-glow-red);
+}
+:root[data-palette="blood"] .ws-stat-ok .n,
+:root[data-palette="blood"] .reg-stat.ok b{
+  color:var(--gold);
+  text-shadow:var(--text-glow-gold);
 }
 
-/* THE HERO IS THE PICTURE.
-   A hot coronary bloom top right where the image is brightest, a cooler venous wash bottom
-   left, over deep maroon. The particle canvas sits on top of this and draws its own points
-   in the same families, so the artwork and its surround stay one image rather than two
-   colours meeting at the canvas edge. */
-:root[data-palette="blood"] .hero{
-  --brand:#FF7A18;
-  --brand-2:#FF9E2C;
-  --brand-tint:rgba(255,158,44,.16);
-  --accent:#FF7A18;
-  --accent-bright:#FFB84D;
-  --accent-bright-tint:rgba(255,184,77,.16);
-  --hero-tint:#FF9E2C;
-  background:
-    radial-gradient(85% 70% at 82% -8%, rgba(255,122,24,.22) 0%, transparent 58%),
-    radial-gradient(70% 60% at 8% 105%, rgba(56,189,248,.13) 0%, transparent 60%),
-    radial-gradient(120% 140% at 50% 30%, #1A060B 0%, #0A0406 58%, #040103 100%);
+/* ---------- buttons ---------- */
+:root[data-palette="blood"] .btn-primary,
+:root[data-palette="blood"] .btn-accent{
+  background:linear-gradient(135deg,#298BB0,#36CFDB);
+  color:#10110E;
+  border:none;
+  box-shadow:0 0 12px rgba(54,207,219,.32), 0 0 30px rgba(54,207,219,.13);
+  transition:box-shadow 250ms ease, transform 250ms ease;
 }
-:root[data-palette="blood"] .hero::after{
-  background:radial-gradient(60% 50% at 90% 100%, rgba(244,114,182,.16), transparent 70%);
+:root[data-palette="blood"] .btn-primary:hover,
+:root[data-palette="blood"] .btn-accent:hover{
+  /* More light, not a different colour: a button that changes hue on hover reads as a
+     different button. */
+  box-shadow:0 0 18px rgba(54,207,219,.5), 0 0 44px rgba(54,207,219,.22);
+  transform:translateY(-1px);
 }
-:root[data-palette="blood"] .hero .btn-primary{box-shadow:0 0 24px -4px rgba(255,122,24,.75);}
-:root[data-palette="blood"] .hero .btn-accent{box-shadow:0 0 26px -4px rgba(255,184,77,.8);}
+:root[data-palette="blood"] .btn-ghost,
+:root[data-palette="blood"] .btn-ghost-dark{
+  background:rgba(28,25,32,.6);
+  border:1px solid rgba(54,207,219,.25);
+  color:var(--fg);
+  -webkit-backdrop-filter:blur(8px);
+  backdrop-filter:blur(8px);
+  transition:border-color 250ms ease, box-shadow 250ms ease;
+}
+:root[data-palette="blood"] .btn-ghost:hover,
+:root[data-palette="blood"] .btn-ghost-dark:hover{
+  border-color:rgba(54,207,219,.65);
+  color:var(--cyan);
+  box-shadow:0 0 8px rgba(54,207,219,.22), inset 0 0 8px rgba(54,207,219,.07);
+}
 
+/* ---------- forms ---------- */
+:root[data-palette="blood"] input,
+:root[data-palette="blood"] select,
+:root[data-palette="blood"] textarea,
+:root[data-palette="blood"] .ws-filters input[type=search],
+:root[data-palette="blood"] .ws-filters select{
+  background:rgba(16,17,14,.7);
+  border:1px solid rgba(54,207,219,.2);
+  color:var(--fg);
+}
+:root[data-palette="blood"] input:focus,
+:root[data-palette="blood"] select:focus,
+:root[data-palette="blood"] textarea:focus{
+  outline:none;
+  border-color:rgba(54,207,219,.65);
+  box-shadow:0 0 8px rgba(54,207,219,.25), inset 0 0 8px rgba(54,207,219,.06);
+}
+:root[data-palette="blood"] ::placeholder{color:var(--fg-faint);}
+
+/* ---------- tables ---------- */
+:root[data-palette="blood"] .ws-table th{
+  background:rgba(44,51,85,.35);
+  color:var(--fg-muted);
+  border-bottom:1px solid rgba(54,207,219,.2);
+}
+:root[data-palette="blood"] .ws-table tr:hover td{background:rgba(54,207,219,.045);}
+
+/* ---------- chips, pills, badges ----------
+   Tinted fill plus a matching hairline, never a solid block of accent. */
+:root[data-palette="blood"] .pill,
+:root[data-palette="blood"] .tr-tag,
+:root[data-palette="blood"] .ev-tag,
+:root[data-palette="blood"] .cat-pill{
+  background:rgba(54,207,219,.10);
+  border:1px solid rgba(54,207,219,.22);
+  color:var(--cyan);
+}
+:root[data-palette="blood"] .tr-tag.warn,
+:root[data-palette="blood"] .ev-tag.warn,
+:root[data-palette="blood"] .cat-Commitment{
+  background:rgba(235,147,69,.12);border-color:rgba(235,147,69,.3);color:var(--orange);
+}
+:root[data-palette="blood"] .tr-tag.bad,
+:root[data-palette="blood"] .ev-tag.nc,
+:root[data-palette="blood"] .cat-CORE,
+:root[data-palette="blood"] .cat-Core{
+  background:rgba(201,68,55,.14);border-color:rgba(201,68,55,.34);color:var(--red-text);
+}
+:root[data-palette="blood"] .tr-tag.ok,
+:root[data-palette="blood"] .ev-tag.ok{
+  background:rgba(41,139,176,.13);border-color:rgba(41,139,176,.3);color:var(--blue-text);
+}
+:root[data-palette="blood"] .cat-Excellence{
+  background:rgba(130,98,175,.14);border-color:rgba(130,98,175,.32);color:var(--violet-text);
+}
+:root[data-palette="blood"] .cat-Achievement{
+  background:rgba(236,183,73,.13);border-color:rgba(236,183,73,.3);color:var(--gold);
+}
+
+/* ---------- progress ---------- */
+:root[data-palette="blood"] .ws-ch-bar{background:rgba(245,245,242,.06);}
+:root[data-palette="blood"] .ws-ch-bar i,
+:root[data-palette="blood"] .sv-progress-fill{
+  background:linear-gradient(90deg,#298BB0,#36CFDB);
+  box-shadow:var(--glow-cyan-md);
+}
+:root[data-palette="blood"] .ws-ring-fg{
+  stroke:var(--cyan);
+  filter:drop-shadow(0 0 6px rgba(54,207,219,.55));
+}
+
+/* ---------- modals, tooltips, toasts ---------- */
+:root[data-palette="blood"] .ws-modal-in,
+:root[data-palette="blood"] .aq-tip,
+:root[data-palette="blood"] .qg-hub-tip,
+:root[data-palette="blood"] .kn-tip,
+:root[data-palette="blood"] .gx-tooltip,
+:root[data-palette="blood"] .face-tooltip{
+  background:rgba(28,25,32,.9);
+  border:1px solid rgba(54,207,219,.28);
+  box-shadow:0 0 30px rgba(0,0,0,.6), 0 0 24px rgba(54,207,219,.10);
+  -webkit-backdrop-filter:blur(16px);
+  backdrop-filter:blur(16px);
+}
+:root[data-palette="blood"] .ws-toast{
+  background:rgba(28,25,32,.94);
+  border:1px solid rgba(54,207,219,.3);
+  box-shadow:var(--glow-cyan-md);
+}
+:root[data-palette="blood"] .ws-toast.bad{
+  border-color:rgba(201,68,55,.45);box-shadow:var(--glow-red-md);
+}
+
+/* ---------- loading ----------
+   A scan rather than a spin: closer to an instrument acquiring than to a page waiting. */
+:root[data-palette="blood"] .ws-skel-row,
+:root[data-palette="blood"] .ws-skel-card{
+  background:linear-gradient(90deg, rgba(28,25,32,.7) 0%, rgba(54,207,219,.08) 50%, rgba(28,25,32,.7) 100%);
+}
+
+/* ---------- decorative bands ---------- */
+:root[data-palette="blood"] .lens-strip{background:#141514;}
+:root[data-palette="blood"] .humor{background:#0C0D0B;}
+:root[data-palette="blood"] .cta-band{
+  background:linear-gradient(120deg,#1B1009,#2C3355 130%);
+  border:1px solid rgba(54,207,219,.14);
+}
+:root[data-palette="blood"] .video-embed{
+  background:linear-gradient(140deg,#1C1920,#272238);
+  border:1px solid rgba(54,207,219,.14);
+}
 :root[data-palette="blood"] .acc.live{
-  background:linear-gradient(160deg,rgba(255,158,44,.16),var(--bg-elevated));
-  border-color:var(--border);
+  background:linear-gradient(160deg,rgba(54,207,219,.12),rgba(28,25,32,.72));
+  border-color:rgba(54,207,219,.3);
 }
-:root[data-palette="blood"] .lens-strip{background:#0C0507;}
-:root[data-palette="blood"] .humor{background:#070203;}
-:root[data-palette="blood"] .cta-band{background:linear-gradient(120deg,#1A060B,#4A0E14 120%);}
-:root[data-palette="blood"] .video-embed{background:linear-gradient(140deg,#1A060B,#3A1018);}
-:root[data-palette="blood"] .code-chip{background:#3A1018;color:#FFE9D6;}
-:root[data-palette="blood"] ::selection{background:var(--accent-bright);color:#1A0600;}
-
-/* The mark itself. The arc is the impulse travelling round it, so it takes the brightest
-   colour in the palette rather than the brand's mid tone. */
-:root[data-palette="blood"] .hero-logo-arc{stroke:var(--accent-bright);}
-
-/* A pulse along the accent rule under section headings — slow, and only where a section
-   actually begins, so it reads as a heartbeat rather than as something loading. */
-@keyframes aq-blood-pulse{
-  0%,100%{opacity:.55;}
-  50%{opacity:1;}
+:root[data-palette="blood"] .code-chip{
+  background:rgba(44,51,85,.5);color:var(--gold-light);
+  border:1px solid rgba(236,183,73,.2);
 }
+:root[data-palette="blood"] ::selection{background:rgba(54,207,219,.32);color:#F5F5F2;}
+:root[data-palette="blood"] .site-footer{
+  background:rgba(16,17,14,.8);border-top:1px solid rgba(54,207,219,.12);
+}
+
+/* The eyebrow rule is the one persistent sign of life on a page: a slow pulse on a 2px
+   line, nowhere near text, so it never competes with reading. */
+@keyframes aq-bio-pulse{0%,100%{opacity:.5;}50%{opacity:1;}}
+:root[data-palette="blood"] .eyebrow{color:var(--cyan);}
 :root[data-palette="blood"] .eyebrow::before{
-  animation:aq-blood-pulse 2.8s ease-in-out infinite;
+  background:var(--cyan);
+  box-shadow:var(--glow-cyan-sm);
+  animation:aq-bio-pulse 3.2s ease-in-out infinite;
 }
 @media (prefers-reduced-motion:reduce){
-  :root[data-palette="blood"] .eyebrow::before{animation:none;opacity:.8;}
+  :root[data-palette="blood"] .eyebrow::before{animation:none;opacity:.85;}
+}
+
+/* The hero's own button rules are twinned from neon and carry its cyan-teal glow at
+   (0,3,0); the general blood button rule is (0,2,0) and loses to them however late it
+   sits. Scoped copies, so the one screen the theme is judged on is not the one screen
+   still glowing the previous palette. */
+:root[data-palette="blood"] .hero .btn-primary,
+:root[data-palette="blood"] .hero .btn-accent{
+  background:linear-gradient(135deg,#298BB0,#36CFDB);
+  color:#10110E;
+  box-shadow:0 0 14px rgba(54,207,219,.38), 0 0 34px rgba(54,207,219,.16);
+}
+:root[data-palette="blood"] .hero .btn-primary:hover,
+:root[data-palette="blood"] .hero .btn-accent:hover{
+  box-shadow:0 0 20px rgba(54,207,219,.55), 0 0 48px rgba(54,207,219,.24);
+}
+:root[data-palette="blood"] .hero .btn-ghost-dark{
+  background:rgba(16,17,14,.55);
+  border:1px solid rgba(54,207,219,.28);
 }

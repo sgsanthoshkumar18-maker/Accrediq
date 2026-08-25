@@ -15,7 +15,7 @@ Paste this whole file into a new chat to pick up where the last one left off.
   this way in `api/video-url.js`.
 - **Secrets go only into Vercel environment variables.** Never into the repo, never into
   chat. A live Resend key was once pasted into a conversation and had to be revoked.
-- **Tests:** `node tests/<name>.test.js`, no framework. All 29 suites must pass.
+- **Tests:** `node tests/<name>.test.js`, no framework. All 31 suites must pass.
   There is no `npm test` script.
 - **`vercel.json` is `additionalProperties: false`** — no comments allowed in it.
 - **Bulk email must use Bcc, never To.** A To-line leak is DPDP-reportable.
@@ -26,6 +26,13 @@ Paste this whole file into a new chat to pick up where the last one left off.
 - **`requestAnimationFrame` and CSS transitions are paused in a hidden tab.** Any browser
   measurement of an animated value will read the *start* value forever. Measure with
   `MutationObserver`, `setTimeout`, or by reading layout values (`offsetTop`).
+- **A hidden pane returns STALE computed styles.** After changing `data-palette` on a live
+  page, `getComputedStyle` on elements that already existed keeps handing back the OLD
+  values — mixed, so `background-color` updates while `border-color` does not. This cost
+  hours: it looked exactly like a cascade defect, and the tell that it was not is that an
+  **inline style also failed to win with no `!important` anywhere**, which cannot happen in
+  real CSS. To verify a palette, create a fresh element with the class, read it, remove it —
+  a new node has no cached style. Or reload the page.
 - **`transform` does not affect layout.** A scroll-reveal that hasn't run displaces an
   element visually by 26px while its layout box is already correct. Measure `offsetTop`,
   not `getBoundingClientRect()`, when checking alignment.
@@ -120,12 +127,23 @@ with ffmpeg — which is also the only fix for iPhone fullscreen.
   turns it off back to default. It SETS rather than cycles — with three palettes a toggle
   means the word you type no longer tells you what you get.
 - `?neon=1` / `?blood=1` / `?blood=0` also work, owner only.
-- **BLOOD** is the circulatory palette, taken from one picture: arterial gold `#FFB84D`
-  accents, venous blue `#38BDF8`, capillary magenta, on a `#0A0406` field that carries red
-  in it rather than being neutral black. Every foreground was measured — worst case 6.5:1,
-  body text 17:1+.
+- **BLOOD** is now the bioluminescent medical-tech theme (the name is kept because it is the
+  word the owner types and the value every test and the `site_settings` row already holds —
+  renaming it would churn the plumbing for nothing). Neon cyan `#36CFDB` on a near-black
+  `#10110E`, with blue, violet, orange, red and gold in a fixed 70/15/7/5/3 budget.
+- **The glow IS the theme.** Flat bright colour on dark is precisely what this is not. Every
+  accent carries a layered bloom from the `--glow-*` / `--text-glow-*` tokens; a single
+  box-shadow is not a bloom. Surfaces are glass — `rgba(28,25,32,.72)` over a
+  `backdrop-filter` — not solid cards, and the body is three radial light sources over the
+  black rather than a flat fill.
+- **Four spec colours fail AA as small text** — red 3.9:1, violet 3.9, magenta 4.3, muted 4.3.
+  Each has a lifted `*-text` sibling (`--red-text:#D56D63`, `--violet-text:#9B81BF`,
+  `--magenta-text:#C37588`, `--blue-text:#3E97B8`, `--fg-faint:#878C95`) bound to text,
+  while the raw spec value still does the work in fills, borders, glows and charts. On a
+  platform where red means NON-CONFORMITY, the most important label must not be the least
+  readable thing on the page. `tests/palette.test.js` fails if these are "tidied" back.
 - **Red stays reserved.** `--nc` means non-conformity and is never the decorative accent,
-  which is why the accent is arterial gold and not red.
+  which is why the accent is cyan and not red.
 
 ### The cascade trap — read this before adding a fourth palette
 
