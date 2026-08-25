@@ -118,7 +118,7 @@ with ffmpeg — which is also the only fix for iPhone fullscreen.
 
 ---
 
-## Three themes: light, blue (dark), neon
+## Three themes: Clinical Light, blue (dark), neon
 
 These are the only three, and the list is deliberately closed.
 
@@ -138,6 +138,64 @@ subscribers only ever choose light or dark for themselves.
 - The shipped default is **neon**. Falling back to "default" made the site open blue on a
   cold load and only turn neon once `site_settings` had been fetched, which looked like
   needing two or three refreshes.
+
+### Clinical Light — the light theme, and why the 3D scenes sit on dark panels
+
+The light theme is **Clinical Light**: cool paper `#F5F8FA`, ink `#0E1621`, two blues
+(`--brand-2 #0F3E68` for primary actions, `--accent-bright #17558C` for accents and links).
+It replaced a warm-paper/teal scheme in August 2026. Neon is the dark theme.
+
+**The accent is blue because the other colours are spoken for.** Green means compliant,
+amber partial, red non-conformity. Spend green on the brand and a compliant chip stops
+reading as a status. Blue/indigo/violet/slate is what remains, and the accent deliberately
+carries no semantic weight.
+
+**Three tokens exist because "the accent is bright" stopped being true.**
+`--on-accent`, `--on-brand` and `--deep-accent`. Light's accent is DARK, so filled buttons
+take white text; neon's is bright teal, so they take near-black. The old code hardcoded
+`#04241F` on `var(--accent-bright)`, which measured **2.13:1** against the new blue — a real
+regression, found by probing computed values, not by looking. `--deep-accent` exists
+because `--accent-bright` is tuned against PAPER and is far too dark to glow on a navy
+surface, so deep surfaces get a lifted member of the same hue family.
+
+Glows now derive with `color-mix(in srgb, var(--token) N%, transparent)` instead of literal
+rgba. That is deliberate: "a rule re-tinted for one theme and forgotten for another" is the
+most repeated bug in this stylesheet, and a derived value cannot have it.
+
+#### The 3D scenes: dark stages, not light scenes
+
+All twelve WebGL scenes draw with `THREE.AdditiveBlending`. Additive blending ADDS to what
+is behind it, so **over white it saturates to white and the artwork disappears entirely** —
+not dimmed, gone. Making them genuinely light-mode means switching every material to
+`NormalBlending` AND regenerating the glow sprite textures, whose colour is baked in at
+creation: twelve files of high-risk change for something no test can verify.
+
+So in the light theme every canvas wrapper gets a **dark stage** — see
+`3D SCENES IN THE LIGHT THEME` in styles.css. This is not a workaround; the light theme
+already rendered its hero as a deep panel through `--deep-1`/`--deep-2` with the organ
+scene on it. The rule extends that established pattern to the other nine canvases.
+
+Two things make it read as designed rather than pasted on: the ground comes from the
+theme's own deep tokens (navy, not a foreign black), and the border, radius and shadow are
+the same card treatment used everywhere else. Navy is also the hue that bridges the teal
+artwork and the blue UI.
+
+**A second reason it is right:** the overlay UI inside those wrappers — `.hg-loading`,
+`.gx-tooltip`, `.hg-zoom-controls` — is hardcoded for a dark canvas (white text, `#5eead4`
+spinners). On the *old* light theme those already rendered badly. The stage fixed a bug
+that predates the change.
+
+The nine staged wrappers are `.gx-wrap .hg-globe-wrap .qg-globe-wrap .kn-wrap .dna-wrap
+.brain-wrap .radar-canvas-wrap .helix-canvas-wrap .ent-globe-wrap`. Four of those are
+injected by JS and never appear in the static HTML — find them via `stage.querySelector`
+in the scene files, not by grepping the pages. `.face-wrap` is deliberately absent: it
+lives inside `.hero`, which is already a deep panel.
+
+**Known limitation.** Scenes read their colours once at construction and none subscribe to
+`onChange`, so toggling the theme re-tints the CSS instantly but the 3D artwork keeps its
+colours **until the next page load**. Acceptable because almost nobody toggles — visitors
+land in whatever is published. Fixing it means giving each scene a re-tint path, which
+differs per scene.
 
 ### A fourth palette was built and then removed — read this before adding another
 

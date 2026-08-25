@@ -34,6 +34,41 @@ window.AQScenePalette = (function () {
     deep:    0x06322C
   };
 
+  /* THE LIGHT THEME STILL DRAWS ON A DARK GROUND.
+     Every scene here uses THREE.AdditiveBlending, which adds to what is behind it — over
+     white it saturates to white and the artwork vanishes outright. So in the light theme
+     the canvases keep a dark stage (styles.css, "3D SCENES IN THE LIGHT THEME"), and these
+     values are tuned for THAT stage, not for paper.
+
+     The shift from neon's teal to a blue is what ties the artwork to a page whose accent is
+     #17558C: same hue family, lifted until it reads against navy. --deep-accent in the CSS
+     is the same colour, so the stage wash and the particles on it agree by construction.
+
+     NOTE what this does NOT do: it never lightens the scene toward the page. Trying to make
+     these scenes genuinely light-mode means changing every material to NormalBlending and
+     regenerating the glow textures, whose colour is baked in at creation — twelve files of
+     change for something no test can check. */
+  var LIGHT = {
+    accent: 0x6FB2E6,   /* 5.9:1 on the stage's lit corner */
+    dim:    0x3D8CC4,
+    ambient: 0xB8CBDC,  /* cool fill, so the blues stay blue rather than drifting warm */
+    key:     0xFFFFFF,
+    link:    0x2A4A66,
+    deep:    0x0B1826   /* the stage's darkest corner, matching --deep-2 */
+  };
+
+  /* Light is the ABSENCE of the attribute, not a value — see the boot snippet, which
+     removes it rather than writing "light". Reading it the other way round would make every
+     scene think a fresh page was light. */
+  function isLight() {
+    try { return document.documentElement.getAttribute("data-theme") !== "dark"; }
+    catch (e) { return false; }
+  }
+  function pick(light, dark, fallback) {
+    if (isLight()) return light;
+    return fallback != null ? fallback : dark;
+  }
+
   /* Each of these answers "what should this scene use", and falls back to what the scene
      already had. No palette overrides the chapter, category or cycle colours any more — a
      third palette used to, and was removed — so those three hand the scene's own values
@@ -45,12 +80,12 @@ window.AQScenePalette = (function () {
   function chapters(fallback) { return fallback; }
   function categories(fallback) { return fallback; }
   function cycle(fallback) { return fallback; }
-  function accent(fallback) { return fallback != null ? fallback : NEON.accent; }
-  function dim(fallback) { return fallback != null ? fallback : NEON.dim; }
-  function ambient(fallback) { return fallback != null ? fallback : NEON.ambient; }
-  function keyLight(fallback) { return fallback != null ? fallback : NEON.key; }
-  function link(fallback) { return fallback != null ? fallback : NEON.link; }
-  function deep(fallback) { return fallback != null ? fallback : NEON.deep; }
+  function accent(fallback) { return pick(LIGHT.accent, NEON.accent, fallback); }
+  function dim(fallback) { return pick(LIGHT.dim, NEON.dim, fallback); }
+  function ambient(fallback) { return pick(LIGHT.ambient, NEON.ambient, fallback); }
+  function keyLight(fallback) { return pick(LIGHT.key, NEON.key, fallback); }
+  function link(fallback) { return pick(LIGHT.link, NEON.link, fallback); }
+  function deep(fallback) { return pick(LIGHT.deep, NEON.deep, fallback); }
 
   /* A scene registers here to be told the palette moved. The owner switching palettes is
      rare enough that a full reload would be acceptable — but a reload loses the camera,
