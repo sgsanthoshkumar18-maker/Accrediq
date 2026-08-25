@@ -403,34 +403,58 @@
          here let a stale "default" written by an earlier bug survive indefinitely: the
          boot snippet read it, nothing ever corrected it, and the device stayed blue.
          The published row is the only thing allowed to say "default". */
-      const want = (row && row.value && row.value.palette === "default") ? "default" : "neon";
+      /* Three palettes now: default, neon, blood. Anything unrecognised becomes neon, which
+         is the shipped default — the same reasoning as before, and the reason a stale
+         "default" written by an old bug could not survive: only a published row may say it. */
+      const raw = row && row.value && row.value.palette;
+      const want = (raw === "default" || raw === "blood") ? raw : "neon";
       try { localStorage.setItem("aq-palette", want); } catch (err) {}
       const html = document.documentElement;
-      // Never neon over the light theme: it is a true-black palette and unreadable there.
-      if (want === "neon" && html.getAttribute("data-theme") === "dark") {
-        html.setAttribute("data-palette", "neon");
-      } else if (want !== "neon") {
+      /* Neither neon nor blood may sit over the light theme: both are near-black palettes
+         whose foregrounds were measured against black, and on white they are unreadable. */
+      if (want !== "default" && html.getAttribute("data-theme") === "dark") {
+        html.setAttribute("data-palette", want);
+      } else {
         html.removeAttribute("data-palette");
       }
     } catch (e) { /* offline: the cached palette from boot stands */ }
   }
   window.AQLoadSitePalette = loadSitePalette;
 
-  function togglePalette() {
-    // Silently ignored for everyone else: no message, because a subscriber typing the
-    // word by accident should not learn that a hidden switch exists.
+  /* Set the palette outright rather than cycling.
+   *
+   * Typing "neon" used to flip between neon and default, which worked while there were two.
+   * With three, a toggle means the word you type does not tell you what you will get — type
+   * "blood" while blood is on and you would land on default, which is not what the word
+   * says. So each word names its palette, and typing the one already showing turns it OFF
+   * back to default. The word is always either "this" or "not this", never "the other one".
+   *
+   * Silently ignored for anyone but the owner: no message, because a subscriber typing the
+   * word by accident should not learn that a hidden switch exists.
+   */
+  function setPalette(name) {
     if (!isOwnerBrowser()) return;
     const html = document.documentElement;
-    const isNeon = html.getAttribute("data-palette") === "neon";
-    const next = isNeon ? "default" : "neon";
-    if (next === "neon") html.setAttribute("data-palette", "neon");
-    else html.removeAttribute("data-palette");
+    const current = html.getAttribute("data-palette") || "default";
+    const next = current === name ? "default" : name;
+
+    if (next === "default") html.removeAttribute("data-palette");
+    else html.setAttribute("data-palette", next);
     try { localStorage.setItem("aq-palette", next); } catch (err) {}
+
+    /* The 3D scenes pick their colours once, at construction. Tell them the palette moved
+       so they can re-tint without a reload — otherwise the page turns and the artwork in
+       the middle of it does not, which looks broken rather than partial. */
+    try {
+      window.dispatchEvent(new CustomEvent("aq:palette", { detail: { palette: next } }));
+    } catch (err) {}
+
     // Publish to every user. Fire and forget: the owner's own view has already changed,
     // and a failed write only means subscribers keep the previous palette until the next
     // successful toggle — never a broken page.
     publishPalette(next);
   }
+  function togglePalette() { setPalette("neon"); }
 
   function toggleTheme() {
     const html = document.documentElement;
@@ -453,17 +477,23 @@
   function initOwnerThemeToggle() {
     // Hidden, owner-only dark-mode switch — no visible UI.
     // Trigger: type the word "dark" anywhere on the page (not while focused in a field).
+    /* The buffer is as long as the longest word, not four characters. It was sliced to 4,
+       which is fine for "dark" and "neon" and silently makes any five-letter word
+       unmatchable — "blood" would only ever have been seen as "lood". */
     let typed = "";
     document.addEventListener("keydown", (e) => {
       const tag = (e.target && e.target.tagName) || "";
       if (tag === "INPUT" || tag === "TEXTAREA" || e.target.isContentEditable) return;
       if (e.key.length !== 1) return;
-      typed = (typed + e.key.toLowerCase()).slice(-4);
-      if (typed === "dark") {
+      typed = (typed + e.key.toLowerCase()).slice(-8);
+      if (typed.endsWith("dark")) {
         toggleTheme();
         typed = "";
-      } else if (typed === "neon") {
-        togglePalette();
+      } else if (typed.endsWith("blood")) {
+        setPalette("blood");
+        typed = "";
+      } else if (typed.endsWith("neon")) {
+        setPalette("neon");
         typed = "";
       }
     });

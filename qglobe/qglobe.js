@@ -9,6 +9,14 @@
    / committee-data.js. */
 
 (function () {
+  /* Scene colours come from theme/scene-palette.js when it is present; every
+     lookup below falls back to the value this scene shipped with. */
+  var P = window.AQScenePalette || { name: function () { return "default"; },
+    chapters: function (f) { return f; }, categories: function (f) { return f; },
+    cycle: function (f) { return f; }, accent: function (f) { return f; },
+    dim: function (f) { return f; }, ambient: function (f) { return f; },
+    key: function (f) { return f; }, link: function (f) { return f; },
+    deep: function (f) { return f; }, onChange: function () {} };
   const stage = document.getElementById("qgStage");
   if (!stage) return;
   const wrapEl = stage.querySelector(".qg-globe-wrap");
@@ -215,7 +223,7 @@
     const lineGeo = new THREE.BufferGeometry();
     lineGeo.setAttribute("position", new THREE.Float32BufferAttribute(linePositions, 3));
     rig.add(new THREE.LineSegments(lineGeo, new THREE.LineBasicMaterial({
-      color: 0x5eead4, transparent: true, opacity: 0.55
+      color: P.accent(0x5eead4), transparent: true, opacity: 0.55
     })));
 
     // Soft glow dots along the borders for a luminous, premium feel

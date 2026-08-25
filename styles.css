@@ -69,7 +69,8 @@
    CONTRAST: every foreground below was checked against its background for
    WCAG AA (4.5:1 body text, 3:1 large text and UI borders).
    ============================================================ */
-:root[data-palette="neon"]{
+:root[data-palette="neon"],
+:root[data-palette="blood"]{
   --bg:#000000;              /* true black */
   --bg-elevated:#04100E;     /* cards lift just enough to separate, tinted teal not blue */
   --bg-deep:#000000;
@@ -116,9 +117,12 @@
 }
 
 /* Surfaces hand-tinted for the indigo palette, re-tinted for neon blue. */
-:root[data-palette="neon"] body{background:#000;}
-:root[data-palette="neon"] .page-head{background:linear-gradient(180deg,rgba(94,234,212,.10),#000 88%);}
-:root[data-palette="neon"] .site-header{background:rgba(0,0,0,.9);border-bottom-color:var(--border);}
+:root[data-palette="neon"] body,
+:root[data-palette="blood"] body{background:#000;}
+:root[data-palette="neon"] .page-head,
+:root[data-palette="blood"] .page-head{background:linear-gradient(180deg,rgba(94,234,212,.10),#000 88%);}
+:root[data-palette="neon"] .site-header,
+:root[data-palette="blood"] .site-header{background:rgba(0,0,0,.9);border-bottom-color:var(--border);}
 /* ---- Home hero: the original cyan-on-deep-navy tone --------------------------
    The rest of the site moved to the teal family so nothing stayed accidentally blue.
    The hero is the deliberate exception: its cyan against a deep navy-black is the look
@@ -130,7 +134,8 @@
    eyebrow, the italic emphasis, the stat numbers and the primary button all follow from
    one place. Because these are plain CSS variables on a container, every breakpoint
    inherits them — the phone layout needs no separate rule and cannot drift out of step. */
-:root[data-palette="neon"] .hero{
+:root[data-palette="neon"] .hero,
+:root[data-palette="blood"] .hero{
   --brand:#22D3EE;
   --brand-2:#38BDF8;
   --brand-tint:rgba(56,189,248,.14);
@@ -140,31 +145,52 @@
   --hero-tint:#22D3EE;
   background:radial-gradient(120% 140% at 78% -10%, #06283D 0%, #010A12 55%, #000 100%);
 }
-:root[data-palette="neon"] .hero::after{background:radial-gradient(60% 50% at 90% 100%, rgba(34,211,238,.16), transparent 70%);}
+:root[data-palette="neon"] .hero::after,
+:root[data-palette="blood"] .hero::after{background:radial-gradient(60% 50% at 90% 100%, rgba(34,211,238,.16), transparent 70%);}
 /* The buttons sit inside .hero, so they pick up the overrides above automatically; these
    only restate the glow, which is a shadow rather than a token. */
-:root[data-palette="neon"] .hero .btn-primary{box-shadow:0 0 22px -4px rgba(56,189,248,.7);}
-:root[data-palette="neon"] .hero .btn-accent{box-shadow:0 0 24px -4px rgba(34,211,238,.75);}
-:root[data-palette="neon"] .acc-band{background:var(--bg-elevated);border-color:var(--border-soft);}
-:root[data-palette="neon"] .acc{background:var(--bg-elevated);}
-:root[data-palette="neon"] .acc.live{background:linear-gradient(160deg,rgba(94,234,212,.14),var(--bg-elevated));border-color:var(--border);}
-:root[data-palette="neon"] .lens-strip{background:#020A09;}
-:root[data-palette="neon"] .humor{background:#000;}
-:root[data-palette="neon"] .cta-band{background:linear-gradient(120deg,#01100E,#06322C 120%);}
-:root[data-palette="neon"] .dl{background:var(--bg-elevated);}
-:root[data-palette="neon"] .video-embed{background:linear-gradient(140deg,#01100E,#06322C);}
-:root[data-palette="neon"] ::selection{background:var(--accent-bright);color:#001512;}
-:root[data-palette="neon"] .code-chip{background:#06322C;color:#E6FFFA;}
+:root[data-palette="neon"] .hero .btn-primary,
+:root[data-palette="blood"] .hero .btn-primary{box-shadow:0 0 22px -4px rgba(56,189,248,.7);}
+:root[data-palette="neon"] .hero .btn-accent,
+:root[data-palette="blood"] .hero .btn-accent{box-shadow:0 0 24px -4px rgba(34,211,238,.75);}
+:root[data-palette="neon"] .acc-band,
+:root[data-palette="blood"] .acc-band{background:var(--bg-elevated);border-color:var(--border-soft);}
+:root[data-palette="neon"] .acc,
+:root[data-palette="blood"] .acc{background:var(--bg-elevated);}
+:root[data-palette="neon"] .acc.live,
+:root[data-palette="blood"] .acc.live{background:linear-gradient(160deg,rgba(94,234,212,.14),var(--bg-elevated));border-color:var(--border);}
+:root[data-palette="neon"] .lens-strip,
+:root[data-palette="blood"] .lens-strip{background:#020A09;}
+:root[data-palette="neon"] .humor,
+:root[data-palette="blood"] .humor{background:#000;}
+:root[data-palette="neon"] .cta-band,
+:root[data-palette="blood"] .cta-band{background:linear-gradient(120deg,#01100E,#06322C 120%);}
+:root[data-palette="neon"] .dl,
+:root[data-palette="blood"] .dl{background:var(--bg-elevated);}
+:root[data-palette="neon"] .video-embed,
+:root[data-palette="blood"] .video-embed{background:linear-gradient(140deg,#01100E,#06322C);}
+:root[data-palette="neon"] ::selection,
+:root[data-palette="blood"] ::selection{background:var(--accent-bright);color:#001512;}
+:root[data-palette="neon"] .code-chip,
+:root[data-palette="blood"] .code-chip{background:#06322C;color:#E6FFFA;}
 :root[data-palette="neon"] .tile,
 :root[data-palette="neon"] .kpi-card,
-:root[data-palette="neon"] .quiz{background:var(--bg-elevated);border-color:var(--border);}
+:root[data-palette="neon"] .quiz,
+:root[data-palette="blood"] .tile,
+:root[data-palette="blood"] .kpi-card,
+:root[data-palette="blood"] .quiz{background:var(--bg-elevated);border-color:var(--border);}
 
 /* Dark-on-light chips need a light foreground once the surface goes black. */
-:root[data-palette="neon"] .pill{background:var(--brand-tint);color:var(--brand-2);}
-:root[data-palette="neon"] .opt{background:var(--bg-elevated);color:var(--fg);border-color:var(--border);}
-:root[data-palette="neon"] .opt:hover{background:var(--brand-tint);color:var(--brand-2);border-color:var(--brand-2);}
-:root[data-palette="neon"] .btn-ghost{color:var(--fg);border-color:var(--border);}
-:root[data-palette="neon"] .btn-ghost:hover{color:var(--accent-bright);border-color:var(--accent-bright);}
+:root[data-palette="neon"] .pill,
+:root[data-palette="blood"] .pill{background:var(--brand-tint);color:var(--brand-2);}
+:root[data-palette="neon"] .opt,
+:root[data-palette="blood"] .opt{background:var(--bg-elevated);color:var(--fg);border-color:var(--border);}
+:root[data-palette="neon"] .opt:hover,
+:root[data-palette="blood"] .opt:hover{background:var(--brand-tint);color:var(--brand-2);border-color:var(--brand-2);}
+:root[data-palette="neon"] .btn-ghost,
+:root[data-palette="blood"] .btn-ghost{color:var(--fg);border-color:var(--border);}
+:root[data-palette="neon"] .btn-ghost:hover,
+:root[data-palette="blood"] .btn-ghost:hover{color:var(--accent-bright);border-color:var(--accent-bright);}
 
 /* Accent buttons carry dark text on a bright fill — keep that legible. */
 /* ---- Neon surface treatment -------------------------------------------------
@@ -193,7 +219,24 @@
 :root[data-palette="neon"] .video-embed,
 :root[data-palette="neon"] .qg-metric-card,
 :root[data-palette="neon"] .sv-opt,
-:root[data-palette="neon"] .hg-shell{
+:root[data-palette="neon"] .hg-shell,
+:root[data-palette="blood"] .card,
+:root[data-palette="blood"] .panel,
+:root[data-palette="blood"] .tile,
+:root[data-palette="blood"] .dept-tile,
+:root[data-palette="blood"] .kpi-card,
+:root[data-palette="blood"] .stat-card,
+:root[data-palette="blood"] .quiz,
+:root[data-palette="blood"] .acc,
+:root[data-palette="blood"] .pf-stat,
+:root[data-palette="blood"] .pf-sub,
+:root[data-palette="blood"] .pf-coverage,
+:root[data-palette="blood"] .pf-chip,
+:root[data-palette="blood"] .pf-next a,
+:root[data-palette="blood"] .video-embed,
+:root[data-palette="blood"] .qg-metric-card,
+:root[data-palette="blood"] .sv-opt,
+:root[data-palette="blood"] .hg-shell{
   background:var(--bg-elevated);
   border:1px solid var(--border);
   box-shadow:0 0 0 1px rgba(45,212,191,.05), 0 18px 44px -24px rgba(45,212,191,.35);
@@ -205,7 +248,13 @@
 :root[data-palette="neon"] .dept-tile:hover,
 :root[data-palette="neon"] .pf-stat:hover,
 :root[data-palette="neon"] .pf-next a:hover,
-:root[data-palette="neon"] .sv-opt:hover{
+:root[data-palette="neon"] .sv-opt:hover,
+:root[data-palette="blood"] .card:hover,
+:root[data-palette="blood"] .tile:hover,
+:root[data-palette="blood"] .dept-tile:hover,
+:root[data-palette="blood"] .pf-stat:hover,
+:root[data-palette="blood"] .pf-next a:hover,
+:root[data-palette="blood"] .sv-opt:hover{
   border-color:var(--brand-2);
   box-shadow:0 0 0 1px rgba(45,212,191,.18), 0 22px 54px -22px rgba(45,212,191,.55);
 }
@@ -214,15 +263,24 @@
 :root[data-palette="neon"] .aq-edition,
 :root[data-palette="neon"] .site-footer,
 :root[data-palette="neon"] .breadcrumb,
-:root[data-palette="neon"] .page-head{
+:root[data-palette="neon"] .page-head,
+:root[data-palette="blood"] .site-header,
+:root[data-palette="blood"] .aq-edition,
+:root[data-palette="blood"] .site-footer,
+:root[data-palette="blood"] .breadcrumb,
+:root[data-palette="blood"] .page-head{
   border-color:var(--border-soft);
 }
-:root[data-palette="neon"] .btn-accent{background:var(--accent-bright);color:#001512;}
-:root[data-palette="neon"] .btn-primary{background:var(--brand-2);color:#001512;}
+:root[data-palette="neon"] .btn-accent,
+:root[data-palette="blood"] .btn-accent{background:var(--accent-bright);color:#001512;}
+:root[data-palette="neon"] .btn-primary,
+:root[data-palette="blood"] .btn-primary{background:var(--brand-2);color:#001512;}
 
 /* Neon glow on primary calls to action */
-:root[data-palette="neon"] .btn-primary{box-shadow:0 0 22px -4px rgba(94,234,212,.7);}
-:root[data-palette="neon"] .btn-accent{box-shadow:0 0 24px -4px rgba(45,212,191,.75);}
+:root[data-palette="neon"] .btn-primary,
+:root[data-palette="blood"] .btn-primary{box-shadow:0 0 22px -4px rgba(94,234,212,.7);}
+:root[data-palette="neon"] .btn-accent,
+:root[data-palette="blood"] .btn-accent{box-shadow:0 0 24px -4px rgba(45,212,191,.75);}
 
 :root[data-theme="dark"]{
   --bg:#0A0D1E;
@@ -265,9 +323,17 @@
  * every page. Caught only by looking at a screenshot; the neon block itself was still
  * byte-for-byte unchanged, which is what made it invisible in a diff.
  *
- * If you ever add a token here, it must be one neon also declares, or scope it the
- * same way. */
-:root[data-theme="dark"]:not([data-palette="neon"]){
+ * If you ever add a token here, it must be one every palette also declares, or scope it
+ * the same way.
+ *
+ * NOW :not([data-palette]) — ANY palette, not the neon one by name.
+ * Naming neon was correct while neon was the only one. Adding the blood palette walked
+ * straight back into the trap this comment describes: :not([data-palette="neon"]) is
+ * (0,3,0) and :root[data-palette="blood"] is (0,2,0), so this block outranked blood
+ * wherever it sat in the file, and blood's backgrounds applied while its accents silently
+ * stayed indigo — the same half-applied look, from the same cause, one palette later.
+ * The bare attribute selector means a fourth palette cannot repeat it. */
+:root[data-theme="dark"]:not([data-palette]){
   --bg-deep:#0D1130;
   --bg-deep-2:#161B45;
   --brand:#332E96;
@@ -892,38 +958,71 @@ a.tile:hover .more{text-decoration:underline;}
 /* ---- Neon palette overrides for feature modules (their CSS hardcodes the
    indigo/teal accents, so they are re-pointed here rather than duplicated). ---- */
 :root[data-palette="neon"] .qg-shell,
-:root[data-palette="neon"] .hg-shell{background:linear-gradient(160deg,#000,#06322C);border-color:rgba(94,234,212,.28);border-top-color:var(--accent-bright);}
+:root[data-palette="neon"] .hg-shell,
+:root[data-palette="blood"] .qg-shell,
+:root[data-palette="blood"] .hg-shell{background:linear-gradient(160deg,#000,#06322C);border-color:rgba(94,234,212,.28);border-top-color:var(--accent-bright);}
 :root[data-palette="neon"] .qg-right,
-:root[data-palette="neon"] .hg-right{background:rgba(0,0,0,.7);}
-:root[data-palette="neon"] .qg-live .dot{background:var(--accent-bright);box-shadow:0 0 6px var(--accent-bright);}
-:root[data-palette="neon"] .qg-panel-cta{background:var(--accent-bright);color:#001512;}
-:root[data-palette="neon"] .qg-panel-cta:hover{background:var(--brand-2);}
+:root[data-palette="neon"] .hg-right,
+:root[data-palette="blood"] .qg-right,
+:root[data-palette="blood"] .hg-right{background:rgba(0,0,0,.7);}
+:root[data-palette="neon"] .qg-live .dot,
+:root[data-palette="blood"] .qg-live .dot{background:var(--accent-bright);box-shadow:0 0 6px var(--accent-bright);}
+:root[data-palette="neon"] .qg-panel-cta,
+:root[data-palette="blood"] .qg-panel-cta{background:var(--accent-bright);color:#001512;}
+:root[data-palette="neon"] .qg-panel-cta:hover,
+:root[data-palette="blood"] .qg-panel-cta:hover{background:var(--brand-2);}
 :root[data-palette="neon"] .qg-metric-card:hover,
-:root[data-palette="neon"] .qg-metric-card.is-active{border-color:var(--accent-bright);background:rgba(45,212,191,.10);}
+:root[data-palette="neon"] .qg-metric-card.is-active,
+:root[data-palette="blood"] .qg-metric-card:hover,
+:root[data-palette="blood"] .qg-metric-card.is-active{border-color:var(--accent-bright);background:rgba(45,212,191,.10);}
 :root[data-palette="neon"] .qg-detail-panel,
 :root[data-palette="neon"] .qg-hub-tip,
 :root[data-palette="neon"] .hg-hub-tip,
 :root[data-palette="neon"] .gx-tooltip,
 :root[data-palette="neon"] .gx-auto-label,
-:root[data-palette="neon"] .kn-tip{background:rgba(2,6,12,.96);border-color:rgba(45,212,191,.4);}
+:root[data-palette="neon"] .kn-tip,
+:root[data-palette="blood"] .qg-detail-panel,
+:root[data-palette="blood"] .qg-hub-tip,
+:root[data-palette="blood"] .hg-hub-tip,
+:root[data-palette="blood"] .gx-tooltip,
+:root[data-palette="blood"] .gx-auto-label,
+:root[data-palette="blood"] .kn-tip{background:rgba(2,6,12,.96);border-color:rgba(45,212,191,.4);}
 :root[data-palette="neon"] .qg-detail-panel h3,
 :root[data-palette="neon"] .qg-hub-tip,
 :root[data-palette="neon"] .hg-coord-val,
-:root[data-palette="neon"] .gx-tooltip span{color:var(--accent-bright);}
-:root[data-palette="neon"] .qg-zoom-controls button{background:rgba(0,0,0,.85);border-color:rgba(45,212,191,.35);color:var(--accent-bright);}
-:root[data-palette="neon"] .qg-zoom-controls button:hover{background:rgba(45,212,191,.18);border-color:var(--accent-bright);}
+:root[data-palette="neon"] .gx-tooltip span,
+:root[data-palette="blood"] .qg-detail-panel h3,
+:root[data-palette="blood"] .qg-hub-tip,
+:root[data-palette="blood"] .hg-coord-val,
+:root[data-palette="blood"] .gx-tooltip span{color:var(--accent-bright);}
+:root[data-palette="neon"] .qg-zoom-controls button,
+:root[data-palette="blood"] .qg-zoom-controls button{background:rgba(0,0,0,.85);border-color:rgba(45,212,191,.35);color:var(--accent-bright);}
+:root[data-palette="neon"] .qg-zoom-controls button:hover,
+:root[data-palette="blood"] .qg-zoom-controls button:hover{background:rgba(45,212,191,.18);border-color:var(--accent-bright);}
 :root[data-palette="neon"] .gx-wrap,
-:root[data-palette="neon"] .kn-wrap{background:radial-gradient(circle at 50% 45%, rgba(94,234,212,.18), transparent 70%);}
+:root[data-palette="neon"] .kn-wrap,
+:root[data-palette="blood"] .gx-wrap,
+:root[data-palette="blood"] .kn-wrap{background:radial-gradient(circle at 50% 45%, rgba(94,234,212,.18), transparent 70%);}
 :root[data-palette="neon"] .qg-loading .spin,
 :root[data-palette="neon"] .hg-loading .spin,
 :root[data-palette="neon"] .gx-loading .spin,
-:root[data-palette="neon"] .sv-progress-fill{border-top-color:var(--accent-bright);background:var(--accent-bright);}
+:root[data-palette="neon"] .sv-progress-fill,
+:root[data-palette="blood"] .qg-loading .spin,
+:root[data-palette="blood"] .hg-loading .spin,
+:root[data-palette="blood"] .gx-loading .spin,
+:root[data-palette="blood"] .sv-progress-fill{border-top-color:var(--accent-bright);background:var(--accent-bright);}
 :root[data-palette="neon"] .face-canvas-wrap,
-:root[data-palette="neon"] .hg-globe-wrap{box-shadow:0 0 60px -10px rgba(45,212,191,.42), 0 0 100px -20px rgba(94,234,212,.3);}
-:root[data-palette="neon"] .sv-title-bar{border-bottom-color:var(--accent-bright);}
-:root[data-palette="neon"] .sop-page{border-color:var(--border);}
-:root[data-palette="neon"] .sd-title{border-bottom-color:var(--brand-2);}
-:root[data-palette="neon"] .sv-opt.is-picked{border-color:var(--accent-bright);background:rgba(45,212,191,.14);color:var(--accent-bright);}
+:root[data-palette="neon"] .hg-globe-wrap,
+:root[data-palette="blood"] .face-canvas-wrap,
+:root[data-palette="blood"] .hg-globe-wrap{box-shadow:0 0 60px -10px rgba(45,212,191,.42), 0 0 100px -20px rgba(94,234,212,.3);}
+:root[data-palette="neon"] .sv-title-bar,
+:root[data-palette="blood"] .sv-title-bar{border-bottom-color:var(--accent-bright);}
+:root[data-palette="neon"] .sop-page,
+:root[data-palette="blood"] .sop-page{border-color:var(--border);}
+:root[data-palette="neon"] .sd-title,
+:root[data-palette="blood"] .sd-title{border-bottom-color:var(--brand-2);}
+:root[data-palette="neon"] .sv-opt.is-picked,
+:root[data-palette="blood"] .sv-opt.is-picked{border-color:var(--accent-bright);background:rgba(45,212,191,.14);color:var(--accent-bright);}
 
 /* The empty-state icons now inherit colour, so give their containers one. */
 .qg-panel-empty svg, .hg-panel-empty svg, .sop-empty svg{color:var(--accent-bright);}
@@ -1714,3 +1813,144 @@ body.aq-locked{
 .aq-tip-x:hover{color:var(--fg);border-color:var(--border-strong);}
 .aq-tip-x:focus-visible{outline:2px solid var(--accent-bright);outline-offset:2px;}
 @media (prefers-reduced-motion:reduce){ .aq-tip{transition:none;} }
+
+
+/* ============================================================
+   BLOOD / CIRCULATORY PALETTE
+   data-palette="blood". Third palette alongside default and neon; published by the owner
+   for everyone, exactly as neon is. Typed trigger: "blood".
+
+   TAKEN FROM ONE PICTURE, ON PURPOSE.
+   A glowing anatomical heart on near-black: arteries lit fiery orange and gold, the great
+   vessels electric cyan, capillaries magenta, and the whole thing sitting in a deep maroon
+   vignette rather than a neutral black. Those four families are the entire palette, and the
+   reason it reads as a circulatory system instead of "a dark theme with orange in it" is
+   that the BACKGROUND carries blood in it too — a neutral black behind warm accents looks
+   like a mistake, not a body.
+
+   WHY THE ACCENT IS ARTERIAL ORANGE AND NOT RED.
+   Red is already spoken for: --nc is a non-conformity, and on a NABH platform that colour
+   has to mean one thing and never decorate. The impulse running through the picture is the
+   gold-orange of the coronary tree, which is both truer to the image and leaves red free to
+   go on meaning "this is wrong".
+
+   CONTRAST: every foreground below was measured against both --bg and --bg-elevated. The
+   worst case in the set is 6.5:1 (--nc on a raised card), comfortably past AA; body text is
+   17:1 or better. Nothing here was chosen because it looked like the picture and left at
+   that.
+   ============================================================ */
+:root[data-palette="blood"]{
+  --bg:#0A0406;              /* near-black, with blood under it rather than neutral grey */
+  --bg-elevated:#160A0E;     /* a card lifts, and warms as it lifts */
+  --bg-deep:#040103;
+
+  --fg:#FFF0F1;              /* 18.4:1 */
+  --fg-muted:#E4B9BE;        /* 11.6:1 */
+  --fg-faint:#B98A92;        /*  6.9:1 — still readable, unlike a true grey at this weight */
+
+  --border:#3A1620;
+  --border-soft:#250E14;
+
+  /* The coronary tree: the lit vessels running over the muscle in the picture. */
+  --brand:#FF7A18;
+  --brand-2:#FF9E2C;         /*  9.9:1 */
+  --brand-tint:rgba(255,158,44,.14);
+
+  --accent:#FF7A18;
+  --accent-bright:#FFB84D;   /* 11.8:1 — the impulse itself, the brightest thing on screen */
+  --accent-bright-tint:rgba(255,184,77,.14);
+
+  --ok:#34D399;              /* oxygenated */
+  --ok-tint:rgba(52,211,153,.15);
+  --warn:#FBBF24;
+  --warn-tint:rgba(251,191,36,.15);
+  --nc:#FF5C6E;              /* arterial red, reserved for non-conformity */
+  --nc-tint:rgba(255,92,110,.16);
+  --info:#38BDF8;            /* the great vessels: venous blue */
+  --info-tint:rgba(56,189,248,.15);
+
+  /* Two shadows: a real one for depth, and a warm bloom so a raised surface looks lit from
+     within rather than cut out of the page. */
+  --shadow-1:0 1px 2px rgba(0,0,0,.85), 0 10px 30px -12px rgba(255,122,24,.30);
+  --shadow-2:0 4px 12px rgba(0,0,0,.8), 0 26px 60px -18px rgba(255,122,24,.42);
+
+  --hero-tint:#FF9E2C;
+
+  --deep-1:#4A0E14;          /* the lit corner: muscle catching the light */
+  --deep-2:#0A0406;          /* its far, darkest corner */
+  --border-strong:#FF7A18;
+  --on-deep:#FFF0F1;
+}
+
+/* ---------- surfaces ----------
+   Each of these exists because the twinned neon rule underneath it carries a literal teal
+   or navy. Anything token-based needs no entry here and re-tints on its own. */
+
+/* The body is not flat. Two soft blooms — warm low, cool high — so scrolling feels like
+   moving through tissue rather than over a black sheet. fixed, so the light stays put and
+   the content passes through it. */
+:root[data-palette="blood"] body{
+  background:
+    radial-gradient(120% 90% at 78% -10%, rgba(255,92,110,.10) 0%, transparent 60%),
+    radial-gradient(90% 70% at 12% 110%, rgba(56,189,248,.07) 0%, transparent 62%),
+    #0A0406;
+  background-attachment:fixed;
+}
+:root[data-palette="blood"] .page-head{
+  background:linear-gradient(180deg,rgba(255,122,24,.12),#0A0406 88%);
+}
+:root[data-palette="blood"] .site-header{
+  background:rgba(10,4,6,.92);border-bottom-color:var(--border);
+}
+
+/* THE HERO IS THE PICTURE.
+   A hot coronary bloom top right where the image is brightest, a cooler venous wash bottom
+   left, over deep maroon. The particle canvas sits on top of this and draws its own points
+   in the same families, so the artwork and its surround stay one image rather than two
+   colours meeting at the canvas edge. */
+:root[data-palette="blood"] .hero{
+  --brand:#FF7A18;
+  --brand-2:#FF9E2C;
+  --brand-tint:rgba(255,158,44,.16);
+  --accent:#FF7A18;
+  --accent-bright:#FFB84D;
+  --accent-bright-tint:rgba(255,184,77,.16);
+  --hero-tint:#FF9E2C;
+  background:
+    radial-gradient(85% 70% at 82% -8%, rgba(255,122,24,.22) 0%, transparent 58%),
+    radial-gradient(70% 60% at 8% 105%, rgba(56,189,248,.13) 0%, transparent 60%),
+    radial-gradient(120% 140% at 50% 30%, #1A060B 0%, #0A0406 58%, #040103 100%);
+}
+:root[data-palette="blood"] .hero::after{
+  background:radial-gradient(60% 50% at 90% 100%, rgba(244,114,182,.16), transparent 70%);
+}
+:root[data-palette="blood"] .hero .btn-primary{box-shadow:0 0 24px -4px rgba(255,122,24,.75);}
+:root[data-palette="blood"] .hero .btn-accent{box-shadow:0 0 26px -4px rgba(255,184,77,.8);}
+
+:root[data-palette="blood"] .acc.live{
+  background:linear-gradient(160deg,rgba(255,158,44,.16),var(--bg-elevated));
+  border-color:var(--border);
+}
+:root[data-palette="blood"] .lens-strip{background:#0C0507;}
+:root[data-palette="blood"] .humor{background:#070203;}
+:root[data-palette="blood"] .cta-band{background:linear-gradient(120deg,#1A060B,#4A0E14 120%);}
+:root[data-palette="blood"] .video-embed{background:linear-gradient(140deg,#1A060B,#3A1018);}
+:root[data-palette="blood"] .code-chip{background:#3A1018;color:#FFE9D6;}
+:root[data-palette="blood"] ::selection{background:var(--accent-bright);color:#1A0600;}
+
+/* The mark itself. The arc is the impulse travelling round it, so it takes the brightest
+   colour in the palette rather than the brand's mid tone. */
+:root[data-palette="blood"] .hero-logo-arc{stroke:var(--accent-bright);}
+
+/* A pulse along the accent rule under section headings — slow, and only where a section
+   actually begins, so it reads as a heartbeat rather than as something loading. */
+@keyframes aq-blood-pulse{
+  0%,100%{opacity:.55;}
+  50%{opacity:1;}
+}
+:root[data-palette="blood"] .eyebrow::before{
+  animation:aq-blood-pulse 2.8s ease-in-out infinite;
+}
+@media (prefers-reduced-motion:reduce){
+  :root[data-palette="blood"] .eyebrow::before{animation:none;opacity:.8;}
+}

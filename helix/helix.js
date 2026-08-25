@@ -6,6 +6,14 @@
    Explorer for that chapter. */
 
 (function () {
+  /* Scene colours come from theme/scene-palette.js when it is present; every
+     lookup below falls back to the value this scene shipped with. */
+  var P = window.AQScenePalette || { name: function () { return "default"; },
+    chapters: function (f) { return f; }, categories: function (f) { return f; },
+    cycle: function (f) { return f; }, accent: function (f) { return f; },
+    dim: function (f) { return f; }, ambient: function (f) { return f; },
+    key: function (f) { return f; }, link: function (f) { return f; },
+    deep: function (f) { return f; }, onChange: function () {} };
   const stage = document.getElementById("helixStage");
   if (!stage) return;
   const wrapEl = stage.querySelector(".helix-canvas-wrap");
@@ -18,7 +26,7 @@
 
   const CHAPTERS = window.NABH_DATA.chapters;
   const CODES = Object.keys(window.NABH_DATA.official);
-  const CAT_COLOR = { CORE: 0xc42e42, Commitment: 0xb0590a, Achievement: 0x0eA5A0, Excellence: 0x3554d1 };
+  const CAT_COLOR = P.categories({ CORE: 0xc42e42, Commitment: 0xb0590a, Achievement: 0x0eA5A0, Excellence: 0x3554d1 });
 
   const canvas = document.getElementById("helixCanvas");
   const overlay = document.getElementById("helixOverlay");
@@ -116,7 +124,7 @@
   }
   const linkGeo = new THREE.BufferGeometry();
   linkGeo.setAttribute("position", new THREE.Float32BufferAttribute(linkPositions, 3));
-  const linkMat = new THREE.LineBasicMaterial({ color: 0x3d4a8a, transparent: true, opacity: 0.28, blending: THREE.AdditiveBlending });
+  const linkMat = new THREE.LineBasicMaterial({ color: P.link(0x3d4a8a), transparent: true, opacity: 0.28, blending: THREE.AdditiveBlending });
   const linkLines = new THREE.LineSegments(linkGeo, linkMat);
   rig.add(linkLines);
 

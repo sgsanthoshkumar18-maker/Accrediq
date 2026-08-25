@@ -4,6 +4,14 @@
    the exact same explain modal used on the flat Standards Explorer. */
 
 (function () {
+  /* Scene colours come from theme/scene-palette.js when it is present; every
+     lookup below falls back to the value this scene shipped with. */
+  var P = window.AQScenePalette || { name: function () { return "default"; },
+    chapters: function (f) { return f; }, categories: function (f) { return f; },
+    cycle: function (f) { return f; }, accent: function (f) { return f; },
+    dim: function (f) { return f; }, ambient: function (f) { return f; },
+    key: function (f) { return f; }, link: function (f) { return f; },
+    deep: function (f) { return f; }, onChange: function () {} };
   const section = document.getElementById("galaxySection");
   const toggleBtn = document.getElementById("galaxyToggleBtn");
   if (!section || !toggleBtn) return;
@@ -59,7 +67,7 @@
     const rig = new THREE.Group();
     scene.add(rig);
 
-    const CAT_COLOR = { CORE: 0xc42e42, Commitment: 0xb0590a, Achievement: 0x0eA5A0, Excellence: 0x3554d1 };
+    const CAT_COLOR = P.categories({ CORE: 0xc42e42, Commitment: 0xb0590a, Achievement: 0x0eA5A0, Excellence: 0x3554d1 });
 
     // 10 cluster anchor points arranged on a large sphere
     const clusterAnchors = {};

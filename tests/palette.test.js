@@ -12,8 +12,11 @@ const html = fs.readFileSync(path.join(__dirname, '../index.html'), 'utf8');
 // --- the boot snippet must not give neon to a non-owner
 const boot = /<script>\(function\(\)\{try\{[\s\S]*?\}\)\(\);<\/script>/.exec(html)[0];
 eq(/own&&p.has\("neon"\)/.test(boot), true, 'only the owner may CHANGE the palette via ?neon=');
-eq(/q==="neon"&&t!=="light"/.test(boot), true, 'every visitor APPLIES the published palette');
-eq(/q==="neon"&&t!=="light"/.test(boot), true, 'neon never rides over the light theme');
+eq(/q!=="default"&&t!=="light"/.test(boot), true, 'every visitor APPLIES the published palette');
+eq(/q!=="default"&&t!=="light"/.test(boot), true, 'no palette rides over the light theme');
+eq(/own&&p.has\("blood"\)/.test(boot), true, 'only the owner may CHANGE the palette via ?blood=');
+eq(/q!=="default"&&q!=="blood"/.test(boot), true,
+   'blood survives a page load instead of being folded into neon');
 eq(/localStorage.getItem\("aq-is-owner"\)==="1"/.test(boot), true, 'boot reads the owner flag');
 // The shipped default is now neon: falling back to "default" made the site open blue on
 // a cold load and only turn neon after site_settings had been fetched and cached, which
@@ -23,8 +26,12 @@ eq(/var DEF="neon"/.test(boot), true, 'the shipped default is neon');
 eq(/aq-theme"\)\|\|"dark"/.test(boot), true, 'theme still defaults to dark for everyone');
 
 // --- the typed shortcut is owner-gated
-eq(/function togglePalette\(\) \{\s*\/\/[\s\S]*?if \(!isOwnerBrowser\(\)\) return;/.test(app), true,
-   'typing "neon" does nothing for a non-owner');
+eq(/function setPalette\(name\) \{[\s\S]{0,400}?if \(!isOwnerBrowser\(\)\) return;/.test(app), true,
+   'typing a palette word does nothing for a non-owner');
+/* The buffer was sliced to four characters, which silently makes any five-letter word
+   unmatchable — "blood" could only ever have been seen as "lood". */
+eq(/slice\(-8\)/.test(app), true, 'the typed buffer is long enough for a five-letter word');
+eq(/endsWith\("blood"\)/.test(app), true, 'typing "blood" is recognised');
 // --- the visible button must never set neon on its own
 const btn = /const themeBtn[\s\S]*?\n    \}/.exec(app)[0];
 eq(/localStorage.setItem\("aq-palette", "neon"\)/.test(btn), false,
@@ -38,9 +45,11 @@ eq(/isOwnerBrowser\(\)/.test(btn), false, 'the restore is not owner-gated');
 
 /* --- the three ways the site used to open blue, each now locked shut --- */
 
-// 1. Boot treats anything that is not an explicit "default" as neon.
-eq(/if\(q!=="default"\)\{q="neon";\}/.test(boot), true,
-   'any stored value other than "default" resolves to neon');
+// 1. Boot treats anything that is not a KNOWN palette as neon. "default" and "blood" are
+//    known; everything else — including a value from a future build, or a corrupted one —
+//    resolves to the shipped default rather than to an attribute nothing styles.
+eq(/if\(q!=="default"&&q!=="blood"\)\{q="neon";\}/.test(boot), true,
+   'an unknown stored value still resolves to neon');
 
 // 1b. Devices poisoned by the old bug are cleared once, then boot neon.
 eq(/aq-palette-v"\)!=="2"/.test(boot), true, 'the poisoned palette cache is reset once');
@@ -81,8 +90,8 @@ eq(/removeAttribute\("data-palette"\)/.test(shell), false,
    'the workspace gate never strips the palette');
 
 // 3. An absent site_settings row means the shipped default, not the stale cache.
-eq(/row\.value\.palette === "default"\) \? "default" : "neon"/.test(app), true,
-   'only a published "default" opts out of neon; anything else is neon');
+eq(/raw === "default" \|\| raw === "blood"\) \? raw : "neon"/.test(app), true,
+   'a published "default" or "blood" is honoured; anything else is neon');
 
 // The two gates must agree: neither may strip a non-owner's palette.
 const gate = fs.readFileSync(path.join(__dirname, '../billing/page-gate.js'), 'utf8');
@@ -112,7 +121,7 @@ eq(/path\.join\(ROOT, "audit"\)/.test(buildCode), true, 'build output path deriv
 
 // --- the neon palette must be teal, with no blue left anywhere in it
 // Strip comments: the word "blue" appears in one explaining why it was removed.
-const neonBlock = /:root\[data-palette="neon"\]\{[\s\S]*?\n\}/.exec(css)[0]
+const neonBlock = /:root\[data-palette="neon"\],\n:root\[data-palette="blood"\]\{[\s\S]*?\n\}/.exec(css)[0]
   .replace(/\/\*[\s\S]*?\*\//g, '');
 ['#38BDF8', '#22D3EE', '56,189,248', '34,211,238'].forEach(blue => {
   eq(neonBlock.includes(blue), false, 'neon palette contains no ' + blue);
@@ -129,8 +138,12 @@ const neonRules = css.split('\n')
   eq(neonRules.includes(blue), false, 'no ' + blue + ' outside the hero exception');
 });
 // And the hero exception must actually still be there.
-eq(/:root\[data-palette="neon"\] \.hero\{[\s\S]*?--hero-tint:#22D3EE/.test(css), true,
-   'home hero keeps its original cyan tone');
+eq(/:root\[data-palette="neon"\] \.hero,\n:root\[data-palette="blood"\] \.hero\{[\s\S]*?--hero-tint:#22D3EE/.test(css), true,
+   'home hero keeps its original cyan tone under neon');
+/* ...and blood overrides that same hero afterwards, or the one screen the whole palette
+   was designed around would still be cyan. */
+eq(/:root\[data-palette="blood"\] \.hero\{[\s\S]*?--hero-tint:#FF9E2C/.test(css), true,
+   'blood re-tints the hero to arterial gold');
 // It must be scoped to .hero — a bare override would repaint the whole site.
 // Check the global block itself (already isolated as neonBlock above), not a span of
 // the file that can run on into the hero rule.
@@ -171,6 +184,37 @@ eq(/create policy site_settings_update[\s\S]*?using \(public\.aq_is_owner\(\)\)[
   });
   eq(offenders, [], 'no hardcoded colour inside a media query (mobile follows the palette)');
 }
+
+/* ---- the blood palette ----------------------------------------------------
+   It exists because the owner asked for a circulatory-system tone, but the parts that
+   matter here are the ones a screenshot cannot check: that it is a real third value
+   rather than a coat of paint on neon, and that it did not walk into the cascade trap
+   documented above it. */
+const bloodBlock = /:root\[data-palette="blood"\]\{[\s\S]*?\n\}/g;
+let bm, bloodTokens = null;
+while ((bm = bloodBlock.exec(css))) bloodTokens = bm[0];   // the LAST one is the real block
+eq(!!bloodTokens, true, 'the blood palette declares its own token block');
+eq(/--accent-bright:#FFB84D/.test(bloodTokens), true, 'blood accent is the arterial gold');
+eq(/--nc:#FF5C6E/.test(bloodTokens), true, 'blood keeps a distinct non-conformity red');
+/* Red is reserved. On a NABH platform --nc means "this is wrong" and must never also be
+   the decorative accent, or a page full of brand colour reads as a page full of failures. */
+eq(/--accent-bright:#FF5C6E/.test(bloodTokens), false, 'the accent is not the NC red');
+
+/* THE CASCADE TRAP, one palette later. :root[data-theme="dark"]:not([data-palette="neon"])
+   is (0,3,0) and :root[data-palette="blood"] is (0,2,0), so naming neon there let the dark
+   block outrank blood wherever it sat in the file — blood's backgrounds applied and its
+   accents silently stayed indigo. The bare attribute selector cannot repeat it. */
+eq(/:root\[data-theme="dark"\]:not\(\[data-palette\]\)/.test(css), true,
+   'the dark block steps aside for ANY palette, not for neon by name');
+eq(/:not\(\[data-palette="neon"\]\)\{/.test(css), false,
+   'no rule still excludes neon by name');
+
+/* Every neon rule has a blood twin, so a surface cannot be re-tinted for one palette and
+   forgotten for the other — which is exactly how the previous palette left surfaces indigo. */
+const neonSel = (css.match(/:root\[data-palette="neon"\]/g) || []).length;
+const bloodSel = (css.match(/:root\[data-palette="blood"\]/g) || []).length;
+eq(bloodSel >= neonSel - 5, true,
+   'blood covers essentially every surface neon does (' + bloodSel + ' vs ' + neonSel + ')');
 
 console.log(`\n${pass} passed, ${fail} failed`);
 process.exit(fail ? 1 : 0);

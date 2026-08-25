@@ -111,6 +111,47 @@ with ffmpeg — which is also the only fix for iPhone fullscreen.
 
 ---
 
+## Three palettes: default, neon, blood
+
+`data-palette` on `<html>`. Absent = default. The owner publishes one for **everyone** via
+`site_settings`; subscribers only ever choose light or dark.
+
+- **Type the word** to set it: `neon`, `blood`, `dark`. Typing the palette already showing
+  turns it off back to default. It SETS rather than cycles — with three palettes a toggle
+  means the word you type no longer tells you what you get.
+- `?neon=1` / `?blood=1` / `?blood=0` also work, owner only.
+- **BLOOD** is the circulatory palette, taken from one picture: arterial gold `#FFB84D`
+  accents, venous blue `#38BDF8`, capillary magenta, on a `#0A0406` field that carries red
+  in it rather than being neutral black. Every foreground was measured — worst case 6.5:1,
+  body text 17:1+.
+- **Red stays reserved.** `--nc` means non-conformity and is never the decorative accent,
+  which is why the accent is arterial gold and not red.
+
+### The cascade trap — read this before adding a fourth palette
+
+`:root[data-theme="dark"]:not([data-palette="neon"])` is **(0,3,0)**;
+`:root[data-palette="blood"]` is **(0,2,0)**. Naming neon there let the dark block outrank
+blood wherever it sat in the file — blood's backgrounds applied while its accents silently
+stayed indigo. The half-applied look, from the same cause, one palette later; the file's own
+comment had warned about it. It is now `:not([data-palette])` — any palette, so a fourth
+cannot repeat it. `tests/palette.test.js` asserts both halves.
+
+### Scene colours
+
+`theme/scene-palette.js`, loaded immediately before `app.js` on all 61 pages. A canvas cannot
+inherit a CSS variable, so the palette is handed to it. Every lookup takes the scene's
+original value as a fallback — `P.accent(0x5eead4)` — so a page without the module renders
+exactly as it always did. Wired into face, brain, dna, galaxy, helix, radar and qglobe.
+`app.js` fires an `aq:palette` event on change so a scene can re-tint without a reload.
+
+### Adding a surface
+
+Every `:root[data-palette="neon"]` rule has a `blood` twin, so blood starts from a complete
+set and the blood block at the end of styles.css overrides only what carries a literal teal
+or navy. If you add a neon rule, add its blood twin, or the test's coverage check fails.
+
+---
+
 ## Short expiry calendar (crash carts)
 
 `workspace/crashcart.html` + `crashcart.js`, rule in `workspace/shortexpiry.js`, alert in

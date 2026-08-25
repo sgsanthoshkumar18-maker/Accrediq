@@ -6,6 +6,14 @@
    — hover/click them exactly like the previous globe nodes did. */
 
 (function () {
+  /* Scene colours come from theme/scene-palette.js when it is present; every
+     lookup below falls back to the value this scene shipped with. */
+  var P = window.AQScenePalette || { name: function () { return "default"; },
+    chapters: function (f) { return f; }, categories: function (f) { return f; },
+    cycle: function (f) { return f; }, accent: function (f) { return f; },
+    dim: function (f) { return f; }, ambient: function (f) { return f; },
+    key: function (f) { return f; }, link: function (f) { return f; },
+    deep: function (f) { return f; }, onChange: function () {} };
   const stage = document.getElementById("faceStage");
   if (!stage) return;
   const wrapEl = stage.querySelector(".face-wrap");
@@ -123,8 +131,8 @@
      is computed. */
   window.addEventListener("resize", sizeRenderer);
 
-  scene.add(new THREE.AmbientLight(0x9db4ff, 0.5));
-  const key = new THREE.DirectionalLight(0xffffff, 0.8); key.position.set(3, 3, 5); scene.add(key);
+  scene.add(new THREE.AmbientLight(P.ambient(0x9db4ff), 0.5));
+  const key = new THREE.DirectionalLight(P.key(0xffffff), 0.8); key.position.set(3, 3, 5); scene.add(key);
 
   const rig = new THREE.Group();
   scene.add(rig);
@@ -189,7 +197,7 @@
        common cases, and the 3.4 floor means the framing is never tighter than it was. */
   }
 
-  const COLORS = [0x5eead4, 0x38bdf8, 0x818cf8, 0xa78bfa, 0xf472b6, 0x34d399, 0x60a5fa, 0xc084fc];
+  const COLORS = P.cycle([0x5eead4, 0x38bdf8, 0x818cf8, 0xa78bfa, 0xf472b6, 0x34d399, 0x60a5fa, 0xc084fc]);
   function glowTexture(hex) {
     const c = document.createElement("canvas"); c.width = c.height = 32;
     const ctx = c.getContext("2d");

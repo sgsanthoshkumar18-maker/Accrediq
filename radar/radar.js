@@ -6,6 +6,14 @@
    since that's how NABH actually weights risk. Saved to this browser only. */
 
 (function () {
+  /* Scene colours come from theme/scene-palette.js when it is present; every
+     lookup below falls back to the value this scene shipped with. */
+  var P = window.AQScenePalette || { name: function () { return "default"; },
+    chapters: function (f) { return f; }, categories: function (f) { return f; },
+    cycle: function (f) { return f; }, accent: function (f) { return f; },
+    dim: function (f) { return f; }, ambient: function (f) { return f; },
+    key: function (f) { return f; }, link: function (f) { return f; },
+    deep: function (f) { return f; }, onChange: function () {} };
   const stage = document.getElementById("radarStage");
   if (!stage) return;
   const wrapEl = stage.querySelector(".radar-canvas-wrap");
@@ -47,9 +55,9 @@
   }
 
   function scoreColor(v) {
-    if (v < 50) return 0xf87171;      // red
-    if (v < 75) return 0xfbbf24;      // amber
-    return 0x5eead4;                   // teal — matches theme accent
+    if (v < 50) return P.name() === "blood" ? 0xFF5C6E : 0xf87171;   // red
+    if (v < 75) return P.name() === "blood" ? 0xFF9E2C : 0xfbbf24;   // amber
+    return P.accent(0x5eead4);         // follows the palette accent
   }
 
   // ---------- Renderer / scene / camera ----------
