@@ -1816,123 +1816,154 @@ body.aq-locked{
 
 
 /* ============================================================
-   BIOLUMINESCENT MEDICAL-TECH PALETTE
+   ARTERIAL PALETTE — taken from the anatomical heart
    data-palette="blood" — the attribute name is unchanged so the published setting, the
    typed word and every test keep working. Third palette alongside default and neon.
 
-   THE IDEA. Dark almost everywhere, with saturated light behaving like electrical activity
-   emerging from it — the way an anatomical scan glows rather than the way a neon sign does.
-   The budget is roughly 70% dark surface, 15% cyan/blue, 7% violet/magenta, 5% orange/red,
-   3% gold. That ratio is the difference between "clinical intelligence platform" and "dark
-   mode with accent colours", and it is easy to lose one component at a time.
-
-   THE GLOW IS THE POINT, NOT THE HUE. Every accent here is a fill, a thin translucent
-   border and a layered bloom. Flat bright colour on dark is exactly what this is not.
+   THE PICTURE THIS COMES FROM. An anatomical heart lit against black: oxygenated red
+   through the muscle, venous blue in the vessels, and a gold sheen where the light catches
+   the surface. Red and blue lead; gold is the shine; the field they sit on is NEUTRAL black.
 
    ---------------------------------------------------------------------------
-   TWO VARIANTS OF SOME COLOURS, AND WHY.
-   The specified colours are correct for fills, borders, glows and chart strokes. Several
-   of them are NOT readable as small text on these surfaces, measured:
+   WHY THE FIELD IS NEUTRAL AND NOT WARM — the bug this palette replaces.
+   The previous attempt laid rgba(201,68,55,.10) over a warm #10110E field. Composited,
+   that is rgb(35,22,18): brown. Red at low opacity over a warm dark ALWAYS silts up into
+   brown, because the green channel lands BETWEEN red and blue instead of below both. The
+   whole site read as brownish gold and no amount of accent colour could rescue it.
+   The field is now #08070A and the atmosphere red is saturated, which composites to
+   rgb(39,15,20) — blue channel above green, so it reads as wine. If anyone warms the base
+   again, or desaturates the red, the page goes brown a second time.
 
-       red     #C94437  3.9:1     violet  #8262AF  3.9:1
-       magenta #B75B71  4.3:1     muted   #747984  4.3:1
+   ---------------------------------------------------------------------------
+   RED IS THE IDENTITY. BLUE IS THE ACTION.
+   A saturated red button reads as "destructive" in every interface anyone has used, and
+   this platform has genuinely destructive controls. So red carries the brand — atmosphere,
+   glow, hero, hairline borders, the logo ring — and NEVER appears as a control or a status
+   chip. Venous blue is what you click. Gold is reserved for achievement.
 
-   AA needs 4.5:1 for body text. On a platform where red means NON-CONFORMITY, shipping the
-   least readable colour on the most important label would be a genuine defect rather than a
-   stylistic one. So each of those has a text sibling lifted 10–22% toward white — enough to
-   pass, little enough that the hue is unchanged — and the spec value is kept for everything
-   that is not small text. Nothing was darkened and no colour was replaced.
+   THE RED RAMP, AND WHY THERE ARE THREE.
+       --red-deep  #8E1B2C   surfaces and atmosphere only, never text (2.1:1)
+       --red       #E23E4E   brand identity: glows, hero, borders
+       --nc        #FF5C6E   NON-CONFORMITY, status only, brightest red on the page
+   Brand red and alarm red are one hue at two brightnesses, a distinction people learn in
+   a single screen. What breaks it is putting --red on a chip, or --nc on decoration.
+
+   MEASURED on the field #08070A and the panel #161318. AA small text = 4.5:1:
+       blue 7.0   gold 11.0   amber 9.2   green 9.6   magenta 5.5   violet 6.4   alarm 6.1
+   Only --red fell short, at 4.41 against the panel. It has one text sibling lifted 2%
+   toward white — --red-text #E34252, 4.53:1 — and the raw value keeps doing the work in
+   fills, borders, glows and chart strokes. --red-deep and --accent are surface and gradient
+   colours and are never small text.
+
+   THE GLOW IS THE POINT, NOT THE HUE. Every accent is a fill, a thin translucent border
+   and a layered bloom. Flat bright colour on dark is exactly what this is not.
    ============================================================ */
 :root[data-palette="blood"]{
-  /* ---- raw palette, exactly as specified ---- */
-  --bio-black:#10110E;
-  --bio-warm:#1B1009;
-  --bio-burgundy:#340F0E;
-  --bio-panel:#1C1920;
-  --bio-panel-violet:#272238;
-  --bio-panel-navy:#2C3355;
+  /* ---- the raw families, read off the picture ---- */
+  --bio-black:#08070A;          /* neutral. read the note above before warming this */
+  --bio-wine:#120A0E;
+  --bio-burgundy:#1E0D13;
+  --bio-panel:#161318;
+  --bio-panel-wine:#231A22;
+  --bio-panel-navy:#1E2A3A;
 
-  --cyan:#36CFDB;
-  --blue:#298BB0;
-  --deep-blue:#335685;
-  --violet:#8262AF;
-  --magenta:#B75B71;
-  --red:#C94437;
-  --orange:#EB9345;
-  --gold:#ECB749;
-  --gold-light:#F5D69B;
+  --red-deep:#8E1B2C;
+  --red:#E23E4E;
+  --magenta:#E0637F;
+  --blue:#3FA9E0;
+  --blue-deep:#2B7FB5;
+  --deep-blue:#1F5F8B;
+  --gold:#F2C14E;
+  --gold-light:#F7DEA0;
+  --orange:#F2A93B;
+  --amber:#F2A93B;
+  --violet:#A78BD0;
+  --green:#34D399;
 
-  /* ---- text-safe siblings (see the note above) ---- */
-  --red-text:#D56D63;
-  --violet-text:#9B81BF;
-  --magenta-text:#C37588;
-  --blue-text:#3E97B8;
+  /* ---- text-safe siblings. Only red needed lifting; the others are stated so the
+         downstream rules that ask for a *-text colour keep resolving. ---- */
+  --red-text:#E34252;           /* 4.53:1 — lifted 2% from #E23E4E */
+  --blue-text:#3FA9E0;          /* 7.0:1  — unchanged */
+  --magenta-text:#E0637F;       /* 5.5:1  — unchanged */
+  --violet-text:#A78BD0;        /* 6.4:1  — unchanged */
 
   /* ---- glow tokens ----
-     Three intensities, so "make it glow" is a decision with three answers rather than one.
-     Subtle for ordinary UI, medium for hover and live indicators, strong for hero numbers
-     and the few things that should read as a light source. */
-  --glow-cyan-sm:0 0 6px rgba(54,207,219,.45);
-  --glow-cyan-md:0 0 10px rgba(54,207,219,.35), 0 0 26px rgba(54,207,219,.16);
-  --glow-cyan-lg:0 0 14px rgba(54,207,219,.45), 0 0 38px rgba(54,207,219,.22), 0 0 70px rgba(54,207,219,.10);
-  --glow-blue-md:0 0 10px rgba(41,139,176,.35), 0 0 26px rgba(41,139,176,.15);
-  --glow-violet-md:0 0 10px rgba(130,98,175,.35), 0 0 26px rgba(130,98,175,.16);
-  --glow-orange-md:0 0 10px rgba(235,147,69,.4), 0 0 26px rgba(235,147,69,.18);
-  --glow-red-md:0 0 10px rgba(201,68,55,.42), 0 0 26px rgba(201,68,55,.18);
-  --glow-gold-md:0 0 10px rgba(236,183,73,.4), 0 0 26px rgba(236,183,73,.18);
+     Three intensities, so "make it glow" has three answers rather than one: subtle for
+     ordinary UI, medium for hover and live indicators, strong for the few things that
+     should read as a light source. The strong one is layered — a single shadow is a
+     halo, not a bloom. */
+  --glow-red-sm:0 0 6px rgba(226,62,78,.45);
+  --glow-red-md:0 0 10px rgba(226,62,78,.38), 0 0 26px rgba(226,62,78,.17);
+  --glow-red-lg:0 0 14px rgba(226,62,78,.5), 0 0 38px rgba(226,62,78,.24), 0 0 70px rgba(226,62,78,.11);
+  --glow-blue-sm:0 0 6px rgba(63,169,224,.45);
+  --glow-blue-md:0 0 10px rgba(63,169,224,.35), 0 0 26px rgba(63,169,224,.16);
+  --glow-blue-lg:0 0 14px rgba(63,169,224,.45), 0 0 38px rgba(63,169,224,.22), 0 0 70px rgba(63,169,224,.10);
+  --glow-gold-md:0 0 10px rgba(242,193,78,.4), 0 0 26px rgba(242,193,78,.18);
+  --glow-amber-md:0 0 10px rgba(242,169,59,.4), 0 0 26px rgba(242,169,59,.18);
+  --glow-magenta-md:0 0 10px rgba(224,99,127,.36), 0 0 26px rgba(224,99,127,.16);
+  --glow-violet-md:0 0 10px rgba(167,139,208,.35), 0 0 26px rgba(167,139,208,.16);
 
-  --text-glow-cyan:0 0 6px rgba(54,207,219,.8), 0 0 18px rgba(54,207,219,.55), 0 0 40px rgba(54,207,219,.3);
-  --text-glow-orange:0 0 6px rgba(235,147,69,.85), 0 0 18px rgba(235,147,69,.6), 0 0 44px rgba(235,147,69,.3);
-  --text-glow-red:0 0 6px rgba(201,68,55,.85), 0 0 20px rgba(201,68,55,.6), 0 0 44px rgba(201,68,55,.3);
-  --text-glow-gold:0 0 6px rgba(236,183,73,.8), 0 0 18px rgba(236,183,73,.55), 0 0 40px rgba(236,183,73,.28);
-  --text-glow-violet:0 0 6px rgba(130,98,175,.75), 0 0 18px rgba(130,98,175,.5), 0 0 40px rgba(130,98,175,.26);
+  --text-glow-red:0 0 6px rgba(226,62,78,.85), 0 0 20px rgba(226,62,78,.6), 0 0 44px rgba(226,62,78,.3);
+  --text-glow-blue:0 0 6px rgba(63,169,224,.8), 0 0 18px rgba(63,169,224,.55), 0 0 40px rgba(63,169,224,.3);
+  --text-glow-gold:0 0 6px rgba(242,193,78,.8), 0 0 18px rgba(242,193,78,.55), 0 0 40px rgba(242,193,78,.28);
+  --text-glow-amber:0 0 6px rgba(242,169,59,.85), 0 0 18px rgba(242,169,59,.6), 0 0 44px rgba(242,169,59,.3);
+  --text-glow-magenta:0 0 6px rgba(224,99,127,.75), 0 0 18px rgba(224,99,127,.5), 0 0 40px rgba(224,99,127,.26);
+  --text-glow-violet:0 0 6px rgba(167,139,208,.75), 0 0 18px rgba(167,139,208,.5), 0 0 40px rgba(167,139,208,.26);
+
+  /* The alarm and the all-clear get their own glows. Reusing --glow-red-md for a
+     non-conformity would put the BRAND red on the one element that must not carry it. */
+  --glow-nc-md:0 0 10px rgba(255,92,110,.42), 0 0 26px rgba(255,92,110,.2);
+  --text-glow-nc:0 0 6px rgba(255,92,110,.85), 0 0 20px rgba(255,92,110,.6), 0 0 44px rgba(255,92,110,.3);
+  --glow-green-md:0 0 10px rgba(52,211,153,.35), 0 0 26px rgba(52,211,153,.16);
+  --text-glow-green:0 0 6px rgba(52,211,153,.8), 0 0 18px rgba(52,211,153,.55), 0 0 40px rgba(52,211,153,.28);
 
   /* ---- mapped onto the tokens the site already uses ----
      SEMANTICS, held to consistently:
-       cyan   primary action, navigation, quality, technology
-       blue   trust, clinical data, normal performance
-       violet analytics, AI, advanced insight
-       orange warning, attention needed
-       red    critical, non-conformity, safety risk
-       gold   achievement, excellence, accreditation success */
-  --bg:#10110E;
-  --bg-elevated:#1C1920;
-  --bg-deep:#1B1009;
-  --bg-deep-2:#340F0E;
+       red    brand identity, atmosphere, borders — NEVER a control, NEVER a status
+       blue   primary action, navigation, links, focus
+       gold   achievement, excellence, accreditation success
+       amber  warning, attention needed
+       green  compliant, normal performance
+       violet analytics, advanced insight
+       alarm  non-conformity and safety risk, and nothing else */
+  --bg:#08070A;
+  --bg-elevated:#161318;
+  --bg-deep:#120A0E;
+  --bg-deep-2:#1E0D13;
 
-  --fg:#F5F5F2;              /* 17.3:1 */
-  --fg-muted:#B8BCC4;        /*  9.9:1 */
-  --fg-faint:#878C95;        /*  4.5:1 — lifted from #747984, which read 4.3 */
+  --fg:#F7F5F6;                 /* 18.5:1 */
+  --fg-muted:#C2BCC4;           /*  9.9:1 */
+  --fg-faint:#8D8791;           /*  5.3:1 */
 
-  /* Borders are translucent, never a flat bright line. */
-  --border:rgba(54,207,219,.18);
-  --border-soft:rgba(245,245,242,.07);
-  --border-strong:rgba(54,207,219,.65);
+  /* Borders carry the identity: a red hairline, never a flat bright line. */
+  --border:rgba(226,62,78,.20);
+  --border-soft:rgba(247,245,246,.07);
+  --border-strong:rgba(226,62,78,.6);
 
-  --brand:#298BB0;
-  --brand-2:#36CFDB;         /* 10.0:1 */
-  --brand-tint:rgba(54,207,219,.12);
+  --brand:#B4283C;
+  --brand-2:#E23E4E;
+  --brand-tint:rgba(226,62,78,.12);
 
-  --accent:#298BB0;
-  --accent-bright:#36CFDB;
-  --accent-bright-tint:rgba(54,207,219,.12);
+  --accent:#2B7FB5;             /* venous blue: the thing you click */
+  --accent-bright:#3FA9E0;      /* 7.0:1 */
+  --accent-bright-tint:rgba(63,169,224,.12);
 
-  --ok:#3E97B8;              /* blue: normal performance, compliant */
-  --ok-tint:rgba(41,139,176,.14);
-  --warn:#EB9345;            /*  7.9:1 — the spec value passes as text unchanged */
-  --warn-tint:rgba(235,147,69,.14);
-  --nc:#D56D63;              /* the lifted red — see the note above */
-  --nc-tint:rgba(201,68,55,.16);
-  --info:#9B81BF;            /* violet: advanced / analytics */
-  --info-tint:rgba(130,98,175,.15);
+  --ok:#34D399;                 /* green, as in every other palette on this site */
+  --ok-tint:rgba(52,211,153,.14);
+  --warn:#F2A93B;
+  --warn-tint:rgba(242,169,59,.14);
+  --nc:#FF5C6E;                 /* the alarm red — status only */
+  --nc-tint:rgba(255,92,110,.15);
+  --info:#A78BD0;
+  --info-tint:rgba(167,139,208,.15);
 
-  --shadow-1:0 1px 2px rgba(0,0,0,.7), 0 10px 30px -12px rgba(54,207,219,.16);
-  --shadow-2:0 4px 14px rgba(0,0,0,.65), 0 26px 60px -18px rgba(54,207,219,.22);
+  --shadow-1:0 1px 2px rgba(0,0,0,.7), 0 10px 30px -12px rgba(226,62,78,.16);
+  --shadow-2:0 4px 14px rgba(0,0,0,.65), 0 26px 60px -18px rgba(226,62,78,.22);
 
-  --hero-tint:#36CFDB;
-  --deep-1:#2C3355;
-  --deep-2:#10110E;
-  --on-deep:#F5F5F2;
+  --hero-tint:#E23E4E;
+  --deep-1:#1E2A3A;
+  --deep-2:#08070A;
+  --on-deep:#F7F5F6;
 }
 
 /* ---------- the atmosphere ----------
@@ -1941,10 +1972,10 @@ body.aq-locked{
    there to stop the dark reading as flat. */
 :root[data-palette="blood"] body{
   background:
-    radial-gradient(circle at 20% 28%, rgba(201,68,55,.10), transparent 34%),
-    radial-gradient(circle at 76% 22%, rgba(54,207,219,.075), transparent 30%),
-    radial-gradient(circle at 50% 82%, rgba(130,98,175,.075), transparent 35%),
-    #10110E;
+    radial-gradient(circle at 22% 26%, rgba(226,62,78,.17), transparent 36%),
+    radial-gradient(circle at 78% 20%, rgba(63,169,224,.12), transparent 32%),
+    radial-gradient(circle at 50% 86%, rgba(242,193,78,.055), transparent 34%),
+    #08070A;
   background-attachment:fixed;
 }
 /* A different light on the workspace than on the public pages, so moving between them feels
@@ -1952,64 +1983,64 @@ body.aq-locked{
 :root[data-palette="blood"] body[data-page="start"],
 :root[data-palette="blood"] body[data-page="workspace"]{
   background:
-    radial-gradient(circle at 82% 18%, rgba(54,207,219,.09), transparent 32%),
-    radial-gradient(circle at 14% 72%, rgba(41,139,176,.08), transparent 34%),
-    radial-gradient(circle at 55% 100%, rgba(130,98,175,.06), transparent 30%),
-    #10110E;
+    radial-gradient(circle at 82% 18%, rgba(63,169,224,.09), transparent 32%),
+    radial-gradient(circle at 14% 72%, rgba(43,127,181,.08), transparent 34%),
+    radial-gradient(circle at 55% 100%, rgba(167,139,208,.06), transparent 30%),
+    #08070A;
   background-attachment:fixed;
 }
 
 :root[data-palette="blood"] .page-head{
-  background:linear-gradient(180deg, rgba(54,207,219,.07), rgba(16,17,14,0) 88%);
-  border-bottom:1px solid rgba(54,207,219,.10);
+  background:linear-gradient(180deg, rgba(63,169,224,.07), rgba(8,7,10,0) 88%);
+  border-bottom:1px solid rgba(63,169,224,.10);
 }
 
 /* ---------- header ----------
    Glass, not a solid bar: the atmosphere behind it stays visible, which is most of what
    makes the surface read as holographic rather than as a panel laid on top. */
 :root[data-palette="blood"] .site-header{
-  background:rgba(16,17,14,.72);
-  border-bottom:1px solid rgba(54,207,219,.16);
+  background:rgba(8,7,10,.72);
+  border-bottom:1px solid rgba(63,169,224,.16);
   -webkit-backdrop-filter:blur(14px) saturate(1.3);
   backdrop-filter:blur(14px) saturate(1.3);
 }
 :root[data-palette="blood"] .nav-link:hover,
 :root[data-palette="blood"] .main-nav a:hover{
-  color:var(--cyan);
-  text-shadow:var(--glow-cyan-sm);
+  color:var(--blue);
+  text-shadow:var(--glow-blue-sm);
 }
 :root[data-palette="blood"] .main-nav a.active{
-  color:var(--cyan);
-  text-shadow:var(--text-glow-cyan);
+  color:var(--blue);
+  text-shadow:var(--text-glow-blue);
 }
 
 /* ---------- the hero ----------
    The one place the light is allowed to be the subject. */
 :root[data-palette="blood"] .hero{
-  --brand:#298BB0;
-  --brand-2:#36CFDB;
-  --brand-tint:rgba(54,207,219,.14);
-  --accent:#298BB0;
-  --accent-bright:#36CFDB;
-  --accent-bright-tint:rgba(54,207,219,.14);
-  --hero-tint:#36CFDB;
+  --brand:#2B7FB5;
+  --brand-2:#3FA9E0;
+  --brand-tint:rgba(63,169,224,.14);
+  --accent:#2B7FB5;
+  --accent-bright:#3FA9E0;
+  --accent-bright-tint:rgba(63,169,224,.14);
+  --hero-tint:#3FA9E0;
   background:
-    radial-gradient(70% 60% at 80% -6%, rgba(54,207,219,.16), transparent 58%),
-    radial-gradient(60% 55% at 10% 104%, rgba(130,98,175,.13), transparent 60%),
-    radial-gradient(120% 140% at 50% 30%, #1B1009 0%, #10110E 55%, #0B0C0A 100%);
+    radial-gradient(70% 60% at 80% -6%, rgba(63,169,224,.16), transparent 58%),
+    radial-gradient(60% 55% at 10% 104%, rgba(167,139,208,.13), transparent 60%),
+    radial-gradient(120% 140% at 50% 30%, #120A0E 0%, #08070A 55%, #08070A 100%);
 }
 :root[data-palette="blood"] .hero::after{
-  background:radial-gradient(60% 50% at 90% 100%, rgba(41,139,176,.16), transparent 70%);
+  background:radial-gradient(60% 50% at 90% 100%, rgba(43,127,181,.16), transparent 70%);
 }
 :root[data-palette="blood"] .hero h1{
-  text-shadow:0 0 30px rgba(54,207,219,.18);
+  text-shadow:0 0 30px rgba(63,169,224,.18);
 }
 :root[data-palette="blood"] .hero-logo-arc{
-  stroke:var(--cyan);
-  filter:drop-shadow(0 0 6px rgba(54,207,219,.7));
+  stroke:var(--blue);
+  filter:drop-shadow(0 0 6px rgba(63,169,224,.7));
 }
 :root[data-palette="blood"] .hero-meta .n{
-  text-shadow:var(--text-glow-cyan);
+  text-shadow:var(--text-glow-blue);
 }
 
 /* ---------- surfaces ----------
@@ -2029,9 +2060,9 @@ body.aq-locked{
 :root[data-palette="blood"] .ws-std,
 :root[data-palette="blood"] .cc-policybar,
 :root[data-palette="blood"] .cc-used-item{
-  background:rgba(28,25,32,.72);
-  border:1px solid rgba(54,207,219,.16);
-  box-shadow:0 0 20px rgba(54,207,219,.05), inset 0 0 20px rgba(54,207,219,.022);
+  background:rgba(22,19,24,.72);
+  border:1px solid rgba(63,169,224,.16);
+  box-shadow:0 0 20px rgba(63,169,224,.05), inset 0 0 20px rgba(63,169,224,.022);
   -webkit-backdrop-filter:blur(12px);
   backdrop-filter:blur(12px);
   transition:transform 250ms ease, border-color 250ms ease, box-shadow 250ms ease;
@@ -2042,9 +2073,9 @@ body.aq-locked{
 :root[data-palette="blood"] .kpi-card:hover,
 :root[data-palette="blood"] .stat-card:hover{
   transform:translateY(-2px);
-  border-color:rgba(54,207,219,.45);
-  box-shadow:0 0 18px rgba(54,207,219,.14), 0 0 40px rgba(54,207,219,.07),
-             inset 0 0 18px rgba(54,207,219,.03);
+  border-color:rgba(63,169,224,.45);
+  box-shadow:0 0 18px rgba(63,169,224,.14), 0 0 40px rgba(63,169,224,.07),
+             inset 0 0 18px rgba(63,169,224,.03);
 }
 /* A lift of two pixels is cinematic; a lift plus a scale is a game. */
 @media (prefers-reduced-motion:reduce){
@@ -2064,46 +2095,51 @@ body.aq-locked{
 :root[data-palette="blood"] .ws-stat .n,
 :root[data-palette="blood"] .reg-stat b,
 :root[data-palette="blood"] .ws-ring-n{
-  color:var(--cyan);
-  text-shadow:var(--text-glow-cyan);
+  color:var(--blue);
+  text-shadow:var(--text-glow-blue);
 }
 :root[data-palette="blood"] .ws-stat-warn .n,
 :root[data-palette="blood"] .reg-stat.warn b{
-  color:var(--orange);
-  text-shadow:var(--text-glow-orange);
+  color:var(--amber);
+  text-shadow:var(--text-glow-amber);
 }
+/* A failing number is an ALARM, so it takes --nc. A CORE number is a NABH category and
+   takes the brand red. They were one rule until the palette made red mean two things. */
 :root[data-palette="blood"] .ws-stat-bad .n,
-:root[data-palette="blood"] .ws-stat-core .n,
 :root[data-palette="blood"] .reg-stat.bad b{
+  color:var(--nc);
+  text-shadow:var(--text-glow-nc);
+}
+:root[data-palette="blood"] .ws-stat-core .n{
   color:var(--red-text);
   text-shadow:var(--text-glow-red);
 }
 :root[data-palette="blood"] .ws-stat-ok .n,
 :root[data-palette="blood"] .reg-stat.ok b{
-  color:var(--gold);
-  text-shadow:var(--text-glow-gold);
+  color:var(--ok);
+  text-shadow:var(--text-glow-green);
 }
 
 /* ---------- buttons ---------- */
 :root[data-palette="blood"] .btn-primary,
 :root[data-palette="blood"] .btn-accent{
-  background:linear-gradient(135deg,#298BB0,#36CFDB);
-  color:#10110E;
+  background:linear-gradient(135deg,#2B7FB5,#3FA9E0);
+  color:#08070A;
   border:none;
-  box-shadow:0 0 12px rgba(54,207,219,.32), 0 0 30px rgba(54,207,219,.13);
+  box-shadow:0 0 12px rgba(63,169,224,.32), 0 0 30px rgba(63,169,224,.13);
   transition:box-shadow 250ms ease, transform 250ms ease;
 }
 :root[data-palette="blood"] .btn-primary:hover,
 :root[data-palette="blood"] .btn-accent:hover{
   /* More light, not a different colour: a button that changes hue on hover reads as a
      different button. */
-  box-shadow:0 0 18px rgba(54,207,219,.5), 0 0 44px rgba(54,207,219,.22);
+  box-shadow:0 0 18px rgba(63,169,224,.5), 0 0 44px rgba(63,169,224,.22);
   transform:translateY(-1px);
 }
 :root[data-palette="blood"] .btn-ghost,
 :root[data-palette="blood"] .btn-ghost-dark{
-  background:rgba(28,25,32,.6);
-  border:1px solid rgba(54,207,219,.25);
+  background:rgba(22,19,24,.6);
+  border:1px solid rgba(63,169,224,.25);
   color:var(--fg);
   -webkit-backdrop-filter:blur(8px);
   backdrop-filter:blur(8px);
@@ -2111,9 +2147,9 @@ body.aq-locked{
 }
 :root[data-palette="blood"] .btn-ghost:hover,
 :root[data-palette="blood"] .btn-ghost-dark:hover{
-  border-color:rgba(54,207,219,.65);
-  color:var(--cyan);
-  box-shadow:0 0 8px rgba(54,207,219,.22), inset 0 0 8px rgba(54,207,219,.07);
+  border-color:rgba(63,169,224,.65);
+  color:var(--blue);
+  box-shadow:0 0 8px rgba(63,169,224,.22), inset 0 0 8px rgba(63,169,224,.07);
 }
 
 /* ---------- forms ---------- */
@@ -2122,16 +2158,16 @@ body.aq-locked{
 :root[data-palette="blood"] textarea,
 :root[data-palette="blood"] .ws-filters input[type=search],
 :root[data-palette="blood"] .ws-filters select{
-  background:rgba(16,17,14,.7);
-  border:1px solid rgba(54,207,219,.2);
+  background:rgba(8,7,10,.7);
+  border:1px solid rgba(63,169,224,.2);
   color:var(--fg);
 }
 :root[data-palette="blood"] input:focus,
 :root[data-palette="blood"] select:focus,
 :root[data-palette="blood"] textarea:focus{
   outline:none;
-  border-color:rgba(54,207,219,.65);
-  box-shadow:0 0 8px rgba(54,207,219,.25), inset 0 0 8px rgba(54,207,219,.06);
+  border-color:rgba(63,169,224,.65);
+  box-shadow:0 0 8px rgba(63,169,224,.25), inset 0 0 8px rgba(63,169,224,.06);
 }
 :root[data-palette="blood"] ::placeholder{color:var(--fg-faint);}
 
@@ -2139,9 +2175,9 @@ body.aq-locked{
 :root[data-palette="blood"] .ws-table th{
   background:rgba(44,51,85,.35);
   color:var(--fg-muted);
-  border-bottom:1px solid rgba(54,207,219,.2);
+  border-bottom:1px solid rgba(63,169,224,.2);
 }
-:root[data-palette="blood"] .ws-table tr:hover td{background:rgba(54,207,219,.045);}
+:root[data-palette="blood"] .ws-table tr:hover td{background:rgba(63,169,224,.045);}
 
 /* ---------- chips, pills, badges ----------
    Tinted fill plus a matching hairline, never a solid block of accent. */
@@ -2149,42 +2185,47 @@ body.aq-locked{
 :root[data-palette="blood"] .tr-tag,
 :root[data-palette="blood"] .ev-tag,
 :root[data-palette="blood"] .cat-pill{
-  background:rgba(54,207,219,.10);
-  border:1px solid rgba(54,207,219,.22);
-  color:var(--cyan);
+  background:rgba(63,169,224,.10);
+  border:1px solid rgba(63,169,224,.22);
+  color:var(--blue);
 }
 :root[data-palette="blood"] .tr-tag.warn,
 :root[data-palette="blood"] .ev-tag.warn,
 :root[data-palette="blood"] .cat-Commitment{
-  background:rgba(235,147,69,.12);border-color:rgba(235,147,69,.3);color:var(--orange);
+  background:rgba(242,169,59,.12);border-color:rgba(242,169,59,.3);color:var(--amber);
 }
+/* NON-CONFORMITY: the alarm red, and the only chip on the site allowed to use it. It is
+   deliberately brighter than the brand red beside it — see the red ramp at the top. */
 :root[data-palette="blood"] .tr-tag.bad,
-:root[data-palette="blood"] .ev-tag.nc,
+:root[data-palette="blood"] .ev-tag.nc{
+  background:rgba(255,92,110,.15);border-color:rgba(255,92,110,.4);color:var(--nc);
+}
+/* CORE is a NABH category, not a finding, so it keeps the brand red. */
 :root[data-palette="blood"] .cat-CORE,
 :root[data-palette="blood"] .cat-Core{
-  background:rgba(201,68,55,.14);border-color:rgba(201,68,55,.34);color:var(--red-text);
+  background:rgba(226,62,78,.14);border-color:rgba(226,62,78,.34);color:var(--red-text);
 }
 :root[data-palette="blood"] .tr-tag.ok,
 :root[data-palette="blood"] .ev-tag.ok{
-  background:rgba(41,139,176,.13);border-color:rgba(41,139,176,.3);color:var(--blue-text);
+  background:rgba(52,211,153,.13);border-color:rgba(52,211,153,.3);color:var(--ok);
 }
 :root[data-palette="blood"] .cat-Excellence{
-  background:rgba(130,98,175,.14);border-color:rgba(130,98,175,.32);color:var(--violet-text);
+  background:rgba(167,139,208,.14);border-color:rgba(167,139,208,.32);color:var(--violet-text);
 }
 :root[data-palette="blood"] .cat-Achievement{
-  background:rgba(236,183,73,.13);border-color:rgba(236,183,73,.3);color:var(--gold);
+  background:rgba(242,193,78,.13);border-color:rgba(242,193,78,.3);color:var(--gold);
 }
 
 /* ---------- progress ---------- */
 :root[data-palette="blood"] .ws-ch-bar{background:rgba(245,245,242,.06);}
 :root[data-palette="blood"] .ws-ch-bar i,
 :root[data-palette="blood"] .sv-progress-fill{
-  background:linear-gradient(90deg,#298BB0,#36CFDB);
-  box-shadow:var(--glow-cyan-md);
+  background:linear-gradient(90deg,#2B7FB5,#3FA9E0);
+  box-shadow:var(--glow-blue-md);
 }
 :root[data-palette="blood"] .ws-ring-fg{
-  stroke:var(--cyan);
-  filter:drop-shadow(0 0 6px rgba(54,207,219,.55));
+  stroke:var(--blue);
+  filter:drop-shadow(0 0 6px rgba(63,169,224,.55));
 }
 
 /* ---------- modals, tooltips, toasts ---------- */
@@ -2194,59 +2235,59 @@ body.aq-locked{
 :root[data-palette="blood"] .kn-tip,
 :root[data-palette="blood"] .gx-tooltip,
 :root[data-palette="blood"] .face-tooltip{
-  background:rgba(28,25,32,.9);
-  border:1px solid rgba(54,207,219,.28);
-  box-shadow:0 0 30px rgba(0,0,0,.6), 0 0 24px rgba(54,207,219,.10);
+  background:rgba(22,19,24,.9);
+  border:1px solid rgba(63,169,224,.28);
+  box-shadow:0 0 30px rgba(0,0,0,.6), 0 0 24px rgba(63,169,224,.10);
   -webkit-backdrop-filter:blur(16px);
   backdrop-filter:blur(16px);
 }
 :root[data-palette="blood"] .ws-toast{
-  background:rgba(28,25,32,.94);
-  border:1px solid rgba(54,207,219,.3);
-  box-shadow:var(--glow-cyan-md);
+  background:rgba(22,19,24,.94);
+  border:1px solid rgba(63,169,224,.3);
+  box-shadow:var(--glow-blue-md);
 }
 :root[data-palette="blood"] .ws-toast.bad{
-  border-color:rgba(201,68,55,.45);box-shadow:var(--glow-red-md);
+  border-color:rgba(255,92,110,.5);box-shadow:var(--glow-nc-md);
 }
 
 /* ---------- loading ----------
    A scan rather than a spin: closer to an instrument acquiring than to a page waiting. */
 :root[data-palette="blood"] .ws-skel-row,
 :root[data-palette="blood"] .ws-skel-card{
-  background:linear-gradient(90deg, rgba(28,25,32,.7) 0%, rgba(54,207,219,.08) 50%, rgba(28,25,32,.7) 100%);
+  background:linear-gradient(90deg, rgba(22,19,24,.7) 0%, rgba(63,169,224,.08) 50%, rgba(22,19,24,.7) 100%);
 }
 
 /* ---------- decorative bands ---------- */
-:root[data-palette="blood"] .lens-strip{background:#141514;}
-:root[data-palette="blood"] .humor{background:#0C0D0B;}
+:root[data-palette="blood"] .lens-strip{background:#0E0C10;}
+:root[data-palette="blood"] .humor{background:#0A090C;}
 :root[data-palette="blood"] .cta-band{
-  background:linear-gradient(120deg,#1B1009,#2C3355 130%);
-  border:1px solid rgba(54,207,219,.14);
+  background:linear-gradient(120deg,#120A0E,#1E2A3A 130%);
+  border:1px solid rgba(63,169,224,.14);
 }
 :root[data-palette="blood"] .video-embed{
-  background:linear-gradient(140deg,#1C1920,#272238);
-  border:1px solid rgba(54,207,219,.14);
+  background:linear-gradient(140deg,#161318,#231A22);
+  border:1px solid rgba(63,169,224,.14);
 }
 :root[data-palette="blood"] .acc.live{
-  background:linear-gradient(160deg,rgba(54,207,219,.12),rgba(28,25,32,.72));
-  border-color:rgba(54,207,219,.3);
+  background:linear-gradient(160deg,rgba(63,169,224,.12),rgba(22,19,24,.72));
+  border-color:rgba(63,169,224,.3);
 }
 :root[data-palette="blood"] .code-chip{
   background:rgba(44,51,85,.5);color:var(--gold-light);
-  border:1px solid rgba(236,183,73,.2);
+  border:1px solid rgba(242,193,78,.2);
 }
-:root[data-palette="blood"] ::selection{background:rgba(54,207,219,.32);color:#F5F5F2;}
+:root[data-palette="blood"] ::selection{background:rgba(63,169,224,.32);color:#F7F5F6;}
 :root[data-palette="blood"] .site-footer{
-  background:rgba(16,17,14,.8);border-top:1px solid rgba(54,207,219,.12);
+  background:rgba(8,7,10,.8);border-top:1px solid rgba(63,169,224,.12);
 }
 
 /* The eyebrow rule is the one persistent sign of life on a page: a slow pulse on a 2px
    line, nowhere near text, so it never competes with reading. */
 @keyframes aq-bio-pulse{0%,100%{opacity:.5;}50%{opacity:1;}}
-:root[data-palette="blood"] .eyebrow{color:var(--cyan);}
+:root[data-palette="blood"] .eyebrow{color:var(--blue);}
 :root[data-palette="blood"] .eyebrow::before{
-  background:var(--cyan);
-  box-shadow:var(--glow-cyan-sm);
+  background:var(--blue);
+  box-shadow:var(--glow-blue-sm);
   animation:aq-bio-pulse 3.2s ease-in-out infinite;
 }
 @media (prefers-reduced-motion:reduce){
@@ -2259,15 +2300,126 @@ body.aq-locked{
    still glowing the previous palette. */
 :root[data-palette="blood"] .hero .btn-primary,
 :root[data-palette="blood"] .hero .btn-accent{
-  background:linear-gradient(135deg,#298BB0,#36CFDB);
-  color:#10110E;
-  box-shadow:0 0 14px rgba(54,207,219,.38), 0 0 34px rgba(54,207,219,.16);
+  background:linear-gradient(135deg,#2B7FB5,#3FA9E0);
+  color:#08070A;
+  box-shadow:0 0 14px rgba(63,169,224,.38), 0 0 34px rgba(63,169,224,.16);
 }
 :root[data-palette="blood"] .hero .btn-primary:hover,
 :root[data-palette="blood"] .hero .btn-accent:hover{
-  box-shadow:0 0 20px rgba(54,207,219,.55), 0 0 48px rgba(54,207,219,.24);
+  box-shadow:0 0 20px rgba(63,169,224,.55), 0 0 48px rgba(63,169,224,.24);
 }
 :root[data-palette="blood"] .hero .btn-ghost-dark{
-  background:rgba(16,17,14,.55);
-  border:1px solid rgba(54,207,219,.28);
+  background:rgba(8,7,10,.55);
+  border:1px solid rgba(63,169,224,.28);
+}
+
+
+/* ---------- twinned-rule corrections ----------
+   Some rules earlier in this file put neon and blood in ONE selector list, so they share a
+   single declaration block. That was deliberate — it gives blood a complete starting set
+   rather than a half-styled page — but it also means those declarations carry neon's literal
+   teal, and editing them in place would silently restyle neon too. Every one that hard-codes
+   a colour is therefore re-stated here instead, where the selector is blood-only.
+
+   These sit at the very end on purpose: same specificity as the rules they correct, later in
+   the file, so they win. If you add a twinned rule with a literal colour, add its correction
+   here as well, or blood keeps a teal patch that nothing in the palette explains. */
+:root[data-palette="blood"] .hero{
+  --brand:#B4283C;
+  --brand-2:#E23E4E;
+  --brand-tint:rgba(226,62,78,.14);
+  --accent:#2B7FB5;
+  --accent-bright:#3FA9E0;
+  --accent-bright-tint:rgba(63,169,224,.14);
+  --hero-tint:#E23E4E;
+  background:
+    radial-gradient(72% 62% at 22% -8%, rgba(226,62,78,.20), transparent 60%),
+    radial-gradient(60% 55% at 88% 8%, rgba(63,169,224,.14), transparent 58%),
+    radial-gradient(50% 45% at 60% 106%, rgba(242,193,78,.07), transparent 62%),
+    radial-gradient(120% 140% at 50% 30%, #150A10 0%, #0C0810 55%, #08070A 100%);
+}
+:root[data-palette="blood"] .hero::after{
+  background:radial-gradient(60% 50% at 90% 100%, rgba(226,62,78,.16), transparent 70%);
+}
+:root[data-palette="blood"] .hero h1{ text-shadow:0 0 30px rgba(226,62,78,.22); }
+/* The logo ring is identity, so it takes the red rather than the action blue. */
+:root[data-palette="blood"] .hero-logo-arc{
+  stroke:var(--red);
+  filter:drop-shadow(0 0 7px rgba(226,62,78,.75));
+}
+:root[data-palette="blood"] .hero-meta .n{ text-shadow:var(--text-glow-red); }
+:root[data-palette="blood"] .btn-primary{ box-shadow:0 0 22px -4px rgba(226,62,78,.6); }
+:root[data-palette="blood"] .btn-accent{ box-shadow:0 0 24px -4px rgba(63,169,224,.7); }
+:root[data-palette="blood"] .hero .btn-primary{ box-shadow:0 0 22px -4px rgba(226,62,78,.6); }
+:root[data-palette="blood"] .hero .btn-accent{ box-shadow:0 0 24px -4px rgba(63,169,224,.7); }
+:root[data-palette="blood"] .dept-tile:hover,
+:root[data-palette="blood"] .pf-stat:hover,
+:root[data-palette="blood"] .pf-next a:hover,
+:root[data-palette="blood"] .sv-opt:hover{
+  border-color:var(--brand-2);
+  box-shadow:0 0 0 1px rgba(226,62,78,.20), 0 22px 54px -22px rgba(226,62,78,.5);
+}
+:root[data-palette="blood"] .sv-opt.is-picked{
+  border-color:var(--accent-bright);
+  background:rgba(63,169,224,.14);
+  color:var(--accent-bright);
+}
+:root[data-palette="blood"] .acc.live{
+  background:linear-gradient(160deg,rgba(226,62,78,.14),var(--bg-elevated));
+  border-color:var(--border);
+}
+:root[data-palette="blood"] .lens-strip{ background:#0A060A; }
+:root[data-palette="blood"] .cta-band{ background:linear-gradient(120deg,#0E0710,#3A1220 120%); }
+:root[data-palette="blood"] .video-embed{ background:linear-gradient(140deg,#0E0710,#2A0F18); }
+:root[data-palette="blood"] .code-chip{ background:#1E0D13; color:#FDEFF1; }
+:root[data-palette="blood"] .page-head{
+  background:linear-gradient(180deg,rgba(226,62,78,.12),#08070A 88%);
+}
+
+/* The big twinned card rule sets one box-shadow for a long list of surfaces, in neon's
+   teal. The glass rule above re-shadows most of them; these are the ones it does not
+   cover, and without this they keep a teal lift under a red-bordered card. */
+:root[data-palette="blood"] .acc,
+:root[data-palette="blood"] .pf-stat,
+:root[data-palette="blood"] .pf-sub,
+:root[data-palette="blood"] .pf-coverage,
+:root[data-palette="blood"] .pf-chip,
+:root[data-palette="blood"] .pf-next a,
+:root[data-palette="blood"] .video-embed,
+:root[data-palette="blood"] .qg-metric-card,
+:root[data-palette="blood"] .sv-opt,
+:root[data-palette="blood"] .hg-shell{
+  box-shadow:0 0 0 1px rgba(226,62,78,.06), 0 18px 44px -24px rgba(226,62,78,.35);
+}
+
+/* The three WebGL shells. Their surrounds have to match the particles the scenes draw,
+   which theme/scene-palette.js now hands out in this same family — otherwise the artwork
+   and its background meet at the canvas edge as two different pictures. */
+:root[data-palette="blood"] .hg-shell{
+  background:linear-gradient(160deg,#08070A,#1E0D13);
+  border-color:rgba(226,62,78,.28);
+  border-top-color:var(--accent-bright);
+}
+:root[data-palette="blood"] .hg-globe-wrap{
+  box-shadow:0 0 60px -10px rgba(226,62,78,.4), 0 0 100px -20px rgba(63,169,224,.28);
+}
+:root[data-palette="blood"] .kn-wrap{
+  background:radial-gradient(circle at 50% 45%, rgba(226,62,78,.18), transparent 70%);
+}
+:root[data-palette="blood"] .kn-tip{
+  background:rgba(10,6,10,.96);
+  border-color:rgba(226,62,78,.4);
+}
+:root[data-palette="blood"] .qg-metric-card.is-active{
+  border-color:var(--accent-bright);
+  background:rgba(63,169,224,.10);
+}
+:root[data-palette="blood"] .qg-zoom-controls button{
+  background:rgba(0,0,0,.85);
+  border-color:rgba(226,62,78,.35);
+  color:var(--accent-bright);
+}
+:root[data-palette="blood"] .qg-zoom-controls button:hover{
+  background:rgba(226,62,78,.18);
+  border-color:var(--accent-bright);
 }

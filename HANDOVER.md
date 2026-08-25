@@ -127,23 +127,49 @@ with ffmpeg — which is also the only fix for iPhone fullscreen.
   turns it off back to default. It SETS rather than cycles — with three palettes a toggle
   means the word you type no longer tells you what you get.
 - `?neon=1` / `?blood=1` / `?blood=0` also work, owner only.
-- **BLOOD** is now the bioluminescent medical-tech theme (the name is kept because it is the
-  word the owner types and the value every test and the `site_settings` row already holds —
-  renaming it would churn the plumbing for nothing). Neon cyan `#36CFDB` on a near-black
-  `#10110E`, with blue, violet, orange, red and gold in a fixed 70/15/7/5/3 budget.
-- **The glow IS the theme.** Flat bright colour on dark is precisely what this is not. Every
-  accent carries a layered bloom from the `--glow-*` / `--text-glow-*` tokens; a single
-  box-shadow is not a bloom. Surfaces are glass — `rgba(28,25,32,.72)` over a
-  `backdrop-filter` — not solid cards, and the body is three radial light sources over the
-  black rather than a flat fill.
-- **Four spec colours fail AA as small text** — red 3.9:1, violet 3.9, magenta 4.3, muted 4.3.
-  Each has a lifted `*-text` sibling (`--red-text:#D56D63`, `--violet-text:#9B81BF`,
-  `--magenta-text:#C37588`, `--blue-text:#3E97B8`, `--fg-faint:#878C95`) bound to text,
-  while the raw spec value still does the work in fills, borders, glows and charts. On a
-  platform where red means NON-CONFORMITY, the most important label must not be the least
-  readable thing on the page. `tests/palette.test.js` fails if these are "tidied" back.
-- **Red stays reserved.** `--nc` means non-conformity and is never the decorative accent,
-  which is why the accent is cyan and not red.
+- **BLOOD** is the arterial palette, taken from an anatomical heart: red and blue leading,
+  gold as the shine, on a NEUTRAL black `#08070A`. The name is kept because it is the word
+  the owner types and the value every test and the `site_settings` row already holds.
+      `--red #E23E4E`  `--accent-bright #3FA9E0`  `--gold #F2C14E`  `--nc #FF5C6E`
+- **NEVER WARM THE FIELD.** This palette replaced a cyan one that laid
+  `rgba(201,68,55,.10)` over a warm `#10110E`. Composited that is `rgb(35,22,18)` — brown —
+  and the whole site read as brownish gold. Red at low opacity over a warm dark ALWAYS silts
+  into brown, because the green channel lands *between* red and blue instead of below both.
+  The field is neutral and the atmosphere red is saturated, so it composites to
+  `rgb(45,16,22)`: blue above green, which reads as wine. `tests/palette.test.js`
+  composites it and asserts the hue, so warming the base or desaturating the red fails.
+- **Red is the identity; blue is the action.** A saturated red button reads as destructive
+  in every interface anyone has used, and this platform has real destructive controls. Red
+  carries atmosphere, glow, hero and hairline borders and never appears as a control. Blue
+  is what you click. Gold is achievement.
+- **The red ramp — three reds, and they are not interchangeable.**
+  `--red-deep #8E1B2C` surfaces only (2.1:1, never text) · `--red #E23E4E` brand ·
+  `--nc #FF5C6E` NON-CONFORMITY, status only. Putting `--red` on a status chip or `--nc` on
+  decoration is the failure mode; both are asserted. A CORE category keeps the brand red
+  because it is a category, not a finding.
+- **The glow IS the theme.** Every accent is a fill, a translucent border and a layered
+  bloom from the `--glow-*` / `--text-glow-*` tokens; a single box-shadow is not a bloom.
+  Surfaces are glass — `rgba(22,19,24,.72)` over a `backdrop-filter` — and the body is
+  three radial light sources rather than a flat fill. This structure came from a spec that
+  was replaced; the colours changed, the structure was right and was kept.
+- **Contrast is measured, not eyeballed.** On `#08070A` and the panel `#161318`: blue 7.0,
+  gold 11.0, amber 9.2, green 9.6, magenta 5.5, violet 6.4, alarm 6.1. Only `--red` fell
+  short at 4.41, and has one sibling lifted 2% toward white — `--red-text #E34252`, 4.53:1.
+  The raw value still does the work in fills, borders, glows and charts.
+
+### Twinned rules share a declaration block — correct them at the end, never in place
+
+Many rules list neon and blood in ONE selector list, so blood starts from a complete set
+rather than a half-styled page. The cost is that those declarations carry neon's literal
+teal, and **editing them in place silently restyles neon too**. Every one that hard-codes a
+colour is re-stated in the `twinned-rule corrections` block at the very end of
+`styles.css` — same specificity, later in the file, so it wins.
+
+This is easy to miss because most twinned rules use `var()` and retint themselves; only
+the ~20 with literals need correcting. The one that caught me twice was a single card rule
+listing seventeen surfaces with one teal `box-shadow` — the glass rule re-shadows most of
+them, so only the handful it does not cover kept a teal lift under a red border.
+`tests/palette.test.js` asserts no neon literal appears after the corrections block.
 
 ### The cascade trap — read this before adding a fourth palette
 

@@ -25,39 +25,46 @@ window.AQScenePalette = (function () {
     } catch (e) { return "default"; }
   }
 
-  /* THE BIOLUMINESCENT MEDICAL-TECH FAMILIES.
+  /* THE ARTERIAL FAMILIES — the anatomical heart the palette is taken from.
      Kept under the key "BLOOD" because that is the palette name the site publishes, the
      word the owner types and the value every test asserts — renaming it would churn the
-     plumbing to no benefit. */
+     plumbing to no benefit. Here the name is also literally right.
+
+     These have to agree with the CSS. A scene sits inside a shell whose background comes
+     from styles.css, so if the particles drift from the surround the artwork and its frame
+     meet at the canvas edge as two different pictures. */
   var BLOOD = {
-    /* The chart/scene sequence the theme specifies, in order: cyan, blue, violet, orange,
-       red, gold. A scene taking the first three gets the three that carry the identity, and
+    /* The scene sequence, in order: red, blue, gold, magenta, violet, amber. A scene taking
+       only the first three gets red, blue and gold — which is the whole identity — and
        nothing has to reach for a seventh colour and invent one. */
     chapters: {
-      AAC: 0x36CFDB,   // cyan   — quality, technology
-      COP: 0x298BB0,   // blue   — clinical data
-      MOM: 0x8262AF,   // violet — analytics
-      PRE: 0xEB9345,   // orange — attention
-      IPC: 0xC94437,   // red    — critical
-      PSQ: 0xECB749,   // gold   — achievement
-      ROM: 0xB75B71,   // magenta
-      FMS: 0x335685,   // deep blue
-      HRM: 0xF5D69B,   // hot gold
-      IMS: 0x2C3355    // navy
+      AAC: 0xE23E4E,   // arterial red — brand identity
+      COP: 0x3FA9E0,   // venous blue  — clinical data
+      MOM: 0xF2C14E,   // gold         — achievement
+      PRE: 0xE0637F,   // magenta      — capillary
+      IPC: 0xA78BD0,   // violet       — analytics
+      PSQ: 0xF2A93B,   // amber        — attention
+      ROM: 0x1F5F8B,   // deep blue
+      FMS: 0x8E1B2C,   // burgundy
+      HRM: 0xF7DEA0,   // pale gold
+      IMS: 0x1E2A3A    // navy
     },
-    cycle: [0x36CFDB, 0x298BB0, 0x8262AF, 0xEB9345, 0xC94437, 0xECB749, 0xB75B71, 0x335685],
+    cycle: [0xE23E4E, 0x3FA9E0, 0xF2C14E, 0xE0637F, 0xA78BD0, 0xF2A93B, 0x1F5F8B, 0x8E1B2C],
     /* Category colours keep the semantic mapping the CSS uses, so a CORE element is the
        same red in the galaxy as it is in a table. */
-    categories: { CORE: 0xC94437, Commitment: 0xEB9345,
-                  Achievement: 0xECB749, Excellence: 0x8262AF },
-    accent: 0x36CFDB,
-    dim:    0x298BB0,
-    /* Cool ambient, near-white key. A warm key would wash the cyan out and cost half the
-       palette; the warmth in this theme comes from the accents, not from the lighting. */
-    ambient: 0x8FB8D9,
-    key:     0xF5F5F2,
-    link:    0x2C3355,
-    deep:    0x10110E
+    categories: { CORE: 0xE23E4E, Commitment: 0xF2A93B,
+                  Achievement: 0xF2C14E, Excellence: 0xA78BD0 },
+    /* Red leads here, unlike in the CSS where blue is the action colour. A scene has no
+       controls to be mistaken for, so the identity colour is free to be the dominant one —
+       and red particles on black are the picture this palette came from. */
+    accent: 0xE23E4E,
+    dim:    0x3FA9E0,
+    /* Cool ambient against warm accents. A warm key would pull the red toward orange, which
+       is the exact failure the CSS field was rebuilt to avoid. */
+    ambient: 0x9AB4CC,
+    key:     0xF7F5F6,
+    link:    0x1E2A3A,
+    deep:    0x08070A
   };
 
   var NEON = {
