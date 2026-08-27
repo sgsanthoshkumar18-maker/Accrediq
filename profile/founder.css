@@ -125,7 +125,7 @@
 
 /* ------------------------------ scrolly card ------------------------------ */
 
-.fp-lens { background: var(--bg-deep-1, var(--bg-deep-2)); color: #fff; padding: 70px 0; }
+.fp-lens { background: var(--deep-1); color: #fff; padding: 70px 0; }
 .fp-card {
   border: 1px solid rgba(255, 255, 255, .14);
   border-radius: var(--r-lg);

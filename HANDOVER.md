@@ -139,6 +139,41 @@ subscribers only ever choose light or dark for themselves.
   cold load and only turn neon once `site_settings` had been fetched, which looked like
   needing two or three refreshes.
 
+### Phantom CSS tokens — the bug class that hid the quiz question
+
+A component stylesheet can be written against token names this site does not define. The
+undefined ones silently fall back to their hardcoded literal while the defined ones follow
+the theme, so the component ends up half-themed — and nothing errors.
+
+`quiz/quiz.css` used `--card` and `--muted`, which exist nowhere, alongside `--fg` and
+`--bg`, which do. The card stayed frozen at its dark fallback while the text went black:
+**the question stem was invisible on the light theme.** Same fault in three other files.
+Fixed by mapping every one onto a real token:
+
+    --card -> --bg-elevated    --muted -> --fg-muted
+    --accent-tint -> --accent-bright-tint    --bg-deep-1 -> --deep-1   (a typo)
+
+**To find them again:** list the names `styles.css` defines, then scan every `.css` file
+for `var(--name)` not in that set. Most survivors are legitimate — set at runtime by JS
+(`--pct`, `--vp-arn`, `--aq-delay`) or defined locally in their own file (`--aud-*`).
+
+**Check the inline copy too.** `quiz.html` inlines a duplicate of its critical CSS on
+purpose (external stylesheets have failed from cache twice). It carried the same faults,
+and being inline it won — fixing only the stylesheet would have changed nothing on screen.
+
+### The dark ("blue") theme was missing every semantic COLOUR
+
+Separate, worse, and it predates the Clinical Light work. `:root[data-theme="dark"]`
+defined `--ok-tint`, `--warn-tint`, `--nc-tint` and `--info-tint` but never `--ok`,
+`--warn`, `--nc` or `--info` — so all four fell through to the LIGHT values and rendered
+dark green, brown, dark red and indigo on a near-black ground:
+
+    --ok 2.96:1    --warn 3.13:1    --nc 2.67:1    --info 2.63:1
+
+Every status chip, KPI figure and toast in that theme was effectively unreadable. Now
+`#34D399 / #FBBF24 / #FF6B8A / #A5B4FC`, all above 6.5:1. **Never add a tint without its
+colour** — the tint being present is what made this look handled.
+
 ### Clinical Light — the light theme, and why the 3D scenes sit on dark panels
 
 The light theme is **Clinical Light**: cool paper `#F5F8FA`, ink `#0E1621`, two blues

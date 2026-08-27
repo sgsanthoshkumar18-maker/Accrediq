@@ -105,7 +105,7 @@
          are telling every visitor where the book is. It also means nobody can claim they
          mistook this site for the official text. rel="noopener" because target=_blank
          without it hands the new tab a reference back to this window. -->
-    <div class="aq-edition">Content based on the <b>NABH Hospital Accreditation Standards, 6th Edition</b> — effective 1 January 2025. Educational use only; always verify against the official standard, available from <a href="https://nabh.co/programmes/hospitals-accreditation-programme-hco/" target="_blank" rel="noopener noreferrer">NABH</a>.</div>
+    <div class="aq-edition">Element codes follow the <b>NABH Hospital Accreditation Standards, 6th Edition</b> — effective 1 January 2025. The descriptions are AQcredix&rsquo;s own wording, not the official text. For exact wording see <a href="https://nabh.co/programmes/hospitals-accreditation-programme-hco/" target="_blank" rel="noopener noreferrer">NABH</a>.</div>
     <header class="site-header">
       <div class="bar wrap">
         <a href="${base}index.html" class="brand brand-nomark">
@@ -626,6 +626,126 @@
     try { localStorage.removeItem("aq-phone-tip-v1"); } catch (e) {}
     setTimeout(show, 2200);
   }
+  if (document.readyState === "loading") document.addEventListener("DOMContentLoaded", init);
+  else init();
+})();
+
+/* ============================================================
+   STANDARDS SOURCE NOTICE
+   A modal shown when a page that presents objective-element content is opened, saying
+   plainly that the wording here is ours and not NABH's, and sending the reader to NABH
+   for the actual text.
+
+   WHY A MODAL AND NOT JUST THE HEADER LINE.
+   The .aq-edition strip at the top of every page already names the source and links to
+   NABH. That is the right thing for a visitor skimming the site. It is not enough for the
+   pages where somebody is about to READ our wording of an element and could mistake it for
+   the standard: on those, the notice has to be acknowledged rather than scrolled past.
+
+   EVERY TIME the standards area is entered, not once per session. A statement about whose
+   words the reader is about to read is worth nothing if it appears once and never again.
+   What keeps that from being punishing is WHERE it fires: the entry pages only, never the
+   639 individual element pages.
+   ============================================================ */
+(function () {
+  "use strict";
+
+  /* WHICH PAGES, AND WHY NOT ALL OF THEM.
+     The notice fires on the Standards explorer and the gap-analysis page — the two places
+     somebody arrives at from the nav intending to read standards. It deliberately does NOT
+     fire on standard.html, the single-element page: those share data-page="standards", and
+     showing it on all 639 of them would train people to dismiss it unread, which is the one
+     outcome that makes a disclaimer worthless. Entering the area is the moment that counts. */
+  var ENTRY = /(^|\/)(standards|know)\.html$/i;
+
+  function isEntryPage() {
+    try {
+      var p = location.pathname;
+      if (ENTRY.test(p)) return true;
+      /* a directory URL that resolves to standards.html */
+      return /\/standards\/?$/i.test(p);
+    } catch (e) { return false; }
+  }
+  var NABH_URL = "https://nabh.co/programmes/hospitals-accreditation-programme-hco/";
+
+
+  function show() {
+    var last = document.activeElement;
+
+    var back = document.createElement("div");
+    back.className = "aq-notice";
+    back.setAttribute("role", "dialog");
+    back.setAttribute("aria-modal", "true");
+    back.setAttribute("aria-labelledby", "aqNoticeTitle");
+    back.innerHTML =
+      '<div class="aq-notice-in">' +
+        '<button type="button" class="aq-notice-x" aria-label="Close">&times;</button>' +
+        '<h2 id="aqNoticeTitle">Before you read these standards</h2>' +
+        '<p>The official NABH wording is <b>not reproduced here</b>. Because that text is ' +
+          'copyright, what you are about to read is <b>AQcredix&rsquo;s own reworded version</b> ' +
+          '&mdash; our description of the system capability each element asks a hospital to have. ' +
+          'Wording, emphasis and detail will differ from the official objective elements.</p>' +
+        '<p>The <b>element codes</b> and their <b>Core / Commitment / Achievement / Excellence</b> ' +
+          'tiers are the real ones, so you can still work element by element with an assessor.</p>' +
+        '<p>For the <b>exact wording</b>, use the official NABH 6th Edition &mdash; on the NABH ' +
+          'website, or a printed copy bought from them.</p>' +
+        '<a class="aq-notice-link" href="' + NABH_URL + '" target="_blank" rel="noopener noreferrer">' +
+          'Open the NABH standards page' +
+          '<svg viewBox="0 0 16 16" aria-hidden="true" width="13" height="13">' +
+          '<path d="M6 2h8v8M14 2 6.5 9.5M11 9v4H3V5h4" fill="none" stroke="currentColor" ' +
+          'stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round"/></svg></a>' +
+        '<p class="aq-notice-fine">AQcredix is an independent platform. It is not affiliated ' +
+          'with, endorsed by, or accredited by NABH. Always verify against the official ' +
+          'standard before relying on anything here for an assessment.</p>' +
+        '<div class="aq-notice-foot"><button type="button" class="btn btn-primary aq-notice-ok">' +
+          'OK, I understand</button></div>' +
+      '</div>';
+
+    document.body.appendChild(back);
+    document.body.classList.add("aq-notice-open");
+    requestAnimationFrame(function () { back.classList.add("in"); });
+
+    var ok = back.querySelector(".aq-notice-ok");
+    var x = back.querySelector(".aq-notice-x");
+    if (ok) ok.focus();
+
+    function close() {
+      back.classList.remove("in");
+      document.body.classList.remove("aq-notice-open");
+      document.removeEventListener("keydown", onKey, true);
+      setTimeout(function () { back.remove(); }, 220);
+      try { if (last && last.focus) last.focus(); } catch (e) {}
+    }
+
+    /* Focus stays inside while it is open: a dialog you can Tab out of is a dialog a screen
+       reader wanders away from, and the notice is the one thing on screen that matters. */
+    function onKey(e) {
+      if (e.key === "Escape") { e.preventDefault(); close(); return; }
+      if (e.key !== "Tab") return;
+      var f = back.querySelectorAll("button, a[href]");
+      if (!f.length) return;
+      var first = f[0], lastEl = f[f.length - 1];
+      if (e.shiftKey && document.activeElement === first) { e.preventDefault(); lastEl.focus(); }
+      else if (!e.shiftKey && document.activeElement === lastEl) { e.preventDefault(); first.focus(); }
+    }
+
+    if (ok) ok.addEventListener("click", close);
+    if (x) x.addEventListener("click", close);
+    /* Clicking the backdrop dismisses it too — but only the backdrop itself, never a click
+       that started inside the panel and drifted out while selecting text. */
+    back.addEventListener("mousedown", function (e) { if (e.target === back) close(); });
+    document.addEventListener("keydown", onKey, true);
+  }
+
+  function init() {
+    /* No "already seen" gate. Every arrival at the standards area shows it: this is a
+       statement about whose words the reader is about to read, and it is worth nothing if
+       it only ever appeared once. Scoping it to the entry pages is what keeps that from
+       being punishing. */
+    if (!isEntryPage()) return;
+    show();
+  }
+
   if (document.readyState === "loading") document.addEventListener("DOMContentLoaded", init);
   else init();
 })();

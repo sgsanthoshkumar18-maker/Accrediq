@@ -176,7 +176,7 @@
 
 /* ---------- role pills for the two master roles ---------- */
 .role-pill.role-quality_manager,.role-pill.role-director{
-  background:var(--accent-tint,rgba(94,234,212,.16));color:var(--accent-bright);}
+  background:var(--accent-bright-tint);color:var(--accent-bright);}
 
 /* ---------- short expiry calendar (crash carts) ----------
    Palette tokens only, as everywhere else here. */

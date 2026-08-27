@@ -283,6 +283,14 @@
 
   --brand-tint:rgba(79,70,229,.20);
   --accent-bright-tint:rgba(14,165,160,.18);
+
+  /* THE COLOURS, not just the tints. Without these the light theme's semantics leaked in
+     and every one measured under 3.2:1 here. Do not delete a colour and leave its tint. */
+  --ok:#34D399;              /* 10.0:1 on the ground, 9.3:1 on a card */
+  --warn:#FBBF24;            /* 11.6 / 10.7 */
+  --nc:#FF6B8A;              /*  7.1 /  6.5 */
+  --info:#A5B4FC;            /*  9.7 /  8.9 — indigo, keeping info distinct from ok */
+
   --ok-tint:rgba(18,128,92,.22);
   --warn-tint:rgba(176,89,10,.22);
   --nc-tint:rgba(196,46,66,.20);
@@ -1249,7 +1257,7 @@ a:focus-visible,button:focus-visible,input:focus-visible,select:focus-visible,te
 }
 
 /* ---------- Homepage tour of the locked workspace ---------- */
-.tour-strip{background:var(--bg-deep-1,var(--bg-deep-2));color:#fff;padding:70px 0;}
+.tour-strip{background:var(--deep-1);color:#fff;padding:70px 0;}
 .tour-strip .section-head h2{color:#fff;}
 .tour-strip .section-head p{color:rgba(255,255,255,.72);max-width:62ch;}
 .tour{max-width:760px;}
@@ -1843,4 +1851,73 @@ body.aq-locked{
    swatches need a border to survive against white — on the dark canvas they did not. */
 :root:not([data-theme="dark"]) .kn-legend i{
   box-shadow:0 0 0 1px rgba(14,22,33,.18);
+}
+
+/* ---------- Standards source notice ----------
+   Built entirely from tokens, so it is correct in Clinical Light, the blue dark theme and
+   neon without a per-theme rule. The one literal is the backdrop scrim: a dark scrim is
+   right on every ground, because its job is to push the page back, not to match it. */
+.aq-notice{
+  position:fixed;inset:0;z-index:300;
+  display:flex;align-items:center;justify-content:center;
+  padding:20px;overflow-y:auto;
+  background:rgba(6,10,16,.62);
+  -webkit-backdrop-filter:blur(3px);backdrop-filter:blur(3px);
+  opacity:0;transition:opacity .22s ease;
+}
+.aq-notice.in{opacity:1;}
+.aq-notice-in{
+  position:relative;
+  background:var(--bg-elevated);
+  border:1px solid var(--border);
+  border-radius:var(--r-lg);
+  box-shadow:var(--shadow-2);
+  padding:30px 30px 24px;
+  max-width:560px;width:100%;max-height:90vh;overflow-y:auto;
+  transform:translateY(8px) scale(.985);
+  transition:transform .22s ease;
+}
+.aq-notice.in .aq-notice-in{transform:none;}
+.aq-notice-in h2{
+  font-family:var(--font-display);
+  font-size:23px;line-height:1.25;margin:0 0 14px;
+  color:var(--fg);padding-right:34px;   /* clears the close button */
+}
+.aq-notice-in p{margin:0 0 13px;font-size:14.5px;line-height:1.65;color:var(--fg-muted);}
+.aq-notice-in p b{color:var(--fg);}
+/* The close control. 40px square: the notice is the first thing a phone user meets on the
+   page, and a 24px glyph in a corner is a target people miss and then resent. */
+.aq-notice-x{
+  position:absolute;top:12px;right:12px;
+  width:40px;height:40px;padding:0;
+  display:flex;align-items:center;justify-content:center;
+  background:transparent;border:1px solid transparent;border-radius:10px;
+  color:var(--fg-faint);font-size:26px;line-height:1;cursor:pointer;
+  transition:background .15s ease,color .15s ease,border-color .15s ease;
+}
+.aq-notice-x:hover{background:var(--brand-tint);color:var(--fg);border-color:var(--border);}
+.aq-notice-x:focus-visible{outline:2px solid var(--accent-bright);outline-offset:2px;}
+.aq-notice-link{
+  display:inline-flex;align-items:center;gap:7px;
+  font-size:14px;font-weight:600;color:var(--accent-bright);
+  text-decoration:none;border-bottom:1px solid var(--accent-bright-tint);
+  padding-bottom:2px;margin:2px 0 16px;
+}
+.aq-notice-link:hover{border-bottom-color:var(--accent-bright);}
+.aq-notice-link:focus-visible{outline:2px solid var(--accent-bright);outline-offset:3px;border-radius:2px;}
+.aq-notice-fine{
+  font-size:12.5px!important;line-height:1.6!important;color:var(--fg-faint)!important;
+  border-top:1px solid var(--border-soft);padding-top:14px;margin:0!important;
+}
+.aq-notice-foot{display:flex;justify-content:flex-end;margin-top:20px;}
+.aq-notice-foot .btn{min-width:150px;justify-content:center;}
+body.aq-notice-open{overflow:hidden;}
+@media (max-width:520px){
+  .aq-notice{padding:14px;align-items:flex-end;}
+  .aq-notice-in{padding:26px 20px 20px;border-radius:var(--r-lg);}
+  .aq-notice-in h2{font-size:20px;}
+  .aq-notice-foot .btn{width:100%;}
+}
+@media (prefers-reduced-motion:reduce){
+  .aq-notice,.aq-notice-in{transition:none;}
 }
