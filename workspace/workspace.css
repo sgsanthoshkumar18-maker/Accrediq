@@ -372,7 +372,20 @@
 }
 
 /* Document library */
-.lib-n{background:var(--bg);padding:1px 7px;border-radius:999px;font-size:11px;margin-left:4px;}
+/* The count badge MUST carry its own colour. Without one it inherits from the tab, and
+   on the selected tab that is the on-brand colour — which on this badge's own background
+   was white on near-white, i.e. the number simply disappeared. */
+.lib-n{background:var(--bg);color:var(--fg-muted);padding:1px 7px;border-radius:999px;
+  font-size:11px;margin-left:4px;font-variant-numeric:tabular-nums;}
+/* On the selected tab the badge INVERTS rather than tinting. A translucent wash cannot
+   serve all three themes: light and dark put white text on the tab, neon puts near-black,
+   so any single wash direction improves one and ruins another (a 20% wash measured 6.2 on
+   light but 4.2 on dark). Swapping the two colours is high contrast in every theme —
+   11.0 light, 6.3 dark, 12.7 neon — and reads as a deliberate solid pill. */
+.cal-tab.is-on .lib-n{
+  background:var(--on-brand);
+  color:var(--brand-2);
+}
 .lib-group{margin-bottom:26px;}
 .lib-group h3{font-size:14px;margin-bottom:10px;display:flex;align-items:center;gap:8px;}
 .lib-grid{display:grid;grid-template-columns:repeat(auto-fill,minmax(220px,1fr));gap:10px;}

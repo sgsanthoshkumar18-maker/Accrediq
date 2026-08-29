@@ -365,6 +365,9 @@
     canvas.addEventListener("touchmove", e => { const t = e.touches[0]; onMove(t.clientX, t.clientY); }, { passive: true });
     canvas.addEventListener("touchend", onUp);
     canvas.addEventListener("wheel", e => {
+      /* Same rule as the wrapper handler below: release the page at the limits. */
+      if ((e.deltaY > 0 && camDistance >= MAX_D - 0.001) ||
+          (e.deltaY < 0 && camDistance <= MIN_D + 0.001)) return;
       e.preventDefault();
       camDistance = Math.max(MIN_D, Math.min(MAX_D, camDistance + e.deltaY * 0.0025));
     }, { passive: false });
@@ -376,7 +379,15 @@
   // is over it. Deltas are normalized because trackpads report pixel-mode deltas
   // while mice report line-mode, which otherwise makes trackpads feel dead.
   wrapEl.addEventListener("wheel", (e) => {
-    e.preventDefault();   // keep the dashboard page still
+    /* At the end of travel, let the page have the scroll. Without this the section is a
+       trap: the globe is already as far out as it goes, the wheel does nothing visible,
+       and the page underneath refuses to move. */
+    const atDist = controls ? camera.position.distanceTo(controls.target) : camDistance;
+    const EDGE = 0.001;
+    if ((e.deltaY > 0 && atDist >= MAX_D - EDGE) ||
+        (e.deltaY < 0 && atDist <= MIN_D + EDGE)) return;
+
+    e.preventDefault();   // still ours while there is zoom left to give
     e.stopPropagation();
 
     let delta = e.deltaY;

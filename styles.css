@@ -674,7 +674,9 @@ p{margin:0 0 0;}
 .lens-grid{display:grid;grid-template-columns:repeat(3,1fr);gap:0;}
 .lens-col{padding:0 28px;position:relative;}
 .lens-col + .lens-col{border-left:1px solid rgba(255,255,255,.12);}
-.lens-col .step{font-family:var(--font-mono);font-size:11.5px;letter-spacing:.09em;color:var(--accent-bright);margin-bottom:9px;}
+/* --deep-accent, not --accent-bright: this sits on a deep strip in every theme, and
+   --accent-bright is tuned for contrast against paper. */
+.lens-col .step{font-family:var(--font-mono);font-size:11.5px;letter-spacing:.09em;color:var(--deep-accent);margin-bottom:9px;}
 .lens-col h3{color:#fff;font-size:17px;margin-bottom:6px;}
 .lens-col p{font-size:13.5px;color:rgba(255,255,255,.6);}
 /* Lens scrollytelling card. The three faces occupy the same box and cross-fade by stage,
@@ -700,11 +702,11 @@ p{margin:0 0 0;}
 .lens-list{list-style:none;padding:0;display:grid;gap:9px;}
 .lens-list li{font-size:14px;padding-left:20px;position:relative;line-height:1.5;}
 .lens-list li::before{content:"";position:absolute;left:0;top:7px;width:8px;height:8px;
-  border-radius:2px;background:var(--accent-bright);}
+  border-radius:2px;background:var(--deep-accent);}
 .lens-gap{font-size:14.5px;padding:12px 14px;border-radius:var(--r-md);
   background:var(--nc-tint);color:var(--nc);font-weight:600;margin-bottom:14px;}
 .lens-fix b{color:#fff;}
-.scrolly-steps .step{color:var(--accent-bright);}
+.scrolly-steps .step{color:var(--deep-accent);}
 /* Category chip and the deep-link out of the rotating card. */
 .lens-cat{font-size:10.5px;font-weight:700;padding:3px 9px;border-radius:999px;
   background:rgba(255,255,255,.10);color:rgba(255,255,255,.86);}

@@ -23,7 +23,9 @@
 .cal-tab.is-on {
   background: var(--brand-2);
   border-color: var(--brand-2);
-  color: #fff;
+  /* NOT #fff. --brand-2 is a bright teal under neon, where white text measures ~1.5:1.
+     --on-brand is whatever reads on the brand colour in the active theme. */
+  color: var(--on-brand);
 }
 
 /* ------------------------------- month grid ------------------------------- */
