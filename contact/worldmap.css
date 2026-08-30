@@ -1,0 +1,160 @@
+/* AQcredix — dotted world map with travelling arcs (contact page).
+   Pairs with contact/worldmap.js. Every colour comes from a token, so this works on the
+   light theme, the blue dark theme and neon without a per-theme rule for the arcs. Only
+   the dot colour is themed explicitly, because canvas cannot read a variable and the JS
+   has to be handed a literal. */
+
+#aqWorldMap{
+  --wm-dot:rgba(14,22,33,.22);          /* light: ink at low alpha reads on paper */
+  position:relative;
+  width:100%;
+  margin-top:26px;
+  /* The dot grid is 180x68, so the box keeps that ratio and nothing stretches. */
+  aspect-ratio:180 / 68;
+}
+:root[data-theme="dark"] #aqWorldMap{--wm-dot:rgba(183,187,216,.20);}
+:root[data-palette="neon"] #aqWorldMap{--wm-dot:rgba(159,216,206,.22);}
+
+.wm-dots{display:block;width:100%;height:auto;}
+.wm-arcs{position:absolute;inset:0;width:100%;height:100%;overflow:visible;}
+
+/* ---------- the arcs ----------
+   Each route draws itself, holds, then clears, and the whole set loops. The stagger comes
+   from --i set per route in JS, so adding a destination needs no new CSS. */
+.wm-arc{
+  fill:none;
+  stroke:var(--accent-bright);
+  stroke-width:.45;
+  stroke-linecap:round;
+  /* Long enough to cover the longest path in the viewBox; the exact number only has to
+     exceed the path length for the dash trick to work. */
+  stroke-dasharray:260;
+  stroke-dashoffset:260;
+  opacity:.9;
+  animation:wm-draw 9s cubic-bezier(.5,0,.5,1) infinite;
+  animation-delay:calc(var(--i, 0) * 1.15s);
+}
+@keyframes wm-draw{
+  0%   {stroke-dashoffset:260; opacity:0;}
+  6%   {opacity:.9;}
+  45%  {stroke-dashoffset:0;   opacity:.9;}
+  70%  {stroke-dashoffset:0;   opacity:.9;}
+  85%  {stroke-dashoffset:0;   opacity:0;}
+  100% {stroke-dashoffset:-260; opacity:0;}
+}
+
+/* The destination lights up as its line lands, rather than blinking on its own clock —
+   that timing is what makes the arcs read as something arriving. */
+.wm-city{
+  fill:var(--accent-bright);
+  opacity:0;
+  animation:wm-land 9s ease-in-out infinite;
+  animation-delay:calc(var(--i, 0) * 1.15s);
+}
+@keyframes wm-land{
+  0%,40% {opacity:0; r:.6;}
+  50%    {opacity:1; r:1.5;}
+  70%    {opacity:1; r:1.1;}
+  85%,100%{opacity:0; r:1.1;}
+}
+
+/* ---------- home ---------- */
+.wm-home-core{fill:var(--accent-bright);}
+.wm-home-pulse{
+  fill:none;
+  stroke:var(--accent-bright);
+  stroke-width:.4;
+  transform-origin:center;
+  animation:wm-pulse 2.8s ease-out infinite;
+}
+@keyframes wm-pulse{
+  0%   {r:1.4; opacity:.75; stroke-width:.5;}
+  100% {r:6.5; opacity:0;   stroke-width:.15;}
+}
+
+/* ---------- the label ----------
+   Positioned as a percentage of the box by the JS, then nudged so the tail of the bubble
+   sits on the marker rather than over it. */
+.wm-label{
+  position:absolute;
+  transform:translate(-50%, calc(-100% - 12px));
+  background:var(--fg);
+  color:var(--bg);
+  font-size:11.5px;
+  font-weight:600;
+  letter-spacing:.01em;
+  padding:4px 9px;
+  border-radius:999px;
+  white-space:nowrap;
+  pointer-events:none;
+  box-shadow:var(--shadow-1);
+}
+.wm-label::after{
+  content:"";
+  position:absolute;
+  left:50%;
+  top:100%;
+  width:1px;
+  height:10px;
+  background:var(--accent-bright);
+  transform:translateX(-50%);
+}
+
+@media (max-width:640px){
+  .wm-label{font-size:10.5px;padding:3px 7px;}
+}
+
+/* Motion is the effect here, so with it switched off the map still has to say the same
+   thing: every route drawn, every city lit, nothing moving. */
+@media (prefers-reduced-motion:reduce){
+  .wm-arc{animation:none;stroke-dashoffset:0;opacity:.75;}
+  .wm-city{animation:none;opacity:1;}
+  .wm-home-pulse{animation:none;opacity:.4;}
+}
+
+/* ---------- contact page layout ----------
+   Map and copy on the left, form on the right; one column under 900px, form first so a
+   phone user reaches the thing they came to do without scrolling past a map. */
+.ct-hero{padding-top:8px;}
+.ct-grid{display:grid;grid-template-columns:1.05fr .95fr;gap:clamp(28px,4vw,56px);align-items:start;}
+@media (max-width:900px){
+  .ct-grid{grid-template-columns:1fr;gap:34px;}
+  .ct-right{order:-1;}
+}
+.ct-icon{
+  display:inline-flex;align-items:center;justify-content:center;
+  width:46px;height:46px;border-radius:12px;margin-bottom:18px;
+  background:var(--accent-bright-tint);color:var(--accent-bright);
+  border:1px solid var(--border);
+}
+.ct-icon svg{width:22px;height:22px;}
+.ct-title{font-family:var(--font-display);font-size:clamp(30px,4vw,44px);line-height:1.08;
+  letter-spacing:-.02em;margin:0 0 14px;}
+.ct-lead{font-size:15.5px;line-height:1.7;color:var(--fg-muted);max-width:46ch;margin:0 0 16px;}
+.ct-inline a{font-size:14.5px;font-weight:600;color:var(--accent-bright);text-decoration:none;
+  border-bottom:1px solid var(--accent-bright-tint);padding-bottom:2px;}
+.ct-inline a:hover{border-bottom-color:var(--accent-bright);}
+
+.ct-form{
+  background:var(--bg-elevated);border:1px solid var(--border);border-radius:var(--r-lg);
+  padding:clamp(20px,2.6vw,30px);box-shadow:var(--shadow-1);
+  display:flex;flex-direction:column;gap:15px;
+}
+.ct-f{display:flex;flex-direction:column;gap:6px;}
+.ct-f label{font-size:12.5px;font-weight:700;color:var(--fg-muted);}
+.ct-f input,.ct-f textarea{
+  padding:11px 13px;border:1px solid var(--border);border-radius:10px;
+  background:var(--bg);color:var(--fg);font-family:inherit;font-size:14.5px;
+}
+.ct-f textarea{resize:vertical;min-height:110px;}
+.ct-f input::placeholder,.ct-f textarea::placeholder{color:var(--fg-faint);}
+.ct-f input:focus,.ct-f textarea:focus{
+  outline:none;border-color:var(--accent-bright);box-shadow:0 0 0 3px var(--accent-bright-tint);
+}
+/* Off-screen rather than display:none — some bots skip hidden inputs, and a field that is
+   not rendered cannot be filled, which defeats the point of a honeypot. */
+.ct-hp{position:absolute;left:-9999px;width:1px;height:1px;overflow:hidden;}
+.ct-actions{display:flex;align-items:center;gap:14px;flex-wrap:wrap;margin-top:4px;}
+.ct-say{font-size:13px;margin:0;line-height:1.5;}
+.ct-say.is-bad{color:var(--nc);}
+.ct-say.is-ok{color:var(--ok);}

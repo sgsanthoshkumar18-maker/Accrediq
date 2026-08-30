@@ -1923,3 +1923,44 @@ body.aq-notice-open{overflow:hidden;}
 @media (prefers-reduced-motion:reduce){
   .aq-notice,.aq-notice-in{transition:none;}
 }
+
+/* ---------- 3D tilt on the hero mark ----------
+   Built to match motion/logo3d.js, which stacks three copies of the mark — ring, arc,
+   letterform — at different depths. The perspective lives on the wrapper and the rotation
+   on the stack, because a single element cannot both establish perspective for its
+   children and be rotated inside it.
+
+   Only the mark tilts. The headline next to it stays flat: text that moves while you are
+   reading it is a cost, not an effect. */
+.aq3d{
+  flex:0 0 auto;
+  display:inline-block;
+  perspective:620px;
+  /* The mark is the child's job to size; the wrapper just needs to not collapse. */
+  line-height:0;
+}
+.aq3d-stack{
+  position:relative;
+  display:block;
+  transform-style:preserve-3d;
+  /* Eases home on pointerleave. Removed while the pointer is inside (see .is-live), or
+     every frame of the tilt would be chasing a 500ms transition and feel like syrup. */
+  transition:transform 520ms cubic-bezier(.2,.7,.2,1);
+  will-change:transform;
+}
+.aq3d.is-live .aq3d-stack{transition:none;}
+/* The first copy sits in flow and defines the box. The rest are stacked on top of it,
+   each pushed out along Z. */
+.aq3d-layer{transform:translateZ(var(--z,0));}
+.aq3d-layer:not(.aq3d-base){position:absolute;inset:0;}
+/* The existing hover glow keeps working — it is on .hero-logo, which every copy still is —
+   but three overlapping drop-shadows read as one muddy halo, so only the top layer glows. */
+.aq3d .hero-logo{transition:filter .4s ease;}
+.hero-headline:hover .aq3d .hero-logo{filter:none;}
+.hero-headline:hover .aq3d .aq3d-layer:last-child{
+  filter:drop-shadow(0 0 10px var(--deep-accent));
+}
+@media (prefers-reduced-motion:reduce){
+  .aq3d-stack{transition:none;transform:none!important;}
+  .aq3d-layer{transform:none;}
+}
