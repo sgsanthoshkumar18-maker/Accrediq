@@ -131,10 +131,17 @@ eq(/path\.join\(ROOT, "audit"\)/.test(buildCode), true, 'build output path deriv
 const neonBlockMatch = /:root\[data-palette="neon"\]\{[\s\S]*?\n\}/.exec(css);
 eq(!!neonBlockMatch, true, 'the neon token block is present');
 const neonBlock = (neonBlockMatch ? neonBlockMatch[0] : '').replace(/\/\*[\s\S]*?\*\//g, '');
-['#38BDF8', '#22D3EE', '56,189,248', '34,211,238'].forEach(blue => {
-  eq(neonBlock.includes(blue), false, 'neon palette contains no ' + blue);
+/* DEEP COBALT. This block is what a default visitor sees — the boot snippet ships
+   DEF="neon" — so it is the one that decides the whole site's colour. */
+eq(/--brand-2:#4C6FFF/.test(neonBlock), true, 'the brand is Deep Cobalt');
+eq(/--accent-bright:#4C6FFF/.test(neonBlock), true, 'the accent is Deep Cobalt');
+['#5EEAD4', '#2DD4BF', '94,234,212', '45,212,191'].forEach(teal => {
+  eq(neonBlock.includes(teal), false, 'no teal survives in the palette (' + teal + ')');
 });
-eq(/--brand-2:#5EEAD4/.test(neonBlock), true, 'neon brand is the brain teal');
+/* TRUE BLACK, NOT A LIFT. Any lift at all reads as grey on a black ground, which is the
+   specific thing the ground was changed to stop doing. */
+eq(/--bg:#000000/.test(neonBlock), true, 'the ground is true black');
+eq(/--bg-deep:#000000/.test(neonBlock), true, 'deep surfaces are the ground, not a band');
 /* The home hero is a deliberate, documented exception: it keeps the original cyan tone
    to match the particle canvas it sits behind. Every OTHER neon rule must be teal, so
    the hero rules are excluded here rather than the check being dropped — that way a
@@ -146,15 +153,21 @@ const neonRules = css.split('\n')
   eq(neonRules.includes(blue), false, 'no ' + blue + ' outside the hero exception');
 });
 // And the hero exception must actually still be there.
-eq(/:root\[data-palette="neon"\] \.hero\{[\s\S]*?--hero-tint:#22D3EE/.test(css), true,
-   'home hero keeps its original cyan tone under neon');
-// It must be scoped to .hero — a bare override would repaint the whole site.
-// Check the global block itself (already isolated as neonBlock above), not a span of
-// the file that can run on into the hero rule.
-eq(/--brand-2:#38BDF8/.test(neonBlock), false,
-   'the cyan override is scoped to the hero, not the global palette');
-eq(/--brand-2:#5EEAD4/.test(neonBlock), true,
-   'the global neon brand stays teal');
+/* NO SECTION BANDS. Six rules used to paint a page-width background of their own, which is
+   what produced the banded look. They are transparent now, and the whole page is one ground.
+   If one of these comes back, the site gets its seams back with it. */
+/* Match the rule itself rather than splitting on "}" — a chunk produced by splitting also
+   carries whatever comment preceded the selector, so startsWith() misses any rule that has
+   one above it. Four of the five did. */
+[['hero', 'hero'], ['lens-strip', 'lens strip'], ['flow-strip', 'flow strip'],
+ ['tour-strip', 'tour strip'], ['acc-band', 'accordion band']].forEach(function (p) {
+  const m = new RegExp('^\\.' + p[0] + '\\{([^}]*)\\}', 'm').exec(css);
+  eq(!!m, true, p[1] + ' rule is present');
+  eq(m ? /background:transparent/.test(m[1]) : false, true,
+     p[1] + ' paints no background of its own');
+});
+eq(/\.page-head\{[^}]*border-bottom/.test(css), false,
+   'the page head no longer draws a rule under itself');
 
 // --- site_settings: everyone reads, only the owner writes
 eq(/create policy site_settings_read on public\.site_settings\s+for select using \(true\)/.test(sql),
