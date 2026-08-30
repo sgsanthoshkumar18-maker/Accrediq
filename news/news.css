@@ -5,8 +5,8 @@
 .aq-news-inner{display:flex;align-items:center;gap:12px;}
 .aq-news-label{flex-shrink:0;display:flex;align-items:center;gap:7px;padding:0 14px;
   font-family:var(--font-mono);font-size:10px;letter-spacing:.08em;text-transform:uppercase;
-  color:var(--accent-bright);background:var(--bg-deep);z-index:2;position:relative;height:38px;}
-.aq-news-label .dot{width:6px;height:6px;border-radius:50%;background:var(--accent-bright);
+  color:var(--accent-text);background:var(--bg-deep);z-index:2;position:relative;height:38px;}
+.aq-news-label .dot{width:6px;height:6px;border-radius:50%;background:var(--accent-solid);
   box-shadow:0 0 6px var(--accent-bright);animation:aqNewsPulse 1.8s ease-in-out infinite;}
 @keyframes aqNewsPulse{0%,100%{opacity:1}50%{opacity:.25}}
 .aq-news-viewport{flex:1;overflow:hidden;position:relative;height:38px;}
@@ -16,9 +16,9 @@
 @keyframes aqNewsScroll{from{transform:translateX(0)}to{transform:translateX(-50%)}}
 .aq-news-item{display:inline-flex;align-items:center;gap:8px;padding:0 18px;white-space:nowrap;
   text-decoration:none;border-right:1px solid var(--border-soft);height:38px;}
-.aq-news-item:hover .aq-news-title{color:var(--accent-bright);text-decoration:underline;}
+.aq-news-item:hover .aq-news-title{color:var(--accent-text);text-decoration:underline;}
 .aq-news-src{font-family:var(--font-mono);font-size:9.5px;font-weight:700;letter-spacing:.04em;
-  text-transform:uppercase;color:var(--brand-2);background:var(--brand-tint);
+  text-transform:uppercase;color:var(--accent-text);background:var(--brand-tint);
   padding:2px 7px;border-radius:4px;flex-shrink:0;}
 .aq-news-title{font-size:12.5px;color:rgba(255,255,255,.86);max-width:60ch;overflow:hidden;
   text-overflow:ellipsis;}

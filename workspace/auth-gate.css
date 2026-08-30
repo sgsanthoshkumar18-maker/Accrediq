@@ -11,16 +11,16 @@
 .aq-gate-tabs button{flex:1;padding:9px;border:1px solid var(--border,#272C50);background:transparent;
   color:var(--fg-muted,#9A9FC2);border-radius:8px;cursor:pointer;font-family:inherit;
   font-size:13px;font-weight:600;}
-.aq-gate-tabs button.active{background:var(--brand-2,#6366F1);border-color:var(--brand-2,#6366F1);color:#fff;}
+.aq-gate-tabs button.active{background:var(--accent-solid,#4362F0);border-color:var(--brand-2,#4C6FFF);color:#fff;}
 .aq-gate-box label{display:block;font-size:12px;font-weight:700;color:var(--fg-muted,#9A9FC2);margin:12px 0 5px;}
 .aq-gate-box input{width:100%;padding:10px 12px;border:1px solid var(--border,#272C50);border-radius:9px;
   background:var(--bg,#0a0d1f);color:var(--fg,#F1F2FA);font-family:inherit;font-size:14px;}
-.aq-gate-box input:focus{outline:none;border-color:var(--brand-2,#6366F1);}
+.aq-gate-box input:focus{outline:none;border-color:var(--brand-2,#4C6FFF);}
 .aq-gate-box .btn{width:100%;margin-top:18px;justify-content:center;}
 .aq-gate-msg{font-size:12.5px;color:var(--warn,#F59E0B);margin-top:12px;line-height:1.55;}
 .aq-gate-back{display:inline-block;margin-top:18px;font-size:12.5px;color:var(--fg-faint,#7C81A6);
   text-decoration:none;}
-.aq-gate-back:hover{color:var(--brand-2,#6366F1);}
+.aq-gate-back:hover{color:var(--accent-text,#6C8CFF);}
 
 /* Tiled watermark over every protected page, naming who is signed in. Deliberately
    faint and click-through, so it never interferes with using the site — the point is
@@ -41,6 +41,6 @@
    button so it reads as a next step, not a second primary action competing with Sign in. */
 .aq-gate-link{
   background:none;border:none;padding:0;margin:0;
-  color:var(--brand-2);font:inherit;text-decoration:underline;cursor:pointer;
+  color:var(--accent-text);font:inherit;text-decoration:underline;cursor:pointer;
 }
 .aq-gate-link:disabled{opacity:.55;cursor:default;}

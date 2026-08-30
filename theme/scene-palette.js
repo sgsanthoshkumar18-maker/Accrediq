@@ -26,12 +26,12 @@ window.AQScenePalette = (function () {
   }
 
   var NEON = {
-    accent: 0x5EEAD4,
-    dim:    0x2DD4BF,
+    accent: 0x4C6FFF,
+    dim:    0x2E4AC8,
     ambient: 0x9DB4FF,
     key:     0xFFFFFF,
     link:    0x3D4A8A,
-    deep:    0x06322C
+    deep:    0x000000
   };
 
   /* THE LIGHT THEME STILL DRAWS ON A DARK GROUND.
@@ -49,12 +49,12 @@ window.AQScenePalette = (function () {
      regenerating the glow textures, whose colour is baked in at creation — twelve files of
      change for something no test can check. */
   var LIGHT = {
-    accent: 0x6FB2E6,   /* 5.9:1 on the stage's lit corner */
-    dim:    0x3D8CC4,
-    ambient: 0xB8CBDC,  /* cool fill, so the blues stay blue rather than drifting warm */
+    accent: 0x6E8CFF,   /* cobalt, lifted so it reads on a dark stage */
+    dim:    0x3C58D8,
+    ambient: 0xC3CEEA,  /* cool fill, so the blues stay blue */
     key:     0xFFFFFF,
-    link:    0x2A4A66,
-    deep:    0x0B1826   /* the stage's darkest corner, matching --deep-2 */
+    link:    0x1E2A5A,
+    deep:    0x000000   /* the ground is black now, not a navy stage */
   };
 
   /* Light is the ABSENCE of the attribute, not a value — see the boot snippet, which

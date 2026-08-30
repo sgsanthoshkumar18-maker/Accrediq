@@ -21,7 +21,7 @@
   text-transform: uppercase;
   /* --accent-bright, not --accent: the deep member of the pair is a fill colour and
      measured 3.07:1 as text on the blue theme's near-black ground. */
-  color: var(--accent-bright);
+  color:var(--accent-text);
   font-weight: 600;
 }
 
@@ -132,7 +132,7 @@
 .aq-opt-text { flex: 1 1 auto; color: inherit; }
 
 .aq-opt.is-picked {
-  border-color: var(--accent-bright);
+  border-color:var(--brand-2);
   background: var(--accent-bright-tint);
 }
 

@@ -55,7 +55,7 @@
   }
 
   // ---------- Background star dust (ambient, not clickable) ----------
-  const DUST_COLORS = ["rgba(224,242,254,1)", "rgba(94,234,212,1)", "rgba(129,140,248,1)"];
+  const DUST_COLORS = ["rgba(224,242,254,1)", "rgba(76,111,255,1)", "rgba(129,140,248,1)"];
   const dustTex = DUST_COLORS.map(glowTexture);
   const ARMS = 3, DUST_COUNT = 900;
   for (let i = 0; i < DUST_COUNT; i++) {

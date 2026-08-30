@@ -57,42 +57,44 @@
   size();
 
   /* ---------------- vortex ---------------- */
-  var vp = [], vFresh = true, vDark = null;
+  var vp = [], vFresh = true;   /* vFresh is kept for size changes; there is no trail now */
   for (var i = 0; i < 380; i++) vp.push({ x: 0, y: 0, life: 0, max: 0, seed: Math.random() });
   function vortex(t) {
+    /* Clear, do not wash. A translucent wash leaves a tail behind every particle, and a few
+       hundred tails on black accumulate into grey smoke — which is exactly what the trails
+       version produced. Dots only. */
+    ctx.clearRect(0, 0, W, H);
     var dark = isDark();
-    if (vFresh || vDark !== dark) {
-      ctx.fillStyle = dark ? "#000000" : "#FFFFFF";
-      ctx.fillRect(0, 0, W, H); vFresh = false; vDark = dark;
-    }
-    /* The wash is the trail length; it also keeps the ground exactly the theme's ground. */
-    ctx.fillStyle = dark ? "rgba(0,0,0,.12)" : "rgba(255,255,255,.15)";
-    ctx.fillRect(0, 0, W, H);
+    /* One colour, from the theme. No hue sweep: a rainbow fights a two-colour palette. */
+    var col = dark ? "108,140,255" : "39,67,201";
     for (var i = 0; i < vp.length; i++) {
       var p = vp[i];
       if (p.life <= 0) {
         p.x = Math.random() * W; p.y = Math.random() * H;
-        p.max = 90 + Math.random() * 160; p.life = p.max; p.seed = Math.random();
+        p.max = 260 + Math.random() * 320; p.life = p.max; p.seed = Math.random();
       }
-      var a = Math.sin(p.x * 0.0042 + t * 0.00022) * Math.cos(p.y * 0.0051 - t * 0.00017)
-            + Math.sin((p.x + p.y) * 0.0026 + t * 0.00031);
-      var ang = a * Math.PI, vx = Math.cos(ang) * 1.45, vy = Math.sin(ang) * 1.45;
+      var a = Math.sin(p.x * 0.0042 + t * 0.00012) * Math.cos(p.y * 0.0051 - t * 0.00009)
+            + Math.sin((p.x + p.y) * 0.0026 + t * 0.00016);
+      var ang = a * Math.PI;
+      /* SPEED. Was 1.45px per frame plus a 2.6 swirl — fast enough to pull the eye off the
+         copy, which was the complaint. Roughly half that now: present, not distracting. */
+      var vx = Math.cos(ang) * 0.62, vy = Math.sin(ang) * 0.62;
       if (m.has) {
         var dx = p.x - m.x, dy = p.y - m.y, d = Math.hypot(dx, dy);
-        if (d < 190 && d > 1) { var f = (190 - d) / 190 * 2.6; vx += (-dy / d) * f; vy += (dx / d) * f; }
+        if (d < 190 && d > 1) { var f = (190 - d) / 190 * 1.15; vx += (-dy / d) * f; vy += (dx / d) * f; }
       }
-      var nx = p.x + vx, ny = p.y + vy;
-      /* Held inside the cobalt band — a hue sweep would fight the palette. */
-      var hue = 220 + p.seed * 20;
-      var al = (p.life / p.max) * (dark ? 0.46 : 0.26);
-      ctx.strokeStyle = "hsla(" + hue.toFixed(0) + "," + (dark ? "96%" : "68%") + "," +
-        (dark ? "64%" : "46%") + "," + al.toFixed(3) + ")";
-      ctx.lineWidth = 1;
-      ctx.beginPath(); ctx.moveTo(p.x, p.y); ctx.lineTo(nx, ny); ctx.stroke();
-      p.x = nx; p.y = ny; p.life--;
+      p.x += vx; p.y += vy; p.life--;
+      /* Fade in and out at the ends of a life so dots arrive and leave rather than blink. */
+      var k = p.life / p.max;
+      var al = (k > 0.85 ? (1 - k) / 0.15 : k < 0.2 ? k / 0.2 : 1) * (dark ? 0.85 : 0.55);
+      ctx.fillStyle = "rgba(" + col + "," + al.toFixed(3) + ")";
+      ctx.beginPath();
+      ctx.arc(p.x, p.y, 1.15 + p.seed * 0.7, 0, 6.2832);
+      ctx.fill();
       if (p.x < -30 || p.x > W + 30 || p.y < -30 || p.y > H + 30) p.life = 0;
     }
   }
+
 
   /* ---------------- cells ----------------
      A Voronoi field. Computing nearest-seed per screen pixel is far too expensive, so it is

@@ -57,7 +57,7 @@
   function scoreColor(v) {
     if (v < 50) return P.name() === "blood" ? 0xFF5C6E : 0xf87171;   // red
     if (v < 75) return P.name() === "blood" ? 0xFF9E2C : 0xfbbf24;   // amber
-    return P.accent(0x5eead4);         // follows the palette accent
+    return P.accent(0x4c6fff);         // follows the palette accent
   }
 
   // ---------- Renderer / scene / camera ----------
@@ -150,7 +150,7 @@
     });
     pts.push(pts[0]);
     const geo = new THREE.BufferGeometry().setFromPoints(pts);
-    const mat = new THREE.LineBasicMaterial({ color: 0x5eead4, transparent: true, opacity: 0.55 });
+    const mat = new THREE.LineBasicMaterial({ color: 0x4c6fff, transparent: true, opacity: 0.55 });
     polyLine = new THREE.Line(geo, mat);
     rig.add(polyLine);
   }
@@ -163,7 +163,7 @@
       const label = overall < 50 ? "Needs focus" : overall < 75 ? "Building readiness" : "Audit-ready";
       overallEl.querySelector(".radar-overall-label").textContent = label;
       overallEl.querySelector(".radar-overall-num").style.color =
-        overall < 50 ? "#f87171" : overall < 75 ? "#fbbf24" : "#5eead4";
+        overall < 50 ? "#f87171" : overall < 75 ? "#fbbf24" : "#4c6fff";
     }
   }
   updateOverallDisplay();

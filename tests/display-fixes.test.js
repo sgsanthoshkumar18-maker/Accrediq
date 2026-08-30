@@ -154,11 +154,17 @@ check('about page arc rotates about the viewBox centre', () => {
   assert.ok(/animation:aq-ring-spin/.test(block[0]), 'arc animation missing');
 });
 
-/* 8. The language switcher's selected chip is dark on teal, not white on teal. */
-check('active language chip is dark on the accent', () => {
+/* 8. The selected language chip is text ON a filled accent, so it takes --on-accent.
+ *    This used to assert a literal #FFFFFF, which was correct only while the accent was a
+ *    light teal. The accent is a dark cobalt now, and pinning the literal is what let the
+ *    chip drift to 2.57:1 against its own background — the token is what has to hold, not
+ *    the colour it happens to resolve to today. */
+check('active language chip takes its colour from --on-accent', () => {
   const s = read('quote/quote.css');
-  assert.ok(/\.aq-quote-lang\.is-active[^}]*color:#001512/.test(s),
-    'active language chip must use dark text on the accent background');
+  assert.ok(s.includes('color:var(--on-accent) !important'),
+    'the active chip must use --on-accent, not a literal or the page foreground');
+  assert.ok(s.includes('.aq-quote-lang.is-active{background:var(--accent-solid'),
+    'and sit on --accent-solid, the accent tuned to carry white text');
 });
 
 /* 9. Library card titles are full foreground, not the panel's muted colour. */

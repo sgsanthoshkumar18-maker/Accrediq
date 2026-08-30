@@ -223,14 +223,14 @@
     const lineGeo = new THREE.BufferGeometry();
     lineGeo.setAttribute("position", new THREE.Float32BufferAttribute(linePositions, 3));
     rig.add(new THREE.LineSegments(lineGeo, new THREE.LineBasicMaterial({
-      color: P.accent(0x5eead4), transparent: true, opacity: 0.55
+      color: P.accent(0x4c6fff), transparent: true, opacity: 0.55
     })));
 
     // Soft glow dots along the borders for a luminous, premium feel
     const dotGeo = new THREE.BufferGeometry();
     dotGeo.setAttribute("position", new THREE.Float32BufferAttribute(dotPositions, 3));
     rig.add(new THREE.Points(dotGeo, new THREE.PointsMaterial({
-      size: 0.014, map: glowTex("rgba(224,255,250,1)"), transparent: true, opacity: 0.6,
+      size: 0.014, map: glowTex("rgba(237,241,248,1)"), transparent: true, opacity: 0.6,
       depthWrite: false, blending: THREE.AdditiveBlending, sizeAttenuation: true
     })));
   })();
@@ -277,10 +277,10 @@
   // using both axes is what spreads them across genuinely different planes rather
   // than stacking them all in roughly the same orientation.
   const orbitalArcs = [
-    { rx: 1.70, ry: 1.35, tilt: 0.60, pitch: 0.15, speed: 0.050, color: 0x5eead4 },
+    { rx: 1.70, ry: 1.35, tilt: 0.60, pitch: 0.15, speed: 0.050, color: 0x4c6fff },
     { rx: 1.55, ry: 1.50, tilt: -0.90, pitch: 0.85, speed: 0.037, color: 0x818cf8 },
     { rx: 1.85, ry: 1.15, tilt: 1.50, pitch: -0.55, speed: 0.063, color: 0xe0f2fe },
-    { rx: 1.62, ry: 1.62, tilt: 2.40, pitch: 1.25, speed: 0.044, color: 0x38bdf8 },
+    { rx: 1.62, ry: 1.62, tilt: 2.40, pitch: 1.25, speed: 0.044, color: 0x7d9bff },
     { rx: 1.78, ry: 1.28, tilt: -2.10, pitch: -1.10, speed: 0.056, color: 0xa78bfa },
     { rx: 1.48, ry: 1.72, tilt: 0.15, pitch: 1.55, speed: 0.031, color: 0x7dd3fc }
   ].map(cfg => {
@@ -298,7 +298,7 @@
   });
 
   // ---------- Department hub dots ----------
-  const STATUS_COLOR = { ok: "#5eead4", watch: "#fbbf24" };
+  const STATUS_COLOR = { ok: "#4c6fff", watch: "#fbbf24" };
   const hubMatCache = {};
   function hubMat(hex) {
     if (!hubMatCache[hex]) hubMatCache[hex] = new THREE.SpriteMaterial({ map: dotTexture(hex), transparent: true, depthWrite: false, blending: THREE.AdditiveBlending });
@@ -313,7 +313,7 @@
     const x = Math.cos(theta) * r, z = Math.sin(theta) * r;
     const pos = new THREE.Vector3(x, y, z).multiplyScalar(RADIUS * 1.035);
 
-    const color = STATUS_COLOR[d.status] || "#5eead4";
+    const color = STATUS_COLOR[d.status] || "#4c6fff";
     const sprite = new THREE.Sprite(hubMat(color));
     sprite.scale.setScalar(0.1);
     sprite.position.copy(pos);
@@ -677,7 +677,7 @@
 
     // Each metric is clickable — data-metric identifies which detail panel to reveal below.
     const metrics = [
-      { key: "kra", color: "#5eead4", val: d.kra.length, lbl: "KEY RESULT AREAS" },
+      { key: "kra", color: "#4c6fff", val: d.kra.length, lbl: "KEY RESULT AREAS" },
       { key: "kpi", color: "#818cf8", val: d.kpi.length, lbl: "KPIs TRACKED" },
       { key: "sop", color: "#fbbf24", val: sops.length, lbl: `SOPs REQUIRED (${d.short})` },
       { key: "committee", color: "#f472b6", val: committees.length, lbl: "COMMITTEES" },
@@ -704,9 +704,9 @@
 
       <div class="qg-score-row">
         <div class="qg-score-label">Department Score</div>
-        <div class="qg-score-val" style="color:${STATUS_COLOR[d.status] || '#5eead4'};">${d.score}<span>/100</span></div>
+        <div class="qg-score-val" style="color:${STATUS_COLOR[d.status] || '#4c6fff'};">${d.score}<span>/100</span></div>
       </div>
-      <div class="qg-score-bar"><div class="qg-score-bar-fill" style="width:${d.score}%;background:${STATUS_COLOR[d.status] || '#5eead4'};"></div></div>
+      <div class="qg-score-bar"><div class="qg-score-bar-fill" style="width:${d.score}%;background:${STATUS_COLOR[d.status] || '#4c6fff'};"></div></div>
       <div class="qg-score-status">${statusWord(d.status)}</div>
 
       <p class="qg-block-note" style="margin-top:16px;">Tap any card below for the full, real detail behind that number.</p>

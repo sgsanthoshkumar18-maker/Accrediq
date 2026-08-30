@@ -12,7 +12,7 @@
   gap:10px;color:var(--fg-faint);font-family:var(--font-mono);font-size:10.5px;letter-spacing:.06em;
   text-transform:uppercase;transition:opacity .5s ease;pointer-events:none;}
 .kn-loading .spin{width:22px;height:22px;border-radius:50%;border:2px solid var(--border);
-  border-top-color:var(--accent-bright);animation:knspin .8s linear infinite;}
+  border-top-color:var(--brand-2);animation:knspin .8s linear infinite;}
 @keyframes knspin{to{transform:rotate(360deg);}}
 .kn-loading.hidden{opacity:0;}
 
@@ -37,7 +37,7 @@
 .kn-tip-row code{font-family:var(--font-mono);font-size:10.5px;color:var(--fg-muted);text-align:right;}
 .kn-tip-row b{font-family:var(--font-mono);font-size:12px;}
 .kn-tip-ref{font-size:10.5px;color:var(--fg-faint);margin-top:8px;font-family:var(--font-mono);}
-.kn-tip-ref b{color:var(--brand-2);}
+.kn-tip-ref b{color:var(--accent-text);}
 .kn-tip-note{font-size:10px;line-height:1.55;color:var(--fg-faint);margin-top:8px;padding-top:8px;
   border-top:1px solid var(--border-soft);}
 

@@ -31,7 +31,7 @@
 .aud-dept { text-align: left; background: var(--aud-surface); border: 1px solid var(--aud-line);
   border-radius: 10px; padding: 14px 15px; cursor: pointer; font: inherit; color: inherit;
   display: flex; flex-direction: column; gap: 4px; transition: border-color .15s, transform .15s; }
-.aud-dept:hover { border-color: var(--accent-bright); transform: translateY(-1px); }
+.aud-dept:hover { border-color:var(--brand-2); transform: translateY(-1px); }
 .aud-dept .n { font-weight: 600; }
 .aud-dept .m { font-size: .8rem; color: var(--aud-na-fg); }
 
@@ -51,12 +51,12 @@
 .aud-chips { display: flex; gap: 6px; flex-wrap: wrap; margin-bottom: 8px; }
 .aud-chip { border: 1px solid var(--aud-line); background: transparent; color: inherit;
   border-radius: 20px; padding: 4px 12px; font-size: .84rem; cursor: pointer; }
-.aud-chip.on { background: var(--accent-bright); border-color: var(--accent-bright); color: var(--bg-deep); }
+.aud-chip.on { background:var(--accent-solid); border-color:var(--brand-2); color: var(--bg-deep); }
 #audQ { width: 100%; max-width: 340px; padding: 7px 11px; border: 1px solid var(--aud-line);
   border-radius: 8px; background: transparent; color: inherit; }
 
 .aud-bar { height: 6px; background: var(--aud-soft); border-radius: 4px; overflow: hidden; margin: 8px 0 6px; }
-.aud-bar i { display: block; height: 100%; background: var(--accent-bright); transition: width .25s; }
+.aud-bar i { display: block; height: 100%; background:var(--accent-solid); transition: width .25s; }
 .aud-tallies { display: flex; gap: 12px; font-size: .82rem; flex-wrap: wrap; }
 .aud-tallies .aud-compliant { color: var(--aud-ok-line); }
 .aud-tallies .aud-partial { color: var(--aud-warn-line); }
@@ -79,7 +79,7 @@
 .aud-ch, .aud-cat, .aud-sop, .aud-iv { font-size: .7rem; text-transform: uppercase;
   letter-spacing: .05em; padding: 2px 7px; border-radius: 4px; background: var(--aud-soft);
   color: var(--aud-na-fg); }
-.aud-sop { background: var(--accent-bright-tint); color: var(--accent-bright); }
+.aud-sop { background: var(--accent-bright-tint); color:var(--accent-text); }
 .aud-el { margin: 0 0 5px; line-height: 1.45; }
 .aud-std { margin: 0; font-size: .8rem; color: var(--aud-na-fg); }
 
@@ -186,7 +186,7 @@
 .aud-del:hover { color: var(--aud-bad-fg); border-color: var(--aud-bad-line); }
 .aud-inprog { font-size: .7rem; background: var(--aud-warn-bg); color: var(--aud-warn-fg);
   border-radius: 4px; padding: 1px 6px; }
-.aud-spark { color: var(--accent-bright); opacity: .85; }
+.aud-spark { color:var(--accent-text); opacity: .85; }
 
 @media print {
   .no-print, #site-header, #site-footer, .ws-nav, .aud-rep-actions { display: none !important; }

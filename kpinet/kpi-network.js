@@ -22,7 +22,7 @@
 
   // Domain palette, drawn from the site's own accent colours.
   const COLORS = {
-    infection:   { hex: 0x5eead4, css: "#5eead4" },
+    infection:   { hex: 0x4c6fff, css: "#4c6fff" },
     medication:  { hex: 0xf87171, css: "#f87171" },
     safety:      { hex: 0x34d399, css: "#34d399" },
     operational: { hex: 0x60a5fa, css: "#60a5fa" }

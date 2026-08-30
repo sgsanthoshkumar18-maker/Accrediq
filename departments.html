@@ -7,8 +7,8 @@
 <title>NABH by Department — Every Role, Every Element | AQcredix</title>
 <meta name="description" content="Click any department to see its operational essentials, licensing requirements, preventive-maintenance checklists, and every real NABH Objective Element that applies to it.">
 <link rel="icon" href="data:image/svg+xml,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 40 40'><circle cx='20' cy='20' r='16' fill='none' stroke='%23D8E0E6' stroke-width='3.4'/><path d='M20 4a16 16 0 1 1-11.31 4.69' fill='none' stroke='%2317A2B8' stroke-width='3.4' stroke-linecap='round'/><path d='M19.15 14.05H20.85L25.61 25.015H26.97V25.95H22.21V25.015H23.315L22 22H18L16.685 25.015H17.79V25.95H13.03V25.015H14.39ZM20 16.26L22.027 20.935H17.973Z' fill='%2317A2B8' fill-rule='evenodd'/></svg>">
-<link rel="stylesheet" href="styles.css?v=20260831b">
-<link rel="stylesheet" href="galaxy2/galaxy2.css?v=20260831b">
+<link rel="stylesheet" href="styles.css?v=20260831j">
+<link rel="stylesheet" href="galaxy2/galaxy2.css?v=20260831j">
 <style>
   .departments-head-grid{display:grid;grid-template-columns:1fr 380px;gap:36px;align-items:center;}
   .departments-head-text{text-align:left;}
@@ -25,7 +25,7 @@
   .dt-card{background:var(--bg-elevated);border:1px solid var(--border);border-radius:var(--r-lg);padding:18px;cursor:pointer;text-align:left;box-shadow:var(--shadow-1);transition:transform .15s ease,box-shadow .15s ease,border-color .15s ease;}
   .dt-card:hover{transform:translateY(-3px);box-shadow:var(--shadow-2);border-color:#CBD0F0;}
   .dt-card.is-active{border-color:var(--brand-2);box-shadow:0 0 0 3px var(--brand-tint),var(--shadow-2);}
-  .dt-card .dt-ico{width:38px;height:38px;border-radius:10px;background:var(--brand-tint);color:var(--brand-2);display:flex;align-items:center;justify-content:center;margin-bottom:10px;}
+  .dt-card .dt-ico{width:38px;height:38px;border-radius:10px;background:var(--brand-tint);color:var(--accent-text);display:flex;align-items:center;justify-content:center;margin-bottom:10px;}
   .dt-card h4{font-family:var(--font-display);font-size:15px;line-height:1.25;}
   .dt-card .dt-count{font-size:11.5px;color:var(--fg-faint);margin-top:6px;font-family:var(--font-mono);}
 
@@ -45,18 +45,18 @@
   .el-match-note{font-size:13px;color:var(--fg-faint);margin-bottom:14px;max-width:74ch;}
   .std-block{margin-bottom:18px;border:1px solid var(--border);border-radius:var(--r-lg);background:var(--bg-elevated);box-shadow:var(--shadow-1);overflow:hidden;}
   .std-block-head{padding:14px 18px;background:var(--brand-tint);font-size:13.5px;font-weight:600;display:flex;gap:10px;}
-  .std-block-head .sc{font-family:var(--font-mono);font-weight:700;color:var(--brand-2);flex-shrink:0;}
+  .std-block-head .sc{font-family:var(--font-mono);font-weight:700;color:var(--accent-text);flex-shrink:0;}
   .el-row{display:grid;grid-template-columns:60px 100px 1fr auto;gap:12px;align-items:center;padding:12px 18px;border-top:1px solid var(--border-soft);font-size:13.5px;}
   @media (max-width:760px){.el-row{grid-template-columns:1fr;gap:6px;}}
   .el-letter{font-family:var(--font-mono);font-weight:700;color:var(--fg-faint);}
   .cat-badge{display:inline-flex;align-items:center;font-size:11px;font-weight:700;padding:4px 9px;border-radius:999px;width:fit-content;}
   .cat-CORE{background:var(--nc-tint);color:var(--nc);}
   .cat-Commitment{background:var(--warn-tint);color:var(--warn);}
-  .cat-Achievement{background:var(--accent-bright-tint);color:var(--accent-bright);}
+  .cat-Achievement{background:var(--accent-bright-tint);color:var(--accent-text);}
   .cat-Excellence{background:var(--info-tint);color:var(--info);}
   .sop-flag{color:var(--warn);font-weight:700;margin-left:4px;}
-  .explain-btn{font-size:12px;font-weight:700;padding:7px 13px;border-radius:999px;border:1px solid var(--border);background:var(--bg);cursor:pointer;color:var(--brand-2);white-space:nowrap;}
-  .explain-btn:hover{background:var(--brand-2);color:#fff;border-color:var(--brand-2);}
+  .explain-btn{font-size:12px;font-weight:700;padding:7px 13px;border-radius:999px;border:1px solid var(--border);background:var(--bg);cursor:pointer;color:var(--accent-text);white-space:nowrap;}
+  .explain-btn:hover{background:var(--accent-solid);color:#fff;border-color:var(--brand-2);}
 
   .modal-back{position:fixed;inset:0;background:rgba(10,13,30,.6);backdrop-filter:blur(3px);z-index:200;display:none;align-items:center;justify-content:center;padding:20px;}
   .modal-back.is-open{display:flex;}
@@ -72,10 +72,10 @@
 </style>
 <script type="application/ld+json">{"@context":"https://schema.org","@type":"EducationalOrganization","name":"AQcredix","alternateName":"AQcredix — Accreditation & Quality Implementation Guidance Platform","url":"https://aqcredix.com/","description":"An independent healthcare quality education and training forum covering NABH accreditation standards, department roles, KPIs, quality tools and mock assessment.","founder":{"@type":"Person","name":"Dr. Santhoshkumar SG","jobTitle":"Founder & CEO, AQcredix; Infectious Disease Clinical Pharmacologist","honorificSuffix":"FISQua, CPQIH (Basic) (CAHO)"},"knowsAbout":["NABH accreditation","Healthcare quality improvement","Hospital infection control","Patient safety","Standard operating procedures","Clinical audit"]}</script>
 <script type="application/ld+json">{"@context":"https://schema.org","@type":"WebSite","name":"AQcredix","url":"https://aqcredix.com/","potentialAction":{"@type":"SearchAction","target":"https://aqcredix.com/standards.html?q={search_term_string}","query-input":"required name=search_term_string"}}</script>
-<link rel="stylesheet" href="workspace/auth-gate.css?v=20260831b">
-<link rel="stylesheet" href="billing/page-gate.css?v=20260831b">
-<link rel="stylesheet" href="motion/motion.css?v=20260831b">
-<link rel="stylesheet" href="search/command.css?v=20260831b">
+<link rel="stylesheet" href="workspace/auth-gate.css?v=20260831j">
+<link rel="stylesheet" href="billing/page-gate.css?v=20260831j">
+<link rel="stylesheet" href="motion/motion.css?v=20260831j">
+<link rel="stylesheet" href="search/command.css?v=20260831j">
 <!-- aq:meta — generated by build/set-meta.js, do not edit by hand -->
 <link rel="canonical" href="https://aqcredix.com/departments.html">
 <meta property="og:type" content="website">
@@ -98,9 +98,9 @@
 <!-- /aq:meta -->
 </head>
 <body data-page="departments" data-access="paid" data-preview="sop">
-<script src="workspace/config.js?v=20260831b"></script>
-<script src="workspace/store.js?v=20260831b"></script>
-<script src="workspace/auth-gate.js?v=20260831b"></script>
+<script src="workspace/config.js?v=20260831j"></script>
+<script src="workspace/store.js?v=20260831j"></script>
+<script src="workspace/auth-gate.js?v=20260831j"></script>
 
 <div id="site-header"></div>
 
@@ -158,17 +158,17 @@
 
 </main>
 <div id="site-footer"></div>
-<script src="nabh-data.js?v=20260831b"></script>
-<script src="nabh-summary.js?v=20260831b"></script>
-<script src="mom-explain.js?v=20260831b"></script>
-<script src="nabh-explain.js?v=20260831b"></script>
-<script src="department-data.js?v=20260831b"></script>
-<script src="dept-icons.js?v=20260831b"></script>
-<script src="theme/scene-palette.js?v=20260831b"></script>
-<script src="app.js?v=20260831b"></script>
-<script src="aq-scroll-lock.js?v=20260831b"></script>
-<script src="support.js?v=20260831b"></script>
-<script src="search/search.js?v=20260831b"></script>
+<script src="nabh-data.js?v=20260831j"></script>
+<script src="nabh-summary.js?v=20260831j"></script>
+<script src="mom-explain.js?v=20260831j"></script>
+<script src="nabh-explain.js?v=20260831j"></script>
+<script src="department-data.js?v=20260831j"></script>
+<script src="dept-icons.js?v=20260831j"></script>
+<script src="theme/scene-palette.js?v=20260831j"></script>
+<script src="app.js?v=20260831j"></script>
+<script src="aq-scroll-lock.js?v=20260831j"></script>
+<script src="support.js?v=20260831j"></script>
+<script src="search/search.js?v=20260831j"></script>
 <script>
 (function(){
   const ICONS = window.DEPT_ICONS;
@@ -311,12 +311,12 @@
   tryLoad(0);
 })();
 </script>
-<script src="billing/billing-config.js?v=20260831b"></script>
-<script src="billing/billing.js?v=20260831b"></script>
-<script src="billing/page-gate.js?v=20260831b"></script>
-<script src="motion/motion.js?v=20260831b"></script>
-<script src="search/command.js?v=20260831b"></script>
-<script src="motion/scrolly.js?v=20260831b"></script>
-<script src="billing/preview.js?v=20260831b"></script>
+<script src="billing/billing-config.js?v=20260831j"></script>
+<script src="billing/billing.js?v=20260831j"></script>
+<script src="billing/page-gate.js?v=20260831j"></script>
+<script src="motion/motion.js?v=20260831j"></script>
+<script src="search/command.js?v=20260831j"></script>
+<script src="motion/scrolly.js?v=20260831j"></script>
+<script src="billing/preview.js?v=20260831j"></script>
 </body>
 </html>

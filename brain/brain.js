@@ -37,12 +37,33 @@
     HRM: "Human Resource Management", IMS: "Information Management System"
   };
   const CHAPTER_ACCENT = {
-    AAC: "#5eead4", COP: "#818cf8", MOM: "#f472b6", PRE: "#60a5fa", IPC: "#f87171",
-    PSQ: "#fbbf24", ROM: "#a78bfa", FMS: "#34d399", HRM: "#fb923c", IMS: "#38bdf8"
+    AAC: "#4c6fff", COP: "#818cf8", MOM: "#f472b6", PRE: "#60a5fa", IPC: "#f87171",
+    PSQ: "#fbbf24", ROM: "#a78bfa", FMS: "#34d399", HRM: "#fb923c", IMS: "#7d9bff"
   };
   const heroEl = document.querySelector(".hero");
-  function setHeroTint(hex) { if (heroEl) heroEl.style.setProperty("--hero-tint", hex); }
-  function resetHeroTint() { if (heroEl) heroEl.style.setProperty("--hero-tint", "#0EA5A0"); }
+  /* A chapter colour chosen for a dark stage can be far too pale for white paper. Darken
+     toward ink until it carries — the hue survives, the contrast becomes real. Large text
+     needs 3:1, and the hero headline and the metric numbers are the only consumers. */
+  function tintFor(hex) {
+    try {
+      if (document.documentElement.getAttribute("data-theme") === "dark") return hex;
+      var n = parseInt(String(hex).replace("#", ""), 16);
+      var r = (n >> 16) & 255, g = (n >> 8) & 255, b = n & 255;
+      function lum(c) {
+        var f = [c[0], c[1], c[2]].map(function (v) {
+          v /= 255; return v <= 0.03928 ? v / 12.92 : Math.pow((v + 0.055) / 1.055, 2.4);
+        });
+        return 0.2126 * f[0] + 0.7152 * f[1] + 0.0722 * f[2];
+      }
+      for (var k = 0; k < 24 && (1.05) / (lum([r, g, b]) + 0.05) < 3.4; k++) {
+        r = Math.round(r * 0.9); g = Math.round(g * 0.9); b = Math.round(b * 0.9);
+      }
+      return "#" + ((1 << 24) + (r << 16) + (g << 8) + b).toString(16).slice(1);
+    } catch (e) { return hex; }
+  }
+
+  function setHeroTint(hex) { if (heroEl) heroEl.style.setProperty("--hero-tint", tintFor(hex)); }
+  function resetHeroTint() { if (heroEl) heroEl.style.setProperty("--hero-tint", tintFor("#4C6FFF")); }
   let chapterStats = null;
   if (window.NABH_DATA) {
     chapterStats = {};
@@ -120,7 +141,7 @@
     }
   }
 
-  const COLORS = P.cycle([0x5eead4, 0x818cf8, 0x38bdf8, 0xa78bfa, 0xf472b6]);
+  const COLORS = P.cycle([0x4c6fff, 0x818cf8, 0x7d9bff, 0xa78bfa, 0xf472b6]);
   function glowTexture(hex) {
     const c = document.createElement("canvas"); c.width = c.height = 32;
     const ctx = c.getContext("2d");
@@ -162,7 +183,7 @@
   }
   const edgeGeo = new THREE.BufferGeometry();
   edgeGeo.setAttribute("position", new THREE.Float32BufferAttribute(edgePositions, 3));
-  const edgeMat = new THREE.LineBasicMaterial({ color: 0x5eead4, transparent: true, opacity: 0.16 });
+  const edgeMat = new THREE.LineBasicMaterial({ color: 0x4c6fff, transparent: true, opacity: 0.16 });
   const edgeLines = new THREE.LineSegments(edgeGeo, edgeMat);
   rig.add(edgeLines);
 
@@ -213,8 +234,8 @@
     btn.type = "button";
     btn.className = "brain-node-hit";
     btn.setAttribute("aria-label", `${n.stat.name} chapter${n.stat.possibleNC != null ? `, ${n.stat.possibleNC} possible non-conformities` : ""}`);
-    btn.addEventListener("mouseenter", () => { showTooltip(n, btn); setHeroTint(CHAPTER_ACCENT[n.code] || "#0EA5A0"); });
-    btn.addEventListener("focus", () => { showTooltip(n, btn); setHeroTint(CHAPTER_ACCENT[n.code] || "#0EA5A0"); });
+    btn.addEventListener("mouseenter", () => { showTooltip(n, btn); setHeroTint(CHAPTER_ACCENT[n.code] || "#4C6FFF"); });
+    btn.addEventListener("focus", () => { showTooltip(n, btn); setHeroTint(CHAPTER_ACCENT[n.code] || "#4C6FFF"); });
     btn.addEventListener("mouseleave", () => { hideTooltip(); resetHeroTint(); });
     btn.addEventListener("blur", () => { hideTooltip(); resetHeroTint(); });
     btn.addEventListener("click", () => { window.location.href = `standards.html?ch=${n.code}`; });

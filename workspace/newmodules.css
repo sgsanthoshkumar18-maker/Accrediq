@@ -51,7 +51,7 @@
 .tr-hint,.ac-hint{font-size:12.5px;line-height:1.6;color:var(--fg-faint);margin:6px 0 0;}
 .tr-edit{background:transparent;border:1px solid var(--border);color:var(--fg-muted);
   border-radius:var(--r-sm);padding:4px 11px;font:inherit;font-size:12.5px;cursor:pointer;}
-.tr-edit:hover{color:var(--accent-bright);border-color:var(--accent-bright);}
+.tr-edit:hover{color:var(--accent-text);border-color:var(--brand-2);}
 
 /* ---------- evidence ---------- */
 .ev-form{display:flex;gap:10px;flex-wrap:wrap;align-items:flex-end;}
@@ -176,7 +176,7 @@
 
 /* ---------- role pills for the two master roles ---------- */
 .role-pill.role-quality_manager,.role-pill.role-director{
-  background:var(--accent-bright-tint);color:var(--accent-bright);}
+  background:var(--accent-bright-tint);color:var(--accent-text);}
 
 /* ---------- short expiry calendar (crash carts) ----------
    Palette tokens only, as everywhere else here. */
@@ -280,7 +280,7 @@ input[type="date"]:hover::-webkit-calendar-picker-indicator{opacity:1;}
 
 .cc-repl{border-top:1px dashed var(--border);margin-top:12px;padding-top:12px;}
 .cc-repl-head{font-size:12.5px;font-weight:700;text-transform:uppercase;letter-spacing:.05em;
-  color:var(--accent-bright);margin-bottom:8px;}
+  color:var(--accent-text);margin-bottom:8px;}
 
 @media (max-width:620px){
   .cc-batch{padding:34px 12px 12px;}

@@ -80,7 +80,7 @@
 .vp-playing:hover .vp-fs,
 .vp-playing:focus-within .vp-fs,
 .vp-fs:focus-visible{opacity:1;}
-.vp-fs:hover{background:rgba(4,16,14,.85);border-color:var(--accent-bright);}
+.vp-fs:hover{background:rgba(4,16,14,.85);border-color:var(--brand-2);}
 .vp-fs.is-on svg{transform:scale(-1);}
 
 /* A coarse pointer has no hover, so there is nothing to reveal it with — it stays up. */
@@ -94,7 +94,7 @@
   content:"";position:absolute;z-index:2;
   width:34px;height:34px;border-radius:50%;
   border:2px solid var(--border);
-  border-top-color:var(--accent-bright);
+  border-top-color:var(--brand-2);
   animation:vp-spin .7s linear infinite;
 }
 @keyframes vp-spin{to{transform:rotate(360deg);}}

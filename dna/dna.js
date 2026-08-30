@@ -28,8 +28,8 @@
 
   const CODES = Object.keys(window.NABH_DATA.official);
   const CHAPTER_ACCENT = {
-    AAC: 0x5eead4, COP: 0x818cf8, MOM: 0xf472b6, PRE: 0x60a5fa, IPC: 0xf87171,
-    PSQ: 0xfbbf24, ROM: 0xa78bfa, FMS: 0x34d399, HRM: 0xfb923c, IMS: 0x38bdf8
+    AAC: 0x4c6fff, COP: 0x818cf8, MOM: 0xf472b6, PRE: 0x60a5fa, IPC: 0xf87171,
+    PSQ: 0xfbbf24, ROM: 0xa78bfa, FMS: 0x34d399, HRM: 0xfb923c, IMS: 0x7d9bff
   };
 
   const renderer = new THREE.WebGLRenderer({ canvas, antialias: true, alpha: true });
@@ -53,7 +53,7 @@
 
   scene.add(new THREE.AmbientLight(P.ambient(0x9db4ff), 0.5));
   const key = new THREE.DirectionalLight(P.key(0xffffff), 1.0); key.position.set(3, 4, 5); scene.add(key);
-  const rim = new THREE.DirectionalLight(P.accent(0x5eead4), 0.5); rim.position.set(-3, -2, -4); scene.add(rim);
+  const rim = new THREE.DirectionalLight(P.accent(0x4c6fff), 0.5); rim.position.set(-3, -2, -4); scene.add(rim);
 
   const rig = new THREE.Group();
   scene.add(rig);
@@ -92,7 +92,7 @@
   CODES.forEach((code, i) => {
     const t = (i + 0.5) / CODES.length;
     const p1 = railPoint(t, 0), p2 = railPoint(t, Math.PI);
-    const color = CHAPTER_ACCENT[code] || 0x5eead4;
+    const color = CHAPTER_ACCENT[code] || 0x4c6fff;
     const o = OFFICIAL[code];
     const stat = { code, name: CHAPTER_NAMES[code] || code, standards: o.standards, elements: o.elements, core: o.core, commitment: o.commitment, achievement: o.achievement, excellence: o.excellence };
 
@@ -161,7 +161,7 @@
       <span class="dna-tt-sub">${s.standards} standards · ${s.elements} elements</span>
       <span class="dna-tt-row"><i style="background:#c42e42;"></i>Core <b>${s.core}</b></span>
       <span class="dna-tt-row"><i style="background:#b0590a;"></i>Commitment <b>${s.commitment}</b></span>
-      <span class="dna-tt-row"><i style="background:#0EA5A0;"></i>Achievement <b>${s.achievement}</b></span>
+      <span class="dna-tt-row"><i style="background:#4C6FFF;"></i>Achievement <b>${s.achievement}</b></span>
       <span class="dna-tt-row"><i style="background:#3554d1;"></i>Excellence <b>${s.excellence}</b></span>
     `;
     tooltip.style.left = (e.clientX - rect.left + 16) + "px";

@@ -142,15 +142,31 @@ eq(/--accent-bright:#4C6FFF/.test(neonBlock), true, 'the accent is Deep Cobalt')
    specific thing the ground was changed to stop doing. */
 eq(/--bg:#000000/.test(neonBlock), true, 'the ground is true black');
 eq(/--bg-deep:#000000/.test(neonBlock), true, 'deep surfaces are the ground, not a band');
-/* The home hero is a deliberate, documented exception: it keeps the original cyan tone
-   to match the particle canvas it sits behind. Every OTHER neon rule must be teal, so
-   the hero rules are excluded here rather than the check being dropped — that way a
-   blue value creeping back into, say, the header would still fail. */
+/* THE HERO EXCEPTION IS GONE. It used to keep a cyan tone and a navy gradient of its own,
+   which is precisely what made the page look banded — and because the rule was
+   palette-scoped it outranked .hero{background:transparent} and survived the first pass at
+   removing it. Nothing may paint a panel behind the hero again. */
+{
+  /* The rule is GONE, not merely emptied. While it existed it re-declared --brand,
+     --accent and --accent-bright inside .hero, so the hero used the dark palette's cobalt
+     even in light mode — 4.18:1 on a white ground. The hero takes the theme's tokens now.
+     Comments are stripped before matching because one of them legitimately contains the
+     words "background:transparent" while explaining why the rule was removed. */
+  const bare = css.replace(/\/\*[\s\S]*?\*\//g, '');
+  eq(/:root\[data-palette="neon"\] \.hero\{/.test(bare), false,
+     'the palette-scoped hero token override is gone');
+  eq(/radial-gradient\(120% 140% at 78% -10%/.test(bare), false,
+     'the navy hero panel has not come back');
+  const heroRule = /^\.hero\{([^}]*)\}/m.exec(bare);
+  eq(heroRule ? /background:transparent/.test(heroRule[1]) : false, true,
+     'the hero paints no background of its own');
+}
+/* And no neon rule anywhere may carry the teal this palette replaced. */
 const neonRules = css.split('\n')
-  .filter(l => l.includes('data-palette="neon"') && !l.includes('.hero'))
+  .filter(l => l.includes('data-palette="neon"'))
   .join('\n');
-['#38BDF8', '#22D3EE', '56,189,248', '34,211,238', '#06283D'].forEach(blue => {
-  eq(neonRules.includes(blue), false, 'no ' + blue + ' outside the hero exception');
+['#5EEAD4', '#2DD4BF', '#22D3EE', '94,234,212', '45,212,191'].forEach(blue => {
+  eq(neonRules.includes(blue), false, 'no ' + blue + ' left in any neon rule');
 });
 // And the hero exception must actually still be there.
 /* NO SECTION BANDS. Six rules used to paint a page-width background of their own, which is

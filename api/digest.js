@@ -59,7 +59,7 @@ function render(digest, name) {
     <table width="100%" cellpadding="0" cellspacing="0" style="max-width:560px;margin:0 auto;
       background:#fff;border-radius:10px;padding:26px;">
       <tr><td style="font-size:12px;letter-spacing:.06em;text-transform:uppercase;
-        color:#0EA5A0;font-weight:700;">AQcredix &middot; weekly summary</td></tr>
+        color:#4C6FFF;font-weight:700;">AQcredix &middot; weekly summary</td></tr>
       <tr><td style="font-size:20px;font-weight:700;color:#0E2233;padding:8px 0 4px;">
         ${esc(D.summarise(digest))}</td></tr>
       <tr><td style="font-size:13px;color:#5A6C7A;padding-bottom:6px;">
@@ -67,12 +67,12 @@ function render(digest, name) {
         ${digest.department ? "in " + esc(digest.department) : "across the hospital"} today.</td></tr>
       ${group("Overdue", digest.overdue, "#B3261E")}
       ${group("Never recorded", digest.never, "#7A5200")}
-      ${group("Due soon", digest.soon, "#0EA5A0")}
+      ${group("Due soon", digest.soon, "#4C6FFF")}
       ${digest.findings.length ? group("Open findings",
           digest.findings.map(c => ({ name: c.title, kind: "Finding", text: c.status || "open" })),
           "#B3261E") : ""}
       <tr><td style="padding:20px 0 0;">
-        <a href="${SITE}/workspace/dashboard.html" style="display:inline-block;background:#0EA5A0;
+        <a href="${SITE}/workspace/dashboard.html" style="display:inline-block;background:#4C6FFF;
           color:#fff;text-decoration:none;padding:12px 22px;border-radius:99px;font-weight:600;
           font-size:14px;">Open my department</a></td></tr>
       <tr><td style="padding-top:18px;font-size:11px;color:#8B99A4;">

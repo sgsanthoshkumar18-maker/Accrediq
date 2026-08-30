@@ -6,7 +6,7 @@
  * it — the parts that belong to this site rather than to the film.
  */
 
-.aqf-mount{position:relative;width:100%;aspect-ratio:16/9;background:#04100E;
+.aqf-mount{position:relative;width:100%;aspect-ratio:16/9;background:#0B0E16;
   border-radius:14px;overflow:hidden;}
 
 /* FULL SCREEN COMES IN TWO FLAVOURS AND BOTH HAVE TO BE DRESSED.
@@ -26,8 +26,8 @@
 .aqf-mount.is-full{position:fixed;inset:0;width:100vw;height:100vh;height:100dvh;
   aspect-ratio:auto;border-radius:0;z-index:9999;}
 .aqf-mount:fullscreen{width:100%;height:100%;aspect-ratio:auto;border-radius:0;
-  background:#04100E;}
-.aqf-mount:-webkit-full-screen{width:100%;height:100%;border-radius:0;background:#04100E;}
+  background:#0B0E16;}
+.aqf-mount:-webkit-full-screen{width:100%;height:100%;border-radius:0;background:#0B0E16;}
 
 .aqf-stage{position:absolute;inset:0;overflow:hidden;}
 
@@ -52,7 +52,7 @@
  * contain tells the browser that nothing inside the frame can affect layout or painting
  * outside it, so a 60fps animation cannot force the rest of the page to re-render while
  * it scrolls past. */
-.aqf-frame-el{width:1280px;height:720px;border:0;display:block;background:#04100E;
+.aqf-frame-el{width:1280px;height:720px;border:0;display:block;background:#0B0E16;
   pointer-events:none;contain:layout paint style;}
 .aqf-stage{contain:layout paint style;}
 
@@ -63,8 +63,8 @@
   transition:opacity .45s ease;}
 .aqf-poster.gone{opacity:0;pointer-events:none;}
 .aqf-poster .pl{width:clamp(58px,8vw,92px);aspect-ratio:1;border-radius:50%;
-  background:#5EEAD4;color:#04241F;display:flex;align-items:center;justify-content:center;
-  font-size:clamp(20px,3vw,32px);box-shadow:0 0 58px -8px rgba(94,234,212,.8);}
+  background:var(--accent-solid,#4362F0);color:#FFFFFF;display:flex;align-items:center;justify-content:center;
+  font-size:clamp(20px,3vw,32px);box-shadow:0 0 58px -8px rgba(76,111,255,.8);}
 .aqf-poster h3{margin:0;padding:0 24px;text-align:center;font-weight:400;
   font-family:Georgia,"Iowan Old Style",serif;color:#F4F2EC;
   font-size:clamp(20px,3.4vw,40px);letter-spacing:-.02em;}
@@ -87,11 +87,11 @@
 @keyframes aqf-end-in{from{opacity:0;}to{opacity:1;}}
 
 .aqf-again{display:inline-flex;align-items:center;gap:11px;cursor:pointer;
-  background:#5EEAD4;color:#04241F;border:0;border-radius:999px;
+  background:var(--accent-solid,#4362F0);color:#FFFFFF;border:0;border-radius:999px;
   font:inherit;font-weight:700;letter-spacing:.01em;
   font-size:clamp(13px,1.5vw,17px);padding:clamp(11px,1.3vw,15px) clamp(20px,2.4vw,30px);
-  box-shadow:0 0 46px -10px rgba(94,234,212,.85);}
-.aqf-again:hover{background:#2DD4BF;}
+  box-shadow:0 0 46px -10px rgba(76,111,255,.85);}
+.aqf-again:hover{background:#2E4AC8;}
 .aqf-again-ic{font-size:1.25em;line-height:1;}
 
 /* ---------- chrome ---------- */
@@ -115,8 +115,8 @@
   border:1px solid rgba(244,242,236,.2);color:#F4F2EC;
   font:inherit;font-size:12px;line-height:1;
   display:flex;align-items:center;justify-content:center;}
-.aqf-bar button:hover{background:rgba(94,234,212,.22);border-color:#5EEAD4;}
-.aqf-bar button:focus-visible,.aqf-seek:focus-visible{outline:2px solid #5EEAD4;outline-offset:2px;}
+.aqf-bar button:hover{background:rgba(76,111,255,.22);border-color:#4C6FFF;}
+.aqf-bar button:focus-visible,.aqf-seek:focus-visible{outline:2px solid #4C6FFF;outline-offset:2px;}
 
 /* The hit area is deliberately much taller than the visible line, so the bar can be
    grabbed with a thumb without demanding precision. */
@@ -124,7 +124,7 @@
   cursor:pointer;}
 .aqf-seek-track{width:100%;height:5px;border-radius:999px;
   background:rgba(244,242,236,.26);overflow:hidden;}
-.aqf-seek-fill{height:100%;width:0;background:#5EEAD4;border-radius:999px;}
+.aqf-seek-fill{height:100%;width:0;background:#4C6FFF;border-radius:999px;}
 
 .aqf-time{flex:none;color:#CFE0DB;font-size:clamp(10px,1.05vw,12.5px);
   letter-spacing:.02em;white-space:nowrap;}
@@ -137,7 +137,7 @@
 
 /* The corner buttons this replaces are gone: restart and full screen now live in the
    transport bar above, where a video's controls are expected to be. */
-.aqf-close:focus-visible,.aqf-again:focus-visible{outline:2px solid #5EEAD4;outline-offset:2px;}
+.aqf-close:focus-visible,.aqf-again:focus-visible{outline:2px solid #4C6FFF;outline-offset:2px;}
 
 .aqf-close{position:absolute;right:18px;top:18px;z-index:8;width:44px;height:44px;
   border-radius:50%;background:rgba(4,16,14,.72);border:1px solid rgba(244,242,236,.3);

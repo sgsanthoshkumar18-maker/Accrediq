@@ -21,14 +21,14 @@
 .pf-email{margin:3px 0 0;color:var(--fg-faint);font-size:14px;overflow-wrap:anywhere;}
 .pf-avatar{width:54px;height:54px;flex-shrink:0;border-radius:50%;
   display:flex;align-items:center;justify-content:center;
-  background:var(--brand-tint);color:var(--brand-2);
+  background:var(--brand-tint);color:var(--accent-text);
   font-family:var(--font-display,Georgia,serif);font-size:24px;font-weight:700;
   border:1px solid var(--border);}
 
 .pf-chips{display:flex;gap:10px;flex-wrap:wrap;margin-top:16px;}
 .pf-chip{background:var(--bg-elevated);border:1px solid var(--border);border-radius:12px;
   padding:9px 15px;display:flex;align-items:baseline;gap:7px;}
-.pf-chip b{font-size:19px;color:var(--brand-2);}
+.pf-chip b{font-size:19px;color:var(--accent-text);}
 .pf-chip span{font-size:12.5px;color:var(--fg-faint);}
 .pf-chip-ok b{color:var(--ok,var(--brand-2));}
 .pf-chip-warn{background:var(--warn-tint);border-color:var(--warn);}
@@ -39,11 +39,11 @@
   border-radius:14px;padding:18px 20px;margin:0 0 26px;}
 .pf-cov-head{display:flex;justify-content:space-between;align-items:baseline;gap:12px;margin-bottom:10px;}
 .pf-cov-head b{font-size:17px;}
-.pf-cov-head span{color:var(--brand-2);font-weight:600;}
+.pf-cov-head span{color:var(--accent-text);font-weight:600;}
 .pf-coverage p{margin:11px 0 0;color:var(--fg-faint);font-size:13.5px;line-height:1.6;}
 
 .pf-bar{height:6px;border-radius:999px;background:var(--brand-tint);overflow:hidden;}
-.pf-bar>span{display:block;height:100%;background:var(--brand-2);border-radius:999px;
+.pf-bar>span{display:block;height:100%;background:var(--accent-solid);border-radius:999px;
   transition:width .4s ease;}
 .pf-bar-lg{height:9px;}
 
@@ -55,13 +55,13 @@
   background:var(--bg-elevated);border:1px solid var(--border);border-radius:14px;padding:16px 17px;
   transition:border-color .18s ease,transform .18s ease;}
 .pf-stat:hover{border-color:var(--brand-2);transform:translateY(-2px);}
-.pf-stat-n{font-size:30px;font-weight:700;line-height:1;color:var(--brand-2);}
+.pf-stat-n{font-size:30px;font-weight:700;line-height:1;color:var(--accent-text);}
 .pf-stat-l{font-size:13.5px;margin:7px 0 11px;line-height:1.4;}
 .pf-stat-m{font-size:12px;color:var(--fg-faint);margin-top:8px;}
 /* Server-backed cards carry a quiet accent edge so the hospital-wide, synced figures are
    distinguishable at a glance from the device-local personal ones. */
 .pf-stat.is-synced{border-left:2px solid var(--brand-2);}
-.pf-stat.is-synced .pf-stat-m{color:var(--brand-2);}
+.pf-stat.is-synced .pf-stat-m{color:var(--accent-text);}
 
 /* ---- subscription ---- */
 .pf-sub{background:var(--bg-elevated);border:1px solid var(--border);border-radius:14px;

@@ -63,7 +63,7 @@
   text-overflow: ellipsis;
   white-space: nowrap;
 }
-.cmdk-row.is-sel .cmdk-t { color: var(--brand-2); font-weight: 600; }
+.cmdk-row.is-sel .cmdk-t { color:var(--accent-text); font-weight: 600; }
 .cmdk-s {
   font-size: 11px;
   color: var(--fg-faint);
@@ -110,7 +110,7 @@
   cursor: pointer;
   min-height: 38px;
 }
-.cmdk-btn:hover { border-color: var(--brand-2); color: var(--brand-2); }
+.cmdk-btn:hover { border-color:var(--brand-2); color:var(--accent-text); }
 
 @media (max-width: 760px) {
   /* Layout only. A phone has no Ctrl+K, so the footer hint is dead weight and the

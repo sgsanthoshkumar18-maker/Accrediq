@@ -45,7 +45,7 @@
 .aqv-bug{
   position:absolute;top:3.2cqw;right:3.2cqw;
   display:flex;align-items:center;gap:1.1cqw;
-  color:var(--aqv-bug-color,#22D3EE);
+  color:var(--aqv-bug-color,#4C6FFF);
   filter:drop-shadow(0 1px 2px rgba(0,18,22,.92))
          drop-shadow(0 2px 12px rgba(0,18,22,.65));
 }
@@ -88,7 +88,7 @@
    after the panel has arrived, so the eye follows the movement to the name. */
 .aqv-rule{
   flex:none;width:.5cqw;min-width:3px;border-radius:2px;
-  background:#5EEAD4;
+  background:#4C6FFF;
   transform:scaleY(0);transform-origin:bottom;
   transition:transform .5s ease .22s;
 }

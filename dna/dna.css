@@ -13,7 +13,7 @@
 .dna-tooltip{
   position:absolute;z-index:20;min-width:190px;
   background:rgba(8,11,32,.94);backdrop-filter:blur(10px);
-  border:1px solid rgba(94,234,212,.3);border-radius:10px;padding:11px 14px;
+  border:1px solid rgba(76,111,255,.3);border-radius:10px;padding:11px 14px;
   color:#fff;opacity:0;pointer-events:none;transition:opacity .15s ease;
 }
 .dna-tooltip.show{opacity:1;}

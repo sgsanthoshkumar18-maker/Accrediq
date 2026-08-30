@@ -67,7 +67,7 @@ window.AQDocx = (function () {
       '<w:rPr><w:b/><w:sz w:val="32"/><w:color w:val="0E2233"/></w:rPr></w:style>' +
     '<w:style w:type="paragraph" w:styleId="Heading2"><w:name w:val="heading 2"/>' +
       '<w:pPr><w:spacing w:before="320" w:after="160"/></w:pPr>' +
-      '<w:rPr><w:b/><w:sz w:val="26"/><w:color w:val="0EA5A0"/></w:rPr></w:style>' +
+      '<w:rPr><w:b/><w:sz w:val="26"/><w:color w:val="4C6FFF"/></w:rPr></w:style>' +
     '<w:style w:type="paragraph" w:styleId="Heading3"><w:name w:val="heading 3"/>' +
       '<w:pPr><w:spacing w:before="220" w:after="120"/></w:pPr>' +
       '<w:rPr><w:b/><w:sz w:val="23"/></w:rPr></w:style>' +

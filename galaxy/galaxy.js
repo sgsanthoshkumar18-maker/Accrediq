@@ -67,7 +67,7 @@
     const rig = new THREE.Group();
     scene.add(rig);
 
-    const CAT_COLOR = P.categories({ CORE: 0xc42e42, Commitment: 0xb0590a, Achievement: 0x0eA5A0, Excellence: 0x3554d1 });
+    const CAT_COLOR = P.categories({ CORE: 0xc42e42, Commitment: 0xb0590a, Achievement: 0x4C6FFF, Excellence: 0x3554d1 });
 
     // 10 cluster anchor points arranged on a large sphere
     const clusterAnchors = {};

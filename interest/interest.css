@@ -76,5 +76,5 @@ form.aqi-step label{font-size:13.5px;font-weight:650;color:var(--fg);margin-bott
 .aqi-tag.yes{background:var(--ok-tint,rgba(46,160,120,.16));color:var(--ok);}
 .aqi-tag.no{background:var(--bg);color:var(--fg-faint);border:1px solid var(--border);}
 
-.aqi-reply{font-size:13px;font-weight:650;color:var(--accent-bright);text-decoration:none;}
+.aqi-reply{font-size:13px;font-weight:650;color:var(--accent-text);text-decoration:none;}
 .aqi-reply:hover{text-decoration:underline;}

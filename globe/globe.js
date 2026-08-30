@@ -74,7 +74,7 @@
   const keyLight = new THREE.DirectionalLight(0xffffff, 1.1);
   keyLight.position.set(4, 3, 5);
   scene.add(keyLight);
-  const rimLight = new THREE.DirectionalLight(0x5eead4, 0.6);
+  const rimLight = new THREE.DirectionalLight(0x4c6fff, 0.6);
   rimLight.position.set(-4, -2, -3);
   scene.add(rimLight);
   scene.add(new THREE.HemisphereLight(0x4f46e5, 0x060814, 0.4));
@@ -145,8 +145,8 @@
     const ctx = c.getContext("2d");
     const g = ctx.createRadialGradient(32, 32, 0, 32, 32, 32);
     g.addColorStop(0, "rgba(224,242,254,1)");
-    g.addColorStop(0.4, "rgba(94,234,212,0.9)");
-    g.addColorStop(1, "rgba(94,234,212,0)");
+    g.addColorStop(0.4, "rgba(76,111,255,0.9)");
+    g.addColorStop(1, "rgba(76,111,255,0)");
     ctx.fillStyle = g; ctx.beginPath(); ctx.arc(32, 32, 32, 0, Math.PI * 2); ctx.fill();
     return new THREE.CanvasTexture(c);
   }

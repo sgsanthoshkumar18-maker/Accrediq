@@ -21,8 +21,8 @@
   min-height: 40px;
 }
 .cal-tab.is-on {
-  background: var(--brand-2);
-  border-color: var(--brand-2);
+  background:var(--accent-solid);
+  border-color:var(--brand-2);
   /* NOT #fff. --brand-2 is a bright teal under neon, where white text measures ~1.5:1.
      --on-brand is whatever reads on the brand colour in the active theme. */
   color: var(--on-brand);
@@ -52,7 +52,7 @@
   line-height: 1;
   cursor: pointer;
 }
-.cal-nav:hover { background: var(--brand-tint); border-color: var(--brand-2); }
+.cal-nav:hover { background: var(--brand-tint); border-color:var(--brand-2); }
 
 .cal-dow {
   display: grid;
@@ -88,7 +88,7 @@
 .cal-cell.is-blank { background: transparent; border-color: transparent; }
 .cal-cell.is-past { opacity: .72; }
 .cal-cell.is-today {
-  border-color: var(--brand-2);
+  border-color:var(--brand-2);
   box-shadow: 0 0 0 1px var(--brand-2) inset;
 }
 .cal-d {
@@ -97,7 +97,7 @@
   font-weight: 700;
   color: var(--fg-faint);
 }
-.cal-cell.is-today .cal-d { color: var(--brand-2); }
+.cal-cell.is-today .cal-d { color:var(--accent-text); }
 
 .cal-chip {
   font-size: 10.5px;
@@ -112,8 +112,8 @@
   white-space: nowrap;
   display: block;
 }
-.cal-chip.is-cmte   { background: var(--brand-tint);          color: var(--brand-2); }
-.cal-chip.is-task   { background: var(--accent-bright-tint);  color: var(--accent-bright); }
+.cal-chip.is-cmte   { background: var(--brand-tint);          color:var(--accent-text); }
+.cal-chip.is-task   { background: var(--accent-bright-tint);  color:var(--accent-text); }
 .cal-chip.is-held   { background: var(--ok-tint, var(--brand-tint)); color: var(--ok, var(--brand-2)); }
 .cal-chip.is-planned{ background: var(--info-tint);           color: var(--info); }
 .cal-chip.is-missed { background: var(--nc-tint);             color: var(--nc); }
@@ -129,8 +129,8 @@
 }
 .cal-key span { display: inline-flex; align-items: center; gap: 6px; }
 .cal-key i.k { width: 11px; height: 11px; border-radius: 3px; display: inline-block; }
-.cal-key i.is-cmte   { background: var(--brand-2); }
-.cal-key i.is-task   { background: var(--accent-bright); }
+.cal-key i.is-cmte   { background:var(--accent-solid); }
+.cal-key i.is-task   { background:var(--accent-solid); }
 .cal-key i.is-held   { background: var(--ok, var(--brand-2)); }
 .cal-key i.is-missed { background: var(--nc); }
 
@@ -159,7 +159,7 @@
 .cal-row.st-overdue { border-left-color: var(--nc); }
 .cal-row.st-never   { border-left-color: var(--warn); }
 .cal-row.st-due     { border-left-color: var(--warn); }
-.cal-row.st-soon    { border-left-color: var(--accent-bright); }
+.cal-row.st-soon    { border-left-color:var(--brand-2); }
 .cal-row.st-ok      { border-left-color: var(--border); }
 
 .cal-row-main { flex: 1; min-width: 0; }
@@ -185,7 +185,7 @@
 .cal-pill.st-overdue { background: var(--nc-tint);            color: var(--nc); }
 .cal-pill.st-never   { background: var(--warn-tint);          color: var(--warn); }
 .cal-pill.st-due     { background: var(--warn-tint);          color: var(--warn); }
-.cal-pill.st-soon    { background: var(--accent-bright-tint); color: var(--accent-bright); }
+.cal-pill.st-soon    { background: var(--accent-bright-tint); color:var(--accent-text); }
 .cal-pill.st-ok      { background: var(--bg);                 color: var(--fg-muted); }
 
 .cal-x {
@@ -197,7 +197,7 @@
   color: var(--fg-muted);
   cursor: pointer;
 }
-.cal-x:hover { color: var(--brand-2); border-color: var(--brand-2); }
+.cal-x:hover { color:var(--accent-text); border-color:var(--brand-2); }
 
 .cal-empty {
   text-align: center;
