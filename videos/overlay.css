@@ -107,7 +107,7 @@
    the panel and competes with the name for the eye. */
 .aqv-creds{
   display:block;font-family:inherit;
-  font-size:max(11px,1.85cqw);line-height:1.25;color:#CFE3DD;letter-spacing:0;
+  font-size:max(11px,1.85cqw);line-height:1.25;color:#CFDCE8;letter-spacing:0;
   margin-top:.18em;
 }
 .aqv-role{
@@ -115,7 +115,7 @@
 }
 /* The second line carries where the speaker is NOW, so it sits a touch brighter than the
    line of past posts above it — present tense reading as present tense. */
-.aqv-role2{color:#D6F1EA;margin-top:.35em;}
+.aqv-role2{color:#DCE6F5;margin-top:.35em;}
 
 /* In a player this small the caption was covering half the picture it was captioning —
    52% of the height of a 353px card, for two lines of history nobody can read at that

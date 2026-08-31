@@ -121,7 +121,7 @@
   padding:8px 6px;border-radius:8px;border:1px solid var(--border);background:var(--bg);
   color:var(--fg-muted);font-size:11.5px;font-weight:700;transition:all .12s;}
 .ws-sbtn:hover{border-color:var(--brand-2);}
-.ws-sbtn.on.s-compliant{background:var(--accent-solid);border-color:var(--brand-2);color:#04241d;}
+.ws-sbtn.on.s-compliant{background:var(--accent-solid);border-color:var(--brand-2);color:#0a1230;}
 .ws-sbtn.on.s-partial{background:var(--warn);border-color:var(--warn);color:#2b1a02;}
 .ws-sbtn.on.s-nc{background:var(--nc);border-color:var(--nc);color:#fff;}
 .ws-sbtn.on.s-na{background:var(--fg-faint);border-color:var(--fg-faint);color:var(--bg);}

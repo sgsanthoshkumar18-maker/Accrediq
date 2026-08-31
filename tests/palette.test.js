@@ -185,6 +185,63 @@ const neonRules = css.split('\n')
 eq(/\.page-head\{[^}]*border-bottom/.test(css), false,
    'the page head no longer draws a rule under itself');
 
+/* DARK IS THE DEFAULT, ON EVERY DEVICE.
+   A first-time visitor with nothing stored must get dark — on a phone, a laptop, and on a
+   machine whose OS is set to light. Two things have to hold for that: the stored-preference
+   lookup falls back to "dark", and no stylesheet follows prefers-color-scheme. The second is
+   the one that would silently undo the first, because it needs no code change to appear —
+   a single media query anywhere in any stylesheet is enough. */
+eq(/localStorage\.getItem\("aq-theme"\)\|\|"dark"/.test(boot), true,
+   'a visitor with no stored preference must default to dark');
+eq(/if\(t!=="light"\)\{document\.documentElement\.setAttribute\("data-theme","dark"\)/.test(boot), true,
+   'anything other than an explicit "light" resolves to dark');
+{
+  const root = path.join(__dirname, '..');
+  const sheets = [];
+  (function walkCss(d) {
+    for (const n of fs.readdirSync(d)) {
+      if (n === 'node_modules' || n === '.git' || n === 'tests') continue;
+      const p = path.join(d, n);
+      if (fs.statSync(p).isDirectory()) walkCss(p);
+      else if (/\.css$/.test(n)) sheets.push(p);
+    }
+  })(root);
+  const following = sheets
+    .filter(f => /prefers-color-scheme/.test(fs.readFileSync(f, 'utf8')))
+    .map(f => path.relative(root, f).split(path.sep).join('/'));
+  eq(following.length, 0,
+     'no stylesheet may follow the OS colour scheme — it would override the dark default: ' +
+     following.join(', '));
+}
+
+/* THE BAND THAT KEPT COMING BACK.
+   Making the base rule transparent is only half the job: the palette-scoped copies are
+   (0,2,0) and beat it, and neon is the palette every visitor actually gets. So a section
+   could read as de-banded in the plain dark theme and still paint its own ground in the one
+   people see — which is how a green-black band survived several passes at removing it.
+   Assert on the palette overrides directly. */
+[['lens-strip', 'lens strip'], ['humor', 'humour band'],
+ ['acc-band', 'accordion band'], ['page-head', 'page head']].forEach(function (p) {
+  const m = new RegExp(':root\\[data-palette="neon"\\] \\.' + p[0] + '\\{([^}]*)\\}').exec(css);
+  if (!m) return;                       /* no override at all is the ideal state */
+  eq(/background:transparent/.test(m[1]), true,
+     'the neon palette must not repaint the ' + p[1] + ': ' + m[1].slice(0, 60));
+});
+
+/* And no band anywhere may be painted a green-black. A near-black green is still green
+   across a whole section — it was dismissed as "near-grey" by an earlier sweep, which is
+   exactly why it survived. */
+{
+  const greens = [];
+  const re = /(?:background|background-color)\s*:\s*#([0-9A-Fa-f]{6})/g;
+  let m;
+  while ((m = re.exec(css))) {
+    const n = parseInt(m[1], 16), r = n >> 16 & 255, g = n >> 8 & 255, b = n & 255;
+    if (g > r && g >= b && (g - r) >= 3) greens.push('#' + m[1]);
+  }
+  eq(greens.length, 0, 'green-tinted grounds in styles.css: ' + greens.join(', '));
+}
+
 // --- site_settings: everyone reads, only the owner writes
 eq(/create policy site_settings_read on public\.site_settings\s+for select using \(true\)/.test(sql),
    true, 'site settings are readable by every visitor');

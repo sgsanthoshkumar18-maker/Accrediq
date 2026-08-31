@@ -102,21 +102,21 @@ module.exports = async function handler(req, res) {
   ].filter(Boolean);
 
   const html =
-    '<div style="font-family:system-ui,Segoe UI,Arial,sans-serif;font-size:15px;line-height:1.6;color:#12201D">' +
+    '<div style="font-family:system-ui,Segoe UI,Arial,sans-serif;font-size:15px;line-height:1.6;color:#131826">' +
     '<p style="margin:0 0 4px;font-size:12px;letter-spacing:.12em;text-transform:uppercase;color:#7A5C36">' +
       'New account &middot; aqcredix.com</p>' +
     '<h2 style="margin:0 0 18px;font-family:Georgia,serif;font-weight:400;font-size:22px">' +
       esc(name || email) + ' signed up</h2>' +
-    '<table style="font-size:14px;color:#5E6D67;border-collapse:collapse">' +
+    '<table style="font-size:14px;color:#6B7488;border-collapse:collapse">' +
       rows.map(function (r) {
-        return '<tr><td style="padding:3px 16px 3px 0;color:#8B978F">' + esc(r[0]) +
-               '</td><td style="color:#12201D">' + esc(r[1]) + '</td></tr>';
+        return '<tr><td style="padding:3px 16px 3px 0;color:#9AA3B4">' + esc(r[0]) +
+               '</td><td style="color:#131826">' + esc(r[1]) + '</td></tr>';
       }).join("") +
     '</table>' +
-    '<p style="font-size:13px;color:#5E6D67;margin-top:20px">' +
+    '<p style="font-size:13px;color:#6B7488;margin-top:20px">' +
       'They have an account. They do not have a subscription unless they pay or you grant ' +
       'complimentary access.</p>' +
-    '<p style="font-size:12px;color:#8B978F;margin-top:14px">' +
+    '<p style="font-size:12px;color:#9AA3B4;margin-top:14px">' +
       '<a href="' + esc(SITE) + '/profile.html" style="color:#2743C9">Open AQcredix</a></p>' +
     '</div>';
 

@@ -58,7 +58,7 @@
   transform:translate(-50%,-100%);
   padding:5px 10px;border-radius:6px;white-space:nowrap;
   background:rgba(6,8,20,.92);border:1px solid rgba(76,111,255,.35);
-  color:#e8fffb;font-size:12px;font-family:var(--font-mono);letter-spacing:.02em;
+  color:#edf1f8;font-size:12px;font-family:var(--font-mono);letter-spacing:.02em;
   box-shadow:0 4px 14px rgba(0,0,0,.45);
   opacity:0;transition:opacity .12s ease;
 }

@@ -126,7 +126,7 @@
   background:rgba(244,242,236,.26);overflow:hidden;}
 .aqf-seek-fill{height:100%;width:0;background:#4C6FFF;border-radius:999px;}
 
-.aqf-time{flex:none;color:#CFE0DB;font-size:clamp(10px,1.05vw,12.5px);
+.aqf-time{flex:none;color:#CFDCE8;font-size:clamp(10px,1.05vw,12.5px);
   letter-spacing:.02em;white-space:nowrap;}
 
 /* On a narrow screen the two skip buttons are the first thing to go — play, seek, time

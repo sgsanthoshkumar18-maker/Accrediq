@@ -61,19 +61,19 @@ module.exports = async function handler(req, res) {
   }
 
   const html =
-    '<div style="font-family:system-ui,Segoe UI,Arial,sans-serif;font-size:15px;line-height:1.6;color:#12201D">' +
+    '<div style="font-family:system-ui,Segoe UI,Arial,sans-serif;font-size:15px;line-height:1.6;color:#131826">' +
     '<p style="margin:0 0 4px;font-size:12px;letter-spacing:.12em;text-transform:uppercase;color:#7A5C36">' +
       esc(kind) + ' &middot; aqcredix.com</p>' +
     '<h2 style="margin:0 0 18px;font-family:Georgia,serif;font-weight:400;font-size:22px">' +
       'Message from ' + esc(email) + '</h2>' +
     '<div style="white-space:pre-wrap;border-left:3px solid #2743C9;padding:2px 0 2px 16px;margin:0 0 20px">' +
       esc(message) + '</div>' +
-    '<table style="font-size:13px;color:#5E6D67;border-collapse:collapse">' +
+    '<table style="font-size:13px;color:#6B7488;border-collapse:collapse">' +
       '<tr><td style="padding:2px 14px 2px 0">Reply to</td><td>' + esc(email) + '</td></tr>' +
       '<tr><td style="padding:2px 14px 2px 0">Sent from</td><td>' + esc(page || "unknown page") + '</td></tr>' +
       '<tr><td style="padding:2px 14px 2px 0">Received</td><td>' + new Date().toISOString() + '</td></tr>' +
     '</table>' +
-    '<p style="font-size:12px;color:#8B978F;margin-top:20px">Hit Reply — it goes straight to them.</p>' +
+    '<p style="font-size:12px;color:#9AA3B4;margin-top:20px">Hit Reply — it goes straight to them.</p>' +
     '</div>';
 
   try {
