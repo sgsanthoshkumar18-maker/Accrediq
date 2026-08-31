@@ -1870,13 +1870,20 @@ body.aq-locked{
 :root:not([data-theme="dark"]) .kn-wrap canvas,
 :root:not([data-theme="dark"]) .dna-wrap canvas,
 :root:not([data-theme="dark"]) .brain-wrap canvas,
-:root:not([data-theme="dark"]) .face-wrap canvas,
 :root:not([data-theme="dark"]) .radar-canvas-wrap canvas,
 :root:not([data-theme="dark"]) .helix-canvas-wrap canvas{
-  /* Chosen by computing the filter matrices rather than by eye: this chain lands the mesh
-     lines on rgb(41,85,255) — the cobalt family — and takes the node glows to a near
-     black-blue, which is what the bright nodes invert to. */
-  filter:invert(1) hue-rotate(180deg) saturate(1.7) contrast(1.2) brightness(.62);
+  /* ONE COLOUR FOR THE WHOLE DRAWING — the Explore-the-standards blue.
+     Inverting alone kept the source colours, so the near-white node glows landed on near
+     black and read as soot, and the chapter accents stayed pink and violet. A black pixel
+     has no chroma left for hue-rotate() to steer, so no amount of saturation rescues it.
+
+     brightness(0) drops that requirement entirely: every visible pixel collapses to black
+     while ALPHA SURVIVES, which turns the scene into a silhouette whose density is its own
+     alpha. invert(.11) is then the one step that can lift a zero, and the rest maps that
+     grey onto the target. Solved numerically against #2743C9 — the chain below lands on
+     rgb(39,66,202), off by 1.4 — so the mesh is the same blue as the button, solid where the
+     web overlaps and pale where it is sparse. */
+  filter:brightness(0) invert(.11) sepia(1) saturate(11) hue-rotate(212deg) brightness(2.1) contrast(1.2);
 }
 
 /* THE GLOBE SHELLS ARE DARK IN BOTH THEMES, SO THEY CARRY THE DARK TOKENS IN BOTH.

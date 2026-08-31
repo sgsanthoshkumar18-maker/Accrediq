@@ -74,7 +74,44 @@ window.AQScenePalette = (function () {
      caller's value when none is passed. That is deliberate and predates the third palette. */
   function chapters(fallback) { return fallback; }
   function categories(fallback) { return fallback; }
-  function cycle(fallback) { return fallback; }
+  /* THE DECORATIVE PARTICLE RAMP.
+     On a dark page this is a spread of hues — blues, violets, a pink — and it reads as a
+     living surface. On white the same spread reads as coloured speckle, and the request was
+     for the artwork to be the one blue the primary button uses. So in the light theme the
+     ramp collapses onto that blue: eight steps around #2743C9, which keeps the depth the
+     varying colours were providing without introducing a second hue. */
+  var LIGHT_RAMP = [0x2743C9, 0x3A57E4, 0x1B2F94, 0x4362F0, 0x2743C9, 0x3350DA, 0x243C9E, 0x4C6FFF];
+  function cycle(fallback) {
+    if (!isLight()) return fallback;
+    if (!fallback || !fallback.length) return LIGHT_RAMP;
+    /* Match the caller's length so index arithmetic downstream is unchanged. */
+    var out = [];
+    for (var i = 0; i < fallback.length; i++) out.push(LIGHT_RAMP[i % LIGHT_RAMP.length]);
+    return out;
+  }
+
+  /* ---- how a scene should DRAW on this theme's ground ----
+     These exist because the light page is white and every scene was written for black.
+     Additive blending adds to what is behind it, so on white it washes out; normal blending
+     with a dark ink is what actually puts a line on paper. Each takes the value the scene
+     already used, so a scene that does not call them is unaffected. */
+  function blending(THREE, fallback) {
+    if (!THREE) return fallback;
+    return isLight() ? THREE.NormalBlending : (fallback != null ? fallback : THREE.AdditiveBlending);
+  }
+  /* The mesh lines: the button's blue on white, the brand blue on black. */
+  function lineColor(fallback) { return pick(0x2743C9, 0x4C6FFF, fallback); }
+  /* Additive strokes on black can be faint and still read, because they accumulate. A single
+     normal-blended stroke on white cannot, so it needs more opacity to carry. */
+  function lineOpacity(fallback) {
+    var v = fallback == null ? 0.34 : fallback;
+    return isLight() ? Math.min(1, v * 1.75) : v;
+  }
+  /* Glow sprites bake their colour in at creation, so the hex has to be decided here. A
+     near-white glow is right over black and invisible over white. */
+  function glowHex(fallback) { return isLight() ? "#2743C9" : (fallback || "#e0f2fe"); }
+  /* The travelling impulse reads as light on a dark organ and as ink on a pale one. */
+  function impulseHex(fallback) { return isLight() ? "#1B2F94" : (fallback || "#ffffff"); }
   function accent(fallback) { return pick(LIGHT.accent, NEON.accent, fallback); }
   function dim(fallback) { return pick(LIGHT.dim, NEON.dim, fallback); }
   function ambient(fallback) { return pick(LIGHT.ambient, NEON.ambient, fallback); }
@@ -91,6 +128,20 @@ window.AQScenePalette = (function () {
     if (typeof fn !== "function") return;
     watchers.push(fn);
   }
+  /* A theme flip matters more than a palette flip for anything drawn in WebGL: the palette
+     only changes which blues are used, while the theme changes the GROUND those blues are
+     drawn on, and with it the blending mode and the baked glow colours. Scenes register the
+     same way for both. */
+  var themeWatchers = [];
+  function onTheme(fn) {
+    if (typeof fn === "function") themeWatchers.push(fn);
+  }
+  try {
+    window.addEventListener("aq:theme", function () {
+      themeWatchers.forEach(function (fn) { try { fn(isLight()); } catch (err) {} });
+    });
+  } catch (e) {}
+
   try {
     window.addEventListener("aq:palette", function (e) {
       var p = (e && e.detail && e.detail.palette) || name();
@@ -103,6 +154,10 @@ window.AQScenePalette = (function () {
     chapters: chapters, categories: categories, cycle: cycle,
     accent: accent, dim: dim, ambient: ambient, key: keyLight,
     link: link, deep: deep,
-    onChange: onChange
+    blending: blending, lineColor: lineColor, lineOpacity: lineOpacity,
+    glowHex: glowHex, impulseHex: impulseHex,
+    isLight: isLight,
+    onChange: onChange,
+    onTheme: onTheme
   };
 })();

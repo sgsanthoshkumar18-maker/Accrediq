@@ -189,6 +189,21 @@
     </footer>`;
   }
 
+  /* Broadcast a theme change. The CSS follows the attribute on its own; WebGL scenes cannot,
+     because their materials and glow textures are created once and keep whatever theme was
+     current at startup, so anything that needs to re-tint listens for this.
+
+     Declared at module scope on purpose: there are TWO ways to change the theme — the header
+     button and toggleTheme() for the keyboard path — and they live in different functions.
+     Declaring it inside either one leaves the other throwing a ReferenceError on click. */
+  function announceTheme() {
+    try {
+      window.dispatchEvent(new CustomEvent("aq:theme", {
+        detail: { dark: document.documentElement.getAttribute("data-theme") === "dark" }
+      }));
+    } catch (e) {}
+  }
+
   function initHeaderFooter() {
     const currentKey = document.body.getAttribute("data-page") || "";
     const base = getBase();
@@ -242,6 +257,7 @@
             }
           } catch (err) {}
         }
+        announceTheme();
       });
     }
 
@@ -473,6 +489,7 @@
         }
       } catch (err) {}
     }
+    announceTheme();
   }
 
   function initOwnerThemeToggle() {

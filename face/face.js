@@ -218,7 +218,10 @@
        common cases, and the 3.4 floor means the framing is never tighter than it was. */
   }
 
-  const COLORS = P.cycle([0x4c6fff, 0x7d9bff, 0x818cf8, 0xa78bfa, 0xf472b6, 0xd946ef, 0x60a5fa, 0xc084fc]);
+  /* Kept so the ramp can be re-derived when the theme changes: P.cycle() answers differently
+     on a light page, and the materials below bake its answer in at creation. */
+  const BASE_RAMP = [0x4c6fff, 0x7d9bff, 0x818cf8, 0xa78bfa, 0xf472b6, 0xd946ef, 0x60a5fa, 0xc084fc];
+  let COLORS = P.cycle(BASE_RAMP);
   function glowTexture(hex) {
     const c = document.createElement("canvas"); c.width = c.height = 32;
     const ctx = c.getContext("2d");
@@ -232,7 +235,7 @@
 
   const particles = points.map((p, i) => {
     const color = COLORS[i % COLORS.length];
-    const mat = new THREE.SpriteMaterial({ map: colorTex[color], transparent: true, depthWrite: false, blending: THREE.AdditiveBlending, opacity: 0.75 });
+    const mat = new THREE.SpriteMaterial({ map: colorTex[color], transparent: true, depthWrite: false, blending: P.blending(THREE, THREE.AdditiveBlending), opacity: 0.75 });
     const sprite = new THREE.Sprite(mat);
     const scale = 0.028 + Math.random() * 0.03;
     sprite.scale.setScalar(scale);
@@ -279,10 +282,10 @@
   // Brighter and denser than the old connective web — this is the organ's skin now,
   // so it should read as a living surface rather than a faint scaffold.
   const edgeMat = new THREE.LineBasicMaterial({
-    color: 0x4c6fff,
+    color: P.lineColor(0x4c6fff),
     transparent: true,
-    opacity: MESH_MODE ? 0.34 : 0.15,
-    blending: THREE.AdditiveBlending,
+    opacity: P.lineOpacity(MESH_MODE ? 0.34 : 0.15),
+    blending: P.blending(THREE, THREE.AdditiveBlending),
     depthWrite: false
   });
   const edgeLines = new THREE.LineSegments(edgeGeo, edgeMat);
@@ -318,8 +321,8 @@
   }
 
   // ---------- 10 real chapter nodes, anchored to the morphing cloud ----------
-  const nodeGlowTex = glowTexture("#e0f2fe");
-  const nodeMat = new THREE.SpriteMaterial({ map: nodeGlowTex, transparent: true, depthWrite: false, blending: THREE.AdditiveBlending });
+  const nodeGlowTex = glowTexture(P.glowHex("#e0f2fe"));
+  const nodeMat = new THREE.SpriteMaterial({ map: nodeGlowTex, transparent: true, depthWrite: false, blending: P.blending(THREE, THREE.AdditiveBlending) });
   // Each chapter node rides a fixed particle index, so it travels with the
   // shape through every morph and always sits on the current organ.
   const chapterNodes = [];
@@ -423,7 +426,48 @@
   //
   // Timing note: the impulse is tuned to complete its sweep inside the 3s hold,
   // so a shape never changes mid-function.
-  const impulseTex = glowTexture("#ffffff");
+  const impulseTex = glowTexture(P.impulseHex("#ffffff"));
+
+  /* RE-TINT WHEN THE THEME CHANGES.
+     This scene is the only one that draws per-theme in JS rather than being re-coloured by a
+     CSS filter, which buys an exact hue but costs this: materials and glow textures are built
+     once, at startup, and a visitor toggling the theme would otherwise keep whichever set was
+     built on load — flat light-mode lines on a black page until they happened to reload.
+
+     Textures are regenerated rather than tinted because the colour is painted into the canvas
+     gradient at creation; the old ones are disposed so a visitor flipping the theme repeatedly
+     does not accumulate GPU textures. */
+  function retint() {
+    const next = P.cycle(BASE_RAMP);
+    const oldTex = colorTex;
+    const fresh = {};
+    next.forEach(c => { fresh[c] = glowTexture("#" + c.toString(16).padStart(6, "0")); });
+    COLORS = next;
+    particles.forEach((p, i) => {
+      const m = p.mesh.material;
+      m.map = fresh[next[i % next.length]];
+      m.blending = P.blending(THREE, THREE.AdditiveBlending);
+      m.needsUpdate = true;
+    });
+    Object.keys(oldTex).forEach(k => { try { oldTex[k].dispose(); } catch (e) {} delete oldTex[k]; });
+    next.forEach(c => { colorTex[c] = fresh[c]; });
+
+    edgeMat.color.setHex(P.lineColor(0x4c6fff));
+    edgeMat.opacity = P.lineOpacity(MESH_MODE ? 0.34 : 0.15);
+    edgeMat.blending = P.blending(THREE, THREE.AdditiveBlending);
+    edgeMat.needsUpdate = true;
+
+    const nodeTex = glowTexture(P.glowHex("#e0f2fe"));
+    try { nodeMat.map.dispose(); } catch (e) {}
+    nodeMat.map = nodeTex;
+    nodeMat.blending = P.blending(THREE, THREE.AdditiveBlending);
+    nodeMat.needsUpdate = true;
+
+    /* The hero tint is clamped against the ground it is painted on, so it has to be
+       recomputed too or a chapter colour picked for black stays on white. */
+    resetHeroTint();
+  }
+  if (P && typeof P.onTheme === "function") P.onTheme(retint);
   let impulseT = 0;                 // 0..1 sweep across the organ
   let currentMotion = "impulse";
   let pulseOrigin = new THREE.Vector3(0, 1.2, 0);
