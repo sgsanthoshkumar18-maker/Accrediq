@@ -248,8 +248,7 @@
 :root[data-palette="neon"] .pf-next a,
 :root[data-palette="neon"] .video-embed,
 :root[data-palette="neon"] .qg-metric-card,
-:root[data-palette="neon"] .sv-opt,
-:root[data-palette="neon"] .hg-shell{
+:root[data-palette="neon"] .sv-opt{
   background:var(--bg-elevated);
   border:1px solid var(--border);
   box-shadow:0 0 0 1px rgba(46,74,200,.05), 0 18px 44px -24px rgba(46,74,200,.35);
@@ -973,8 +972,10 @@ a.tile:hover .more{text-decoration:underline;}
 
 /* ---- Neon palette overrides for feature modules (their CSS hardcodes the
    indigo/teal accents, so they are re-pointed here rather than duplicated). ---- */
+/* The globes keep their own deep-space ground in every palette, and no border: the shell is
+   a window, not a card. */
 :root[data-palette="neon"] .qg-shell,
-:root[data-palette="neon"] .hg-shell{background:linear-gradient(160deg,#000,#000000);border-color:rgba(76,111,255,.28);border-top-color:var(--brand-2);}
+:root[data-palette="neon"] .hg-shell{background:linear-gradient(160deg,#05070F,#0A1230);border:0;}
 :root[data-palette="neon"] .qg-right,
 :root[data-palette="neon"] .hg-right{background:rgba(0,0,0,.7);}
 :root[data-palette="neon"] .qg-live .dot{background:var(--accent-solid);box-shadow:0 0 6px var(--accent-bright);}
@@ -1833,44 +1834,72 @@ body.aq-locked{
    and at (0,2,1) it outranks the plain .gx-wrap rules in the per-scene stylesheets, which
    load after this file.
    ============================================================ */
-/* THE SCENES ON A LIGHT PAGE — NO PANEL, JUST THE ARTWORK.
-   The wrappers paint nothing in either theme. On the dark page the artwork already sits on
-   the ground it was drawn for; on white it needs help, because every one of these scenes
-   uses THREE.AdditiveBlending and additive over white saturates to white — the lines do not
-   dim, they disappear.
+/* THE SCENES SPLIT INTO TWO KINDS, AND THEY WANT OPPOSITE THINGS.
+   Treating all ten alike is what produced a white globe: one rule cannot serve both.
 
-   WHY A FILTER RATHER THAN RECOLOURING THE SCENES. Recolouring means switching nine files to
-   NormalBlending and regenerating their glow textures, and the materials are built once at
-   startup — so a visitor toggling the theme would keep whichever set was built on load, and
-   see light-mode artwork on a black page. This inverts the composited canvas instead: the
+   LINE ART — the organ mesh, the brain, the DNA, the helix, the KPI network, the radar.
+   These are drawings, not objects in a place. They belong on the page itself, with no panel
+   and no edge. On a dark page they already read; on white they would vanish, because every
+   scene uses THREE.AdditiveBlending and additive over white saturates to white — the lines
+   do not dim, they disappear. So the composited canvas is inverted in the light theme: the
    bright-on-transparent drawing becomes dark-on-transparent, the hue rotation carries the
-   blue back to blue, and because it is CSS it flips the instant the theme does, with no
-   stale materials and no reload. Alpha is untouched, so nothing paints a rectangle.
+   blue back to blue, and alpha is untouched so nothing paints a rectangle. Doing it in CSS
+   rather than in the scenes matters because the materials are built once at startup — a
+   visitor toggling the theme would otherwise keep whichever set was built on load.
 
-   Scoped to :root:not([data-theme="dark"]) because light is the ABSENCE of the attribute. */
+   SPACE — the two globes and the galaxy. A globe is an object lit against space, and space
+   is black in any theme. Their shells already paint a dark ground in both themes, so these
+   get NO filter: the light theme shows exactly the same globe the dark theme does, which is
+   what was asked for and is also the only version that makes sense.
+
+   NOTHING CLIPS. Every one of these wrappers holds its own tooltip as a direct child, so an
+   overflow:hidden on the wrapper cuts the tooltip off at the artwork's edge — which is what
+   was hiding the node labels. The canvas carries the corner radius instead, so the stage
+   stays neat and the tooltip can leave. */
 .gx-wrap, .hg-globe-wrap, .qg-globe-wrap, .kn-wrap, .dna-wrap, .brain-wrap,
 .face-wrap, .radar-canvas-wrap, .helix-canvas-wrap, .ent-globe-wrap{
   background:transparent;
   border:0;
-  overflow:hidden;
+  overflow:visible;
 }
-:root:not([data-theme="dark"]) .gx-wrap canvas,
-:root:not([data-theme="dark"]) .hg-globe-wrap canvas,
-:root:not([data-theme="dark"]) .qg-globe-wrap canvas,
+.gx-wrap > canvas, .hg-globe-wrap > canvas, .qg-globe-wrap > canvas,
+.ent-globe-wrap > canvas{
+  border-radius:var(--r-lg);
+}
+/* Line art only. The globes and the galaxy are deliberately absent from this list. */
 :root:not([data-theme="dark"]) .kn-wrap canvas,
 :root:not([data-theme="dark"]) .dna-wrap canvas,
 :root:not([data-theme="dark"]) .brain-wrap canvas,
 :root:not([data-theme="dark"]) .face-wrap canvas,
 :root:not([data-theme="dark"]) .radar-canvas-wrap canvas,
-:root:not([data-theme="dark"]) .helix-canvas-wrap canvas,
-:root:not([data-theme="dark"]) .ent-globe-wrap canvas{
-  /* Chosen by computing the filter matrices rather than by eye: this chain lands the
-     mesh lines on rgb(41,85,255) — the cobalt family — and takes the node glows to a near
+:root:not([data-theme="dark"]) .helix-canvas-wrap canvas{
+  /* Chosen by computing the filter matrices rather than by eye: this chain lands the mesh
+     lines on rgb(41,85,255) — the cobalt family — and takes the node glows to a near
      black-blue, which is what the bright nodes invert to. */
   filter:invert(1) hue-rotate(180deg) saturate(1.7) contrast(1.2) brightness(.62);
 }
-/* Overlay UI sits on the page in light and on the artwork's own dark ground in dark, so it
-   takes the theme's foreground either way. */
+
+/* THE GLOBE SHELLS ARE DARK IN BOTH THEMES, SO THEY CARRY THE DARK TOKENS IN BOTH.
+   This is the fix for the readings that were invisible in the light theme: the shell paints
+   a navy ground in every theme, but its contents were resolving --fg to the light theme's
+   ink. Overriding the tokens on the island itself fixes every descendant at once — the
+   labels, the values, the panel, the hints — instead of forty individual rules, and it keeps
+   working for anything added to the panel later. */
+.hg-shell, .qg-shell{
+  --fg:#EDF1F8;
+  --fg-muted:#B9C2D2;
+  --fg-faint:#93A0B4;
+  --border:rgba(255,255,255,.12);
+  --border-strong:rgba(255,255,255,.22);
+  --surface-1:rgba(255,255,255,.05);
+  --surface-2:rgba(255,255,255,.10);
+  --accent-text:#6C8CFF;
+  color:var(--fg);
+  /* The blue rule along the top was the last section border on the page. */
+  border:0;
+}
+/* Overlay UI is drawn on the artwork, which is dark for the globes and the page ground for
+   the line art — so it takes the token, and the token is already right in both cases. */
 .gx-auto-label, .hg-loading, .qg-loading, .gx-loading, .kn-loading,
 .face-loading, .brain-loading, .ent-globe-loading{
   color:var(--fg-muted);

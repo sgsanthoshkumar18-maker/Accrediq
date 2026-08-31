@@ -3,9 +3,8 @@
 .qg-shell{
   display:grid;grid-template-columns:1.3fr 1fr;gap:0;
   background:linear-gradient(160deg,#070a1e,#10143a);
-  border:1px solid rgba(76,111,255,.18);border-radius:var(--r-xl);
+  border:0;border-radius:var(--r-xl);
   overflow:hidden;box-shadow:var(--shadow-2);
-  border-top:2px solid #4c6fff;
 }
 @media (max-width:980px){.qg-shell{grid-template-columns:1fr;}}
 
