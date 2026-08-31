@@ -164,6 +164,15 @@ window.AQAuditExcel = (function () {
       [L("Readiness (unweighted)"), sc.plain + "%"],
       [L("Verdict"), B(sc.band.label)],
       [L("Open Core-category findings"), { v: sc.coreOpen, n: true }],
+      /* What the department physically has, on the front page rather than buried three
+         sheets in — it is the first question anyone asks of an internal audit. */
+      [L("Walk-the-floor items present"), (function () {
+        var ql = A.quickSummary(session);
+        return ql.total
+          ? { v: ql.present.length + " of " + ql.total + "  (" + ql.pct + "%)",
+              s: ql.pct >= 80 ? XF.compliant : ql.pct >= 50 ? XF.partial : XF.nc }
+          : "—";
+      })()],
       [],
       [B("Legend")],
       [{ v: "C", s: XF.compliant }, W("Compliant — requirement met, evidence seen")],
@@ -244,6 +253,28 @@ window.AQAuditExcel = (function () {
     return sheetXml(out, { widths: [13, 9, 11, 62, 44, 22, 14], freeze: 1 });
   }
 
+  /* The walk-the-floor list, as evidence. Present/absent per item plus the totals, so the
+     sheet answers "what does this department actually have" without anyone re-reading the
+     report. Absent rows are styled as non-conformities because that is what they are. */
+  function quickSheet(session) {
+    var ql = window.AQAudit.quickSummary(session);
+    var out = [[H("Walk-the-floor item"), H("Present in department")]];
+    ql.list.forEach(function (q) {
+      var ok = ql.present.indexOf(q) >= 0;
+      out.push([W(q), { v: ok ? "Yes" : "No", s: ok ? XF.compliant : XF.nc }]);
+    });
+    if (!ql.total) {
+      out.push([W("The assessor checklist lists no walk-the-floor items for this area.")]);
+    } else {
+      out.push([]);
+      out.push([B("Present"), { v: ql.present.length, s: XF.compliant }]);
+      out.push([B("Not available"), { v: ql.absent.length, s: XF.nc }]);
+      out.push([B("Total items"), ql.total]);
+      out.push([B("Percent present"), ql.pct + "%"]);
+    }
+    return sheetXml(out, { widths: [74, 22], freeze: 1 });
+  }
+
   function kpiSheet(session) {
     var sc = (window.AUDIT_SCOPE || {})[session.department_id] || {};
     var out = [[H("Quality indicator to verify"), H("Data available")]];
@@ -298,7 +329,7 @@ window.AQAuditExcel = (function () {
   /* ------------------------------- package ------------------------------- */
 
   var SHEETS = ["Cover", "Kamishibai Board", "Findings", "Non-Conformities",
-                "Quality Indicators", "Analysis"];
+                "Walk-the-Floor List", "Quality Indicators", "Analysis"];
 
   function build(session) {
     if (!window.JSZip) throw new Error("JSZip is not loaded yet — wait a moment and try again.");
@@ -352,8 +383,9 @@ window.AQAuditExcel = (function () {
     ws.file("sheet2.xml", boardSheet(session, rows));
     ws.file("sheet3.xml", findingsSheet(session, rows));
     ws.file("sheet4.xml", ncSheet(session, sc));
-    ws.file("sheet5.xml", kpiSheet(session));
-    ws.file("sheet6.xml", analysisSheet(session, sc));
+    ws.file("sheet5.xml", quickSheet(session));
+    ws.file("sheet6.xml", kpiSheet(session));
+    ws.file("sheet7.xml", analysisSheet(session, sc));
 
     return zip.generateAsync({
       type: "blob",

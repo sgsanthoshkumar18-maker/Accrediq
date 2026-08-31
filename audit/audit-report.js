@@ -103,6 +103,31 @@ window.AQAuditReport = (function () {
       "the NABH 5th Edition assessor checklist. It is not an NABH opinion, and an assessor " +
       "will not reproduce this number.</p></div>";
 
+    /* THE QUICK LIST AS A RESULT, NOT A CHECKLIST.
+       What the department physically has is the first thing an assessor establishes, and it
+       is the part a spreadsheet audit usually loses. Absent items are listed by name rather
+       than summarised, because "9 of 13 present" tells nobody what to go and fix. */
+    var ql = A.quickSummary(session);
+    if (ql.total) {
+      h += '<div class="aud-card aud-quickrep"><h3>What the department has (' +
+        ql.present.length + " of " + ql.total + ")</h3>" +
+        '<div class="aud-qbar" role="img" aria-label="' + ql.pct +
+        '% of the quick list present"><span style="width:' + ql.pct + '%"></span></div>' +
+        '<p class="aud-sub"><b>' + ql.pct + "%</b> of the walk-the-floor list was present " +
+        "on the day.</p><div class=\"aud-qcols\">";
+      h += '<div><h4>Present (' + ql.present.length + ")</h4>" +
+        (ql.present.length
+          ? '<ul class="aud-qlist ok">' + ql.present.map(function (q) {
+              return "<li>" + esc(q) + "</li>"; }).join("") + "</ul>"
+          : "<p class=\"aud-sub\">Nothing on the list was recorded as present.</p>") + "</div>";
+      h += '<div><h4>Not available (' + ql.absent.length + ")</h4>" +
+        (ql.absent.length
+          ? '<ul class="aud-qlist bad">' + ql.absent.map(function (q) {
+              return "<li>" + esc(q) + "</li>"; }).join("") + "</ul>"
+          : "<p class=\"aud-sub\">Everything on the list was present.</p>") + "</div>";
+      h += "</div></div>";
+    }
+
     h += '<div class="aud-card"><h3>Where the gaps sit</h3>' + chapterStrip(sc) + "</div>";
 
     h += '<div class="aud-card"><h3>Findings to close (' + sc.open.length + ")</h3>";

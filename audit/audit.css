@@ -194,3 +194,40 @@
   .aud-report { font-size: 11pt; }
   a[href]:after { content: ""; }
 }
+
+/* ---------- Walk-the-floor result on the finished report ----------
+ * What the department physically has is the first thing an assessor establishes, so it gets
+ * a panel of its own rather than a line in a summary. Present and absent are listed by name
+ * side by side: "9 of 13" tells nobody what to go and fix.
+ *
+ * Colour never carries the meaning alone — each column is titled, and the absent list is
+ * marked with a symbol as well as a colour, so the printed and greyscale versions survive.
+ */
+.aud-quickrep .aud-qbar{
+  height:10px;border-radius:999px;background:var(--surface-2);overflow:hidden;margin:4px 0 10px;
+}
+.aud-quickrep .aud-qbar span{
+  display:block;height:100%;border-radius:999px;background:var(--ok);
+  /* Grows on reveal so the number is read rather than skimmed past. */
+  animation:aud-qgrow .9s cubic-bezier(.22,.61,.36,1) both;
+}
+@keyframes aud-qgrow{from{width:0 !important;}}
+.aud-qcols{display:grid;grid-template-columns:repeat(auto-fit,minmax(220px,1fr));gap:18px;margin-top:6px;}
+.aud-qcols h4{
+  font-size:11px;letter-spacing:.06em;text-transform:uppercase;color:var(--fg-muted);
+  font-family:var(--font-mono);margin:0 0 8px;
+}
+.aud-qlist{list-style:none;padding:0;margin:0;display:grid;gap:6px;font-size:13.5px;}
+.aud-qlist li{display:flex;gap:9px;align-items:flex-start;line-height:1.5;}
+.aud-qlist li::before{flex-shrink:0;font-weight:700;}
+.aud-qlist.ok li::before{content:"\2713";color:var(--ok);}
+.aud-qlist.bad li::before{content:"\00D7";color:var(--nc);}
+.aud-qlist.bad li{color:var(--fg);}
+
+@media (prefers-reduced-motion:reduce){
+  .aud-quickrep .aud-qbar span{animation:none;}
+}
+@media print{
+  .aud-quickrep .aud-qbar span{animation:none;}
+  .aud-qcols{grid-template-columns:1fr 1fr;}
+}

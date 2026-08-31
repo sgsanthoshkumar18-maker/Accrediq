@@ -353,11 +353,38 @@
       return a.indexOf(q) === i;
     });
 
+    /* An audit saved before the quick list became tickable has no map at all. Without this
+       the first tick throws and the session silently stops saving — on the floor, mid-audit. */
+    if (!session.quick_checks) session.quick_checks = {};
+
+    /* Ticked means the auditor saw it in the department; left clear means it was not there.
+       This is walked on the floor before the element-by-element pass, so it is the first
+       record of what the area actually has — and it is what the finished report and the
+       Excel both count from. */
     el("audQuick").innerHTML = quick.length
       ? '<details class="aud-quick" open><summary>Quick list — what to walk the floor with (' +
-        quick.length + ")</summary><ul>" +
-        quick.map(function (q) { return "<li>" + esc(q) + "</li>"; }).join("") + "</ul></details>"
+        '<span id="audQuickCount">' + quick.length + "</span>)</summary>" +
+        '<p class="aud-sub">Tick what is actually present in this department. Anything left ' +
+        "clear is recorded as not available.</p><ul>" +
+        quick.map(function (q, i) {
+          return '<li><label><input type="checkbox" data-quick="' + i + '"' +
+            (session.quick_checks[q] ? " checked" : "") + "> " + esc(q) + "</label></li>";
+        }).join("") + "</ul></details>"
       : "";
+
+    function paintQuickCount() {
+      var n = quick.filter(function (q) { return session.quick_checks[q]; }).length;
+      var c = el("audQuickCount");
+      if (c) c.textContent = n + " of " + quick.length + " present";
+    }
+    el("audQuick").querySelectorAll("[data-quick]").forEach(function (c) {
+      c.addEventListener("change", function () {
+        session.quick_checks[quick[+c.getAttribute("data-quick")]] = c.checked;
+        paintQuickCount();
+        A.save(session);
+      });
+    });
+    paintQuickCount();
 
     renderFilters();
     renderList();

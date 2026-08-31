@@ -177,7 +177,31 @@ window.AQAudit = (function () {
       status: "in_progress",
       total_elements: rows.length,
       findings: {},        // code -> { status, evidence, justification, severity, owner, due_date }
-      kpi_checks: {}       // kpi label -> true/false
+      kpi_checks: {},      // kpi label -> true/false
+      /* quick list item -> true/false. Ticked means the auditor saw it in the department;
+         unticked means it was not there. Absence is a real result, so an untouched item is
+         reported as absent rather than as "not checked" — an internal audit that silently
+         drops the things nobody looked at is the kind that passes and then fails on the day. */
+      quick_checks: {}
+    };
+  }
+
+  /* What the quick list says about this department. Driven entirely by the scope data, so
+     every department gets it without a per-department change. */
+  function quickSummary(session) {
+    var sc = (window.AUDIT_SCOPE || {})[session.department_id] || {};
+    /* Deduplicated the same way the screen does it: a sub-area inherits its parent's list
+       and then adds its own, so an item can appear twice. */
+    var list = (sc.quickList || []).filter(function (q, i, a) { return a.indexOf(q) === i; });
+    var checks = session.quick_checks || {};
+    var present = [], absent = [];
+    list.forEach(function (q) { (checks[q] ? present : absent).push(q); });
+    return {
+      list: list,
+      present: present,
+      absent: absent,
+      total: list.length,
+      pct: list.length ? Math.round((present.length / list.length) * 100) : null
     };
   }
 
@@ -383,7 +407,8 @@ window.AQAudit = (function () {
       nc: sc.counts.nc,
       na: sc.counts.na,
       readiness_score: sc.weighted,
-      payload: JSON.stringify({ findings: session.findings, kpi_checks: session.kpi_checks })
+      payload: JSON.stringify({ findings: session.findings, kpi_checks: session.kpi_checks,
+        quick_checks: session.quick_checks || {} })
     };
   }
 
@@ -393,6 +418,7 @@ window.AQAudit = (function () {
     return assign({}, row, {
       findings: p.findings || {},
       kpi_checks: p.kpi_checks || {},
+      quick_checks: p.quick_checks || {},
       last_active_at: Date.now()
     });
   }
@@ -459,6 +485,7 @@ window.AQAudit = (function () {
     elapsedSeconds: elapsedSeconds,
     fmtDuration: fmtDuration,
     score: score,
+    quickSummary: quickSummary,
     band: band,
     trainingNeeds: trainingNeeds,
     ownerMatrix: ownerMatrix,
