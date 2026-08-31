@@ -125,3 +125,95 @@
 @media (prefers-reduced-motion:reduce){
   .da-bar-fill{transition:none;}
 }
+
+/* ---------- Tiles that open ----------
+ * A count is the start of a question — which four KRAs, which thirteen Core elements — so
+ * every tile is a button that reveals the records behind its number.
+ */
+.da-tile{
+  display:block;width:100%;text-align:left;border:0;font:inherit;cursor:pointer;
+  transition:background .18s ease, transform .18s ease;
+}
+.da-tile:hover{background:var(--surface-2);transform:translateY(-2px);}
+.da-tile:focus-visible{outline:2px solid var(--brand-2);outline-offset:2px;}
+.da-tile.is-open{background:var(--surface-2);}
+.da-tile.is-open::before{width:100%;left:0;border-radius:0;}
+.da-tile-more{
+  margin-top:8px;font-size:10.5px;letter-spacing:.05em;text-transform:uppercase;
+  font-family:var(--font-mono);color:var(--accent-text);opacity:0;transition:opacity .18s ease;
+}
+.da-tile:hover .da-tile-more,
+.da-tile:focus-visible .da-tile-more,
+.da-tile.is-open .da-tile-more{opacity:1;}
+.da-tile.is-open .da-tile-more::after{content:" \2014 close";}
+
+.da-tile-detail{
+  background:var(--surface-1);border-radius:var(--r-lg);padding:18px 20px;position:relative;
+  animation:da-open .28s cubic-bezier(.22,.61,.36,1) both;
+}
+.da-tile-detail::before{
+  content:"";position:absolute;left:20px;top:0;width:22px;height:2px;
+  border-radius:0 0 2px 2px;background:var(--accent-bright);opacity:.85;
+}
+@keyframes da-open{from{opacity:0;transform:translateY(-6px);}}
+.da-tile-detail h4{font-size:14px;margin:0 0 6px;color:var(--fg);}
+.da-tile-detail .da-hint{margin:0 0 12px;}
+
+.da-kradetail{margin:0;padding-left:20px;display:grid;gap:8px;font-size:13.5px;line-height:1.55;}
+.da-kradetail li::marker{color:var(--accent-text);font-family:var(--font-mono);font-weight:700;}
+
+.da-elgroups{display:grid;gap:16px;max-height:420px;overflow-y:auto;padding-right:4px;}
+.da-elstd{font-size:12px;color:var(--fg-muted);margin-bottom:7px;line-height:1.45;}
+.da-elstd b{font-family:var(--font-mono);color:var(--accent-text);}
+.da-ellist{list-style:none;padding:0;margin:0;display:grid;gap:7px;}
+.da-ellist li{
+  display:grid;grid-template-columns:auto auto 1fr;gap:9px;align-items:baseline;
+  font-size:13px;line-height:1.5;
+}
+.da-elcode{font-family:var(--font-mono);font-size:11.5px;font-weight:700;color:var(--fg-muted);}
+.da-elcat{
+  font-size:9.5px;letter-spacing:.05em;text-transform:uppercase;font-family:var(--font-mono);
+  padding:2px 6px;border-radius:4px;background:var(--surface-2);color:var(--fg-faint);white-space:nowrap;
+}
+.da-cat-core{background:var(--nc-tint);color:var(--nc);}
+.da-cat-commitment{background:var(--accent-bright-tint,var(--surface-2));color:var(--accent-text);}
+.da-cat-achievement{background:var(--warn-tint);color:var(--warn);}
+.da-cat-excellence{background:var(--ok-tint);color:var(--ok);}
+
+.da-cmlist{display:grid;gap:14px;}
+.da-cm{background:var(--surface-2);border-radius:var(--r-md);padding:13px 15px;}
+.da-cm-head{display:flex;flex-wrap:wrap;gap:10px;align-items:baseline;margin-bottom:5px;}
+.da-cm-head b{font-size:14px;}
+.da-cm-freq{
+  font-size:10.5px;letter-spacing:.05em;text-transform:uppercase;font-family:var(--font-mono);
+  color:var(--accent-text);
+}
+.da-cm p{font-size:13px;line-height:1.55;margin:0 0 4px;color:var(--fg-muted);}
+
+@media (max-width:620px){
+  .da-ellist li{grid-template-columns:auto 1fr;}
+  .da-elcat{grid-column:1 / -1;justify-self:start;}
+  .da-elgroups{max-height:none;}
+}
+@media (prefers-reduced-motion:reduce){
+  .da-tile,.da-tile-detail{transition:none;animation:none;}
+  .da-tile:hover{transform:none;}
+}
+
+/* ---------- Choosing a department to edit ----------
+ * Edit mode is a deliberate state, not a hidden gesture: the grid says it is waiting for a
+ * choice, so nobody edits a department by accident while browsing.
+ */
+.dash-editnote{
+  background:var(--accent-bright-tint,var(--surface-1));border-radius:var(--r-md);
+  padding:12px 14px;font-size:13px;line-height:1.55;color:var(--fg-muted);margin:0 0 16px;
+}
+.dash-editnote b{color:var(--fg);}
+.dept-grid.is-picking .dept-tile{
+  box-shadow:inset 0 0 0 2px var(--brand-2);
+}
+.dept-grid.is-picking .dept-tile::after{
+  content:"Edit this department";
+  display:block;margin-top:10px;font-size:10.5px;letter-spacing:.05em;text-transform:uppercase;
+  font-family:var(--font-mono);color:var(--accent-text);
+}

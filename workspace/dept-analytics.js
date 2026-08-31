@@ -223,21 +223,36 @@ window.AQDeptAnalytics = (function () {
          so the counts come from walking it, not from filtering a flat list. */
       var ch = window.NABH_DATA && window.NABH_DATA.chapters;
       if (ch) {
-        var core = 0, commitment = 0, total = 0, seen = false;
+        /* Keep the records, not just the counts. A tile that says "13 Core elements" and
+           cannot tell you WHICH thirteen is a number without a use — the whole point of
+           opening it is to see what you are answerable for. */
+        var all = [], seen = false;
         codes.forEach(function (code) {
           var c = ch[String(code).toUpperCase()];
           if (!c || !c.standards) return;
           seen = true;
           c.standards.forEach(function (s) {
             (s.elements || []).forEach(function (e) {
-              total++;
-              var cat = String(e.category || "");
-              if (/^core$/i.test(cat)) core++;
-              else if (/^commitment$/i.test(cat)) commitment++;
+              all.push({
+                code: s.code + "." + e.letter,
+                text: e.text || "",
+                category: String(e.category || ""),
+                standard: s.code,
+                standardText: s.text || "",
+                chapter: c.code || code,
+                chapterName: c.name || ""
+              });
             });
           });
         });
-        if (seen) { out.core = core; out.commitment = commitment; out.elements = total; }
+        if (seen) {
+          out.elementList = all;
+          out.coreList = all.filter(function (e) { return /^core$/i.test(e.category); });
+          out.commitmentList = all.filter(function (e) { return /^commitment$/i.test(e.category); });
+          out.elements = all.length;
+          out.core = out.coreList.length;
+          out.commitment = out.commitmentList.length;
+        }
       }
       /* Committees declare the chapters they answer to, so this is a real link rather than a
          string search across the whole record. */
@@ -246,7 +261,8 @@ window.AQDeptAnalytics = (function () {
           var refs = (c.refChapters || []).map(function (r) { return String(r).toUpperCase(); });
           return codes.some(function (code) { return refs.indexOf(String(code).toUpperCase()) >= 0; });
         });
-        if (cm.length) out.committees = cm.length;
+        out.committeeList = cm;
+        out.committees = cm.length;
       }
     } catch (e) {}
     return out;
@@ -254,15 +270,106 @@ window.AQDeptAnalytics = (function () {
 
   function tiles(d, extra) {
     var onTarget = d.kpi.filter(function (k) { return statusOf(k[3]) === "ok"; }).length;
-    var t = [["Key result areas", d.kra.length], ["KPIs tracked", d.kpi.length],
-             ["On target", onTarget + " / " + d.kpi.length]];
-    if (extra.elements != null) t.push(["Elements in scope", extra.elements]);
-    if (extra.core != null) t.push(["Core elements", extra.core]);
-    if (extra.commitment != null) t.push(["Commitment elements", extra.commitment]);
-    if (extra.committees != null) t.push(["Committees", extra.committees]);
+    var t = [["kra", "Key result areas", d.kra.length],
+             ["kpi", "KPIs tracked", d.kpi.length],
+             ["ontarget", "On target", onTarget + " / " + d.kpi.length]];
+    if (extra.elements != null) t.push(["elements", "Elements in scope", extra.elements]);
+    if (extra.core != null) t.push(["core", "Core elements", extra.core]);
+    if (extra.commitment != null) t.push(["commitment", "Commitment elements", extra.commitment]);
+    if (extra.committees != null) t.push(["committees", "Committees", extra.committees]);
+    /* Buttons, not read-only cards. A count is the start of a question — which four KRAs,
+       which thirteen Core elements, which committees this department sits on — and the
+       answer is already in the data, so the tile opens it rather than sending anyone to a
+       different page to look. */
     return '<div class="da-tiles">' + t.map(function (x) {
-      return '<div class="da-tile"><div class="v">' + esc(x[1]) + '</div><div class="l">' + esc(x[0]) + '</div></div>';
-    }).join("") + '</div>';
+      return '<button type="button" class="da-tile" data-tile="' + x[0] + '" ' +
+        'aria-expanded="false"><div class="v">' + esc(x[2]) + '</div>' +
+        '<div class="l">' + esc(x[1]) + '</div>' +
+        '<div class="da-tile-more">View detail</div></button>';
+    }).join("") + '</div><div class="da-tile-detail" id="daTileDetail" hidden></div>';
+  }
+
+  /* ------------------------------------------------- what a tile opens into */
+
+  function elementTable(list, title, note) {
+    if (!list || !list.length) return "<p class=\"da-hint\">Nothing recorded for this department.</p>";
+    /* Grouped by standard, because that is how an assessor works through them and how they
+       are numbered — a flat list of 107 codes is unreadable. */
+    var byStd = {}, order = [];
+    list.forEach(function (e) {
+      if (!byStd[e.standard]) { byStd[e.standard] = { text: e.standardText, items: [] }; order.push(e.standard); }
+      byStd[e.standard].items.push(e);
+    });
+    return '<h4>' + esc(title) + " (" + list.length + ")</h4>" +
+      (note ? '<p class="da-hint">' + esc(note) + "</p>" : "") +
+      '<div class="da-elgroups">' + order.map(function (code) {
+        var g = byStd[code];
+        return '<div class="da-elgroup"><div class="da-elstd"><b>' + esc(code) + "</b> " +
+          esc(g.text) + "</div><ul class=\"da-ellist\">" +
+          g.items.map(function (e) {
+            return "<li><span class=\"da-elcode\">" + esc(e.code) + "</span>" +
+              '<span class="da-elcat da-cat-' + esc(e.category.toLowerCase()) + '">' +
+              esc(e.category) + "</span><span>" + esc(e.text) + "</span></li>";
+          }).join("") + "</ul></div>";
+      }).join("") + "</div>";
+  }
+
+  function tileDetail(key, d, extra) {
+    if (key === "kra") {
+      return "<h4>Key result areas (" + d.kra.length + ")</h4>" +
+        '<p class="da-hint">What this department is measured on. Each one is what the KPIs ' +
+        "below are supposed to move.</p><ol class=\"da-kradetail\">" +
+        d.kra.map(function (k) { return "<li>" + esc(k) + "</li>"; }).join("") + "</ol>";
+    }
+    if (key === "kpi" || key === "ontarget") {
+      var rows = key === "ontarget"
+        ? d.kpi.filter(function (k) { return statusOf(k[3]) === "ok"; })
+        : d.kpi;
+      var title = key === "ontarget" ? "KPIs meeting their target" : "KPIs tracked";
+      if (!rows.length) return "<h4>" + title + "</h4><p class=\"da-hint\">None yet.</p>";
+      return "<h4>" + title + " (" + rows.length + ")</h4>" +
+        '<table class="da-table"><thead><tr><th>KPI</th><th>Current</th><th>Target</th>' +
+        "<th>Status</th></tr></thead><tbody>" +
+        rows.map(function (k) {
+          return '<tr><td data-l="KPI">' + esc(k[0]) + '</td>' +
+            '<td data-l="Current" class="mono">' + esc(k[1]) + '</td>' +
+            '<td data-l="Target" class="mono">' + esc(k[2]) + '</td>' +
+            '<td data-l="Status"><span class="da-status ' + statusOf(k[3]) + '">' +
+            esc(statusLabel(k[3])) + "</span></td></tr>";
+        }).join("") + "</tbody></table>";
+    }
+    if (key === "elements") {
+      return elementTable(extra.elementList, "Every element in this department's scope",
+        "The full set this department is answerable for, grouped by standard.");
+    }
+    if (key === "core") {
+      return elementTable(extra.coreList, "Core elements",
+        "Core carries the most weight in an assessment — a Core non-conformity is not offset " +
+        "by a run of easy wins elsewhere.");
+    }
+    if (key === "commitment") {
+      return elementTable(extra.commitmentList, "Commitment elements",
+        "The baseline tier. These are expected to be in place before the higher tiers are assessed.");
+    }
+    if (key === "committees") {
+      var cm = extra.committeeList || [];
+      if (!cm.length) {
+        return "<h4>Committees</h4><p class=\"da-hint\">No committee in the register lists this " +
+          "department's chapter. That is worth checking rather than assuming — most departments " +
+          "sit on at least one.</p>";
+      }
+      return "<h4>Committees this department sits on (" + cm.length + ")</h4>" +
+        '<div class="da-cmlist">' + cm.map(function (c) {
+          return '<div class="da-cm"><div class="da-cm-head"><b>' + esc(c.name || c.short || "") +
+            "</b>" + (c.frequency ? '<span class="da-cm-freq">' + esc(c.frequency) + "</span>" : "") +
+            "</div>" +
+            (c.purpose ? "<p>" + esc(c.purpose) + "</p>" : "") +
+            (c.chairperson ? '<p class="da-hint"><b>Chair:</b> ' + esc(c.chairperson) +
+              (c.memberSecretary ? " &nbsp;·&nbsp; <b>Member secretary:</b> " + esc(c.memberSecretary) : "") +
+              "</p>" : "") + "</div>";
+        }).join("") + "</div>";
+    }
+    return "";
   }
 
   function readView(d) {
@@ -382,6 +489,29 @@ window.AQDeptAnalytics = (function () {
     var d = merged(dept);
     host.innerHTML = editing ? editView(d) : readView(d);
     host.classList.add("is-open");
+
+    /* Tiles open into the records behind the number. Clicking the open one closes it, so the
+       panel is never left showing something the visitor has moved on from. */
+    if (!editing) {
+      var facts = chapterFacts(d);
+      var detail = host.querySelector("#daTileDetail");
+      host.querySelectorAll("[data-tile]").forEach(function (tile) {
+        tile.addEventListener("click", function () {
+          var key = tile.getAttribute("data-tile");
+          var wasOpen = tile.classList.contains("is-open");
+          host.querySelectorAll("[data-tile]").forEach(function (t) {
+            t.classList.remove("is-open");
+            t.setAttribute("aria-expanded", "false");
+          });
+          if (wasOpen) { detail.hidden = true; detail.innerHTML = ""; return; }
+          tile.classList.add("is-open");
+          tile.setAttribute("aria-expanded", "true");
+          detail.innerHTML = tileDetail(key, d, facts);
+          detail.hidden = false;
+          detail.scrollIntoView({ behavior: "smooth", block: "nearest" });
+        });
+      });
+    }
 
     host.querySelectorAll("[data-da]").forEach(function (btn) {
       btn.addEventListener("click", function () {

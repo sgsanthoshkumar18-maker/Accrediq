@@ -108,10 +108,47 @@ check('the dashboard loads the analytics module', () => {
   const html = read('dashboard.html');
   assert.ok(/workspace\/dept-analytics\.css\?v=/.test(html), 'stylesheet not linked');
   assert.ok(/workspace\/dept-analytics\.js\?v=/.test(html), 'script not loaded');
-  assert.ok(/AQDeptAnalytics\.render\(detail, d, false\)/.test(html), 'drill-down not wired');
+  assert.ok(/AQDeptAnalytics\.render\(detail, d, !!startInEdit\)/.test(html), 'drill-down not wired');
   assert.ok(/AQDeptAnalytics\.merged\(src\)/.test(html), 'grid tiles do not show saved edits');
+  /* The edit entry point must be gated on the module's own permission check, not merely
+     hidden with CSS — a hidden button is still a button. */
+  assert.ok(/AQDeptAnalytics\.canEdit\(\)/.test(html),
+    'the edit entry point is not gated on canEdit()');
+  assert.ok(/id="deptEditMode" hidden/.test(html),
+    'the edit button must ship hidden and only be revealed for permitted roles');
   const stamps = new Set((html.match(/\?v=[0-9a-zA-Z._-]+/g) || []));
   assert.strictEqual(stamps.size, 1, 'mixed cache stamps: ' + [...stamps].join(', '));
+});
+
+/* EVERY TILE OPENS INTO THE RECORDS BEHIND ITS NUMBER. "13 Core elements" that cannot tell
+ * you which thirteen is a number without a use, and it was sending people to the standards
+ * page to find out. The detail comes from the real datasets, so a tile that silently returns
+ * nothing means the lookup drifted from the data shape. */
+check('every tile has detail content behind it', () => {
+  const js = read('workspace/dept-analytics.js');
+  ['kra', 'kpi', 'ontarget', 'elements', 'core', 'commitment', 'committees'].forEach(k =>
+    assert.ok(js.includes('"' + k + '"'), 'no tile detail for ' + k));
+  assert.ok(/function tileDetail\(/.test(js), 'tileDetail() is missing');
+  assert.ok(/data-tile="/.test(js), 'tiles are not buttons');
+  /* Counts and lists must come from the same walk, or a tile can say 13 and open 12. */
+  assert.ok(/out\.core = out\.coreList\.length/.test(js),
+    'the Core count must be derived from the list it opens, not counted separately');
+  assert.ok(/out\.commitment = out\.commitmentList\.length/.test(js),
+    'the Commitment count must be derived from the list it opens');
+  assert.ok(/out\.committees = cm\.length/.test(js),
+    'the committee count must be derived from the list it opens');
+});
+
+/* The globe's CTA said "Open full department profile" and navigated to the standards page,
+ * which lists a chapter's elements and says nothing about the department. */
+check('the globe CTA opens the department profile, not the standards page', () => {
+  const qg = read('qglobe/qglobe.js');
+  assert.ok(/openDeptDetailFromQGlobe/.test(qg),
+    'the CTA does not call the dashboard hook');
+  assert.ok(/data-qg-profile=/.test(qg), 'the CTA is not addressable');
+  /* The href stays as a fallback for pages with no dashboard, and for middle-click. */
+  assert.ok(/ev\.metaKey \|\| ev\.ctrlKey \|\| ev\.shiftKey/.test(qg),
+    'opening in a new tab must still work');
 });
 
 /* Charts are drawn from tokens so they follow light, dark and neon with no per-theme rule.

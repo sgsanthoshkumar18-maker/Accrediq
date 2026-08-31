@@ -720,8 +720,22 @@
 
       <div class="qg-detail-panel" id="qgDetailPanel"></div>
 
-      <a class="qg-panel-cta" href="departments.html${DEPT_ID_ALIAS[d.id] ? '?d=' + encodeURIComponent(DEPT_ID_ALIAS[d.id]) : ''}">Open full department profile →</a>
+      <a class="qg-panel-cta" data-qg-profile="${d.id}" href="departments.html${DEPT_ID_ALIAS[d.id] ? '?d=' + encodeURIComponent(DEPT_ID_ALIAS[d.id]) : ''}">Open full department profile →</a>
     `;
+
+    /* "Full department profile" means this department's dashboard — its score, KPIs against
+       target, status mix and the elements behind them. It was navigating to the standards
+       page instead, which lists that chapter's elements and nothing about the department.
+       The dashboard already exposes a hook for exactly this; the href stays as the fallback
+       for any page that has no dashboard to open, and for a middle-click or a new tab. */
+    var profileLink = panel.querySelector("[data-qg-profile]");
+    if (profileLink && typeof window.openDeptDetailFromQGlobe === "function") {
+      profileLink.addEventListener("click", function (ev) {
+        if (ev.metaKey || ev.ctrlKey || ev.shiftKey || ev.button === 1) return;  /* new tab */
+        ev.preventDefault();
+        window.openDeptDetailFromQGlobe(profileLink.getAttribute("data-qg-profile"));
+      });
+    }
 
     const detailPanel = document.getElementById("qgDetailPanel");
     panel.querySelectorAll(".qg-metric-card").forEach(btn => {
