@@ -51,7 +51,7 @@
 .aud-chips { display: flex; gap: 6px; flex-wrap: wrap; margin-bottom: 8px; }
 .aud-chip { border: 1px solid var(--aud-line); background: transparent; color: inherit;
   border-radius: 20px; padding: 4px 12px; font-size: .84rem; cursor: pointer; }
-.aud-chip.on { background:var(--accent-solid); border-color:var(--brand-2); color: var(--bg-deep); }
+.aud-chip.on { background:var(--accent-solid); border-color:var(--brand-2); color: var(--on-accent); }
 #audQ { width: 100%; max-width: 340px; padding: 7px 11px; border: 1px solid var(--aud-line);
   border-radius: 8px; background: transparent; color: inherit; }
 

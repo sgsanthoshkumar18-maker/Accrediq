@@ -58,7 +58,7 @@
 
   /* ---------------- vortex ---------------- */
   var vp = [], vFresh = true;   /* vFresh is kept for size changes; there is no trail now */
-  for (var i = 0; i < 380; i++) vp.push({ x: 0, y: 0, life: 0, max: 0, seed: Math.random() });
+  for (var i = 0; i < 240; i++) vp.push({ x: 0, y: 0, life: 0, max: 0, seed: Math.random() });
   function vortex(t) {
     /* Clear, do not wash. A translucent wash leaves a tail behind every particle, and a few
        hundred tails on black accumulate into grey smoke — which is exactly what the trails
@@ -78,18 +78,18 @@
       var ang = a * Math.PI;
       /* SPEED. Was 1.45px per frame plus a 2.6 swirl — fast enough to pull the eye off the
          copy, which was the complaint. Roughly half that now: present, not distracting. */
-      var vx = Math.cos(ang) * 0.62, vy = Math.sin(ang) * 0.62;
+      var vx = Math.cos(ang) * 0.34, vy = Math.sin(ang) * 0.34;
       if (m.has) {
         var dx = p.x - m.x, dy = p.y - m.y, d = Math.hypot(dx, dy);
-        if (d < 190 && d > 1) { var f = (190 - d) / 190 * 1.15; vx += (-dy / d) * f; vy += (dx / d) * f; }
+        if (d < 190 && d > 1) { var f = (190 - d) / 190 * 0.55; vx += (-dy / d) * f; vy += (dx / d) * f; }
       }
       p.x += vx; p.y += vy; p.life--;
       /* Fade in and out at the ends of a life so dots arrive and leave rather than blink. */
       var k = p.life / p.max;
-      var al = (k > 0.85 ? (1 - k) / 0.15 : k < 0.2 ? k / 0.2 : 1) * (dark ? 0.85 : 0.55);
+      var al = (k > 0.85 ? (1 - k) / 0.15 : k < 0.2 ? k / 0.2 : 1) * (dark ? 0.30 : 0.20);   /* atmosphere, not a foreground layer */
       ctx.fillStyle = "rgba(" + col + "," + al.toFixed(3) + ")";
       ctx.beginPath();
-      ctx.arc(p.x, p.y, 1.15 + p.seed * 0.7, 0, 6.2832);
+      ctx.arc(p.x, p.y, 0.95 + p.seed * 0.55, 0, 6.2832);
       ctx.fill();
       if (p.x < -30 || p.x > W + 30 || p.y < -30 || p.y > H + 30) p.life = 0;
     }

@@ -34,27 +34,22 @@ window.AQScenePalette = (function () {
     deep:    0x000000
   };
 
-  /* THE LIGHT THEME STILL DRAWS ON A DARK GROUND.
-     Every scene here uses THREE.AdditiveBlending, which adds to what is behind it — over
-     white it saturates to white and the artwork vanishes outright. So in the light theme
-     the canvases keep a dark stage (styles.css, "3D SCENES IN THE LIGHT THEME"), and these
-     values are tuned for THAT stage, not for paper.
+  /* LIGHT DRAWS EXACTLY WHAT DARK DRAWS.
+     The scenes sit on one stage in both themes (styles.css, "THE SCENES KEEP ONE STAGE"), so
+     there is no longer a second ground to tune a second palette against. Two palettes here
+     only meant the meshwork, the globes and the helix came out a different blue depending on
+     the theme, for no reason a viewer could see — and a lighter blue picked for a navy stage
+     is simply wrong on black.
 
-     The shift from neon's teal to a blue is what ties the artwork to a page whose accent is
-     #17558C: same hue family, lifted until it reads against navy. --deep-accent in the CSS
-     is the same colour, so the stage wash and the particles on it agree by construction.
-
-     NOTE what this does NOT do: it never lightens the scene toward the page. Trying to make
-     these scenes genuinely light-mode means changing every material to NormalBlending and
-     regenerating the glow textures, whose colour is baked in at creation — twelve files of
-     change for something no test can check. */
+     Keeping LIGHT as its own object rather than aliasing NEON is deliberate: it is the hook a
+     future theme would use, and it documents that the sameness is a decision, not an oversight. */
   var LIGHT = {
-    accent: 0x6E8CFF,   /* cobalt, lifted so it reads on a dark stage */
-    dim:    0x3C58D8,
-    ambient: 0xC3CEEA,  /* cool fill, so the blues stay blue */
+    accent: 0x4C6FFF,
+    dim:    0x2E4AC8,
+    ambient: 0x9DB4FF,
     key:     0xFFFFFF,
-    link:    0x1E2A5A,
-    deep:    0x000000   /* the ground is black now, not a navy stage */
+    link:    0x3D4A8A,
+    deep:    0x000000
   };
 
   /* Light is the ABSENCE of the attribute, not a value — see the boot snippet, which

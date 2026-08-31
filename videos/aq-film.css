@@ -59,7 +59,7 @@
 /* ---------- poster ---------- */
 .aqf-poster{position:absolute;inset:0;z-index:6;cursor:pointer;
   display:flex;flex-direction:column;align-items:center;justify-content:center;gap:20px;
-  background:radial-gradient(120% 90% at 30% 10%,#0E3B34,#0B2F2A 45%,#061513);
+  background:radial-gradient(120% 90% at 30% 10%,#132A66,#0A1230 45%,#05070F);
   transition:opacity .45s ease;}
 .aqf-poster.gone{opacity:0;pointer-events:none;}
 .aqf-poster .pl{width:clamp(58px,8vw,92px);aspect-ratio:1;border-radius:50%;
@@ -68,7 +68,7 @@
 .aqf-poster h3{margin:0;padding:0 24px;text-align:center;font-weight:400;
   font-family:Georgia,"Iowan Old Style",serif;color:#F4F2EC;
   font-size:clamp(20px,3.4vw,40px);letter-spacing:-.02em;}
-.aqf-poster p{margin:0;color:#8FA39D;font-size:clamp(12px,1.5vw,17px);}
+.aqf-poster p{margin:0;color:#9FB0CE;font-size:clamp(12px,1.5vw,17px);}
 
 /* ---------- watch again ----------
  * Shown when the film reaches its end. The script will not reveal it until the film has

@@ -4,8 +4,8 @@
 /* ---------------------------------- hero ---------------------------------- */
 
 .fp-hero {
-  background: var(--bg-deep-2);
-  color: #fff;
+  background: transparent;
+  color: var(--fg);
   padding: 64px 0 48px;
   position: relative;
   overflow: hidden;
@@ -79,8 +79,8 @@
   letter-spacing: 0;
   white-space: nowrap;
 }
-.fp-role { font-size: 16px; color: rgba(255, 255, 255, .86); margin-bottom: 4px; }
-.fp-loc { font-size: 13.5px; color: rgba(255, 255, 255, .58); margin-bottom: 16px; }
+.fp-role { font-size: 16px; color: var(--fg-muted); margin-bottom: 4px; }
+.fp-loc { font-size: 13.5px; color: var(--fg-faint); margin-bottom: 16px; }
 
 .fp-tags { display: flex; flex-wrap: wrap; gap: 7px; margin-bottom: 20px; justify-content: center; }
 .fp-tag {
@@ -90,7 +90,7 @@
   border-radius: 999px;
   background: rgba(255, 255, 255, .08);
   border: 1px solid rgba(255, 255, 255, .14);
-  color: rgba(255, 255, 255, .88);
+  color: var(--fg);
 }
 .fp-links { display: flex; gap: 9px; flex-wrap: wrap; justify-content: center; }
 
@@ -118,14 +118,14 @@
   font-size: 11.5px;
   text-transform: uppercase;
   letter-spacing: .05em;
-  color: rgba(255, 255, 255, .6);
+  color: var(--fg-muted);
   margin-top: 7px;
   display: block;
 }
 
 /* ------------------------------ scrolly card ------------------------------ */
 
-.fp-lens { background: var(--deep-1); color: #fff; padding: 70px 0; }
+.fp-lens { background: transparent; color: var(--fg); padding: 70px 0; }
 .fp-card {
   border: 1px solid rgba(255, 255, 255, .14);
   border-radius: var(--r-lg);
@@ -157,13 +157,13 @@
   color:var(--accent-text);
   margin-bottom: 12px;
 }
-.fp-card p { font-size: 14.5px; line-height: 1.65; color: rgba(255, 255, 255, .82); }
+.fp-card p { font-size: 14.5px; line-height: 1.65; color: var(--fg-muted); }
 .fp-face-list { list-style: none; padding: 0; margin: 16px 0 0; display: grid; gap: 8px; }
 .fp-face-list li {
   font-size: 13.5px;
   padding-left: 18px;
   position: relative;
-  color: rgba(255, 255, 255, .92);
+  color: var(--fg);
 }
 .fp-face-list li::before {
   content: "";
@@ -346,7 +346,7 @@
 .fp-issuer { font-size: 12.5px; color:var(--accent-text); font-weight: 600; }
 .fp-cert-meta { font-size: 11.5px; color: var(--fg-faint); margin-top: 5px; }
 
-.fp-affil { font-size: 12.5px; color: rgba(255, 255, 255, .5); margin-bottom: 14px; }
+.fp-affil { font-size: 12.5px; color: var(--fg-faint); margin-bottom: 14px; }
 
 /* The two flagged credentials, given room. */
 .fp-certs-top { display: grid; grid-template-columns: 1fr 1fr; gap: 16px; margin-bottom: 18px; }
@@ -568,7 +568,7 @@ html.fp-tilt-on [data-tilt].is-tilting::after { opacity: 1; }
    Scoped with :not([data-theme="dark"]) / [data-theme="dark"] because the boot snippet
    sets no data-theme for light and sets "dark" for both dark and neon.
    --------------------------------------------------------------------------- */
-.fp-signoff{margin-top:44px;padding-top:30px;border-top:1px solid var(--border);
+.fp-signoff{margin-top:44px;padding-top:30px;border-top:0;
   display:flex;flex-direction:column;align-items:flex-start;gap:2px}
 .fp-signoff img{display:block;width:220px;height:auto;margin-bottom:6px;
   /* Revealed left to right, the way it was written. */

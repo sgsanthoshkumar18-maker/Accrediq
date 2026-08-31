@@ -1,12 +1,12 @@
 /* AQcredix — Quote of the Day bar. Mirrors the health-alerts ticker, one shade quieter. */
-.aq-quote{background:var(--bg-deep);border-bottom:1px solid var(--border);overflow:hidden;
+.aq-quote{background:transparent;border-bottom:0;overflow:hidden;
   display:none;position:relative;}
 .aq-quote.is-ready{display:block;}
 .aq-quote-inner{display:flex;align-items:center;gap:12px;}
 
 .aq-quote-label{flex-shrink:0;display:flex;align-items:center;gap:7px;padding:0 14px;
   font-family:var(--font-mono);font-size:10px;letter-spacing:.08em;text-transform:uppercase;
-  color:var(--accent-text);background:var(--bg-deep);z-index:2;position:relative;height:34px;}
+  color:var(--accent-text);background:var(--bg);z-index:2;position:relative;height:34px;}
 .aq-quote-label .dot{width:6px;height:6px;border-radius:50%;background:var(--accent-solid);
   box-shadow:0 0 6px var(--brand-2);}
 

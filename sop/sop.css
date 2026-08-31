@@ -31,7 +31,7 @@
 
 .sop-toolbar{display:flex;justify-content:space-between;align-items:center;gap:14px;flex-wrap:wrap;margin-bottom:14px;}
 .sop-meta{display:flex;align-items:center;gap:8px;flex-wrap:wrap;}
-.sop-badge{font-family:var(--font-mono);font-size:11px;font-weight:700;background:var(--bg-deep);color:#fff;padding:5px 10px;border-radius:6px;}
+.sop-badge{font-family:var(--font-mono);font-size:11px;font-weight:700;background:var(--surface-2);color:var(--fg);padding:5px 10px;border-radius:6px;}
 .sop-matchcount{font-size:11.5px;color:var(--ok);background:var(--ok-tint);padding:5px 10px;border-radius:999px;font-weight:600;}
 .sop-skeleton-flag{font-size:11px;color:var(--warn);background:var(--warn-tint);padding:5px 10px;border-radius:999px;font-weight:600;}
 .sop-error{color:var(--nc);font-size:14px;}

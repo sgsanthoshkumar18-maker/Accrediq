@@ -29,7 +29,7 @@
 .inc-chips{display:flex;gap:6px;flex-wrap:wrap;margin-bottom:8px;}
 .inc-chip{border:1px solid var(--border);background:transparent;color:inherit;
   border-radius:20px;padding:5px 13px;font-size:.84rem;cursor:pointer;min-height:34px;}
-.inc-chip.on{background:var(--accent-solid);border-color:var(--brand-2);color:var(--bg-deep);}
+.inc-chip.on{background:var(--accent-solid);border-color:var(--brand-2);color:var(--on-accent);}
 #incQ{width:100%;max-width:360px;padding:8px 12px;border:1px solid var(--border);
   border-radius:8px;background:transparent;color:inherit;margin-bottom:14px;}
 

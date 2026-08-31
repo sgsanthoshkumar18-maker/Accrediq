@@ -1,11 +1,11 @@
 /* AQcredix — health headlines bar */
-.aq-news{background:var(--bg-deep);border-bottom:1px solid var(--border);overflow:hidden;
+.aq-news{background:transparent;border-bottom:0;overflow:hidden;
   display:none;position:relative;}
 .aq-news.is-ready{display:block;}
 .aq-news-inner{display:flex;align-items:center;gap:12px;}
 .aq-news-label{flex-shrink:0;display:flex;align-items:center;gap:7px;padding:0 14px;
   font-family:var(--font-mono);font-size:10px;letter-spacing:.08em;text-transform:uppercase;
-  color:var(--accent-text);background:var(--bg-deep);z-index:2;position:relative;height:38px;}
+  color:var(--accent-text);background:var(--bg);z-index:2;position:relative;height:38px;}
 .aq-news-label .dot{width:6px;height:6px;border-radius:50%;background:var(--accent-solid);
   box-shadow:0 0 6px var(--accent-bright);animation:aqNewsPulse 1.8s ease-in-out infinite;}
 @keyframes aqNewsPulse{0%,100%{opacity:1}50%{opacity:.25}}

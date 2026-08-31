@@ -1,0 +1,127 @@
+/* AQcredix — Quality Dashboard, department analytics.
+ *
+ * WHAT THIS REPLACES. The drill-down used to be two columns of text: a KRA list and a KPI
+ * table. Everything a quality manager actually does with that data — see which KPIs are off
+ * target, how far off, and which way they are moving — had to be done by reading rows.
+ *
+ * EVERY COLOUR IS A TOKEN. The charts are inline SVG using currentColor and the theme's own
+ * semantic tokens, so they follow light, dark and neon with no per-theme rule and no second
+ * palette to keep in sync. Status colour is separate from the accent on purpose: "on target"
+ * must never be the same blue as "this is a link".
+ */
+
+.da-wrap{display:grid;gap:18px;}
+
+/* ---------- header ---------- */
+.da-head{display:flex;flex-wrap:wrap;align-items:flex-start;justify-content:space-between;gap:18px;}
+.da-title h2{font-size:clamp(22px,2.4vw,30px);margin:2px 0 4px;}
+.da-title .da-persona{font-size:13.5px;color:var(--fg-muted);}
+.da-head-actions{display:flex;align-items:center;gap:10px;flex-shrink:0;}
+
+/* ---------- stat tiles ---------- */
+.da-tiles{display:grid;grid-template-columns:repeat(auto-fit,minmax(148px,1fr));gap:12px;}
+.da-tile{background:var(--surface-1);border-radius:var(--r-md);padding:14px 16px;position:relative;}
+/* The accent tick, not a border. A rule around every tile is the banding the layout avoids;
+   a short mark at the top-left says "this is a card" without drawing a box. */
+.da-tile::before{content:"";position:absolute;left:16px;top:0;width:22px;height:2px;
+  border-radius:0 0 2px 2px;background:var(--accent-bright);opacity:.85;}
+.da-tile .v{font-family:var(--font-display);font-size:27px;font-weight:700;line-height:1.1;color:var(--fg);
+  font-variant-numeric:tabular-nums;}
+.da-tile .l{font-size:10.5px;letter-spacing:.06em;text-transform:uppercase;color:var(--fg-faint);
+  font-family:var(--font-mono);margin-top:5px;}
+
+/* ---------- chart cards ---------- */
+.da-charts{display:grid;grid-template-columns:minmax(0,1fr) minmax(0,1.4fr);gap:16px;align-items:start;}
+.da-card{background:var(--surface-1);border-radius:var(--r-lg);padding:18px 20px;position:relative;min-width:0;}
+.da-card::before{content:"";position:absolute;left:20px;top:0;width:22px;height:2px;
+  border-radius:0 0 2px 2px;background:var(--accent-bright);opacity:.85;}
+.da-card h3{font-size:11.5px;letter-spacing:.06em;text-transform:uppercase;color:var(--fg-muted);
+  font-family:var(--font-mono);margin:0 0 14px;}
+.da-card .da-sub{font-size:12px;color:var(--fg-faint);margin-top:10px;line-height:1.5;}
+
+/* ---------- gauge ---------- */
+.da-gauge{display:flex;align-items:center;gap:18px;}
+.da-gauge svg{flex-shrink:0;}
+.da-gauge-n{font-family:var(--font-display);font-size:38px;font-weight:700;line-height:1;color:var(--fg);
+  font-variant-numeric:tabular-nums;}
+.da-gauge-l{font-size:12.5px;color:var(--fg-muted);margin-top:4px;}
+
+/* ---------- KPI bars ---------- */
+.da-bars{display:grid;gap:13px;}
+.da-bar-row{display:grid;grid-template-columns:1fr auto;gap:4px 12px;align-items:baseline;}
+.da-bar-name{font-size:13px;color:var(--fg);min-width:0;overflow-wrap:anywhere;}
+.da-bar-val{font-family:var(--font-mono);font-size:12px;color:var(--fg-muted);
+  font-variant-numeric:tabular-nums;text-align:right;white-space:nowrap;}
+.da-bar-track{grid-column:1 / -1;height:8px;border-radius:999px;background:var(--surface-2);overflow:hidden;position:relative;}
+.da-bar-fill{height:100%;border-radius:999px;transition:width .5s cubic-bezier(.22,.61,.36,1);}
+.da-bar-fill.ok{background:var(--ok);}
+.da-bar-fill.watch{background:var(--warn);}
+.da-bar-fill.risk{background:var(--nc);}
+/* Where the target sits on the track, so "how far off" is visible rather than calculated. */
+.da-bar-target{position:absolute;top:-2px;bottom:-2px;width:2px;background:var(--fg);opacity:.55;border-radius:1px;}
+
+/* ---------- trend ---------- */
+.da-trend-empty{font-size:13px;color:var(--fg-muted);line-height:1.6;}
+.da-trend svg{width:100%;height:auto;display:block;overflow:visible;}
+
+/* ---------- KPI table ---------- */
+.da-table{width:100%;border-collapse:collapse;font-size:13.5px;}
+.da-table th{text-align:left;padding:9px 10px;background:var(--surface-2);color:var(--fg-muted);
+  font-size:11px;letter-spacing:.05em;text-transform:uppercase;font-family:var(--font-mono);font-weight:700;}
+.da-table th:first-child{border-radius:var(--r-sm) 0 0 var(--r-sm);}
+.da-table th:last-child{border-radius:0 var(--r-sm) var(--r-sm) 0;}
+.da-table td{padding:11px 10px;vertical-align:middle;}
+.da-table tbody tr + tr td{box-shadow:inset 0 1px 0 var(--border);}
+.da-table .mono{font-family:var(--font-mono);font-variant-numeric:tabular-nums;}
+.da-status{display:inline-flex;align-items:center;gap:6px;font-size:11.5px;font-weight:600;
+  padding:3px 9px;border-radius:999px;white-space:nowrap;}
+.da-status.ok{background:var(--ok-tint);color:var(--ok);}
+.da-status.watch{background:var(--warn-tint);color:var(--warn);}
+.da-status.risk{background:var(--nc-tint);color:var(--nc);}
+
+/* ---------- KRAs ---------- */
+.da-kra{list-style:none;padding:0;margin:0;display:grid;gap:10px;}
+.da-kra li{display:flex;gap:11px;align-items:flex-start;font-size:13.5px;line-height:1.55;}
+.da-kra .kn{font-family:var(--font-mono);font-size:11px;font-weight:700;color:var(--accent-text);
+  flex-shrink:0;padding-top:2px;}
+
+/* ---------- edit mode ---------- */
+.da-edit-in{width:100%;background:var(--bg);color:var(--fg);border:1px solid var(--border-strong,var(--border));
+  border-radius:var(--r-sm);padding:7px 9px;font:inherit;font-size:13px;}
+.da-edit-in:focus{outline:none;border-color:var(--brand-2);box-shadow:0 0 0 3px var(--brand-tint);}
+.da-edit-in.mono{font-family:var(--font-mono);}
+.da-edit-bar{display:flex;flex-wrap:wrap;align-items:center;gap:10px;background:var(--accent-bright-tint,var(--surface-1));
+  border-radius:var(--r-md);padding:12px 14px;font-size:13px;color:var(--fg-muted);}
+.da-edit-bar strong{color:var(--fg);}
+.da-edit-bar .sp{margin-left:auto;display:flex;gap:8px;}
+.da-saved{font-size:12px;color:var(--ok);font-weight:600;}
+.da-hint{font-size:12px;color:var(--fg-faint);line-height:1.55;}
+.da-kra-row{display:flex;gap:8px;align-items:center;}
+.da-row-del{flex-shrink:0;background:var(--nc-tint);color:var(--nc);border:0;border-radius:var(--r-sm);
+  width:30px;height:30px;cursor:pointer;font-size:15px;line-height:1;}
+.da-row-del:hover{filter:brightness(1.08);}
+
+/* ---------- responsive ---------- */
+@media (max-width:900px){
+  .da-charts{grid-template-columns:1fr;}
+}
+@media (max-width:620px){
+  .da-tiles{grid-template-columns:repeat(auto-fit,minmax(120px,1fr));}
+  .da-tile .v{font-size:23px;}
+  .da-card{padding:15px 14px;}
+  .da-card::before,.da-tile::before{left:14px;}
+  /* A KPI table cannot become legible on a phone by shrinking. It becomes a stack of rows,
+     each label carried in a data attribute so no column heading is lost. */
+  .da-table thead{position:absolute;width:1px;height:1px;overflow:hidden;clip:rect(0 0 0 0);}
+  .da-table tr{display:grid;gap:4px;padding:12px 0;}
+  .da-table tbody tr + tr{box-shadow:inset 0 1px 0 var(--border);}
+  .da-table tbody tr + tr td{box-shadow:none;}
+  .da-table td{padding:2px 0;display:flex;justify-content:space-between;gap:14px;align-items:center;}
+  .da-table td::before{content:attr(data-l);font-size:10.5px;letter-spacing:.05em;text-transform:uppercase;
+    color:var(--fg-faint);font-family:var(--font-mono);flex-shrink:0;}
+  .da-table td:first-child{font-weight:600;}
+  .da-table td:first-child::before{content:none;}
+}
+@media (prefers-reduced-motion:reduce){
+  .da-bar-fill{transition:none;}
+}
