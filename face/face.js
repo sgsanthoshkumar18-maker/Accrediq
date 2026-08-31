@@ -38,7 +38,7 @@
   };
   const CHAPTER_ACCENT = {
     AAC: "#4c6fff", COP: "#818cf8", MOM: "#f472b6", PRE: "#60a5fa", IPC: "#f87171",
-    PSQ: "#fbbf24", ROM: "#a78bfa", FMS: "#34d399", HRM: "#fb923c", IMS: "#7d9bff"
+    PSQ: "#fbbf24", ROM: "#a78bfa", FMS: "#d946ef", HRM: "#fb923c", IMS: "#7d9bff"
   };
   const heroEl = document.querySelector(".hero");
   /* A chapter colour chosen for a dark stage can be far too pale for white paper. Darken
@@ -218,7 +218,7 @@
        common cases, and the 3.4 floor means the framing is never tighter than it was. */
   }
 
-  const COLORS = P.cycle([0x4c6fff, 0x7d9bff, 0x818cf8, 0xa78bfa, 0xf472b6, 0x34d399, 0x60a5fa, 0xc084fc]);
+  const COLORS = P.cycle([0x4c6fff, 0x7d9bff, 0x818cf8, 0xa78bfa, 0xf472b6, 0xd946ef, 0x60a5fa, 0xc084fc]);
   function glowTexture(hex) {
     const c = document.createElement("canvas"); c.width = c.height = 32;
     const ctx = c.getContext("2d");

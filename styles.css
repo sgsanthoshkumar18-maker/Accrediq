@@ -464,7 +464,7 @@ p{margin:0 0 0;}
 .btn:hover{border-color:var(--brand-2);color:var(--accent-text);}
 .btn:hover{transform:translateY(-1px);}
 .btn-accent{background:var(--accent-solid);color:var(--on-accent);box-shadow:0 10px 24px -10px color-mix(in srgb, var(--accent-bright) 55%, transparent);}
-.btn-accent:hover{background:#0c9691;}
+.btn-accent:hover{background:#3a57e4;}
 .btn-primary{background:var(--accent-solid);color:var(--on-brand);box-shadow:0 10px 24px -10px color-mix(in srgb, var(--brand-2) 50%, transparent);}
 .btn-primary:hover{background:var(--brand);}
 .btn-ghost{background:transparent;border-color:var(--border);color:var(--fg);}
@@ -1833,39 +1833,48 @@ body.aq-locked{
    and at (0,2,1) it outranks the plain .gx-wrap rules in the per-scene stylesheets, which
    load after this file.
    ============================================================ */
-/* THE SCENES KEEP ONE STAGE IN BOTH THEMES.
-   This used to be scoped to the light theme and built from --deep-1/--bg-deep/--deep-2. Those
-   tokens were flattened to #FFFFFF when the palette moved to Deep Cobalt, so the "dark stage"
-   composited to pure white — which is why the globe vanished in the light theme rather than
-   merely dimming. Additive blending over white does not fade, it saturates to nothing.
+/* THE SCENES ON A LIGHT PAGE — NO PANEL, JUST THE ARTWORK.
+   The wrappers paint nothing in either theme. On the dark page the artwork already sits on
+   the ground it was drawn for; on white it needs help, because every one of these scenes
+   uses THREE.AdditiveBlending and additive over white saturates to white — the lines do not
+   dim, they disappear.
 
-   The fix is not to re-tint per theme. A light page does not make a black-backed viewport
-   wrong: the artwork is a lit object seen against space, and that reads the same way on paper
-   as it does on a dark page. So the stage is now literal and identical in both themes, and
-   the scenes look the same everywhere — which is also what makes them checkable.
+   WHY A FILTER RATHER THAN RECOLOURING THE SCENES. Recolouring means switching nine files to
+   NormalBlending and regenerating their glow textures, and the materials are built once at
+   startup — so a visitor toggling the theme would keep whichever set was built on load, and
+   see light-mode artwork on a black page. This inverts the composited canvas instead: the
+   bright-on-transparent drawing becomes dark-on-transparent, the hue rotation carries the
+   blue back to blue, and because it is CSS it flips the instant the theme does, with no
+   stale materials and no reload. Alpha is untouched, so nothing paints a rectangle.
 
-   NO BORDER. A rule around this panel is exactly the seam the whole layout is avoiding; on
-   the dark page the stage is already invisible against the ground, and on the light page the
-   rounded black panel is its own edge. */
+   Scoped to :root:not([data-theme="dark"]) because light is the ABSENCE of the attribute. */
 .gx-wrap, .hg-globe-wrap, .qg-globe-wrap, .kn-wrap, .dna-wrap, .brain-wrap,
 .face-wrap, .radar-canvas-wrap, .helix-canvas-wrap, .ent-globe-wrap{
-  background:
-    radial-gradient(68% 58% at 50% 42%, rgba(125,155,255,.15), transparent 70%),
-    linear-gradient(158deg, #05070F 0%, #000000 55%, #04060D 100%);
+  background:transparent;
   border:0;
-  border-radius:var(--r-xl);
-  color:#EDF1F8;
   overflow:hidden;
 }
-/* Overlay UI drawn straight onto the stage is light in both themes now, because the stage
-   is. These were flipping to --fg-muted in light, which is ink, and became unreadable the
-   moment the stage stopped being white. */
+:root:not([data-theme="dark"]) .gx-wrap canvas,
+:root:not([data-theme="dark"]) .hg-globe-wrap canvas,
+:root:not([data-theme="dark"]) .qg-globe-wrap canvas,
+:root:not([data-theme="dark"]) .kn-wrap canvas,
+:root:not([data-theme="dark"]) .dna-wrap canvas,
+:root:not([data-theme="dark"]) .brain-wrap canvas,
+:root:not([data-theme="dark"]) .face-wrap canvas,
+:root:not([data-theme="dark"]) .radar-canvas-wrap canvas,
+:root:not([data-theme="dark"]) .helix-canvas-wrap canvas,
+:root:not([data-theme="dark"]) .ent-globe-wrap canvas{
+  /* Chosen by computing the filter matrices rather than by eye: this chain lands the
+     mesh lines on rgb(41,85,255) — the cobalt family — and takes the node glows to a near
+     black-blue, which is what the bright nodes invert to. */
+  filter:invert(1) hue-rotate(180deg) saturate(1.7) contrast(1.2) brightness(.62);
+}
+/* Overlay UI sits on the page in light and on the artwork's own dark ground in dark, so it
+   takes the theme's foreground either way. */
 .gx-auto-label, .hg-loading, .qg-loading, .gx-loading, .kn-loading,
 .face-loading, .brain-loading, .ent-globe-loading{
-  color:#B9C2D2;
+  color:var(--fg-muted);
 }
-/* The KPI-network legend sits OUTSIDE its wrapper, on the page itself, so on white paper its
-   swatches still need an edge to survive. */
 :root:not([data-theme="dark"]) .kn-legend i{
   box-shadow:0 0 0 1px rgba(14,22,33,.18);
 }

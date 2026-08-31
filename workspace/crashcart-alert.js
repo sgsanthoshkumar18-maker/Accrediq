@@ -116,7 +116,7 @@ function rows(items, urgent) {
 function section(title, groups, urgent) {
   if (!groups.length) return "";
   return '<h3 style="font:700 15px/1.3 system-ui;margin:26px 0 8px;color:' +
-           (urgent ? "#b42318" : "#0B4F45") + '">' + esc(title) + '</h3>' +
+           (urgent ? "#b42318" : "#2743C9") + '">' + esc(title) + '</h3>' +
     groups.map(function (g) {
       return '<div style="margin:0 0 16px">' +
         '<div style="font:600 14px system-ui;margin:0 0 4px">' + esc(g.cart) +
@@ -157,7 +157,7 @@ function render(review, orgName) {
     section("Short expiry — replace before the date shown", shortByCart, false) +
 
     (monthly.length > 1
-      ? '<h3 style="font:700 15px/1.3 system-ui;margin:26px 0 8px;color:#0B4F45">' +
+      ? '<h3 style="font:700 15px/1.3 system-ui;margin:26px 0 8px;color:#2743C9">' +
         'By month</h3><ul style="margin:0 0 8px;padding-left:20px;color:#344">' +
         monthly.map(function (m) {
           return '<li><b>' + esc(E.monthLabel(m.month)) + '</b> — ' + m.items.length +
@@ -166,7 +166,7 @@ function render(review, orgName) {
       : "") +
 
     '<p style="margin:22px 0 0"><a href="' + SITE + '/workspace/crashcart.html" ' +
-      'style="background:#0E7C6B;color:#fff;text-decoration:none;padding:10px 18px;' +
+      'style="background:#2743C9;color:#fff;text-decoration:none;padding:10px 18px;' +
       'border-radius:7px;font-weight:600;display:inline-block">Open the short expiry calendar</a></p>' +
     '<p style="margin:18px 0 0;color:#889;font-size:12px">Counted across ' +
       review.cartCount + ' crash cart' + (review.cartCount === 1 ? "" : "s") + ' and ' +

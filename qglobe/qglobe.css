@@ -139,7 +139,7 @@
 .qg-committee-chip{font-family:var(--font-mono);font-size:10.5px;font-weight:700;background:rgba(255,255,255,.04);border:1px solid;padding:4px 10px;border-radius:999px;}
 
 .qg-panel-cta{display:block;text-align:center;background:var(--accent-solid);color:var(--on-accent);font-weight:700;font-size:13.5px;padding:12px;border-radius:999px;margin-top:8px;}
-.qg-panel-cta:hover{background:#3fd8c2;}
+.qg-panel-cta:hover{background:#3a57e4;}
 
 @media (max-width:980px){
   .qg-right{max-height:none;border-left:none;border-top:1px solid rgba(255,255,255,.06);}

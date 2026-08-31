@@ -37,9 +37,9 @@ window.AQCrashCartExcel = (function () {
      states. A workbook where everything is coloured tells the reader nothing about where to
      look, which is the whole point of colouring anything. */
   var FILLS = [
-    { key: "title",   bg: "FF0B4F45", fg: "FFFFFFFF", bold: true,  size: 14 },
-    { key: "head",    bg: "FF0E7C6B", fg: "FFFFFFFF", bold: true },
-    { key: "band",    bg: "FFDCEBE6", fg: "FF0B4F45", bold: true },
+    { key: "title",   bg: "FF2743C9", fg: "FFFFFFFF", bold: true,  size: 14 },
+    { key: "head",    bg: "FF2743C9", fg: "FFFFFFFF", bold: true },
+    { key: "band",    bg: "FFDCEBE6", fg: "FF2743C9", bold: true },
     { key: "expired", bg: "FFFEE4E2", fg: "FFB42318", bold: true },
     { key: "short",   bg: "FFFEF0C7", fg: "FF93370D", bold: false },
     { key: "ok",      bg: "FFECFDF3", fg: "FF027A48", bold: false },

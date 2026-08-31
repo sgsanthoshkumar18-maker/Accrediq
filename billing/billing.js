@@ -309,7 +309,7 @@ window.AQBilling = (function () {
         description: p.label + " subscription",
         order_id: order.id,
         prefill: { email: user.email || "", name: user.name || "" },
-        theme: { color: "#17A2B8" },
+        theme: { color: "#4C6FFF" },
         handler: function (resp) {
           fetch("/api/verify-payment", {
             method: "POST",

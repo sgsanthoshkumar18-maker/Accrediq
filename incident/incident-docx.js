@@ -18,7 +18,7 @@ window.AQIncidentDoc = (function () {
   var I = window.AQIncident;
 
   var INK = "0E2233";
-  var ACCENT = "17A2B8";
+  var ACCENT = "4C6FFF";
   var ACCENT_DEEP = "0E6B7A";
   var MUTED = "5A6C7A";
   var RULE = "D8E0E6";

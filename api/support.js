@@ -66,7 +66,7 @@ module.exports = async function handler(req, res) {
       esc(kind) + ' &middot; aqcredix.com</p>' +
     '<h2 style="margin:0 0 18px;font-family:Georgia,serif;font-weight:400;font-size:22px">' +
       'Message from ' + esc(email) + '</h2>' +
-    '<div style="white-space:pre-wrap;border-left:3px solid #0B4F45;padding:2px 0 2px 16px;margin:0 0 20px">' +
+    '<div style="white-space:pre-wrap;border-left:3px solid #2743C9;padding:2px 0 2px 16px;margin:0 0 20px">' +
       esc(message) + '</div>' +
     '<table style="font-size:13px;color:#5E6D67;border-collapse:collapse">' +
       '<tr><td style="padding:2px 14px 2px 0">Reply to</td><td>' + esc(email) + '</td></tr>' +

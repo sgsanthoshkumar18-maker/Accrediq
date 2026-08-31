@@ -117,7 +117,7 @@ module.exports = async function handler(req, res) {
       'They have an account. They do not have a subscription unless they pay or you grant ' +
       'complimentary access.</p>' +
     '<p style="font-size:12px;color:#8B978F;margin-top:14px">' +
-      '<a href="' + esc(SITE) + '/profile.html" style="color:#0B4F45">Open AQcredix</a></p>' +
+      '<a href="' + esc(SITE) + '/profile.html" style="color:#2743C9">Open AQcredix</a></p>' +
     '</div>';
 
   try {

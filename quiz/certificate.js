@@ -27,7 +27,7 @@ window.AQCert = (function () {
 
   var INK = "#0E2233";
   var INK_SOFT = "#5A6C7A";
-  var ACCENT = "#17A2B8";
+  var ACCENT = "#4C6FFF";
   var ACCENT_DEEP = "#0E6B7A";
   var PAPER = "#FFFFFF";
   var RULE = "#D8E0E6";
@@ -221,7 +221,7 @@ window.AQCert = (function () {
    * size and disappears at thumbnail size, which is what you want. */
   function drawLattice(ctx, W, H) {
     ctx.save();
-    ctx.strokeStyle = "rgba(23,162,184,0.045)";
+    ctx.strokeStyle = "rgba(76, 111, 255,0.045)";
     ctx.lineWidth = 1.5;
     for (var i = -H; i < W; i += 26) {
       ctx.beginPath();
@@ -403,9 +403,9 @@ window.AQCert = (function () {
        rather than as a plain box rule. */
     var uw = 350;
     var g = ctx.createLinearGradient(cx - uw, 0, cx + uw, 0);
-    g.addColorStop(0, "rgba(23,162,184,0)");
+    g.addColorStop(0, "rgba(76, 111, 255,0)");
     g.addColorStop(0.5, ACCENT);
-    g.addColorStop(1, "rgba(23,162,184,0)");
+    g.addColorStop(1, "rgba(76, 111, 255,0)");
     ctx.fillStyle = g;
     ctx.fillRect(cx - uw, 678, uw * 2, 4);
 

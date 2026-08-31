@@ -29,7 +29,7 @@
   const CODES = Object.keys(window.NABH_DATA.official);
   const CHAPTER_ACCENT = {
     AAC: 0x4c6fff, COP: 0x818cf8, MOM: 0xf472b6, PRE: 0x60a5fa, IPC: 0xf87171,
-    PSQ: 0xfbbf24, ROM: 0xa78bfa, FMS: 0x34d399, HRM: 0xfb923c, IMS: 0x7d9bff
+    PSQ: 0xfbbf24, ROM: 0xa78bfa, FMS: 0xd946ef, HRM: 0xfb923c, IMS: 0x7d9bff
   };
 
   const renderer = new THREE.WebGLRenderer({ canvas, antialias: true, alpha: true });
