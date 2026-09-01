@@ -4,6 +4,7 @@
  *     vortex  home            particles on a flow field, cursor swirls them
  *     cells   standards       a drifting Voronoi cell field
  *     signal  dashboard       nodes that link when they meet, cursor pushes them apart
+ *     constellation  founder  a sprung grid; a cursor sweep shoves it open and it recoils
  *
  * NO DEPENDENCIES, DELIBERATELY. The cells effect is the one people reach for Vanta to get,
  * and Vanta needs three.js r134 plus vanta.cells.min.js — roughly 600KB to draw a pattern,
@@ -193,7 +194,127 @@
     }
   }
 
-  var DRAW = { vortex: vortex, cells: cells, signal: signal }[KIND];
+  /* ---------------------------------------------------------- constellation
+     A grid of nodes on springs. Sweeping the cursor shoves them aside and they pull back to
+     their anchor — Hooke's law with damping, so the recoil settles rather than oscillating.
+
+     THREE THINGS CHANGED FROM THE REFERENCE IMPLEMENTATION, all for this page:
+
+     1. It draws on a TRANSPARENT canvas. The original painted an opaque background colour
+        across the whole canvas, which on this site would cover the page it is supposed to sit
+        behind. Here the body paints the ground and this only ever adds to it.
+
+     2. Links are found by grid neighbour, not by comparing every node with every other. The
+        original is O(n²): at its 55px spacing a 1920×1080 screen holds ~750 nodes, which is
+        285,000 distance checks per frame, sixty times a second. Because the nodes start on a
+        grid and the link distance is only a little longer than the spacing, the same picture
+        comes out of four comparisons per node — right, down, and the two diagonals. That is
+        what makes it viable on a phone.
+
+     3. No hex-coordinate readout and no giant title. Both are good fun on a standalone demo
+        and both would print text across a biography. This is a background.
+
+     Spacing widens on small screens, so a phone draws a comparable number of nodes to a
+     laptop rather than several thousand. */
+  var cg = [], cgCols = 0, cgRows = 0, cgFresh = true;
+  var cgMouse = { x: -9999, y: -9999, px: -9999, py: -9999, speed: 0 };
+
+  function cgInit() {
+    /* Roughly 70px on a phone down to 58px on a desktop: enough that the mesh reads as a mesh
+       at any width without the node count running away on a large monitor. */
+    var gap = W < 560 ? 70 : W < 1100 ? 62 : 58;
+    cgCols = Math.ceil(W / gap) + 1;
+    cgRows = Math.ceil(H / gap) + 1;
+    cg = [];
+    for (var j = 0; j < cgRows; j++) {
+      for (var i = 0; i < cgCols; i++) {
+        var x = i * gap, y = j * gap;
+        cg.push({ x: x, y: y, vx: 0, vy: 0, bx: x, by: y,
+                  r: 0.9 + Math.random() * 0.8, ph: Math.random() * 6.2832 });
+      }
+    }
+    cgFresh = false;
+  }
+
+  var cgLast = 0;
+  function constellation(t) {
+    if (cgFresh || !cg.length) cgInit();
+    var dt = cgLast ? Math.min((t - cgLast) / 1000, 0.05) : 0.016;
+    cgLast = t;
+
+    /* Cursor speed drives how hard the shockwave hits, which is the whole character of the
+       effect: a slow drift barely disturbs it, a fast sweep throws it open. */
+    if (m.has) { cgMouse.x = m.x; cgMouse.y = m.y; } else { cgMouse.x = -9999; cgMouse.y = -9999; }
+    var mvx = (cgMouse.x - cgMouse.px) / (dt * 1000 || 1);
+    var mvy = (cgMouse.y - cgMouse.py) / (dt * 1000 || 1);
+    cgMouse.px = cgMouse.x; cgMouse.py = cgMouse.y;
+    cgMouse.speed = Math.min(Math.hypot(mvx, mvy), 6);
+
+    var dark = isDark();
+    ctx.clearRect(0, 0, W, H);
+
+    /* Cobalt in both themes. On paper it has to be the dark end of the family and quieter
+       still, or a full-screen mesh competes with the text sitting on top of it. */
+    var line = dark ? "108,140,255" : "39,67,201";
+    var node = dark ? "125,155,255" : "39,67,201";
+    var LINK_A = dark ? 0.16 : 0.11;
+    var NODE_A = dark ? 0.42 : 0.30;
+    var NEAR_A = dark ? 0.85 : 0.62;
+
+    var REACH = 210, K = 18, DAMP = 0.82, LINK = 78, LINK_SQ = LINK * LINK;
+
+    for (var n = 0; n < cg.length; n++) {
+      var p = cg[n];
+      p.ph += dt * 2.4;
+      if (m.has) {
+        var dx = cgMouse.x - p.x, dy = cgMouse.y - p.y, d = Math.hypot(dx, dy);
+        if (d < REACH && d > 0.01) {
+          var force = (1 - d / REACH) * (900 + cgMouse.speed * 130);
+          p.vx -= (dx / d) * force * dt;
+          p.vy -= (dy / d) * force * dt;
+        }
+      }
+      p.vx += (p.bx - p.x) * K * dt;
+      p.vy += (p.by - p.y) * K * dt;
+      p.vx *= DAMP; p.vy *= DAMP;
+      p.x += p.vx * dt * 60;
+      p.y += p.vy * dt * 60;
+    }
+
+    /* Links: grid neighbours only. */
+    ctx.lineWidth = 0.7;
+    for (var j2 = 0; j2 < cgRows; j2++) {
+      for (var i2 = 0; i2 < cgCols; i2++) {
+        var a = cg[j2 * cgCols + i2];
+        if (!a) continue;
+        for (var k = 0; k < 4; k++) {
+          /* right, down, down-right, down-left */
+          var ni = i2 + (k === 0 ? 1 : k === 2 ? 1 : k === 3 ? -1 : 0);
+          var nj = j2 + (k === 0 ? 0 : 1);
+          if (ni < 0 || ni >= cgCols || nj >= cgRows) continue;
+          var b = cg[nj * cgCols + ni];
+          if (!b) continue;
+          var lx = a.x - b.x, ly = a.y - b.y, sq = lx * lx + ly * ly;
+          if (sq > LINK_SQ) continue;
+          var al = (1 - Math.sqrt(sq) / LINK) * LINK_A;
+          ctx.strokeStyle = "rgba(" + line + "," + al.toFixed(3) + ")";
+          ctx.beginPath(); ctx.moveTo(a.x, a.y); ctx.lineTo(b.x, b.y); ctx.stroke();
+        }
+      }
+    }
+
+    for (var q = 0; q < cg.length; q++) {
+      var s = cg[q];
+      var near = m.has && Math.hypot(cgMouse.x - s.x, cgMouse.y - s.y) < REACH;
+      var alpha = near ? NEAR_A : NODE_A + Math.sin(s.ph) * 0.06;
+      ctx.fillStyle = "rgba(" + node + "," + alpha.toFixed(3) + ")";
+      var rad = near ? s.r * 1.9 : s.r + Math.sin(s.ph) * 0.22;
+      ctx.beginPath(); ctx.arc(s.x, s.y, Math.max(0.4, rad), 0, 6.2832); ctx.fill();
+    }
+  }
+
+  var DRAW = { vortex: vortex, cells: cells, signal: signal,
+               constellation: constellation }[KIND];
   if (!DRAW) return;
 
   /* Cells is the expensive one; half rate is indistinguishable for a slow drift and halves
@@ -204,7 +325,7 @@
   function frame(t) {
     requestAnimationFrame(frame);
     if (hidden) return;
-    if (size()) vFresh = true;
+    if (size()) { vFresh = true; cgFresh = true; }
     if (++tick % EVERY) return;
     DRAW(t);
   }
