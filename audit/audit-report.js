@@ -68,6 +68,106 @@ window.AQAuditReport = (function () {
       '<button type="button" class="btn btn-ghost" id="audPrint">Print / save as PDF</button>' +
       "</div></div>";
 
+    /* ------------------------------------------------------------- analysis
+       A score tells a quality manager where they are. It does not tell them what to do on
+       Monday. This block answers the two questions that actually drive that: what is holding
+       up, and what is most likely to cost them on the day.
+
+       Everything below is computed from findings that were actually recorded — no ranking is
+       invented, and where there is nothing to say the block says so. */
+    if (window.AQCharts) {
+      var C = window.AQCharts;
+      var chapters = Object.keys(sc.byChapter).map(function (k) { return sc.byChapter[k]; })
+        .filter(function (c) { return c.applicable > 0; });
+      var ranked = chapters.slice().sort(function (a, b) { return b.pct - a.pct; });
+      var best = ranked[0], worst = ranked[ranked.length - 1];
+
+      /* What would actually cost accreditation: open findings on Core elements, worst first.
+         sc.open is already sorted by severity, so taking from the front is taking the most
+         serious. */
+      var coreRisk = sc.open.filter(function (r) {
+        return /^core$/i.test(r.category || "");
+      });
+
+      h += '<div class="aud-analysis">';
+
+      h += '<div class="aqc-cards">' +
+        C.card({ label: "Readiness (weighted)", value: sc.weighted, unit: "%",
+                 note: sc.band.label }) +
+        C.card({ label: "Elements assessed", value: sc.assessed + " / " + sc.applicable,
+                 note: sc.counts.unassessed ? sc.counts.unassessed + " left unassessed"
+                                            : "Every applicable element was assessed" }) +
+        C.card({ label: "Findings to close", value: sc.open.length,
+                 note: sc.open.length ? "Non-conformities and partial compliances" : "Nothing open" }) +
+        C.card({ label: "Core elements open", value: sc.coreOpen,
+                 note: sc.coreOpen ? "These carry the most weight" : "No Core element is open" }) +
+        "</div>";
+
+      h += '<div class="aqc-grid-2" style="margin-top:16px">';
+
+      h += '<div class="aqc-panel"><h3>Where the result comes from</h3>' +
+        C.rings([
+          { label: "Compliant", pct: sc.applicable ? Math.round(sc.counts.compliant / sc.applicable * 100) : 0, tone: "var(--ok)" },
+          { label: "Partially compliant", pct: sc.applicable ? Math.round(sc.counts.partial / sc.applicable * 100) : 0, tone: "var(--warn)" },
+          { label: "Non-compliant", pct: sc.applicable ? Math.round(sc.counts.nc / sc.applicable * 100) : 0, tone: "var(--nc)" }
+        ], { centre: { value: sc.weighted + "%", label: "Readiness" }, label: "Status mix" }) +
+        "</div>";
+
+      h += '<div class="aqc-panel"><h3>Readiness by chapter</h3>' +
+        C.bars(ranked.map(function (c) {
+          return { label: c.code, sub: c.pct + "%", v: c.pct,
+                   tone: c.pct >= 85 ? "var(--ok)" : c.pct >= 60 ? "var(--warn)" : "var(--nc)" };
+        }), { max: 100, pct: true, label: "Readiness by chapter",
+              empty: "No chapter had an applicable element in this scope." }) +
+        '<p class="aud-sub" style="margin-top:10px">Weighted within each chapter, so a Core ' +
+        "failure pulls its chapter down further than an Excellence one.</p></div>";
+
+      h += "</div>";
+
+      /* The two sentences worth acting on. */
+      h += '<div class="aqc-grid-2" style="margin-top:16px">';
+      if (best) {
+        h += C.callout({
+          tone: "good", kicker: "Strongest area",
+          title: best.name + " — " + best.pct + "%",
+          body: "This chapter is the most complete in this department: " +
+            best.counts.compliant + " of " + best.applicable +
+            " applicable elements fully compliant. It is the part of this department worth " +
+            "showing an assessor first, and the practice worth copying into the weaker areas."
+        });
+      }
+      if (coreRisk.length) {
+        h += C.callout({
+          tone: "bad", kicker: "What would cost you",
+          title: coreRisk.length + " Core element" + (coreRisk.length === 1 ? "" : "s") + " still open",
+          body: "Core elements carry the heaviest weight in an assessment and are not offset " +
+            "by strong performance elsewhere. Close these before anything else on the list:",
+          items: coreRisk.slice(0, 5).map(function (r) {
+            return r.code + " — " + r.text.slice(0, 96) + (r.text.length > 96 ? "…" : "") +
+              (r.finding.owner ? "  (" + r.finding.owner +
+                (r.finding.due_date ? ", due " + r.finding.due_date : "") + ")" : "");
+          })
+        });
+      } else if (worst && worst.pct < 100) {
+        h += C.callout({
+          tone: "warn", kicker: "Weakest area",
+          title: worst.name + " — " + worst.pct + "%",
+          body: "No Core element is open, so nothing here is an immediate threat to the " +
+            "result. This chapter is where the remaining ground is: " +
+            (worst.counts.nc + worst.counts.partial) + " element" +
+            ((worst.counts.nc + worst.counts.partial) === 1 ? " is" : "s are") + " still short."
+        });
+      } else {
+        h += C.callout({
+          tone: "good", kicker: "Nothing open",
+          title: "Every applicable element was met",
+          body: "No non-conformities or partial compliances were recorded in this department. " +
+            "Re-audit on the schedule below rather than treating this as settled."
+        });
+      }
+      h += "</div></div>";
+    }
+
     h += '<div class="aud-rep-grid">' +
       '<div class="aud-card aud-score">' + donut(sc) +
       '<div class="aud-band aud-band-' + sc.band.key + '">' + esc(sc.band.label) + "</div>" +

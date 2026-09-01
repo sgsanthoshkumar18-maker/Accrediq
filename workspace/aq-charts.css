@@ -1,0 +1,134 @@
+/* AQcredix — the shared chart vocabulary.
+ *
+ * One stylesheet for the dashboard and the audit analysis, so the two screens read as one
+ * product. Everything is token-driven: no per-theme rule exists in this file, and none
+ * should be added — a chart that needs a theme branch is a chart using a literal colour.
+ */
+
+/* ------------------------------------------------------------------- cards */
+.aqc-cards{display:grid;grid-template-columns:repeat(auto-fit,minmax(184px,1fr));gap:14px;}
+.aqc-card{
+  background:var(--surface-1);border-radius:var(--r-lg);padding:15px 17px;position:relative;
+  min-width:0;overflow:hidden;
+}
+/* The accent tick, not a border. A rule around every card is the banding the layout avoids. */
+.aqc-card::before{
+  content:"";position:absolute;left:17px;top:0;width:22px;height:2px;
+  border-radius:0 0 2px 2px;background:var(--accent-bright);opacity:.85;
+}
+.aqc-card-top{display:flex;align-items:center;gap:10px;margin-bottom:9px;}
+.aqc-card-label{
+  font-size:10.5px;letter-spacing:.06em;text-transform:uppercase;font-family:var(--font-mono);
+  color:var(--fg-faint);flex:1;min-width:0;
+}
+.aqc-delta{
+  font-size:11px;font-weight:700;padding:2px 7px;border-radius:999px;white-space:nowrap;
+  font-variant-numeric:tabular-nums;
+}
+.aqc-delta.good{background:var(--ok-tint);color:var(--ok);}
+.aqc-delta.bad{background:var(--nc-tint);color:var(--nc);}
+.aqc-delta.flat{background:var(--surface-2);color:var(--fg-faint);}
+.aqc-card-val{
+  font-family:var(--font-display);font-size:27px;font-weight:700;line-height:1.05;
+  color:var(--fg);font-variant-numeric:tabular-nums;display:flex;align-items:baseline;gap:5px;
+}
+.aqc-card-unit{font-size:13px;color:var(--fg-faint);font-weight:600;}
+.aqc-card-note{font-size:11.5px;color:var(--fg-muted);margin-top:7px;line-height:1.45;}
+.aqc-spark{width:100%;height:30px;display:block;margin-top:10px;overflow:visible;}
+
+/* ------------------------------------------------------------------ charts */
+.aqc-panel{
+  background:var(--surface-1);border-radius:var(--r-lg);padding:18px 20px;position:relative;min-width:0;
+}
+.aqc-panel::before{
+  content:"";position:absolute;left:20px;top:0;width:22px;height:2px;
+  border-radius:0 0 2px 2px;background:var(--accent-bright);opacity:.85;
+}
+.aqc-panel h3{
+  font-size:11.5px;letter-spacing:.06em;text-transform:uppercase;font-family:var(--font-mono);
+  color:var(--fg-muted);margin:0 0 14px;
+}
+.aqc-grid-2{display:grid;grid-template-columns:repeat(auto-fit,minmax(320px,1fr));gap:16px;}
+
+.aqc-area svg,.aqc-bars svg{width:100%;height:auto;display:block;overflow:visible;}
+.aqc-grid{stroke:var(--border);stroke-width:1;}
+.aqc-axis{
+  font-size:9.5px;font-family:var(--font-mono);fill:var(--fg-faint);
+}
+.aqc-axis-sub{font-size:8.5px;opacity:.75;}
+.aqc-dot{fill:var(--accent-bright);}
+.aqc-line{stroke-dasharray:1400;stroke-dashoffset:0;animation:aqc-draw 1.1s cubic-bezier(.22,.61,.36,1) both;}
+@keyframes aqc-draw{from{stroke-dashoffset:1400;}}
+.aqc-bar{animation:aqc-rise .7s cubic-bezier(.22,.61,.36,1) both;transform-origin:center bottom;}
+@keyframes aqc-rise{from{transform:scaleY(0);}}
+
+/* ------------------------------------------------------------------- rings */
+.aqc-rings{display:flex;flex-wrap:wrap;align-items:center;gap:20px;}
+.aqc-ring-wrap{position:relative;flex-shrink:0;width:168px;}
+.aqc-ring-wrap svg{width:168px;height:168px;display:block;}
+.aqc-ring{animation:aqc-sweep 1s cubic-bezier(.22,.61,.36,1) both;}
+@keyframes aqc-sweep{from{stroke-dasharray:0 9999;}}
+.aqc-ring-centre{
+  position:absolute;inset:0;display:flex;flex-direction:column;align-items:center;
+  justify-content:center;pointer-events:none;text-align:center;
+}
+.aqc-ring-centre b{
+  font-family:var(--font-display);font-size:31px;font-weight:700;color:var(--fg);line-height:1;
+  font-variant-numeric:tabular-nums;
+}
+.aqc-ring-centre span{font-size:10.5px;letter-spacing:.05em;text-transform:uppercase;
+  font-family:var(--font-mono);color:var(--fg-faint);margin-top:4px;}
+.aqc-ring-legend{display:grid;gap:9px;flex:1;min-width:150px;}
+.aqc-legend-row{display:flex;align-items:center;gap:9px;font-size:12.5px;color:var(--fg-muted);}
+.aqc-legend-row i{width:9px;height:9px;border-radius:50%;flex-shrink:0;}
+.aqc-legend-row b{margin-left:auto;color:var(--fg);font-variant-numeric:tabular-nums;}
+
+.aqc-legend{display:flex;flex-wrap:wrap;gap:14px;margin-top:12px;}
+.aqc-legend-item{display:flex;align-items:center;gap:7px;font-size:12px;color:var(--fg-muted);}
+.aqc-legend-item i{width:9px;height:9px;border-radius:2px;flex-shrink:0;}
+.aqc-legend-item b{color:var(--fg);font-variant-numeric:tabular-nums;}
+
+/* ---------------------------------------------------------------- callouts */
+.aqc-callout{
+  border-radius:var(--r-lg);padding:16px 18px;position:relative;
+  background:var(--surface-1);
+}
+.aqc-callout::before{
+  content:"";position:absolute;left:0;top:14px;bottom:14px;width:3px;border-radius:0 3px 3px 0;
+}
+.aqc-callout-good::before{background:var(--ok);}
+.aqc-callout-bad::before{background:var(--nc);}
+.aqc-callout-warn::before{background:var(--warn);}
+.aqc-callout-info::before{background:var(--accent-bright);}
+.aqc-callout-k{
+  font-size:10.5px;letter-spacing:.06em;text-transform:uppercase;font-family:var(--font-mono);
+  margin-bottom:5px;
+}
+.aqc-callout-good .aqc-callout-k{color:var(--ok);}
+.aqc-callout-bad .aqc-callout-k{color:var(--nc);}
+.aqc-callout-warn .aqc-callout-k{color:var(--warn);}
+.aqc-callout-info .aqc-callout-k{color:var(--accent-text);}
+.aqc-callout-h{font-family:var(--font-display);font-size:17px;font-weight:700;color:var(--fg);line-height:1.3;}
+.aqc-callout p{font-size:13.5px;line-height:1.6;color:var(--fg-muted);margin:7px 0 0;}
+.aqc-callout ul{margin:9px 0 0;padding-left:18px;display:grid;gap:6px;font-size:13px;line-height:1.5;color:var(--fg-muted);}
+.aqc-callout li::marker{color:var(--fg-faint);}
+
+.aqc-empty{font-size:13px;color:var(--fg-muted);line-height:1.6;margin:0;}
+
+/* -------------------------------------------------------------- responsive */
+@media (max-width:620px){
+  .aqc-cards{grid-template-columns:repeat(auto-fit,minmax(140px,1fr));gap:11px;}
+  .aqc-card{padding:13px 14px;}
+  .aqc-card::before{left:14px;}
+  .aqc-card-val{font-size:22px;}
+  .aqc-panel{padding:15px 14px;}
+  .aqc-panel::before{left:14px;}
+  .aqc-rings{gap:14px;justify-content:center;}
+}
+@media (prefers-reduced-motion:reduce){
+  .aqc-line,.aqc-bar,.aqc-ring{animation:none;}
+}
+@media print{
+  .aqc-line,.aqc-bar,.aqc-ring{animation:none;}
+  .aqc-panel,.aqc-card,.aqc-callout{break-inside:avoid;}
+}

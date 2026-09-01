@@ -372,6 +372,51 @@ window.AQDeptAnalytics = (function () {
     return "";
   }
 
+  /* WHAT IS WORKING AND WHAT IS NOT, named.
+     A grid of charts shows a manager where they are; it does not tell them what to do next.
+     These two are computed from attainment against each KPI's own target, so "worst" means
+     furthest from the line that department set — not simply the smallest number, which would
+     rank a 2% infection rate below a 90% compliance rate and be useless. */
+  function insight(d) {
+    if (!window.AQCharts) return "";
+    var C = window.AQCharts;
+    var scored = d.kpi.map(function (k) {
+      return { name: k[0], val: k[1], target: k[2], status: statusOf(k[3]), a: attainment(k[1], k[2]) };
+    }).filter(function (x) { return x.a != null; });
+    if (!scored.length) return "";
+    var ranked = scored.slice().sort(function (a, b) { return b.a - a.a; });
+    var best = ranked[0], worst = ranked[ranked.length - 1];
+    var off = d.kpi.filter(function (k) { return statusOf(k[3]) !== "ok"; });
+
+    var out = '<div class="aqc-grid-2">';
+    out += C.callout({
+      tone: "good", kicker: "Holding up",
+      title: best.name,
+      body: "At " + best.val + " against a target of " + best.target + " — the furthest ahead " +
+        "of its target in this department, and the practice worth copying into the others."
+    });
+    if (off.length) {
+      out += C.callout({
+        tone: worst.status === "risk" ? "bad" : "warn",
+        kicker: "Costing you most",
+        title: worst.name,
+        body: "At " + worst.val + " against a target of " + worst.target +
+          " — the furthest short of its target here. " +
+          (off.length > 1 ? off.length + " KPIs in total are off target:" : "It is the only KPI off target."),
+        items: off.length > 1 ? off.map(function (k) {
+          return k[0] + " — " + k[1] + " vs " + k[2];
+        }) : null
+      });
+    } else {
+      out += C.callout({
+        tone: "good", kicker: "Nothing off target",
+        title: "Every KPI is meeting its target",
+        body: "Keep the monthly figures up to date so a slide is visible before an assessor finds it."
+      });
+    }
+    return out + "</div>";
+  }
+
   function readView(d) {
     var facts = chapterFacts(d);
     return '' +
@@ -403,6 +448,7 @@ window.AQDeptAnalytics = (function () {
           '<div class="da-card"><h3>KPI status mix</h3>' + mix(d.kpi) + '</div>' +
           '<div class="da-card"><h3>Score by month</h3>' + trend(d.trend) + '</div>' +
         '</div>' +
+        insight(d) +
         '<div class="da-card"><h3>KPIs tracked</h3>' +
           '<table class="da-table"><thead><tr><th>KPI</th><th>Current</th><th>Target</th><th>Status</th></tr></thead><tbody>' +
           d.kpi.map(function (k) {
