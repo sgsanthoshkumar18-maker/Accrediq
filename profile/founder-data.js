@@ -32,7 +32,7 @@ window.FOUNDER = {
      the page falls back to the ring mark with initials, which is deliberately not a
      broken-image icon. LinkedIn images cannot be hot-linked — they are signed URLs that
      expire — so the file has to live in the repo. */
-  photo: "assets/founder.jpg",
+  photo: "assets/founder.png",
 
   /* The three-stage story for the pinned scrollytelling card. */
   lens: [

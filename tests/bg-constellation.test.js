@@ -162,10 +162,30 @@ check('the canvas is inert and sits behind the page', () => {
   assert.ok(/position:fixed/.test(rule[1]), 'the canvas must be fixed');
 });
 
-check('the founder page is wired to it', () => {
+/* The founder page used this briefly and now has the oversized-name hero instead, so no page
+ * currently requests it. The effect is kept rather than deleted: it is ~90 lines beside three
+ * siblings in the same module, fully covered by the checks above, and it is the obvious answer
+ * the next time a page wants a background. What matters is that it stays correct and stays
+ * reachable by the one attribute that turns it on. */
+check('the effect stays available even though no page requests it today', () => {
+  const js = read('motion/bg.js');
+  assert.ok(/constellation: constellation/.test(js),
+    'the effect must stay registered in the DRAW map to be reachable by data-bg');
+  const pages = fs.readdirSync(ROOT).filter(f => /\.html$/.test(f));
+  const users = pages.filter(f => /data-bg="constellation"/.test(read(f)));
+  /* Not an error either way — this records which pages use it so a future change is visible. */
+  console.log('        (pages using it: ' + (users.length ? users.join(', ') : 'none'));
+});
+
+/* The founder page dropped it deliberately. If data-bg comes back without motion/bg.js being
+ * loaded, or the other way round, the page half-works — so assert they agree. */
+check('the founder page requests no background, and loads none', () => {
   const html = read('founder.html');
-  assert.ok(/<body[^>]*data-bg="constellation"/.test(html), 'founder page does not request it');
-  assert.ok(/motion\/bg\.js\?v=/.test(html), 'founder page does not load the background module');
+  const asks = /data-bg="/.test(html);
+  const loads = /motion\/bg\.js/.test(html);
+  assert.strictEqual(asks, loads,
+    asks ? 'the page requests a background but does not load the module'
+         : 'the page loads the background module but requests no effect');
 });
 
 /* Reduced motion still gets one painted frame — a still mesh, not a blank page. */

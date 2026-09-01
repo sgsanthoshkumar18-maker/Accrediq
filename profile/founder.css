@@ -588,3 +588,119 @@ html.fp-tilt-on [data-tilt].is-tilting::after { opacity: 1; }
      100% would hide it entirely for anyone who asked for less motion. */
   .fp-signoff img{clip-path:inset(0 0 0 0);transition:none}
 }
+
+/* ============================================================
+   FOUNDER HERO — the name as the stage
+   ------------------------------------------------------------
+   Replaces the constellation background. That was atmosphere behind a page; this is the page.
+
+   HOW IT WORKS. The name is set very large and sits at the back of the stacking order; the
+   portrait sits in front of it, so the head occludes part of the type. Nothing is masked or
+   cut out in software — the overlap IS the effect, and it costs one z-index.
+
+   The first half of the name is drawn as an outline and the second solid. A word this size
+   set entirely solid reads as shouting; entirely outlined it reads as unfinished. The split
+   is what makes it sit still.
+
+   ON THE PORTRAIT. It is layered in front of live type, so a photo with its own background
+   paints a rectangle across the letters. The rule below keeps a soft edge either way, but the
+   effect only fully lands with a cut-out PNG.
+   ============================================================ */
+.fp-stage{
+  position:relative;
+  padding:clamp(28px,6vw,72px) 0 clamp(32px,5vw,56px);
+  overflow:hidden;
+}
+
+/* ---------- the oversized name ---------- */
+.fp-stage-name{
+  position:relative;
+  z-index:0;
+  display:block;
+  text-align:center;
+  font-family:var(--font-display);
+  font-weight:800;
+  letter-spacing:-.045em;
+  line-height:.86;
+  /* Fills the width at any viewport without a media query per size. */
+  /* A starting size only. The real size is measured and set by fitStageName() in
+     founder.js, because "as large as fits on one line" is a fact about the rendered glyphs
+     and the container, and CSS cannot ask that question. */
+  font-size:clamp(30px,11vw,180px);
+  text-transform:uppercase;
+  white-space:nowrap;
+  margin-bottom:clamp(-24px,-3.4vw,-58px);   /* the photo rises into the type */
+  user-select:none;
+}
+.fp-n-outline{
+  color:transparent;
+  -webkit-text-stroke:1.5px var(--accent-bright);
+  /* Firefox and older Safari ignore -webkit-text-stroke; they get the solid tone instead,
+     which is a different look rather than an invisible word. */
+  @supports not (-webkit-text-stroke: 1px red) { color:var(--accent-text); }
+}
+.fp-n-solid{ color:var(--accent-text); }
+
+/* ---------- the three-column stage ---------- */
+.fp-stage-grid{
+  position:relative;
+  z-index:2;
+  display:grid;
+  grid-template-columns:minmax(0,1fr) auto minmax(0,1fr);
+  align-items:end;
+  gap:clamp(14px,3vw,34px);
+}
+.fp-stage-left{ padding-bottom:clamp(6px,2vw,26px); }
+.fp-stage-right{ display:flex; justify-content:flex-end; padding-bottom:clamp(6px,2vw,26px); }
+.fp-stage-right .fp-tags{ justify-content:flex-end; }
+
+/* The real heading stays for screen readers and search, out of sight. */
+.fp-sr-name{
+  position:absolute;width:1px;height:1px;padding:0;margin:-1px;
+  overflow:hidden;clip:rect(0 0 0 0);white-space:nowrap;border:0;
+}
+
+/* ---------- the portrait ---------- */
+.fp-stage-photo{ display:flex; justify-content:center; align-items:flex-end; }
+.fp-stage .fp-photo{
+  width:clamp(190px,26vw,340px);
+  height:auto;
+  aspect-ratio:3 / 4;
+  border-radius:0;
+  border:0;
+  background:transparent;
+  overflow:visible;
+  /* Grounds the figure against the type instead of letting it float. */
+  filter:drop-shadow(0 22px 44px rgba(0,0,0,.45));
+}
+.fp-stage .fp-photo img{
+  width:100%;height:100%;object-fit:contain;object-position:bottom;display:block;
+}
+/* No photo yet: the initials ring stands in, sized to the same slot. */
+.fp-stage .fp-photo.is-fallback{
+  aspect-ratio:1;width:clamp(150px,18vw,220px);border-radius:50%;
+  border:3px solid var(--accent-bright);background:var(--surface-1);
+  align-items:center;justify-content:center;filter:none;
+}
+
+/* ---------- responsive ---------- */
+@media (max-width:900px){
+  .fp-stage-grid{
+    grid-template-columns:1fr;
+    justify-items:center;
+    text-align:center;
+  }
+  .fp-stage-right{ justify-content:center; }
+  .fp-stage-right .fp-tags{ justify-content:center; }
+  .fp-stage-photo{ order:-1; }
+  .fp-stage-name{ margin-bottom:clamp(-18px,-3vw,-34px); }
+  .fp-stage .fp-photo{ width:clamp(180px,52vw,260px); }
+}
+@media (max-width:560px){
+  /* The name still fits on one line here — fitStageName() shrinks it to whatever the screen
+     allows. Only the stroke thins, because 1.5px on 40px type is heavy. */
+  .fp-n-outline{ -webkit-text-stroke-width:1px; }
+}
+@media (prefers-reduced-motion:reduce){
+  .fp-stage .fp-photo{ transition:none; }
+}

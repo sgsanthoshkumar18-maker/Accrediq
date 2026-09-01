@@ -41,6 +41,112 @@
     /* The portrait is optional. An <img> that 404s shows a broken-image icon, which looks
        like a fault rather than a choice, so the fallback is installed on error and the
        ring mark stands in until a file exists at the configured path. */
+    /* The oversized name behind the portrait. Split so the LAST word is the solid half:
+       the surname is what should carry at that size, and an outline ending is what stops the
+       whole thing reading as a shout. Titles are dropped — "Dr." set 190px tall is noise. */
+    (function paintStageName() {
+      var a = el("fNameA"), b = el("fNameB");
+      if (!a || !b) return;
+      /* The FULL name, title included — it reads as the person's name rather than a brand
+         mark, which is the point of putting it at the top of their own page. */
+      var parts = String(F.name || "").trim().split(/\s+/).filter(Boolean);
+      if (!parts.length) return;
+      if (parts.length === 1) {
+        /* One word: split it in half rather than leaving the outline empty. */
+        var w = parts[0], cut = Math.ceil(w.length / 2);
+        a.textContent = w.slice(0, cut);
+        b.textContent = w.slice(cut);
+      } else {
+        b.textContent = parts.pop();
+        a.textContent = parts.join(" ") + " ";   /* an ordinary space: nowrap holds the line on
+                                               desktop, and this can break when it wraps */
+      }
+    })();
+
+    /* AS LARGE AS FITS ON ONE LINE — measured, not guessed.
+       A clamp() on vw is a guess about how wide the glyphs will be, and it is wrong for any
+       name longer or shorter than the one it was tuned against. This asks the browser: it
+       sets a size, reads the rendered width, and scales to the width actually available.
+
+       Two passes rather than a loop: the first lands within a percent or two, the second
+       corrects for rounding. A binary search would be more code for a difference nobody can
+       see. */
+    (function fitStageName() {
+      var box = document.querySelector(".fp-stage-name");
+      if (!box || !box.parentElement) return;
+
+      function fit() {
+        var parent = box.parentElement;
+        /* clientWidth INCLUDES the parent's padding, and .wrap has a good deal of it. Fitting
+           to that overflows by exactly the padding — which is how the last letter ended up
+           off the right edge. Measure the content box. */
+        var ps = getComputedStyle(parent);
+        var avail = parent.clientWidth
+          - (parseFloat(ps.paddingLeft) || 0)
+          - (parseFloat(ps.paddingRight) || 0);
+        if (avail <= 0) return;                    /* not laid out yet */
+        /* Measure on one line first, whatever the previous state was. */
+        box.style.whiteSpace = "nowrap";
+        box.style.fontSize = "100px";
+        var size = 100;
+        for (var pass = 0; pass < 2; pass++) {
+          var w = box.scrollWidth;
+          if (!w) return;
+          /* Leave a hair of room: scrollWidth rounds down, and a name touching both edges
+             looks like it overflowed even when it has not. */
+          size = size * (avail * 0.985) / w;
+          box.style.fontSize = size + "px";
+        }
+
+        /* ONE LINE, UNTIL ONE LINE STOPS BEING WORTH IT.
+           A twenty-character name fitted to a phone lands around 24px — smaller than the
+           body copy underneath it, which is the opposite of the point. Below this floor the
+           name is allowed to wrap instead, so it stays the largest thing on the page. */
+        var MIN = 40;
+        if (size < MIN) {
+          box.style.whiteSpace = "normal";
+
+          /* Wrapping buys height, not width: the longest single word still has to fit on a
+             line. Measure it at a known size and scale from that — this is the hard ceiling,
+             and the MIN floor must yield to it or the name runs off the screen. */
+          var longest = String(box.textContent || "").trim().split(/\s+/)
+            .reduce(function (a, b) { return b.length > a.length ? b : a; }, "");
+          var bs = getComputedStyle(box);
+          var probe = document.createElement("span");
+          probe.textContent = longest;
+          probe.style.cssText = "position:absolute;left:-9999px;top:0;visibility:hidden;" +
+            "white-space:nowrap;font-size:100px;font-family:" + bs.fontFamily +
+            ";font-weight:" + bs.fontWeight + ";letter-spacing:" + bs.letterSpacing +
+            ";text-transform:" + bs.textTransform;
+          document.body.appendChild(probe);
+          var wordW = probe.scrollWidth;
+          probe.remove();
+
+          var ceiling = wordW ? 100 * (avail * 0.98) / wordW : MIN;
+          /* Prefer MIN, but never exceed what the longest word allows. */
+          box.style.fontSize = Math.min(Math.max(size, MIN), ceiling) + "px";
+
+          /* CORRECT AGAINST THE REAL RENDER. The probe cannot know about the text stroke or
+             the exact shaping of the display face, so it lands a few percent optimistic.
+             Measuring what actually rendered and scaling down is exact where a prediction is
+             not. Only ever shrinks, so it cannot introduce an overflow of its own. */
+          for (var fix = 0; fix < 3 && box.scrollWidth > avail; fix++) {
+            var f = parseFloat(box.style.fontSize) || MIN;
+            box.style.fontSize = (f * avail / box.scrollWidth * 0.99) + "px";
+          }
+        }
+      }
+
+      fit();
+      /* Webfonts land after first paint and change every measurement. */
+      if (document.fonts && document.fonts.ready) document.fonts.ready.then(fit).catch(function () {});
+      var t;
+      window.addEventListener("resize", function () {
+        clearTimeout(t);
+        t = setTimeout(fit, 120);
+      }, { passive: true });
+    })();
+
     var ph = el("fPhoto");
     var img = new Image();
     img.onload = function () {
