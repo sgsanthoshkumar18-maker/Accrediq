@@ -169,7 +169,7 @@ window.AQAuditExcel = (function () {
       [L("Walk-the-floor items present"), (function () {
         var ql = A.quickSummary(session);
         return ql.total
-          ? { v: ql.present.length + " of " + ql.total + "  (" + ql.pct + "%)",
+          ? { v: ql.pct + "%  (" + ql.counts.compliant + " full, " + ql.counts.partial + " partial, " + ql.counts.nc + " missing)",
               s: ql.pct >= 80 ? XF.compliant : ql.pct >= 50 ? XF.partial : XF.nc }
           : "—";
       })()],
@@ -258,21 +258,34 @@ window.AQAuditExcel = (function () {
      report. Absent rows are styled as non-conformities because that is what they are. */
   function quickSheet(session) {
     var ql = window.AQAudit.quickSummary(session);
-    var out = [[H("Walk-the-floor item"), H("Present in department")]];
-    ql.list.forEach(function (q) {
-      var ok = ql.present.indexOf(q) >= 0;
-      out.push([W(q), { v: ok ? "Yes" : "No", s: ok ? XF.compliant : XF.nc }]);
+    var out = [[H("Walk-the-floor item"), H("Status"), H("Result")]];
+    ql.rows.forEach(function (r) {
+      var st = r.status;
+      /* The letter goes in the cell as well as the colour, so the sheet survives greyscale
+         printing and colour vision deficiency — the same rule the Kamishibai board follows. */
+      out.push([W(r.item),
+        { v: shortOf(st), s: styleFor(st) },
+        { v: (window.AQAudit.STATUS[st] || {}).label || st, s: styleFor(st) }]);
     });
     if (!ql.total) {
       out.push([W("The assessor checklist lists no walk-the-floor items for this area.")]);
     } else {
       out.push([]);
-      out.push([B("Present"), { v: ql.present.length, s: XF.compliant }]);
-      out.push([B("Not available"), { v: ql.absent.length, s: XF.nc }]);
-      out.push([B("Total items"), ql.total]);
-      out.push([B("Percent present"), ql.pct + "%"]);
+      out.push([B("Fully in place"), { v: ql.counts.compliant, n: true, s: XF.compliant }]);
+      out.push([B("In place, with gaps"), { v: ql.counts.partial, n: true, s: XF.partial }]);
+      out.push([B("Missing or not working"), { v: ql.counts.nc, n: true, s: XF.nc }]);
+      out.push([B("Not applicable"), { v: ql.counts.na, n: true, s: XF.na }]);
+      out.push([B("Not scored"), { v: ql.counts.unassessed, n: true, s: XF.unassessed }]);
+      out.push([]);
+      out.push([B("Applicable items"), { v: ql.applicable, n: true }]);
+      out.push([B("Compliance"), { v: ql.pct + "%", s: XF.band }]);
+      out.push([]);
+      out.push([L("How this is scored"),
+        W("Full credit for fully in place, half credit for in place with gaps. Not Applicable " +
+          "is excluded from the denominator. Anything left unscored counts against the figure, " +
+          "because an item nobody looked at is not evidence of compliance.")]);
     }
-    return sheetXml(out, { widths: [74, 22], freeze: 1 });
+    return sheetXml(out, { widths: [62, 10, 26], freeze: 1 });
   }
 
   function kpiSheet(session) {

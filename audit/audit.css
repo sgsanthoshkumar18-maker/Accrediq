@@ -231,3 +231,55 @@
   .aud-quickrep .aud-qbar span{animation:none;}
   .aud-qcols{grid-template-columns:1fr 1fr;}
 }
+
+/* ---------- Quick list: tick plus a four-way status ----------
+ * Presence and compliance are different questions. The tick is the fast path for "fully in
+ * place"; the four buttons are how an auditor says it exists but with gaps, is missing, or
+ * does not apply here. They are one value with two ways in, so they can never disagree.
+ *
+ * The letters carry the meaning, not the colour — this has to survive greyscale printing and
+ * colour vision deficiency, and it is filled in on a phone on a ward.
+ */
+.aud-qlist-edit{list-style:none;padding:0;margin:0;display:grid;gap:2px;}
+.aud-qlist-edit li{
+  display:flex;flex-wrap:wrap;align-items:center;gap:10px;
+  padding:7px 0;border-bottom:1px solid var(--border);
+}
+.aud-qlist-edit li:last-child{border-bottom:0;}
+.aud-qtick{
+  display:flex;align-items:flex-start;gap:9px;flex:1;min-width:190px;cursor:pointer;
+  font-size:14px;line-height:1.45;
+}
+.aud-qtick input{margin-top:2px;flex-shrink:0;width:17px;height:17px;accent-color:var(--ok);cursor:pointer;}
+
+.aud-qstates{display:flex;gap:4px;flex-shrink:0;}
+.aud-qst{
+  min-width:38px;height:30px;padding:0 8px;border-radius:var(--r-sm);cursor:pointer;
+  border:1px solid var(--border);background:var(--surface-1);color:var(--fg-muted);
+  font-family:var(--font-mono);font-size:11.5px;font-weight:700;letter-spacing:.03em;
+  transition:background .15s ease, color .15s ease, border-color .15s ease;
+}
+.aud-qst:hover{border-color:var(--brand-2);color:var(--fg);}
+.aud-qst:focus-visible{outline:2px solid var(--brand-2);outline-offset:1px;}
+.aud-qst.is-on.aud-qst-compliant{background:var(--ok-tint);color:var(--ok);border-color:var(--ok);}
+.aud-qst.is-on.aud-qst-partial{background:var(--warn-tint);color:var(--warn);border-color:var(--warn);}
+.aud-qst.is-on.aud-qst-nc{background:var(--nc-tint);color:var(--nc);border-color:var(--nc);}
+.aud-qst.is-on.aud-qst-na{background:var(--surface-2);color:var(--fg);border-color:var(--fg-faint);}
+
+/* A ward round happens on a phone. The states stay reachable without a horizontal scroll. */
+@media (max-width:560px){
+  .aud-qlist-edit li{gap:7px;}
+  .aud-qtick{min-width:100%;}
+  .aud-qstates{width:100%;}
+  .aud-qst{flex:1;min-width:0;height:34px;}
+}
+@media (prefers-reduced-motion:reduce){
+  .aud-qst{transition:none;}
+}
+
+/* The report's walk-the-floor groups gained two more states. Each is marked with a symbol as
+   well as a colour, so the printed and greyscale versions still read. */
+.aud-qlist.warn li::before{content:"\25D1";color:var(--warn);}   /* half-filled: in place, with gaps */
+.aud-qlist.un li::before{content:"\003F";color:var(--fg-faint);} /* not scored */
+.aud-qlist.na li::before{content:"\2013";color:var(--fg-faint);} /* not applicable */
+.aud-qlist.un li,.aud-qlist.na li{color:var(--fg-muted);}

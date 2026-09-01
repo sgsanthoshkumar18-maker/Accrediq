@@ -361,27 +361,78 @@
        This is walked on the floor before the element-by-element pass, so it is the first
        record of what the area actually has — and it is what the finished report and the
        Excel both count from. */
+    /* Each item is scored the same four ways an element is. Presence and compliance are not
+       the same thing — a licence can be on the wall and expired, a fridge can be there with
+       no temperature log — and a tick can only ever say "it exists".
+
+       The tick is kept as the fast path, because most items on a walk are simply fine and
+       clicking one box is quicker than four. It is a shortcut for Compliant, not a second
+       piece of state: ticking sets C, and choosing PC/NC/NA clears it. One value, two ways
+       in, so the two can never disagree. */
+    var QSTATES = [["compliant", "C", "Compliant"], ["partial", "PC", "Partially compliant"],
+                   ["nc", "NC", "Non-compliant"], ["na", "NA", "Not applicable"]];
+
     el("audQuick").innerHTML = quick.length
       ? '<details class="aud-quick" open><summary>Quick list — what to walk the floor with (' +
         '<span id="audQuickCount">' + quick.length + "</span>)</summary>" +
-        '<p class="aud-sub">Tick what is actually present in this department. Anything left ' +
-        "clear is recorded as not available.</p><ul>" +
+        '<p class="aud-sub">Tick anything that is fully in place, or score it: <b>PC</b> when ' +
+        "it exists with gaps, <b>NC</b> when it is missing or not working, <b>NA</b> when it " +
+        "does not apply here. Anything left unscored is reported as unassessed.</p>" +
+        '<ul class="aud-qlist-edit">' +
         quick.map(function (q, i) {
-          return '<li><label><input type="checkbox" data-quick="' + i + '"' +
-            (session.quick_checks[q] ? " checked" : "") + "> " + esc(q) + "</label></li>";
+          var st = A.quickStatus(session, q);
+          return '<li data-qrow="' + i + '">' +
+            '<label class="aud-qtick"><input type="checkbox" data-quick="' + i + '"' +
+            (st === "compliant" ? " checked" : "") + '><span>' + esc(q) + "</span></label>" +
+            '<span class="aud-qstates" role="group" aria-label="Status for ' + esc(q) + '">' +
+            QSTATES.map(function (s) {
+              return '<button type="button" class="aud-qst aud-qst-' + s[0] +
+                (st === s[0] ? " is-on" : "") + '" data-qstate="' + i + '" data-val="' + s[0] +
+                '" title="' + s[2] + '" aria-pressed="' + (st === s[0]) + '">' + s[1] + "</button>";
+            }).join("") + "</span></li>";
         }).join("") + "</ul></details>"
       : "";
 
     function paintQuickCount() {
-      var n = quick.filter(function (q) { return session.quick_checks[q]; }).length;
+      var s = A.quickSummary(session);
       var c = el("audQuickCount");
-      if (c) c.textContent = n + " of " + quick.length + " present";
+      if (!c) return;
+      c.textContent = s.counts.compliant + " compliant · " + s.counts.partial + " partial · " +
+        s.counts.nc + " non-compliant" +
+        (s.counts.na ? " · " + s.counts.na + " N/A" : "") +
+        (s.unassessed ? " · " + s.unassessed + " unscored" : "");
     }
+
+    function setQuick(i, status) {
+      var item = quick[i];
+      session.quick_checks[item] = status;
+      var row = el("audQuick").querySelector('[data-qrow="' + i + '"]');
+      if (row) {
+        var box = row.querySelector("[data-quick]");
+        if (box) box.checked = status === "compliant";
+        row.querySelectorAll("[data-qstate]").forEach(function (b) {
+          var on = b.getAttribute("data-val") === status;
+          b.classList.toggle("is-on", on);
+          b.setAttribute("aria-pressed", String(on));
+        });
+      }
+      paintQuickCount();
+      A.save(session);
+    }
+
     el("audQuick").querySelectorAll("[data-quick]").forEach(function (c) {
       c.addEventListener("change", function () {
-        session.quick_checks[quick[+c.getAttribute("data-quick")]] = c.checked;
-        paintQuickCount();
-        A.save(session);
+        /* Unticking means "not simply compliant" rather than "non-compliant" — the auditor
+           says which of PC/NC/NA it is. Guessing here would put a finding in the report
+           that nobody made. */
+        setQuick(+c.getAttribute("data-quick"), c.checked ? "compliant" : "unassessed");
+      });
+    });
+    el("audQuick").querySelectorAll("[data-qstate]").forEach(function (b) {
+      b.addEventListener("click", function () {
+        var i = +b.getAttribute("data-qstate"), val = b.getAttribute("data-val");
+        /* Clicking the state it already has clears it, so a mis-tap is undoable. */
+        setQuick(i, A.quickStatus(session, quick[i]) === val ? "unassessed" : val);
       });
     });
     paintQuickCount();

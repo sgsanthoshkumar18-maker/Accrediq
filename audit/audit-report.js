@@ -209,22 +209,38 @@ window.AQAuditReport = (function () {
        than summarised, because "9 of 13 present" tells nobody what to go and fix. */
     var ql = A.quickSummary(session);
     if (ql.total) {
-      h += '<div class="aud-card aud-quickrep"><h3>What the department has (' +
-        ql.present.length + " of " + ql.total + ")</h3>" +
+      /* Scored, not counted. "9 of 13 present" overstates a department where four of those
+         nine exist with gaps — and that gap is exactly what an assessor opens first. */
+      var qgroups = [
+        ["Fully in place", ql.present, "ok"],
+        ["In place, with gaps", ql.partial, "warn"],
+        ["Missing or not working",
+          ql.rows.filter(function (r) { return r.status === "nc"; })
+                 .map(function (r) { return r.item; }), "bad"],
+        ["Not scored",
+          ql.rows.filter(function (r) { return r.status === "unassessed"; })
+                 .map(function (r) { return r.item; }), "un"],
+        ["Not applicable here", ql.na, "na"]
+      ].filter(function (g) { return g[1].length; });
+
+      h += '<div class="aud-card aud-quickrep"><h3>What the department has — walked, not ' +
+        "read off a file</h3>" +
         '<div class="aud-qbar" role="img" aria-label="' + ql.pct +
-        '% of the quick list present"><span style="width:' + ql.pct + '%"></span></div>' +
-        '<p class="aud-sub"><b>' + ql.pct + "%</b> of the walk-the-floor list was present " +
-        "on the day.</p><div class=\"aud-qcols\">";
-      h += '<div><h4>Present (' + ql.present.length + ")</h4>" +
-        (ql.present.length
-          ? '<ul class="aud-qlist ok">' + ql.present.map(function (q) {
-              return "<li>" + esc(q) + "</li>"; }).join("") + "</ul>"
-          : "<p class=\"aud-sub\">Nothing on the list was recorded as present.</p>") + "</div>";
-      h += '<div><h4>Not available (' + ql.absent.length + ")</h4>" +
-        (ql.absent.length
-          ? '<ul class="aud-qlist bad">' + ql.absent.map(function (q) {
-              return "<li>" + esc(q) + "</li>"; }).join("") + "</ul>"
-          : "<p class=\"aud-sub\">Everything on the list was present.</p>") + "</div>";
+        '% compliance on the walk-the-floor list"><span style="width:' + ql.pct +
+        '%"></span></div>' +
+        '<p class="aud-sub"><b>' + ql.pct + "%</b> across " + ql.applicable +
+        " applicable item" + (ql.applicable === 1 ? "" : "s") +
+        " — full credit for fully in place, half for in place with gaps, and Not Applicable " +
+        "excluded from the denominator." +
+        (ql.unassessed ? " <b>" + ql.unassessed + " item" +
+          (ql.unassessed === 1 ? " was" : "s were") + " left unscored</b> and counts against " +
+          "the figure: an item nobody looked at is not evidence of compliance." : "") +
+        '</p><div class="aud-qcols">';
+      qgroups.forEach(function (g) {
+        h += "<div><h4>" + esc(g[0]) + " (" + g[1].length + ")</h4>" +
+          '<ul class="aud-qlist ' + g[2] + '">' +
+          g[1].map(function (q) { return "<li>" + esc(q) + "</li>"; }).join("") + "</ul></div>";
+      });
       h += "</div></div>";
     }
 

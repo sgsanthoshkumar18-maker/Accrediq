@@ -188,20 +188,59 @@ window.AQAudit = (function () {
 
   /* What the quick list says about this department. Driven entirely by the scope data, so
      every department gets it without a per-department change. */
+  /* A quick-list item is scored the same four ways an element is, because presence and
+     compliance are not the same thing. Something can be on the shelf and still be wrong: an
+     out-of-date licence, a fridge with no temperature log, a narcotics register with gaps. A
+     tick could only ever say "it exists", which is the weaker half of the question.
+
+     Stored as a status string. Sessions saved when this was a checkbox hold booleans, so
+     those are read forward here rather than migrated in place — an audit in progress must
+     never be rewritten underneath the person running it. */
+  function quickStatus(session, item) {
+    var v = (session.quick_checks || {})[item];
+    if (v === true) return "compliant";       /* ticked, under the old checkbox */
+    if (v === false) return "nc";             /* explicitly cleared, under the old checkbox */
+    if (typeof v === "string" && STATUS[v]) return v;
+    return "unassessed";
+  }
+
   function quickSummary(session) {
     var sc = (window.AUDIT_SCOPE || {})[session.department_id] || {};
     /* Deduplicated the same way the screen does it: a sub-area inherits its parent's list
        and then adds its own, so an item can appear twice. */
     var list = (sc.quickList || []).filter(function (q, i, a) { return a.indexOf(q) === i; });
-    var checks = session.quick_checks || {};
-    var present = [], absent = [];
-    list.forEach(function (q) { (checks[q] ? present : absent).push(q); });
+
+    var counts = { compliant: 0, partial: 0, nc: 0, na: 0, unassessed: 0 };
+    var rows = list.map(function (q) {
+      var st = quickStatus(session, q);
+      counts[st]++;
+      return { item: q, status: st };
+    });
+
+    /* Scored like the elements are: half credit for partial, Not Applicable excluded from
+       the denominator entirely. Anything left unassessed still counts against the score —
+       a walk-the-floor item nobody looked at is not evidence of compliance. */
+    var applicable = list.length - counts.na;
+    var gained = counts.compliant + counts.partial * 0.5;
+
     return {
       list: list,
-      present: present,
-      absent: absent,
+      rows: rows,
+      counts: counts,
+      /* Kept because the report, the Excel and the tests all read them. "present" now means
+         fully compliant, which is the only reading that does not overstate the result. */
+      present: rows.filter(function (r) { return r.status === "compliant"; })
+                   .map(function (r) { return r.item; }),
+      absent: rows.filter(function (r) { return r.status === "nc" || r.status === "unassessed"; })
+                  .map(function (r) { return r.item; }),
+      partial: rows.filter(function (r) { return r.status === "partial"; })
+                   .map(function (r) { return r.item; }),
+      na: rows.filter(function (r) { return r.status === "na"; })
+              .map(function (r) { return r.item; }),
       total: list.length,
-      pct: list.length ? Math.round((present.length / list.length) * 100) : null
+      applicable: applicable,
+      unassessed: counts.unassessed,
+      pct: applicable ? Math.round((gained / applicable) * 100) : null
     };
   }
 
@@ -486,6 +525,7 @@ window.AQAudit = (function () {
     fmtDuration: fmtDuration,
     score: score,
     quickSummary: quickSummary,
+    quickStatus: quickStatus,
     band: band,
     trainingNeeds: trainingNeeds,
     ownerMatrix: ownerMatrix,

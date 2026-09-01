@@ -153,5 +153,95 @@ check('the report and the UI both read the shared summary', () => {
   assert.ok(/A\.save\(session\)/.test(ui), 'a tick must persist immediately');
 });
 
+/* FOUR STATES, NOT A TICK. Presence and compliance are different questions: a licence can be
+ * on the wall and expired. These check the scoring behaves the way the elements do. */
+check('an item can be scored C / PC / NC / NA', () => {
+  const dept = DEPTS.find(k => (SCOPE[k].quickList || []).length >= 5);
+  const s = A.create(dept, { name: 'Test' });
+  const list = A.quickSummary(s).list;
+  s.quick_checks[list[0]] = 'compliant';
+  s.quick_checks[list[1]] = 'partial';
+  s.quick_checks[list[2]] = 'nc';
+  s.quick_checks[list[3]] = 'na';
+  const q = A.quickSummary(s);
+  assert.strictEqual(q.counts.compliant, 1, 'compliant not counted');
+  assert.strictEqual(q.counts.partial, 1, 'partial not counted');
+  assert.strictEqual(q.counts.nc, 1, 'non-compliant not counted');
+  assert.strictEqual(q.counts.na, 1, 'not-applicable not counted');
+  assert.strictEqual(q.counts.unassessed, q.total - 4, 'the rest should be unassessed');
+});
+
+/* Half credit for partial, and Not Applicable out of the denominator — the same arithmetic
+   the elements use, so the two figures on the report mean the same thing. */
+check('partial earns half credit and NA leaves the denominator', () => {
+  const dept = DEPTS.find(k => (SCOPE[k].quickList || []).length >= 4);
+  const s = A.create(dept, { name: 'Test' });
+  const list = A.quickSummary(s).list;
+  /* Score every item so nothing is left unassessed, then check the arithmetic exactly. */
+  list.forEach((q, i) => { s.quick_checks[q] = i === 0 ? 'na' : i === 1 ? 'partial' : 'compliant'; });
+  const q = A.quickSummary(s);
+  const applicable = list.length - 1;
+  const gained = (list.length - 2) + 0.5;
+  assert.strictEqual(q.applicable, applicable, 'NA must leave the denominator');
+  assert.strictEqual(q.pct, Math.round((gained / applicable) * 100),
+    'partial must earn half credit');
+});
+
+/* An item nobody looked at is not evidence of compliance, so it must not quietly vanish
+   from the denominator the way Not Applicable does. */
+check('an unscored item counts against the score, unlike NA', () => {
+  const dept = DEPTS.find(k => (SCOPE[k].quickList || []).length >= 4);
+  const s = A.create(dept, { name: 'Test' });
+  const list = A.quickSummary(s).list;
+  list.forEach((q, i) => { if (i > 0) s.quick_checks[q] = 'compliant'; });
+  const q = A.quickSummary(s);
+  assert.strictEqual(q.unassessed, 1, 'one item was left unscored');
+  assert.strictEqual(q.applicable, list.length, 'unscored must stay in the denominator');
+  assert.ok(q.pct < 100, 'an unscored item must stop the score reaching 100');
+});
+
+/* An audit saved while this was a checkbox must read forward, and must not be rewritten
+   underneath the person running it. */
+check('checkbox-era data reads forward without being migrated in place', () => {
+  const dept = DEPTS.find(k => (SCOPE[k].quickList || []).length >= 3);
+  const s = A.create(dept, { name: 'Test' });
+  const list = A.quickSummary(s).list;
+  s.quick_checks[list[0]] = true;
+  s.quick_checks[list[1]] = false;
+  assert.strictEqual(A.quickStatus(s, list[0]), 'compliant', 'a tick should read as compliant');
+  assert.strictEqual(A.quickStatus(s, list[1]), 'nc', 'an explicit clear should read as non-compliant');
+  assert.strictEqual(s.quick_checks[list[0]], true, 'the stored value must not be rewritten');
+  const q = A.quickSummary(s);
+  assert.strictEqual(q.counts.compliant, 1);
+  assert.strictEqual(q.counts.nc, 1);
+});
+
+/* The tick and the four buttons are one value with two ways in. Two independent pieces of
+   state would let the screen show a tick beside NC. */
+check('the tick is a shortcut for Compliant, not separate state', () => {
+  const ui = read('audit/audit-ui.js');
+  assert.ok(/data-qstate=/.test(ui), 'the four-way control is missing');
+  assert.ok(/setQuick\(\+c\.getAttribute\("data-quick"\), c\.checked \? "compliant" : "unassessed"\)/.test(ui),
+    'ticking must set Compliant and unticking must clear, not guess a failure');
+  assert.ok(/box\.checked = status === "compliant"/.test(ui),
+    'the tick must be repainted from the single stored status');
+  assert.ok(/A\.quickStatus\(session, quick\[i\]\) === val \? "unassessed" : val/.test(ui),
+    're-picking the current state should clear it, so a mis-tap is undoable');
+});
+
+check('the Excel carries the status, not a yes/no', () => {
+  const xl = read('audit/audit-excel.js');
+  /* Scoped to quickSheet: the KPI sheet keeps a legitimate yes/no ("was data available"),
+     which is a different question and should not be caught by this. */
+  const from = xl.indexOf('function quickSheet(');
+  const to = xl.indexOf('function kpiSheet(');
+  assert.ok(from > 0 && to > from, 'quickSheet is missing');
+  const sheet = xl.slice(from, to);
+  assert.ok(/shortOf\(st\)/.test(sheet), 'the sheet must print the C/PC/NC/NA letter');
+  assert.ok(/ql\.counts\.partial/.test(sheet), 'the totals must include partial');
+  assert.ok(/Not scored/.test(sheet), 'unscored items must be reported, not hidden');
+  assert.ok(!/"Yes" : "No"/.test(sheet), 'the walk-the-floor sheet should no longer be yes/no');
+});
+
 if (failures) { console.log('\n' + failures + ' failing'); process.exit(1); }
 console.log('\nall passing');
