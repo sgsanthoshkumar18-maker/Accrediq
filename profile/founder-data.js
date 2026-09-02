@@ -42,9 +42,14 @@ window.FOUNDER = {
      plus alpha rather than three colour channels, which is why it is less than half the
      weight of the colour version at the same size.
 
-     The colour cut-out is kept at assets/founder-cut.png and the untouched original at
-     assets/founder.png — switching back is this one line plus --fp-figure-ratio. */
-  photo: "assets/founder-cut-bw.png",
+     TRIMMED TO THE SILHOUETTE, THEN CENTRE-CROPPED BACK TO 0.948. The export carried a band
+     of empty frame above the hair; the figure is sized by height and its width follows from
+     the frame's ratio, so that band was making the figure wider than the body it contains and
+     holding the text columns further out than the shoulders ever needed. Trimming it alone
+     would have swung the ratio to 1.14 — a fifth wider again — so the frame is cropped back to
+     the ratio the layout was built around, which costs a little of each outer shoulder and
+     reads as a poster crop. Swapping the asset is this one line plus --fp-figure-ratio. */
+  photo: "assets/founder-2026.png",
 
   /* The three-stage story for the pinned scrollytelling card. */
   lens: [

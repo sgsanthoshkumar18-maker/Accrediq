@@ -406,6 +406,76 @@
     });
   }
 
+  /* ---------------------- sit the text block on the hero floor ----------------------
+     The left column flows its text around the figure's silhouette, and text can only flow
+     around a float — which rules out the flexbox that would otherwise bottom-align it. So the
+     column is full height and the block is pushed down by padding instead.
+
+     IT HAS TO BE MEASURED, AND MEASURED TWICE. How tall the block is depends on where it
+     sits: move it down and the lines beside it wrap against the shoulders instead of the
+     neck, which changes how many lines there are, which changes its height. One pass lands
+     close and the second settles it. Two is enough — a third has never moved the number in
+     testing, and looping until it stops risks not stopping. */
+  function pushTextToFloor() {
+    var col = document.querySelector(".fp-stage-left");
+    var grid = document.querySelector(".fp-stage-grid");
+    if (!col || !grid || !col.querySelector(".fp-flow")) return;
+    /* Stacked layout: the figure is above the text, the float is display:none, nothing to do.
+       Asking the float rather than the viewport width keeps this and the media query from
+       ever disagreeing about where the breakpoint is. */
+    if (getComputedStyle(col.querySelector(".fp-flow")).display === "none") {
+      var c = col.querySelector(".fp-stage-copy");
+      if (c) c.style.removeProperty("--fp-push");
+      col.style.removeProperty("--fp-flow-h");
+      col.style.removeProperty("--fp-flow-top");
+      col.style.height = "";
+      return;
+    }
+    var copy = col.querySelector(".fp-stage-copy");
+    if (!copy) return;
+
+    /* SIZE THE SHAPE BOX TO THE COLUMN — after zeroing it, so it cannot ratchet.
+       The float lives inside the column, so its own height feeds back into the column's
+       height: measured while the float is already tall, every call grows the layout a little
+       more, and the first attempt ran away to 946px. Zeroing first gives the column's natural
+       height, which is the stable answer. Deliberately NOT the figure's height: the figure is
+       the grid plus a bleed below the floor, so a float that tall could never fit inside a
+       column the grid has to contain. */
+    /* MEASURE FROM A CLEAN LAYOUT, THEN PIN IT.
+       The figure is the grid PLUS a bleed below the floor, so a float matching the figure is
+       always taller than the grid — and a float inside a grid item grows that item, which
+       grows the grid, which grows the figure again. The first attempt ran away to 946px.
+
+       Pinning the column to the height it has with no float breaks the loop: the float can
+       then be the figure's exact height and simply overflows, which costs nothing because it
+       is invisible. Everything is read in the cleared state, so repeated calls — a resize, the
+       font landing — always start from the same place and cannot ratchet. */
+    col.style.height = "";
+    col.style.setProperty("--fp-flow-h", "0px");
+    col.style.setProperty("--fp-flow-top", "0px");
+    copy.style.setProperty("--fp-push", "0px");
+    void col.offsetHeight;
+
+    var colR = col.getBoundingClientRect();
+    var figR = document.querySelector(".fp-stage-photo").getBoundingClientRect();
+    col.style.height = colR.height.toFixed(1) + "px";
+    col.style.setProperty("--fp-flow-top", Math.max(0, figR.top - colR.top).toFixed(1) + "px");
+    col.style.setProperty("--fp-flow-h", figR.height.toFixed(1) + "px");
+
+    /* ASK HOW FAR THE COPY IS FROM THE FLOOR, not how tall it is. The column is stretched to
+       the hero, so its own height is the hero's height whatever is inside it — scrollHeight
+       can never answer this. The distance from the bottom of the copy to the bottom of the
+       column is the correction, and adding it to the current push is the answer in either
+       direction. Twice, because moving the copy changes which part of the body its lines wrap
+       around, which changes how many lines there are. */
+    for (var pass = 0; pass < 2; pass++) {
+      var cur = parseFloat(copy.style.getPropertyValue("--fp-push")) || 0;
+      var pad = parseFloat(getComputedStyle(col).paddingBottom) || 0;
+      var slack = (col.getBoundingClientRect().bottom - pad) - copy.getBoundingClientRect().bottom;
+      copy.style.setProperty("--fp-push", Math.max(0, cur + slack).toFixed(1) + "px");
+    }
+  }
+
   /* --------------------------------- start --------------------------------- */
 
   function init() {
@@ -420,6 +490,19 @@
     renderPublications();
     renderCerts();
     initTilt();
+
+    /* The shape comes from the portrait file, so the outline is only real once the image has
+       decoded — measured before that, the text wraps around the bare rectangle and the block
+       lands at the wrong height. Run it now for the no-image case and again on decode. */
+    pushTextToFloor();
+    if (document.fonts && document.fonts.ready) {
+      document.fonts.ready.then(pushTextToFloor).catch(function () {});
+    }
+    var flowImg = new Image();
+    flowImg.onload = pushTextToFloor;
+    flowImg.onerror = pushTextToFloor;
+    flowImg.src = F.photo;
+    window.addEventListener("resize", pushTextToFloor, { passive: true });
 
     /* The site-wide reveal observer already ran during DOMContentLoaded, before any of
        this existed. Re-running it picks up everything just rendered; without this the
