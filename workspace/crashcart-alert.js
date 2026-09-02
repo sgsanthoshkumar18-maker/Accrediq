@@ -77,6 +77,18 @@ function normalise(raw) {
   return local + "@" + domain;
 }
 
+/* alert_email holds the people ASSIGNED to the crash cart, and a hospital usually assigns
+   more than one — a pharmacist and a ward sister, say. Stored as free text in one column, so
+   it is split on the separators a person actually types: commas, semicolons, newlines and
+   spaces. Anything without an @ is dropped rather than handed to the mail API, which would
+   reject the whole send and take the valid recipients down with it. */
+function addresses(raw) {
+  return String(raw == null ? "" : raw)
+    .split(/[,;\s]+/)
+    .map(function (a) { return a.trim(); })
+    .filter(function (a) { return a.indexOf("@") > 0; });
+}
+
 async function table(name, select) {
   try {
     const r = await fetch(SB + "/rest/v1/" + name + "?select=" + (select || "*"),
@@ -232,15 +244,35 @@ async function run(req, res) {
        the one that mattered. */
     if (review.empty) { quiet++; continue; }
 
-    /* Addressed to the person who restocks: the address set for this hospital if there is
-       one, otherwise everyone who could actually act on it. Bcc, never To — a To line
-       would show every recipient each other's address. */
-    const atTheHospital = s.alert_email
-      ? [s.alert_email]
+    /* WHO IS ASSIGNED TO THIS, AND NOBODY ELSE.
+       A crash cart's contents are not something every editor in the hospital needs in their
+       inbox. The quality manager or director names the people who actually restock — one
+       address or several — and only those people are written to. That naming lives in
+       alert_email, which is why it is read as a LIST rather than a single address: a hospital
+       usually has a pharmacist and a ward sister on this, not one person.
+
+       Falling back to the role list when nobody has been named is deliberate. A hospital that
+       has never opened the setting must not silently stop being told its adrenaline expired;
+       the default is the people who could act, and naming anyone narrows it from there.
+
+       The OWNER is always added, whichever branch ran. They are accountable for the account
+       and asked to see everything typed under it, and an owner who has narrowed the list to a
+       ward pharmacist should not thereby remove themselves.
+
+       Bcc, never To — a To line would show every recipient each other's address. */
+    const assigned = addresses(s.alert_email);
+    const owners = members.filter(function (m) {
+      return m.org_id === org && m.email &&
+             String(m.role || "").toLowerCase() === "owner";
+    }).map(function (m) { return m.email; });
+
+    const atTheHospital = (assigned.length
+      ? assigned
       : members.filter(function (m) {
           return m.org_id === org && m.email &&
                  RESTOCK_ROLES.indexOf(String(m.role || "").toLowerCase()) > -1;
-        }).map(function (m) { return m.email; });
+        }).map(function (m) { return m.email; })
+    ).concat(owners);
 
     /* De-duplicated on the normalised address, so somebody who is both the hospital's
        named contact and a member does not get the same mail twice — and so the support
