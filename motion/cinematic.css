@@ -98,6 +98,21 @@ html.aq-cine [data-cine="letters"] .cine-w i{
   transition-delay:calc(var(--cine-delay, 0ms) + var(--cine-i, 0) * var(--cine-stagger));
 }
 
+/* ------------------------------------------------------- the honest failure mode
+   is-cine-in only ASKS for a transition. If the transition never runs, the element keeps its
+   hidden start state indefinitely — and "drop" starts at clip-path:inset(100% 0 0 0), which
+   is invisible regardless of opacity. That is a blank headline, not a missed animation.
+   is-cine-shown is the hard end state: no transition, !important, nothing left to go wrong.
+   It is applied by the backstop timer and whenever the page was hidden at reveal time. */
+html.aq-cine [data-cine].is-cine-shown,
+html.aq-cine [data-cine="letters"].is-cine-shown .cine-w i{
+  opacity:1 !important;
+  transform:none !important;
+  clip-path:none !important;
+  filter:none !important;
+  transition:none !important;
+}
+
 /* ---------------------------------------------------------------- arrived */
 html.aq-cine [data-cine].is-cine-in{
   opacity:1;

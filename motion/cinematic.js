@@ -130,9 +130,32 @@
     }
   }, { rootMargin: "0px 0px -12% 0px", threshold: 0.08 });
 
+  /* showAll is the escape hatch, so it must SHOW, not ask. is-cine-in only starts a
+     transition; in exactly the situations this function exists for — no viewport, no
+     observer, a prerendered tab — that transition may never run, and the element would keep
+     its hidden start state while carrying the class that claims it arrived. */
   function showAll() {
-    all.forEach(function (el) { el.classList.add("is-cine-in"); });
+    all.forEach(function (el) {
+      el.classList.add("is-cine-in");
+      el.classList.add("is-cine-shown");
+    });
     try { io.disconnect(); } catch (e) {}
+  }
+
+  /* Is this element actually rendered, or only claiming to be? "drop" starts clipped to
+     inset(100% 0 0 0), which is invisible at any opacity, so both have to be asked. */
+  function looksHidden(el) {
+    var cs;
+    try { cs = getComputedStyle(el); } catch (e) { return false; }
+    if (parseFloat(cs.opacity) < 0.99) return true;
+    var cp = cs.clipPath || cs.webkitClipPath || "";
+    /* inset(100%…) and anything near it still hides the element outright. */
+    return /inset\(\s*(?:9\d(?:\.\d+)?|100)%/.test(cp);
+  }
+
+  function forceShown(el) {
+    el.classList.add("is-cine-in");
+    if (looksHidden(el)) el.classList.add("is-cine-shown");
   }
 
   /* NO VIEWPORT, NO ANIMATION. A page can be laid out with zero height — a hidden or
@@ -162,14 +185,29 @@
      anything still waiting is simply shown. This should never fire; it exists because the
      cost of it firing is a missed animation, and the cost of it not existing is a blank
      section. */
+  /* THE QUESTION IS "IS IT VISIBLE", NOT "DOES IT HAVE THE CLASS". This previously looked for
+     elements MISSING is-cine-in, which meant the one failure that matters — the class applied
+     but the transition never run, leaving the element at its hidden start state — was the
+     single case the backstop could not see. Ask the rendered result instead. */
   setTimeout(function () {
-    var stuck = all.filter(function (el) { return !el.classList.contains("is-cine-in"); });
-    if (!stuck.length) return;
-    stuck.forEach(function (el) {
+    all.forEach(function (el) {
       var r = el.getBoundingClientRect();
-      if (r.top < window.innerHeight && r.bottom > 0) el.classList.add("is-cine-in");
+      if (r.top < window.innerHeight && r.bottom > 0) forceShown(el);
     });
   }, 4000);
+
+  /* A tab backgrounded during load runs no transitions, so an element can be told to arrive
+     and simply never move. When the visitor comes back, anything still hidden is shown
+     outright — they have missed the animation either way, and a blank headline is not a
+     lesser failure than a missing one. */
+  document.addEventListener("visibilitychange", function () {
+    if (document.hidden) return;
+    all.forEach(function (el) {
+      if (el.classList.contains("is-cine-in") && looksHidden(el)) {
+        el.classList.add("is-cine-shown");
+      }
+    });
+  });
 
   /* A page restored from the back/forward cache keeps the classes it had, which is correct.
      Nothing to undo — recorded here because the absence of a pageshow handler is deliberate. */

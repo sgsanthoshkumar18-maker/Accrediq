@@ -38,7 +38,13 @@
   function heroParallax() {
     var hero = document.querySelector(".fp-hero");
     if (!hero) return;
-    var layers = hero.querySelectorAll("[data-depth]");
+    /* Never parallax something the reveal system also owns. Both write transform, and this
+       one writes it INLINE, which outranks the stylesheet: the reveal would then be unable to
+       return the element to its resting position. Excluded here rather than only in the markup
+       so that adding data-depth to a revealed element cannot quietly break it again. */
+    var layers = [].filter.call(hero.querySelectorAll("[data-depth]"), function (el) {
+      return !el.hasAttribute("data-cine");
+    });
     if (!layers.length) return;
 
     var move = throttled(function (e) {

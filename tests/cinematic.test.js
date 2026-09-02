@@ -69,8 +69,13 @@ function run(opts) {
   };
   if (opts.noIO) delete win.IntersectionObserver;
 
+  let listeners = [];
   const doc = {
     documentElement: html,
+    hidden: false,
+    /* The module re-checks on visibilitychange, because a tab backgrounded during load runs
+       no transitions and an element can be told to arrive and never move. */
+    addEventListener(type, fn) { listeners.push(type); },
     querySelectorAll(sel) {
       if (sel === '[data-cine]') return els;
       return [];
@@ -85,7 +90,7 @@ function run(opts) {
     armed: html.contains('aq-cine'),
     shown: els.filter(e => e.classList.contains('is-cine-in')).length,
     total: els.length,
-    observed, disconnected, els
+    observed, disconnected, els, listeners
   };
 }
 
@@ -135,7 +140,31 @@ check('elements already on screen arrive without needing a scroll', () => {
 
 check('there is a last-resort reveal so nothing can stay hidden', () => {
   assert.ok(/setTimeout\(/.test(js), 'the fallback timer is gone');
-  assert.ok(/stuck/.test(js), 'the fallback no longer looks for stuck elements');
+
+  /* THIS ASSERTION USED TO BE WRONG, AND THE BUG IT MISSED SHIPPED. It checked that the
+     fallback looked for "stuck" elements — meaning elements MISSING is-cine-in. But adding
+     the class only ASKS for a transition; if that transition never runs, the element keeps
+     its hidden start state while carrying the class that claims it arrived. That case — the
+     only one that actually matters — was invisible to a check written this way, and the
+     founder page shipped with its headline permanently hidden.
+
+     The right question is whether the element RENDERED, so that is what is asserted now. */
+  assert.ok(/function looksHidden/.test(js),
+    'the fallback must ask whether the element rendered, not whether it has the class');
+  assert.ok(/clipPath/.test(js),
+    'opacity alone is not enough: the drop variant hides via clip-path:inset(100%) and is ' +
+    'invisible at full opacity');
+  assert.ok(!/var stuck = all\.filter/.test(js),
+    'the fallback is back to looking for elements missing the class');
+  assert.ok(/is-cine-shown/.test(js),
+    'there must be a hard end state that does not depend on a transition running');
+});
+
+check('a tab backgrounded during load is rechecked when the visitor returns', () => {
+  const r = run(three);
+  assert.ok(r.listeners.indexOf('visibilitychange') !== -1,
+    'no visibilitychange listener: a tab hidden at load runs no transitions, so elements ' +
+    'can be told to arrive and simply never move');
 });
 
 /* Only composited properties: anything else animates layout and drops frames mid-scroll. */

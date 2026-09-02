@@ -218,5 +218,58 @@ check('the figure is not also being moved by the parallax layer', () => {
     'the pinned figure has a parallax offset again; it will drift off the floor on scroll');
 });
 
+/* ---------------------------------------------------------------- the name never arrived
+ * Shipped broken: the giant name stayed invisible on the live site while the portrait showed.
+ * Two causes, and the second is the one worth guarding forever.
+ */
+check('nothing in the hero is driven by two systems at once', () => {
+  /* founder-motion.js writes an INLINE transform on every [data-depth] layer in the hero on
+     pointer-move. An inline transform outranks the stylesheet, so .is-cine-in{transform:none}
+     could never return the element to its resting place. */
+  const both = [];
+  (html.match(/<[^>]*data-cine[^>]*>/g) || []).forEach(t => {
+    if (/data-depth/.test(t)) both.push(t.slice(0, 80));
+  });
+  assert.deepStrictEqual(both, [],
+    'these carry both data-cine and data-depth; the parallax writes transform inline and the ' +
+    'reveal cannot undo it: ' + both.join(' | '));
+
+  const motion = read('profile/founder-motion.js');
+  assert.ok(/hasAttribute\("data-cine"\)/.test(motion),
+    'the parallax must exclude revealed elements itself, not rely on the markup staying right');
+});
+
+check('the reveal has a failure mode that actually shows content', () => {
+  /* is-cine-in only ASKS for a transition. If the transition never runs the element keeps its
+     hidden start state while carrying the class that claims it arrived — and "drop" starts at
+     clip-path:inset(100% 0 0 0), invisible at any opacity. The old backstop looked for
+     elements MISSING the class, so this exact case was the one thing it could not see. */
+  const cjs = read('motion/cinematic.js');
+  const ccss = read('motion/cinematic.css');
+
+  assert.ok(/is-cine-shown/.test(ccss), 'the hard end-state class is gone from the CSS');
+  const shown = ccss.match(/\.is-cine-shown[^{]*\{[^}]*\}/);
+  assert.ok(shown, 'no rule defines is-cine-shown');
+  ['opacity:1 !important', 'clip-path:none !important', 'transition:none !important']
+    .forEach(d => assert.ok(shown[0].includes(d),
+      'is-cine-shown must force ' + d + ' or it is just another request for a transition'));
+
+  assert.ok(/function looksHidden/.test(cjs),
+    'the backstop must ask whether the element RENDERED, not whether it has the class');
+  assert.ok(/cs\.clipPath/.test(cjs),
+    'opacity alone is not enough: drop hides via clip-path and would pass an opacity check');
+  assert.ok(!/var stuck = all\.filter/.test(cjs),
+    'the backstop is back to looking for elements missing the class, which is the one ' +
+    'failure it cannot detect');
+  assert.ok(/visibilitychange/.test(cjs),
+    'a tab backgrounded during load runs no transitions; there must be a re-check on return');
+
+  /* The escape hatch must show, not ask. */
+  const sa = cjs.match(/function showAll\(\)[\s\S]*?\n  \}/);
+  assert.ok(sa && /is-cine-shown/.test(sa[0]),
+    'showAll still only adds is-cine-in, so in the very cases it exists for the content ' +
+    'stays hidden');
+});
+
 if (failures) { console.log('\n' + failures + ' failing'); process.exit(1); }
 console.log('\nall passing');
