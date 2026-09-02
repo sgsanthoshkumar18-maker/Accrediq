@@ -32,7 +32,19 @@ window.FOUNDER = {
      the page falls back to the ring mark with initials, which is deliberately not a
      broken-image icon. LinkedIn images cannot be hot-linked — they are signed URLs that
      expire — so the file has to live in the repo. */
-  photo: "assets/founder.png",
+  /* Greyscale, background removed, and trimmed so the hair starts on the first row — that
+     empty band was a fifth of the source frame, and it stopped the figure reaching the name
+     however large the box was made.
+
+     Greyscale is a composition decision, not a stylistic tic: the pink shirt was the
+     brightest thing on a black page and took the eye before the name did, and pink sits too
+     close in tone to the indigo accent where the two overlap. Stored as one grey channel
+     plus alpha rather than three colour channels, which is why it is less than half the
+     weight of the colour version at the same size.
+
+     The colour cut-out is kept at assets/founder-cut.png and the untouched original at
+     assets/founder.png — switching back is this one line plus --fp-figure-ratio. */
+  photo: "assets/founder-cut-bw.png",
 
   /* The three-stage story for the pinned scrollytelling card. */
   lens: [

@@ -75,22 +75,38 @@
       var box = document.querySelector(".fp-stage-name");
       if (!box || !box.parentElement) return;
 
+      /* MEASURE THE TEXT, NOT THE BOX. The name is full-bleed, so the element is as wide as
+         the screen; scrollWidth on a block is floored at its own clientWidth and therefore
+         reports the CONTAINER whenever the text is narrower than it. The fit could only ever
+         shrink, never grow — which is why swapping the wide face for a condensed one left the
+         name at exactly the old size instead of filling the extra room. A Range over the
+         contents reports the glyphs themselves, at any width, on one line or several. */
+      function textWidth() {
+        try {
+          var rng = document.createRange();
+          rng.selectNodeContents(box);
+          var w = rng.getBoundingClientRect().width;
+          if (w) return w;
+        } catch (e) { /* very old browsers: fall through */ }
+        return box.scrollWidth;
+      }
+
       function fit() {
-        var parent = box.parentElement;
-        /* clientWidth INCLUDES the parent's padding, and .wrap has a good deal of it. Fitting
-           to that overflows by exactly the padding — which is how the last letter ended up
-           off the right edge. Measure the content box. */
-        var ps = getComputedStyle(parent);
-        var avail = parent.clientWidth
-          - (parseFloat(ps.paddingLeft) || 0)
-          - (parseFloat(ps.paddingRight) || 0);
+        /* THE NAME IS FULL-BLEED, so it is fitted to the SCREEN, not to the padded container
+           it happens to sit inside. Measuring the container capped it well short of the edges
+           and was why it never looked as large as the reference.
+
+           A small gutter is kept so the first and last letters are not flush against the
+           glass, which reads as an overflow even when it is not. */
+        var gutter = window.innerWidth < 600 ? 16 : 26;
+        var avail = box.clientWidth - gutter * 2;
         if (avail <= 0) return;                    /* not laid out yet */
         /* Measure on one line first, whatever the previous state was. */
         box.style.whiteSpace = "nowrap";
         box.style.fontSize = "100px";
         var size = 100;
         for (var pass = 0; pass < 2; pass++) {
-          var w = box.scrollWidth;
+          var w = textWidth();
           if (!w) return;
           /* Leave a hair of room: scrollWidth rounds down, and a name touching both edges
              looks like it overflowed even when it has not. */
@@ -98,10 +114,22 @@
           box.style.fontSize = size + "px";
         }
 
+        /* A CEILING, so the hero stays one screen. Without it a wide monitor sets the name
+           from width alone and the block alone is taller than the viewport. */
+        var MAX = 220;
+        if (size > MAX) { size = MAX; box.style.fontSize = MAX + "px"; }
+
         /* ONE LINE, UNTIL ONE LINE STOPS BEING WORTH IT.
            A twenty-character name fitted to a phone lands around 24px — smaller than the
            body copy underneath it, which is the opposite of the point. Below this floor the
            name is allowed to wrap instead, so it stays the largest thing on the page. */
+        /* One line still fits: correct against the real render, because growing can overshoot
+           the same way shrinking can. */
+        for (var g = 0; g < 3 && textWidth() > avail; g++) {
+          var gf = parseFloat(box.style.fontSize) || size;
+          box.style.fontSize = (gf * avail / textWidth() * 0.99) + "px";
+        }
+
         var MIN = 40;
         if (size < MIN) {
           box.style.whiteSpace = "normal";
@@ -130,9 +158,9 @@
              the exact shaping of the display face, so it lands a few percent optimistic.
              Measuring what actually rendered and scaling down is exact where a prediction is
              not. Only ever shrinks, so it cannot introduce an overflow of its own. */
-          for (var fix = 0; fix < 3 && box.scrollWidth > avail; fix++) {
+          for (var fix = 0; fix < 3 && textWidth() > avail; fix++) {
             var f = parseFloat(box.style.fontSize) || MIN;
-            box.style.fontSize = (f * avail / box.scrollWidth * 0.99) + "px";
+            box.style.fontSize = (f * avail / textWidth() * 0.99) + "px";
           }
         }
       }

@@ -161,3 +161,22 @@ html.aq-cine [data-cine-underline]:focus-visible::after{ transform:scaleX(1); }
     clip-path:none !important; filter:none !important;
   }
 }
+
+/* ---------------------------------------------------------------- rise-slow
+   The portrait. It comes up from below the fold of the composition and is the last thing to
+   settle, so it is slower than everything else and travels further — the eye should follow it
+   up rather than notice it has appeared. No blur and no scale here: the reference simply
+   raises the figure, and adding focus-pull on top made it busy. */
+html.aq-cine [data-cine="riseslow"]{
+  opacity:0;
+  /* A longer travel than the other variants: at 16% it read as appearing rather than
+     rising. The figure is the last thing to arrive and should be seen to come up. */
+  transform:translate3d(0, 26%, 0);
+  transition:opacity calc(var(--cine-dur) * 1.1) var(--cine-ease) var(--cine-delay, 0ms),
+             transform calc(var(--cine-dur) * 2) var(--cine-ease) var(--cine-delay, 0ms);
+}
+@media (prefers-reduced-motion: reduce){
+  html.aq-cine [data-cine="riseslow"]{
+    opacity:1 !important; transform:none !important; transition:none !important;
+  }
+}

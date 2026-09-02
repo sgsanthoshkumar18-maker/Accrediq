@@ -608,9 +608,22 @@ html.fp-tilt-on [data-tilt].is-tilting::after { opacity: 1; }
    ============================================================ */
 .fp-stage{
   position:relative;
-  padding:clamp(28px,6vw,72px) 0 clamp(32px,5vw,56px);
-  overflow:hidden;
+  /* No bottom padding: the portrait is flush with the floor of the section. Any padding here
+     shows as white space under the figure and makes it look pasted on. */
+  /* Tight at the top: every pixel spent above the name is a pixel the figure does not get,
+     and the whole composition has to land inside one screen. */
+  padding:clamp(12px,2.5vw,34px) 0 0;
+  /* The portrait animates up from below its resting place; clipping vertically would cut
+     the start of that move. Horizontal clipping is still wanted, for the oversized name. */
+  overflow-x:hidden;
+  overflow-y:visible;
 }
+
+/* The hero name only. Anton is a condensed display face, which is what lets a
+   twenty-character name run edge to edge instead of being fitted down to body size — the
+   same reason poster typography is condensed. Deliberately NOT --font-display (Fraunces,
+   a serif, which read like a book title at this scale) and NOT --font-body. */
+:root{ --font-hero:'Anton','Arial Narrow',Impact,var(--font-body); }
 
 /* ---------- the oversized name ---------- */
 .fp-stage-name{
@@ -618,10 +631,14 @@ html.fp-tilt-on [data-tilt].is-tilting::after { opacity: 1; }
   z-index:0;
   display:block;
   text-align:center;
-  font-family:var(--font-display);
-  font-weight:800;
-  letter-spacing:-.045em;
-  line-height:.86;
+  /* Break out of .wrap so the name can run to the edges of the screen. */
+  margin-left:calc(50% - 50vw);
+  margin-right:calc(50% - 50vw);
+  font-family:var(--font-hero);
+  /* Anton ships one weight; the fallbacks want the bold. */
+  font-weight:400;
+  letter-spacing:-.005em;
+  line-height:.84;
   /* Fills the width at any viewport without a media query per size. */
   /* A starting size only. The real size is measured and set by fitStageName() in
      founder.js, because "as large as fits on one line" is a fact about the rendered glyphs
@@ -629,15 +646,20 @@ html.fp-tilt-on [data-tilt].is-tilting::after { opacity: 1; }
   font-size:clamp(30px,11vw,180px);
   text-transform:uppercase;
   white-space:nowrap;
-  margin-bottom:clamp(-24px,-3.4vw,-58px);   /* the photo rises into the type */
+  /* The portrait covers the lower part of the letters, the way the reference does it. Stated
+     in the name's OWN em, not in px or vw: the size is set at runtime by fitStageName(), so a
+     fixed pixel overlap would be most of a small name and a sliver of a large one. The block
+     is 0.84em tall (the line-height), so -0.66em hides about four fifths of it — enough to
+     read as one layered image, while the head is narrower than the word so the outer letters
+     stay legible. */
+  margin-bottom:-.66em;
   user-select:none;
 }
 .fp-n-outline{
-  color:transparent;
-  -webkit-text-stroke:1.5px var(--accent-bright);
+  color:var(--accent-text);
+  -webkit-text-stroke:0;
   /* Firefox and older Safari ignore -webkit-text-stroke; they get the solid tone instead,
      which is a different look rather than an invisible word. */
-  @supports not (-webkit-text-stroke: 1px red) { color:var(--accent-text); }
 }
 .fp-n-solid{ color:var(--accent-text); }
 
@@ -646,12 +668,42 @@ html.fp-tilt-on [data-tilt].is-tilting::after { opacity: 1; }
   position:relative;
   z-index:2;
   display:grid;
-  grid-template-columns:minmax(0,1fr) auto minmax(0,1fr);
+  /* The middle track is a spacer: the figure is absolutely positioned over it, and this is
+     what holds the two text columns out to either side of it. It has to track the figure's
+     width, which grew when the empty band was trimmed off the top of the cut-out. */
+  /* NOT the figure width. The figure is absolutely positioned over this track, so the track
+     only has to hold the columns clear of the SILHOUETTE, and the silhouette is 45% of the
+     frame at head height, widening to the full frame only across the shoulders at the very
+     bottom. Matching the track to the whole box squeezed the columns to 182px and stacked
+     the buttons; this leaves the box free to overlap its own transparent margins. */
+  grid-template-columns:minmax(0,1fr) var(--fp-figure-w) minmax(0,1fr);
   align-items:end;
-  gap:clamp(14px,3vw,34px);
+  /* No grid gap: the columns must abut the figure exactly, so the breathing room is padding
+     on the columns themselves, which does not eat into the track arithmetic. */
+  gap:0;
+  /* THE HERO IS ONE SCREEN. This height is what the portrait is then stretched to fill, so
+     there is no arithmetic that can leave a gap under the figure — the figure IS this tall.
+     svh, not vh: on a phone vh counts the area behind the browser chrome, which is exactly
+     the band that showed as dead space below the photo. */
+  min-height:var(--fp-hero-h);
 }
-.fp-stage-left{ padding-bottom:clamp(6px,2vw,26px); }
-.fp-stage-right{ display:flex; justify-content:flex-end; padding-bottom:clamp(6px,2vw,26px); }
+/* Both columns sit on the floor beside the figure, filling the band that used to be empty. */
+.fp-stage-left{
+  grid-column:1;
+  padding-bottom:clamp(4px,1vw,14px);
+  padding-right:clamp(10px,1.6vw,24px);
+}
+/* .fp-links is centred for the ordinary centred hero. In the stage the column is a left
+   rail, so a wrapped second button was centring itself under the first and reading as an
+   indent rather than a stack. */
+.fp-stage-left .fp-links{ justify-content:flex-start; }
+.fp-stage-right{
+  grid-column:3;
+  display:flex;
+  justify-content:flex-end;
+  padding-bottom:clamp(4px,1vw,14px);
+  padding-left:clamp(10px,1.6vw,24px);
+}
 .fp-stage-right .fp-tags{ justify-content:flex-end; }
 
 /* The real heading stays for screen readers and search, out of sight. */
@@ -661,20 +713,70 @@ html.fp-tilt-on [data-tilt].is-tilting::after { opacity: 1; }
 }
 
 /* ---------- the portrait ---------- */
-.fp-stage-photo{ display:flex; justify-content:center; align-items:flex-end; }
+.fp-stage-photo{
+  position:absolute;
+  left:50%;
+  /* Both edges pinned, so the figure spans the full hero: its top reaches the name and its
+     bottom IS the section floor. Anchoring only the bottom left the leftover height as the
+     black band under the photo. */
+  top:0;
+  /* Bled past the grid floor by the exact gap to the next block, so the figure crops at the
+     edge of the composition the way a poster does rather than floating above a strip of
+     ground. The text columns stay on the grid floor; only the figure runs on. */
+  bottom:calc(var(--fp-gap-to-next) * -1);
+  transform:translateX(-50%);
+  z-index:2;
+  display:flex;
+  align-items:flex-end;
+  justify-content:center;
+  pointer-events:none;           /* it sits over the columns; it must not eat their clicks */
+}
+/* ONE NUMBER, USED TWICE. The band of ground between the figure's feet and whatever comes
+   next is the stat band's top margin — and it was the black strip under the shoulders. The
+   figure is now bled downward by exactly that amount, so the two cancel and the figure runs
+   to where the next block starts. Declaring it once means they cannot drift apart. */
+.fp-stage{
+  --fp-gap-to-next:clamp(26px,4vw,48px);
+  /* THE HERO IS ONE SCREEN, and every other number here is derived from this one.
+     svh, not vh: vh counts the area behind mobile browser chrome, which is the band that
+     showed as dead space under the figure. */
+  --fp-hero-h:clamp(360px, calc(100svh - 250px), 700px);
+  /* THE CUT-OUT'S OWN RATIO — assets/founder-cut-bw.png, 810 x 854. Everything the figure
+     needs is derived from this one number: its rendered width, and the width of the grid
+     track that holds the text columns clear of it. Written out twice they would disagree the
+     first time the asset was swapped, and the columns would land on the shoulders. */
+  --fp-figure-ratio:calc(810 / 854);
+  /* The figure is as tall as the hero plus the bleed, so its width follows from that ratio.
+     Deriving it rather than hand-tuning a number is what keeps the text columns exactly
+     beside the figure at every viewport instead of only at the one I happened to measure —
+     set by hand, the columns overlapped the shoulders by 53px everywhere else. */
+  --fp-figure-w:min(calc((var(--fp-hero-h) + var(--fp-gap-to-next)) * var(--fp-figure-ratio)), 64vw, 780px);
+}
+.fp-stage .fp-statband{ margin-top:var(--fp-gap-to-next); }
 .fp-stage .fp-photo{
-  width:clamp(190px,26vw,340px);
-  height:auto;
-  aspect-ratio:3 / 4;
+  /* SIZED BY HEIGHT, NOT WIDTH. The figure is as tall as the hero, and its width follows from
+     the source ratio. Sizing by width meant the height was whatever it happened to be, and
+     any shortfall showed as black under the shoulders. */
+  height:100%;
+  width:auto;
+  /* The same expression the middle track uses, so the figure and the space reserved for it
+     cannot disagree. */
+  max-width:var(--fp-figure-w);
+  aspect-ratio:var(--fp-figure-ratio);
   border-radius:0;
   border:0;
   background:transparent;
   overflow:visible;
-  /* Grounds the figure against the type instead of letting it float. */
-  filter:drop-shadow(0 22px 44px rgba(0,0,0,.45));
+  /* NO DROP SHADOW. The cut-out reaches the left, right and bottom edges of its own frame,
+     so a drop-shadow renders as three straight dark edges rather than following a silhouette
+     — invisible on black, and the "passport photo border" seen in the light theme. */
+  filter:none;
 }
 .fp-stage .fp-photo img{
-  width:100%;height:100%;object-fit:contain;object-position:bottom;display:block;
+  width:100%;height:100%;
+  /* cover, with the ratio above matching the file exactly: no crop in practice, and no
+     letterbox band if the asset is ever swapped for one a few pixels off. */
+  object-fit:cover;object-position:top center;display:block;
 }
 /* No photo yet: the initials ring stands in, sized to the same slot. */
 .fp-stage .fp-photo.is-fallback{
@@ -689,12 +791,20 @@ html.fp-tilt-on [data-tilt].is-tilting::after { opacity: 1; }
     grid-template-columns:1fr;
     justify-items:center;
     text-align:center;
+    min-height:0;
   }
+  /* Stacked, the figure returns to the flow: absolute positioning only makes sense while
+     there are columns for it to stand between. */
+  .fp-stage-photo{
+    position:static; transform:none; justify-content:center; pointer-events:auto;
+  }
+  .fp-stage-left, .fp-stage-right{ grid-column:auto; }
   .fp-stage-right{ justify-content:center; }
   .fp-stage-right .fp-tags{ justify-content:center; }
   .fp-stage-photo{ order:-1; }
-  .fp-stage-name{ margin-bottom:clamp(-18px,-3vw,-34px); }
-  .fp-stage .fp-photo{ width:clamp(180px,52vw,260px); }
+  .fp-stage-name{ margin-bottom:-.2em; }
+  /* Stacked there is no hero height to fill, so the figure is sized by width again. */
+  .fp-stage .fp-photo{ width:clamp(200px,62vw,320px); height:auto; max-width:none; }
 }
 @media (max-width:560px){
   /* The name still fits on one line here — fitStageName() shrinks it to whatever the screen

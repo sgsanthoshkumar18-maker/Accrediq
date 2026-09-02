@@ -225,10 +225,27 @@ check('the founder name splits correctly for the oversized hero', () => {
 check('the name is fitted by measurement, not by a vw guess', () => {
   const src = read('profile/founder.js');
   assert.ok(/function fitStageName/.test(src), 'the fit routine is gone');
-  assert.ok(/paddingLeft/.test(src) && /paddingRight/.test(src),
-    'the fit must measure the content box — clientWidth includes padding and overflows by it');
-  assert.ok(/box\.scrollWidth > avail/.test(src),
+  /* The name is full-bleed now, so it is fitted to the SCREEN rather than to the padded
+     container it sits inside — measuring the container capped it well short of the edges. */
+  assert.ok(/var gutter = window\.innerWidth/.test(src),
+    'the fit must measure against the viewport, with a gutter, now that the name is full-bleed');
+  assert.ok(/box\.clientWidth - gutter \* 2/.test(src),
+    'the available width should be the bleed box less the gutter');
+  /* THE BUG THIS REPLACES. The name is full-bleed, so the element is as wide as the screen,
+     and scrollWidth on a block is floored at its own clientWidth: it reports the CONTAINER
+     whenever the text is narrower than it. The fit could therefore only ever shrink. Nothing
+     showed while the face was wide enough to overflow at the trial size; swapping in a
+     condensed one exposed it, and the name stayed at exactly its old 90px instead of growing
+     into the 1388px it now had. A Range over the contents reports the glyphs at any width. */
+  assert.ok(/function textWidth/.test(src),
+    'the fit must measure the glyphs, not the box');
+  assert.ok(/selectNodeContents/.test(src),
+    'a Range over the contents is what reports text narrower than its container');
+  assert.ok(/textWidth\(\) > avail/.test(src),
     'there must be a corrective pass against the real render, not just a prediction');
+  assert.ok(/var MAX = 220/.test(src),
+    'without a ceiling a wide monitor sizes the name from width alone and the hero stops ' +
+    'fitting on one screen');
   assert.ok(/document\.fonts/.test(src),
     'webfonts land after first paint and change every measurement');
   assert.ok(/var MIN = 40/.test(src),
