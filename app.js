@@ -146,6 +146,21 @@
     return `
     <footer class="site-footer">
       <div class="wrap">
+        <!-- THE WAY INTO THE WORKSPACE, ON EVERY PAGE.
+             The header has no room for a second button below 1360px — it needs about 81px
+             that is not there — and burying the link in a footer column means nobody reading
+             a standards page ever notices they have somewhere of their own to go. The footer
+             is the one block that renders on all 61 pages, so the invitation lives here: at
+             the end of whatever the visitor was reading, which is exactly when "what next?"
+             is the question they have. -->
+        <div class="footer-cta">
+          <div class="footer-cta-copy">
+            <b>Your hospital's own workspace</b>
+            <span>Audits, evidence, committees, registers and the short expiry calendar &mdash;
+              everything your team files against NABH, in one place.</span>
+          </div>
+          <a class="btn btn-accent footer-cta-btn" href="${base}workspace/start.html">Enter your hospital &rarr;</a>
+        </div>
         <div class="footer-grid">
           <div class="footer-brand">
             <a href="${base}index.html" class="brand">${shieldMark}<span class="brand-stack">AQcredix<span class="full-name">Accreditation &amp; Quality Implementation Guidance Platform</span></span></a>
@@ -154,7 +169,6 @@
           <div class="footer-col"><h4>Learn</h4>
             <a href="${base}plans.html">Plans &amp; pricing</a><a href="${base}index.html#aqFilmHome" id="aqFilmBtn">Wanna know about AQcredix?</a><a href="${base}value.html">What your department gets</a><a href="${base}standards.html">Standards</a>
             <a href="${base}departments.html">Departments</a>
-            <a href="${base}workspace/start.html">Enter your hospital</a>
             <a href="${base}clinical-areas.html">Clinical Areas</a>
             <a href="${base}nonclinical-areas.html">Non-Clinical Areas</a>
             <a href="${base}dashboard.html">Quality Dashboard</a>

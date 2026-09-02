@@ -2055,3 +2055,21 @@ body{background:var(--bg);}
 @media (prefers-reduced-motion:reduce){
   .aq-tilt{transition:none;transform:none!important;}
 }
+
+/* ---- the workspace invitation that closes every page ----
+   Sits at the top of the shared footer, so it appears once on all 61 pages at the moment the
+   visitor has finished reading and is asking what to do next. It is NOT in the header: the bar
+   has no room for a second button below 1360px, and adding one there was what forced the whole
+   navigation into a drawer on desktop. */
+.footer-cta{display:flex;align-items:center;justify-content:space-between;gap:20px;
+  flex-wrap:wrap;padding:22px 24px;margin:0 0 34px;
+  border:1px solid var(--border);border-radius:var(--r-lg);background:var(--bg-elevated);}
+.footer-cta-copy{display:flex;flex-direction:column;gap:5px;min-width:0;}
+.footer-cta-copy b{font-size:16px;font-weight:700;color:var(--fg);}
+.footer-cta-copy span{font-size:13.5px;line-height:1.55;color:var(--fg-muted);max-width:62ch;}
+/* Never shrinks below its label: a wrapped call to action reads as a mistake. */
+.footer-cta-btn{flex:0 0 auto;white-space:nowrap;}
+@media (max-width:640px){
+  .footer-cta{padding:18px;margin-bottom:26px;}
+  .footer-cta-btn{width:100%;justify-content:center;}
+}
