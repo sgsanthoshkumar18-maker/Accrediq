@@ -233,8 +233,26 @@
   }
   window.addEventListener("load", scan);
 
-  /* Exported so a page that builds its own DOM can say when it is ready. */
-  window.AQCine = { refresh: scan };
+  /* REPLAY ONE ELEMENT FROM THE BEGINNING.
+     For content that arrives after its container was revealed — the portrait is injected on
+     img.onload, which lands after the reveal has already run, so the box animated while it was
+     empty and the photograph simply appeared inside it afterwards. Clearing the classes,
+     forcing the hidden state through a reflow and re-adding on the next frame is the same
+     three steps playNow() uses, applied to one element on demand. */
+  function play(el) {
+    if (!el || REDUCED) { if (el) el.classList.add("is-cine-in"); return; }
+    el.classList.remove("is-cine-in", "is-cine-shown");
+    void document.body.offsetWidth;
+    var done = false;
+    var go = function () { if (done) return; done = true; el.classList.add("is-cine-in"); };
+    try { requestAnimationFrame(function () { requestAnimationFrame(go); }); }
+    catch (e) { go(); }
+    setTimeout(go, 80);
+  }
+
+  /* Exported so a page that builds its own DOM can say when it is ready, and so a late
+     image can restart its own reveal. */
+  window.AQCine = { refresh: scan, play: play };
 
   /* LAST RESORT. If something has gone wrong — an observer that never fires, a layout that
      settles late, a browser quirk — content must not stay hidden. After a few seconds,
@@ -250,7 +268,7 @@
       var r = el.getBoundingClientRect();
       if (r.top < window.innerHeight && r.bottom > 0) forceShown(el);
     });
-  }, 4000);
+  }, 6000);
 
   /* A tab backgrounded during load runs no transitions, so an element can be told to arrive
      and simply never move. When the visitor comes back, anything still hidden is shown

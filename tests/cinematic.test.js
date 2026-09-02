@@ -179,8 +179,15 @@ check('above-the-fold elements get a painted start state before arriving', () =>
   assert.ok(/if \(!r\.height && !r\.width\) return;/.test(js),
     'a zero-size box means the content has not rendered — it must be left for the next scan, ' +
     'not judged off-screen');
-  assert.ok(/window\.AQCine = \{ refresh: scan \}/.test(js),
-    'refresh() must be exported so a late-rendering page can say when it is ready');
+  assert.ok(/window\.AQCine = \{ refresh: scan, play: play \}/.test(js),
+    'refresh() and play() must both be exported: refresh for a late-rendering page, play for ' +
+    'content that arrives after its container was already revealed');
+
+  /* THE PORTRAIT. founder.js injects the <img> on img.onload, which lands after the container
+     has been revealed — so the box rose while empty and the photograph appeared inside it
+     having missed its own entrance. It has to replay once the image is actually there. */
+  assert.ok(/AQCine\.play\(ph\)/.test(read('profile/founder.js')),
+    'the portrait must replay its reveal when the image finally loads');
   assert.ok(/addEventListener\("load", scan\)/.test(js),
     'a re-scan on load is the safety net for pages that never call refresh()');
   assert.ok(/AQCine\.refresh\(\)/.test(read('profile/founder.js')),

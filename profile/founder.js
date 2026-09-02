@@ -179,6 +179,10 @@
     var img = new Image();
     img.onload = function () {
       ph.innerHTML = '<img src="' + esc(F.photo) + '" alt="' + esc(F.name) + '">';
+      /* The reveal already ran while this box was empty — the container rose, and the
+         photograph then appeared inside it having missed its own entrance. Replaying it now
+         that the image is actually here is what makes the portrait rise rather than pop. */
+      if (window.AQCine && window.AQCine.play) window.AQCine.play(ph);
     };
     img.onerror = function () {
       ph.innerHTML = '<span class="fp-initials">' + initials() + "</span>";
