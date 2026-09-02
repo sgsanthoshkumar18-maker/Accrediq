@@ -97,6 +97,19 @@ module.exports = async function handler(req, res) {
     return res.status(405).json({ error: "GET or POST only" });
   }
 
+  /* ?scope=entry is the receipt a hospital gets the moment it enters crash cart stock, and it
+     is the one caller here that is a SIGNED-IN PERSON rather than the cron.
+
+     It is dispatched before the shared-secret check on purpose, and that is safe because it
+     does not rely on the shared secret for its safety. It carries a stricter guard of its own:
+     the caller presents a Supabase access token, Supabase is asked whose token it is, and the
+     mail goes to that verified address and nowhere else. There is no recipient in the request
+     to tamper with, so the worst anyone can do with a stolen route is mail themselves. The
+     cron secret cannot be used here anyway — the browser has no business holding it. */
+  if (String((req.query && req.query.scope) || "") === "entry") {
+    return require("../workspace/entry-receipt.js").run(req, res);
+  }
+
   /* Guarded by a shared secret as well as the method. A digest endpoint that anyone can
      POST to is a way to email a hospital's overdue list to its own staff repeatedly, which
      is at best a nuisance and at worst how people learn to ignore the digest. */

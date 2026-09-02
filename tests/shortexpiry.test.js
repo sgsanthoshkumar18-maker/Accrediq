@@ -187,5 +187,79 @@ has(/id="ccCopyNo"/, 'the offer must be declinable');
 /* A copied row lands in the TARGET cart, not the source. */
 has(/cart_id: targetId,/, 'copied rows are written to the cart being filled');
 
+
+/* ============ the receipt sent the moment stock is entered ============
+ *
+ * The weekly alert is a promise; this is the evidence. A hospital typing thirty ampoules on a
+ * Tuesday cannot tell a working alert from a dead one until a Monday arrives with something
+ * actually expiring — possibly months away. So the receipt goes out on entry, and it goes out
+ * WHETHER OR NOT anything is short: an email that only ever arrives with bad news makes
+ * silence mean "all clear" and "we are broken" at the same time, and the reader cannot tell
+ * which. The tests below are mostly about that, and about who it is allowed to reach.
+ */
+const RC = fs2.readFileSync(path.join(__dirname, '../workspace/entry-receipt.js'), 'utf8');
+const DG = fs2.readFileSync(path.join(__dirname, '../api/digest.js'), 'utf8');
+const hasRC = (re, m) => eq(re.test(RC), true, m);
+
+/* It renders in BOTH states, and says something useful in the quiet one. */
+{
+  const R = require(path.join(__dirname, '../workspace/entry-receipt.js'));
+  const cts = [{ id: 'w1', name: 'Deluxe Ward' }];
+  const clear = E.review(cts, [{ id: 'a', cart_id: 'w1', name: 'Adrenaline',
+    quantity: 2, expires_on: '2027-08-31' }], on('2026-09-03'));
+  const short = E.review(cts, [{ id: 'b', cart_id: 'w1', name: 'Adrenaline',
+    quantity: 2, expires_on: '2026-12-31' }], on('2026-09-03'));
+
+  eq(clear.empty, true, 'nothing short in the all-clear fixture');
+  eq(short.short.length, 1, 'and one short item in the other');
+
+  const a = R.render(clear, 'VHS', '3 Sep 2026');
+  const b = R.render(short, 'VHS', '3 Sep 2026');
+  eq(/Nothing in your crash cart data is expiring/.test(a), true,
+     'the all-clear receipt says so plainly, rather than being an empty page');
+  eq(a.length > 400, true, 'the all-clear receipt is a real message, not a stub');
+  eq(/need attention/.test(b), true, 'the other one leads with what needs doing');
+
+  /* The policy, in both — this is the line that tells a hospital which month they are in and
+     why, and it is the part they can check against the screen. */
+  [a, b].forEach(function (html, i) {
+    eq(/December 2026 or earlier/.test(html), true,
+       'receipt ' + (i + 1) + ' states the window as a MONTH');
+    eq(/The whole month counts/.test(html), true,
+       'receipt ' + (i + 1) + ' says the printed date does not matter');
+    eq(/every Monday/.test(html), true,
+       'receipt ' + (i + 1) + ' sets the expectation for the weekly mail');
+  });
+}
+
+/* WHO IT CAN REACH. The recipient is never taken from the request — otherwise this is an open
+   relay that signs its mail as AQcredix. */
+hasRC(/auth\/v1\/user/, 'the token must be verified against Supabase, not trusted');
+hasRC(/to: \[email\]/, 'the mail goes to the verified address');
+eq(/to:\s*\(?\s*req\.body/.test(RC), false, 'the recipient must never come from the request body');
+hasRC(/return res\.status\(401\)/, 'an unsigned or invalid session is refused');
+
+/* It reports the whole register, not a diff — so the numbers can be checked against the
+   screen, and stock typed yesterday is not silently dropped from today's answer. */
+hasRC(/E\.review\(mineCarts, mineItems/, 'the review covers every cart the hospital has');
+hasRC(/i\.org_id === org/, 'and only that hospital');
+
+/* It must survive an unconfigured deployment by SAYING so, not by throwing. */
+hasRC(/configured: false/, 'a missing key is reported plainly rather than failing obscurely');
+
+/* Vercel Hobby allows twelve functions and api/ is at twelve; a thirteenth breaks the build. */
+eq(/scope[^]{0,80}=== "entry"/.test(DG), true,
+   'the receipt is dispatched from the existing endpoint, not a new function');
+eq(DG.indexOf('=== "entry"') < DG.indexOf('const secret = process.env.CRON_SECRET'), true,
+   'it dispatches BEFORE the cron-secret check — a browser cannot hold that secret, and the ' +
+   'receipt carries a stricter guard of its own');
+
+/* One mail per sitting. "Save and add another" is how a delivery is entered, so firing per
+   row would send thirty mails for one afternoon and train the hospital to filter us. */
+eq(/receiptTimer = setTimeout\(sendReceipt, \d{4,}\)/.test(CC), true,
+   'the receipt is debounced, not sent per saved row');
+eq(/if \(receiptTimer\) clearTimeout\(receiptTimer\);/.test(CC), true,
+   'and every further save pushes it back, so it fires once the typing stops');
+
 console.log(pass + ' passed, ' + fail + ' failed');
 process.exit(fail ? 1 : 0);

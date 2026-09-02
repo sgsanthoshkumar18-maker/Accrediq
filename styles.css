@@ -550,12 +550,27 @@ p{margin:0 0 0;}
 .nav-wide-only{display:none;}
 @media (min-width:1360px){ .nav-wide-only{display:inline-flex;} }
 
+/* THE BAND WHERE IT DISAPPEARED ENTIRELY. The button beside the dashboard needs 1360px, and
+   this in-nav copy of it used to appear only at 980px and below — so on every screen between
+   981 and 1359, which is most laptops, there was no way to reach the workspace from any page
+   at all. The two rules have to MEET, not leave a gap: this one now runs right up to the width
+   where the other takes over. */
 .nav-workspace-menu{display:none;}
-@media (max-width:980px){
+@media (max-width:1359px){
   .nav-workspace-menu{display:flex;color:var(--accent-text);font-weight:600;}
 }
 
-@media (max-width:980px){
+/* THE DRAWER TAKES OVER WHEREVER THE FULL BAR DOES NOT FIT — which is everything below
+   1360px, not below 980px.
+   Measured on about.html: at 1024 the bar already overflowed its container by 106px and the
+   page scrolled sideways, before anything was added to it. And "Enter your hospital" needs
+   about 81px that simply is not there at 1280 either. So the horizontal nav was being asked
+   to hold more than it could from 981px up, and the workspace link was dropped to make room —
+   which is why there was no way to reach the workspace on a normal laptop from any page.
+   Meeting the 1360px breakpoint exactly means the two layouts hand over with no gap and no
+   overflow: below it the drawer carries every link including the workspace one, above it the
+   bar has room for the button. */
+@media (max-width:1359px){
   /* Anchored to the header with position:absolute, NOT fixed.
      .site-header carries backdrop-filter, and any ancestor with backdrop-filter, filter
      or transform becomes the containing block for fixed-position descendants — so a

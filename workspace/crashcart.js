@@ -473,6 +473,59 @@
     W.toast(rows.length + " item" + (rows.length === 1 ? "" : "s") + " copied across");
   }
 
+
+  /* ============ the receipt that proves the alerting works ============
+   *
+   * A weekly alert is a PROMISE. Somebody typing thirty ampoules into a trolley register has
+   * no way to tell a working alert from a broken one until a Monday arrives and something
+   * happens to be expiring — which, in a well-run hospital, may be months away. Until then
+   * the feature is indistinguishable from one that is quietly dead, and nobody trusts it.
+   *
+   * So the moment stock goes in, the server mails a receipt to the address that entered it:
+   * what is short right now, or that nothing is, plus the window the policy puts them in.
+   * It is the only moment the hospital can check the claim against something they know.
+   *
+   * ONE MAIL PER SITTING, NOT PER ROW. "Save and add another" is the normal way a delivery is
+   * entered, so firing on each save would send thirty mails for one afternoon's work and
+   * teach the hospital to filter us. The timer is reset by every save and only fires once the
+   * typing has actually stopped, which is also the moment the register is worth reporting. */
+  var receiptTimer = null;
+
+  function scheduleReceipt() {
+    if (receiptTimer) clearTimeout(receiptTimer);
+    receiptTimer = setTimeout(sendReceipt, 6000);
+  }
+
+  async function sendReceipt() {
+    receiptTimer = null;
+    /* Only where there is a server and a signed-in session to prove who is asking. On the
+       local adapter there is no account and no address to send to, and that is not a failure
+       worth reporting to anyone. */
+    if (!S.isConfigured || !S.isConfigured()) return;
+    var token = null;
+    try {
+      var sess = JSON.parse(localStorage.getItem("aq-sb-session") || "null");
+      token = sess && sess.access_token;
+    } catch (e) { /* no session */ }
+    if (!token) return;
+
+    try {
+      var r = await fetch("/api/digest?scope=entry", {
+        method: "POST",
+        headers: { Authorization: "Bearer " + token }
+      });
+      var j = await r.json().catch(function () { return {}; });
+      /* Said out loud, because the whole point is that the hospital can SEE it happen. A
+         silent success here would be the same unverifiable promise this exists to replace. */
+      if (j && j.ok) {
+        W.toast("Emailed you a summary of what is short" +
+          (j.short || j.expired ? "" : " — nothing is, in this data"));
+      } else if (j && j.configured === false) {
+        W.toast("Saved. Email alerts are not switched on for this site yet", "bad");
+      }
+    } catch (e) { /* the save already succeeded; a failed receipt must never undo it */ }
+  }
+
   /* ---------------- "was the crash cart opened?" ---------------- */
 
   function usedItemBlock(n, cartId) {
@@ -900,9 +953,9 @@
       var again = (e.submitter && e.submitter.id === "ccItemAgain");
       try {
         if (f.id === "ccCartForm") await saveCart(f);
-        else if (f.id === "ccItemForm") await saveItem(f);
-        else if (f.id === "ccOpenForm") await saveOpened(f);
-        else if (f.id === "ccCopyForm") await saveCopied(f);
+        else if (f.id === "ccItemForm") { await saveItem(f); scheduleReceipt(); }
+        else if (f.id === "ccOpenForm") { await saveOpened(f); scheduleReceipt(); }
+        else if (f.id === "ccCopyForm") { await saveCopied(f); scheduleReceipt(); }
         else if (f.id === "ccDlForm") { await doDownload(f); close(); return; }
       } catch (err) {
         W.toast("Could not save: " + (err && err.message || err), "bad");
@@ -945,7 +998,7 @@
         var f = document.getElementById("ccItemForm");
         var rid = f.getAttribute("data-id");
         if (rid && confirm("Delete this batch from the cart?")) {
-          await S.adapter.remove(ITEMS, rid); close(); await refresh();
+          await S.adapter.remove(ITEMS, rid); scheduleReceipt(); close(); await refresh();
         }
         return;
       }
