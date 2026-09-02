@@ -17,6 +17,9 @@
  */
 const K = require("../calendar/schedule.js");
 const D = require("../workspace/digest.js");
+/* The same short-expiry rule the screen and the entry receipt use. A second implementation
+   would disagree with them the first time either was edited. */
+const X = require("../workspace/shortexpiry.js");
 
 const SB = process.env.SUPABASE_URL;
 /* Either name — see the note in api/verify-payment.js. */
@@ -41,7 +44,44 @@ function esc(s) {
 
 /* Plain HTML, tables, inline styles. Not a preference — Outlook, which is what hospital
    administration runs, ignores most modern CSS and any external stylesheet. */
-function render(digest, name) {
+/* alert_email names the people assigned to the crash cart, and a hospital usually names more
+   than one. Split on what a person actually types. */
+function addresses(raw) {
+  return String(raw == null ? "" : raw)
+    .split(/[,;\s]+/).map(a => a.trim()).filter(a => a.indexOf("@") > 0);
+}
+function sameMailbox(a, b) {
+  const norm = e => {
+    const x = String(e || "").trim().toLowerCase();
+    const at = x.lastIndexOf("@");
+    if (at < 1) return x;
+    let local = x.slice(0, at);
+    const domain = x.slice(at + 1);
+    const plus = local.indexOf("+");
+    if (plus > -1) local = local.slice(0, plus);
+    if (domain === "gmail.com" || domain === "googlemail.com") local = local.split(".").join("");
+    return local + "@" + domain;
+  };
+  return norm(a) === norm(b);
+}
+
+const RESTOCK_ROLES = ["owner", "admin", "quality_manager", "director", "editor"];
+
+/* IS THIS PERSON ASSIGNED TO THE CRASH CART?
+   The whole email is built from assignment: a section appears in someone's mail because they
+   are responsible for that thing, not because they happen to be on the account. Named
+   addresses win; the owner is always included so narrowing the list cannot lock them out of
+   their own hospital; and if nobody has been named at all, everyone whose role could restock
+   is treated as assigned, so a hospital that never opened the setting is still told. */
+function assignedToCarts(member, settingsRow) {
+  const named = addresses(settingsRow && settingsRow.alert_email);
+  const role = String(member.role || "").toLowerCase();
+  if (role === "owner") return true;
+  if (named.length) return named.some(a => sameMailbox(a, member.email));
+  return RESTOCK_ROLES.indexOf(role) > -1;
+}
+
+function render(digest, name, carts) {
   const row = (i, colour) => `
     <tr><td style="padding:10px 12px;border-left:3px solid ${colour};background:#f7f9fa;border-radius:4px;">
       <div style="font-weight:600;font-size:14px;color:#0E2233;">${esc(i.name)}</div>
@@ -54,6 +94,40 @@ function render(digest, name) {
     ${items.slice(0, 8).map(i => row(i, colour)).join("")}
     ${items.length > 8 ? `<tr><td style="font-size:12px;color:#8B99A4;">and ${items.length - 8} more</td></tr>` : ""}` : "";
 
+  /* ONE HEADING PER THING THIS PERSON IS RESPONSIBLE FOR, INCLUDING THE QUIET ONES.
+     A section that says "nothing overdue" is not filler — it is the difference between "there
+     is nothing to do" and "the alerting is broken", and the reader cannot tell those apart
+     from an absence. So when somebody is assigned to two areas and only one has anything, they
+     get both headings: the quiet one states it is quiet, and the other lists the work.
+
+     The whole email is still suppressed when EVERY section is quiet — see the send rule.
+     Reassurance is worth reading beside something actionable; on its own, every Monday, it is
+     what teaches people to filter us into a folder they never open. */
+  const cartRows = c => c.map(i => `
+    <tr><td style="padding:10px 12px;border-left:3px solid ${i.state === "expired" ? "#B3261E" : "#B54708"};
+      background:#f7f9fa;border-radius:4px;">
+      <div style="font-weight:600;font-size:14px;color:#0E2233;">${esc(i.name)}${i.strength ? " " + esc(i.strength) : ""}</div>
+      <div style="font-size:12px;color:#5A6C7A;">${esc(i.cart)} &middot; qty ${esc(i.quantity)} &middot;
+        expires ${esc(i.expiry)}${i.batch ? " &middot; batch " + esc(i.batch) : ""}</div>
+    </td></tr><tr><td style="height:6px;"></td></tr>`).join("");
+
+  const heading = t => `<tr><td style="padding:22px 0 8px;font-size:12px;font-weight:700;
+    letter-spacing:.05em;text-transform:uppercase;color:#0E2233;border-top:1px solid #e6ebee;">${esc(t)}</td></tr>`;
+
+  const quiet = t => `<tr><td style="padding:4px 0 2px;font-size:13px;color:#5A6C7A;">${esc(t)}</td></tr>`;
+
+  const cartSection = !carts ? "" :
+    heading("Crash cart medicines") +
+    (carts.empty
+      ? quiet("No batch is expiring inside your " + carts.months + "-month window. Every cart is in date.")
+      : quiet((carts.expired.length ? carts.expired.length + " already expired. " : "") +
+              "Everything expiring in " + X.monthLabel(carts.windowMonth) + " or earlier is listed.") +
+        cartRows(carts.expired) + cartRows(carts.short));
+
+  const workQuiet = digest.empty
+    ? quiet("Nothing overdue" + (digest.department ? " in " + digest.department : "") + " as of today.")
+    : "";
+
   return `<!doctype html><html><body style="margin:0;padding:24px;background:#eef2f4;
     font-family:-apple-system,Segoe UI,Roboto,sans-serif;">
     <table width="100%" cellpadding="0" cellspacing="0" style="max-width:560px;margin:0 auto;
@@ -65,12 +139,15 @@ function render(digest, name) {
       <tr><td style="font-size:13px;color:#5A6C7A;padding-bottom:6px;">
         ${name ? esc(name) + ", this" : "This"} is what is outstanding
         ${digest.department ? "in " + esc(digest.department) : "across the hospital"} today.</td></tr>
+      ${heading(digest.department ? digest.department : "Your departments")}
+      ${workQuiet}
       ${group("Overdue", digest.overdue, "#B3261E")}
       ${group("Never recorded", digest.never, "#7A5200")}
       ${group("Due soon", digest.soon, "#4C6FFF")}
       ${digest.findings.length ? group("Open findings",
           digest.findings.map(c => ({ name: c.title, kind: "Finding", text: c.status || "open" })),
           "#B3261E") : ""}
+      ${cartSection}
       <tr><td style="padding:20px 0 0;">
         <a href="${SITE}/workspace/dashboard.html" style="display:inline-block;background:#4C6FFF;
           color:#fff;text-decoration:none;padding:12px 22px;border-radius:99px;font-weight:600;
@@ -81,6 +158,9 @@ function render(digest, name) {
     </table></body></html>`;
 }
 
+/* The handler is the default export, as Vercel requires. render is hung off it so the
+   wording of the mail can be checked without a database or a mail server — this email is the
+   only thing most of a hospital ever sees of the platform. */
 module.exports = async function handler(req, res) {
   /* GET IS ACCEPTED, AND HAS TO BE.
      This was POST only, and Vercel invokes a cron job with a GET — "Vercel makes an HTTP
@@ -153,6 +233,16 @@ module.exports = async function handler(req, res) {
       table("checklists"), table("rounds"), table("capa")
     ]);
 
+    /* THE CRASH CART NOW RIDES IN THIS EMAIL RATHER THAN ITS OWN.
+       Two mails landing within an hour of each other on a Monday is two things to open and
+       two things to start ignoring. One mail, with a heading per responsibility, is what a
+       person can actually act on — and it is only possible now that assignment decides who
+       sees the medicine list, because before this the digest reached everyone on the account
+       and folding the carts in would have handed a viewer the trolley's contents. */
+    const [carts, cartItems, cartSettings] = await Promise.all([
+      table("crash_carts"), table("crash_cart_items"), table("crash_cart_settings")
+    ]);
+
     const today = new Date();
     const iso = today.toISOString().slice(0, 10);
     const dow = today.getDay();
@@ -172,6 +262,14 @@ module.exports = async function handler(req, res) {
 
       const org = member.org_id;
       const mine = rows => rows.filter(r => r.org_id === org);
+
+      /* Only for the people this hospital has put on the crash cart. Everyone else's email
+         simply has no such heading — the section's presence IS the assignment. */
+      const cartSet = (cartSettings || []).find(x => x.org_id === org) || {};
+      const myCarts = assignedToCarts(member, cartSet)
+        ? X.review(mine(carts || []), mine(cartItems || []),
+                   { today: X.todayIST(), months: cartSet.months })
+        : null;
 
       const digest = D.build(K, {
         tasks: mine(tasks), committees: mine(committees), meetings: mine(meetings),
@@ -198,8 +296,14 @@ module.exports = async function handler(req, res) {
       }
 
       /* Nothing to say is a real answer. "You have 0 overdue items" every Monday is how a
-         digest teaches people to filter it into a folder they never open. */
-      if (digest.empty) { quiet++; continue; }
+         digest teaches people to filter it into a folder they never open.
+
+         But "nothing" now has to mean nothing ACROSS EVERYTHING they are responsible for. A
+         biomedical engineer with a clean register and an expiring ampoule in their crash cart
+         has something to read, and the old test — which knew only about the digest — would
+         have sent them nothing at all. */
+      const cartsWorthSending = myCarts && !myCarts.empty;
+      if (digest.empty && !cartsWorthSending) { quiet++; continue; }
 
       if (RESEND) {
         await fetch("https://api.resend.com/emails", {
@@ -210,8 +314,12 @@ module.exports = async function handler(req, res) {
             to: member.email,
             subject: EXPIRY_ONLY
               ? "AQcredix · Certificates expiring soon"
-              : "AQcredix · " + D.summarise(digest),
-            html: render(digest, member.name)
+              : "AQcredix · " + (digest.empty && cartsWorthSending
+                  ? (myCarts.expired.length + myCarts.short.length) + " crash cart batch" +
+                    (myCarts.expired.length + myCarts.short.length === 1 ? "" : "es") +
+                    " need attention"
+                  : D.summarise(digest)),
+            html: render(digest, member.name, EXPIRY_ONLY ? null : myCarts)
           })
         });
       }
@@ -237,3 +345,5 @@ module.exports = async function handler(req, res) {
     return res.status(500).json({ ok: false, error: String(e && e.message || e) });
   }
 };
+
+module.exports.render = render;

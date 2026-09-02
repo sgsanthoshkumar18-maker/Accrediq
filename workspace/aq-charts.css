@@ -132,3 +132,25 @@
   .aqc-line,.aqc-bar,.aqc-ring{animation:none;}
   .aqc-panel,.aqc-card,.aqc-callout{break-inside:avoid;}
 }
+
+/* ---- pie / donut ----
+   The key is part of the chart, not a caption: colour alone cannot carry a compliance figure,
+   so every slice is named and given its own percentage in text. */
+.aqc-pie{display:flex;align-items:center;gap:20px;flex-wrap:wrap;}
+.aqc-pie svg{width:184px;height:184px;flex:0 0 auto;}
+.aqc-slice{stroke:var(--bg);stroke-width:2;}
+.aqc-pie-mid{font:700 22px/1 var(--font-display,inherit);fill:var(--fg);}
+.aqc-pie-sub{font:600 11px/1 inherit;fill:var(--fg-faint);text-transform:uppercase;letter-spacing:.05em;}
+.aqc-pie-key{list-style:none;margin:0;padding:0;display:grid;gap:7px;min-width:180px;flex:1 1 180px;}
+.aqc-pie-key li{display:flex;align-items:center;gap:9px;font-size:13px;color:var(--fg-muted);}
+.aqc-pie-key i{width:10px;height:10px;border-radius:3px;flex:0 0 auto;}
+.aqc-pie-key span{flex:1 1 auto;min-width:0;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;}
+.aqc-pie-key b{color:var(--fg);font-variant-numeric:tabular-nums;}
+
+/* ---- pareto ----
+   The cumulative line is the point of the chart, so it is drawn over the bars rather than
+   beside them, and the 80% mark is a dashed reference — not a threshold anything is failing. */
+.aqc-cum{fill:none;stroke:var(--accent-bright);stroke-width:2;stroke-linejoin:round;}
+.aqc-dot{fill:var(--accent-bright);}
+.aqc-80{stroke:var(--fg-faint);stroke-width:1;stroke-dasharray:4 4;opacity:.7;}
+.aqc-parlabel{font-size:10px;}

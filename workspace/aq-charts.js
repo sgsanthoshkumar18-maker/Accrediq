@@ -244,6 +244,144 @@ window.AQCharts = (function () {
         : "") + "</div>";
   }
 
+
+  /* ------------------------------------------------------------------- pie */
+
+  /* A MIX, AND ONLY A MIX. A pie answers "what is this made of" and nothing else: it cannot
+     show a trend, and past about six slices nobody can rank them by eye. So the caller's rows
+     are collapsed to the largest five plus an honest "other", rather than drawing twenty
+     slivers and calling it detail.
+
+     Every slice is labelled with its own percentage. Colour alone would make the chart useless
+     to a reader who cannot distinguish two of the tones, and these are compliance figures. */
+  function pie(rows, o) {
+    o = o || {};
+    if (!rows || !rows.length) {
+      return '<p class="aqc-empty">' + esc(o.empty || "Nothing to break down yet.") + "</p>";
+    }
+    var clean = rows.map(function (r) { return { label: r.label, v: Math.max(0, num(r.v) || 0), tone: r.tone }; })
+                    .filter(function (r) { return r.v > 0; });
+    if (!clean.length) {
+      return '<p class="aqc-empty">' + esc(o.empty || "Nothing to break down yet.") + "</p>";
+    }
+    clean.sort(function (a, b) { return b.v - a.v; });
+    if (clean.length > 6) {
+      var rest = clean.slice(5).reduce(function (n, r) { return n + r.v; }, 0);
+      clean = clean.slice(0, 5).concat([{ label: "Other", v: rest, tone: "var(--fg-faint)" }]);
+    }
+    var total = clean.reduce(function (n, r) { return n + r.v; }, 0) || 1;
+
+    var R = 78, C = 92, ring = o.donut === false ? 0 : 44;
+    var a0 = -Math.PI / 2, slices = "";
+    clean.forEach(function (r, i) {
+      var frac = r.v / total, a1 = a0 + frac * Math.PI * 2;
+      /* A single slice covering the whole circle cannot be drawn as an arc — the start and end
+         points coincide and the path collapses. Draw the ring itself. */
+      if (frac >= 0.9999) {
+        slices += '<circle class="aqc-slice" cx="' + C + '" cy="' + C + '" r="' + ((R + ring) / 2).toFixed(1) +
+          '" fill="none" stroke="' + (r.tone || "var(--accent-bright)") + '" stroke-width="' + (R - ring) + '"/>';
+      } else {
+        var big = frac > 0.5 ? 1 : 0;
+        var x0 = C + R * Math.cos(a0), y0 = C + R * Math.sin(a0);
+        var x1 = C + R * Math.cos(a1), y1 = C + R * Math.sin(a1);
+        var ix1 = C + ring * Math.cos(a1), iy1 = C + ring * Math.sin(a1);
+        var ix0 = C + ring * Math.cos(a0), iy0 = C + ring * Math.sin(a0);
+        slices += '<path class="aqc-slice" fill="' + (r.tone || "var(--accent-bright)") + '" d="' +
+          "M" + x0.toFixed(1) + " " + y0.toFixed(1) +
+          "A" + R + " " + R + " 0 " + big + " 1 " + x1.toFixed(1) + " " + y1.toFixed(1) +
+          "L" + ix1.toFixed(1) + " " + iy1.toFixed(1) +
+          "A" + ring + " " + ring + " 0 " + big + " 0 " + ix0.toFixed(1) + " " + iy0.toFixed(1) +
+          'Z"><title>' + esc(r.label) + ": " + r.v + " (" +
+          Math.round(frac * 100) + "%)</title></path>";
+      }
+      a0 = a1;
+    });
+
+    var mid = o.centre == null ? "" :
+      '<text class="aqc-pie-mid" x="' + C + '" y="' + (C - 2) + '" text-anchor="middle">' +
+        esc(o.centre) + "</text>" +
+      (o.centreSub ? '<text class="aqc-pie-sub" x="' + C + '" y="' + (C + 16) +
+        '" text-anchor="middle">' + esc(o.centreSub) + "</text>" : "");
+
+    var key = clean.map(function (r) {
+      return '<li><i style="background:' + (r.tone || "var(--accent-bright)") + '"></i>' +
+        '<span>' + esc(r.label) + "</span><b>" + Math.round((r.v / total) * 100) + "%</b></li>";
+    }).join("");
+
+    return '<div class="aqc-pie">' +
+      '<svg viewBox="0 0 184 184" role="img" aria-label="' + esc(o.title || "Breakdown") + '">' +
+        slices + mid + "</svg>" +
+      '<ul class="aqc-pie-key">' + key + "</ul></div>";
+  }
+
+  /* ---------------------------------------------------------------- pareto */
+
+  /* WHERE THE PROBLEM ACTUALLY IS. Bars descending, with the cumulative share drawn over them,
+     so the reader can see how few categories account for most of the gap. On a quality
+     dashboard this is the chart that answers "what do I fix first" — a ranked list of twenty
+     departments does not, because the eye cannot tell whether the top three are most of the
+     problem or barely any of it.
+     The 80% line is drawn because that is the convention the reader is looking for; it is a
+     reference, not a threshold anything is judged against. */
+  function pareto(rows, o) {
+    o = o || {};
+    var clean = (rows || []).map(function (r) {
+      return { label: r.label, v: Math.max(0, num(r.v) || 0) };
+    }).filter(function (r) { return r.v > 0; });
+    if (!clean.length) {
+      return '<p class="aqc-empty">' + esc(o.empty || "Nothing to rank yet.") + "</p>";
+    }
+    clean.sort(function (a, b) { return b.v - a.v; });
+    if (clean.length > 10) clean = clean.slice(0, 10);
+
+    var total = clean.reduce(function (n, r) { return n + r.v; }, 0) || 1;
+    var W = 640, H = o.height || 230, L = 34, R = 38, T = 12, B = 52;
+    var iw = W - L - R, ih = H - T - B;
+    var bw = iw / clean.length, barW = Math.min(bw * 0.62, 46);
+    var hi = clean[0].v || 1;
+
+    var grid = "";
+    for (var g = 0; g <= 4; g++) {
+      var y = T + ih * (1 - g / 4);
+      grid += '<line class="aqc-grid" x1="' + L + '" x2="' + (W - R) + '" y1="' + y.toFixed(1) +
+        '" y2="' + y.toFixed(1) + '"/>' +
+        '<text class="aqc-axis" x="' + (L - 6) + '" y="' + (y + 3.5).toFixed(1) +
+        '" text-anchor="end">' + Math.round((hi * g) / 4) + "</text>" +
+        '<text class="aqc-axis" x="' + (W - R + 6) + '" y="' + (y + 3.5).toFixed(1) +
+        '">' + (g * 25) + "%</text>";
+    }
+
+    var acc = 0, bodyBars = "", pts = [];
+    clean.forEach(function (r, i) {
+      var cx = L + bw * i + bw / 2;
+      var h = (r.v / hi) * ih;
+      bodyBars += '<rect class="aqc-bar" x="' + (cx - barW / 2).toFixed(1) + '" y="' +
+        (T + ih - h).toFixed(1) + '" width="' + barW.toFixed(1) + '" height="' +
+        Math.max(h, 0).toFixed(1) + '" rx="3" fill="' + (o.tone || "var(--warn)") + '">' +
+        "<title>" + esc(r.label) + ": " + r.v + "</title></rect>" +
+        '<text class="aqc-axis aqc-parlabel" x="' + cx.toFixed(1) + '" y="' + (T + ih + 15) +
+        '" text-anchor="middle">' + esc(String(r.label).slice(0, 12)) + "</text>";
+      acc += r.v;
+      pts.push([cx, T + ih * (1 - acc / total)]);
+    });
+
+    var line = pts.map(function (p, i) {
+      return (i ? "L" : "M") + p[0].toFixed(1) + " " + p[1].toFixed(1);
+    }).join(" ");
+    var dots = pts.map(function (p) {
+      return '<circle class="aqc-dot" cx="' + p[0].toFixed(1) + '" cy="' + p[1].toFixed(1) + '" r="3"/>';
+    }).join("");
+    var eighty = T + ih * (1 - 0.8);
+
+    return '<div class="aqc-wrap"><svg class="aqc-svg" viewBox="0 0 ' + W + " " + H +
+      '" role="img" aria-label="' + esc(o.title || "Pareto") + '">' + grid +
+      '<line class="aqc-80" x1="' + L + '" x2="' + (W - R) + '" y1="' + eighty.toFixed(1) +
+        '" y2="' + eighty.toFixed(1) + '"/>' +
+      bodyBars +
+      '<path class="aqc-cum" d="' + line + '"/>' + dots +
+      "</svg></div>";
+  }
+
   return { card: card, sparkline: sparkline, area: area, bars: bars, rings: rings,
-           legend: legend, callout: callout, esc: esc };
+           legend: legend, callout: callout, pie: pie, pareto: pareto, esc: esc };
 })();

@@ -31,6 +31,10 @@
       desc: "Induction, fire safety, BLS and competency — who has it and when it lapses" },
     { key: "crashcart", href: "crashcart.html", label: "Short Expiry",
       desc: "Crash cart medicines and their expiry dates" },
+    /* Their OWN dashboard, not the general one. Sits in the workspace rather than beside the
+       public dashboard because it is built from data only this hospital has. */
+    { key: "qualitydashboard", href: "quality-dashboard.html", label: "My Dashboard",
+      desc: "Your own departments, KRAs and targets — charted from your own figures" },
     { key: "rounds", href: "rounds.html", label: "Rounds",
       desc: "Recurring checks that produce a score, trended against your target" },
     { key: "capa", href: "capa.html", label: "NC & CAPA",

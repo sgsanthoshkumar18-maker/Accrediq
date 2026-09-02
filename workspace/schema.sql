@@ -2244,3 +2244,94 @@ alter table public.code_blue_events
 comment on column public.code_blue_events.items_used_flag is
   'A cart can be opened without anything being taken — a drill, or a seal replaced. The '
   'event is still worth recording, and the stock is not touched.';
+
+-- ===========================================================================
+-- THE HOSPITAL'S OWN QUALITY DASHBOARD
+--
+-- WHY THIS IS NOT THE GENERAL DASHBOARD WITH A FILTER ON IT.
+-- The general dashboard is one shape for every hospital, and no two hospitals have the same
+-- shape: the departments differ, the KRAs differ, and the number of KPIs under each differs.
+-- A hospital that cannot see its OWN departments on its own dashboard reads the whole thing
+-- as somebody else's demo. So this is their structure, typed once, and everything on the
+-- screen is drawn from it.
+--
+-- EVERYTHING IS A METRIC WITH A TARGET AND MONTHLY READINGS.
+-- KRAs, KPIs, committees in place, SOPs written, training attended, and whatever the director
+-- has invented for a department this year are all the same shape: a name, a target, and a
+-- number that changes each month. Modelling them separately would mean four trend engines and
+-- four sets of charts that drift apart. One shape means the Pareto that ranks KPI gaps ranks
+-- committee gaps for free.
+--
+-- THE READING IS PER MONTH, AND THAT IS THE WHOLE POINT.
+-- A single "achieved" column would answer "how are we doing" and never "is it working". The
+-- month is stamped by the app, so a hospital returning in October writes an October row and
+-- the graph grows a point; it never overwrites September's, which is what makes the trend
+-- honest rather than a number that only ever looks like today.
+-- ===========================================================================
+
+create table if not exists public.qd_departments (
+  id          text primary key,
+  org_id      uuid references public.orgs(id) on delete cascade,
+  name        text not null,
+  -- Free text on purpose. A hospital that calls it "Casualty" must not be corrected to
+  -- "Emergency" by a dropdown built from somebody else's list.
+  head        text,
+  position    int  not null default 0,      -- the order the hospital reads them in
+  created_at  timestamptz not null default now()
+);
+
+create table if not exists public.qd_metrics (
+  id          text primary key,
+  org_id      uuid references public.orgs(id) on delete cascade,
+  dept_id     text references public.qd_departments(id) on delete cascade,
+  -- kra | kpi | committee | sop | training | custom
+  -- Kept as text rather than an enum so a hospital's own category cannot require a migration.
+  kind        text not null default 'kpi',
+  name        text not null,
+  unit        text,                          -- '%', 'count', 'days'…
+  target      numeric,
+  -- Whether a rising number is good. An infection rate and a hand-hygiene score both move,
+  -- and colouring both green when they rise would be actively misleading.
+  higher_is_better boolean not null default true,
+  position    int  not null default 0,
+  created_at  timestamptz not null default now()
+);
+
+create table if not exists public.qd_readings (
+  id          text primary key,
+  org_id      uuid references public.orgs(id) on delete cascade,
+  metric_id   text references public.qd_metrics(id) on delete cascade,
+  -- Always the FIRST of the month. Storing the day the person happened to type would make two
+  -- hospitals' Septembers incomparable and would sort badly.
+  month       date not null,
+  achieved    numeric,
+  note        text,
+  created_at  timestamptz not null default now(),
+  unique (metric_id, month)                  -- one reading per metric per month, updated in place
+);
+
+create index if not exists qd_metrics_dept_idx   on public.qd_metrics (dept_id);
+create index if not exists qd_readings_metric_idx on public.qd_readings (metric_id, month);
+
+alter table public.qd_departments enable row level security;
+alter table public.qd_metrics     enable row level security;
+alter table public.qd_readings    enable row level security;
+
+-- Same shape as every other hospital table: your own org, and only while the subscription is
+-- live. Written as a loop so a policy cannot drift between the three.
+do $$
+declare t text;
+begin
+  foreach t in array array['qd_departments','qd_metrics','qd_readings']
+  loop
+    execute format('drop policy if exists %I_read on public.%I', t, t);
+    execute format($f$create policy %I_read on public.%I for select to authenticated
+       using (org_id = public.my_org() and public.has_access())$f$, t, t);
+
+    execute format('drop policy if exists %I_write on public.%I', t, t);
+    execute format($f$create policy %I_write on public.%I for all to authenticated
+       using (org_id = public.my_org() and public.has_access() and public.can_edit())
+       with check (org_id = public.my_org() and public.has_access() and public.can_edit())$f$,
+       t, t);
+  end loop;
+end $$;

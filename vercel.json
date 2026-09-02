@@ -40,10 +40,6 @@
     {
       "path": "/api/digest?scope=expiry",
       "schedule": "0 4 1 * *"
-    },
-    {
-      "path": "/api/digest?scope=crashcart",
-      "schedule": "0 2 * * 1"
     }
   ]
 }

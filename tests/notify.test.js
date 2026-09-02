@@ -105,8 +105,15 @@ ok(/SUPABASE_SERVICE_KEY/.test(api), 'the digest job uses a service key');
 ok(/CRON_SECRET/.test(api), 'and is guarded by a shared secret');
 ok(/req\.method !== "POST"/.test(api), 'GET cannot trigger a send');
 ok(/configured: false/.test(api), 'it reports plainly when not configured rather than failing');
-ok(/if \(digest\.empty\) \{ quiet\+\+; continue; \}/.test(api),
+/* "Nothing is wrong" is still not worth an email — but nothing now has to mean nothing
+   ACROSS EVERYTHING the reader is responsible for. The crash cart rides in this mail since
+   the two Monday sends were merged, so a biomedical engineer with a clean register and an
+   expiring ampoule has something to read; the old rule knew only about the digest half and
+   would have sent that person nothing at all. */
+ok(/if \(digest\.empty && !cartsWorthSending\) \{ quiet\+\+; continue; \}/.test(api),
    'nobody is emailed to be told nothing is wrong');
+ok(/const cartsWorthSending = myCarts && !myCarts\.empty;/.test(api),
+   'and the crash cart counts towards whether there is anything to say');
 /* Without last_sent_on an hourly cron sends twenty-four identical emails, which is the
    fastest possible way to make someone switch the digest off for good. */
 ok(/p\.last_sent_on === iso/.test(api), 'an email is sent at most once a day');
