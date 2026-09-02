@@ -42,13 +42,14 @@ window.FOUNDER = {
      plus alpha rather than three colour channels, which is why it is less than half the
      weight of the colour version at the same size.
 
-     TRIMMED TO THE SILHOUETTE, THEN CENTRE-CROPPED BACK TO 0.948. The export carried a band
-     of empty frame above the hair; the figure is sized by height and its width follows from
-     the frame's ratio, so that band was making the figure wider than the body it contains and
-     holding the text columns further out than the shoulders ever needed. Trimming it alone
-     would have swung the ratio to 1.14 — a fifth wider again — so the frame is cropped back to
-     the ratio the layout was built around, which costs a little of each outer shoulder and
-     reads as a poster crop. Swapping the asset is this one line plus --fp-figure-ratio. */
+     THE FULL FRAME, UNCROPPED. The body reaches the left and right edges of this export at
+     the shoulders, so any horizontal trim cuts the arms off square — and a squared-off arm is
+     exactly what makes a cut-out read as a rectangular photo dropped into the page. It is
+     downscaled and nothing else. The frame being wider than the body costs nothing now: the
+     hero flows its text around the SILHOUETTE (see .fp-flow in founder.css), not around the
+     box, so the empty margin is space the copy runs into rather than space it is held off by.
+     Swapping the asset is this one line, plus --fp-figure-ratio and the shape polygon —
+     regenerate both with tools/shape-polygon.js. */
   photo: "assets/founder-2026.png",
 
   /* The three-stage story for the pinned scrollytelling card. */

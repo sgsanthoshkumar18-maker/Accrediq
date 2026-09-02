@@ -143,8 +143,9 @@ function render(review, orgName) {
       'CRASH CART MEDICINE EXPIRY ALERT !!</h1>' +
     '<p style="margin:0 0 18px;color:#667;font-size:13.5px">' +
       esc(orgName || "Your hospital") + ' &middot; short-expiry policy: <b>' +
-      review.months + ' months</b> &middot; covering everything expiring on or before <b>' +
-      dmy(review.windowEnds) + '</b></p>' +
+      review.months + ' months</b> &middot; covering every batch expiring in <b>' +
+      E.monthLabel(review.windowMonth) + '</b> or earlier &mdash; the whole month, ' +
+      'whatever the day printed on the pack</p>' +
 
     (review.expired.length
       ? '<div style="background:#fef3f2;border:1px solid #fda29b;border-radius:8px;' +
@@ -201,7 +202,10 @@ async function run(req, res) {
     return res.status(503).json({ ok: false, error: "could not read the register" });
   }
 
-  const today = new Date().toISOString().slice(0, 10);
+  /* IST. The cron fires at 02:00 IST, which is still the PREVIOUS day — and on the 1st, the
+     previous MONTH — in UTC. Reading the clock in UTC here would have shifted the whole
+     window by a month for exactly the run that matters. */
+  const today = E.todayIST();
   const orgName = {};
   (orgs || []).forEach(function (o) { orgName[o.id] = o.name; });
   const setting = {};

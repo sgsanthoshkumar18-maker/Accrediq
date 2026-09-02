@@ -741,11 +741,11 @@ html.fp-tilt-on [data-tilt].is-tilting::after { opacity: 1; }
      Sixteen bands, each taking the LEFTMOST edge within the band so the outline is always the
      conservative side of the body. Regenerate with tools/shape-polygon.js if the portrait is
      ever replaced — the numbers are this asset's silhouette and nothing else's. */
-  shape-outside:polygon(36.9% 0%, 36.9% 6.2%, 30.6% 6.2%, 30.6% 12.5%, 29.1% 12.5%,
-    29.1% 18.7%, 29.3% 18.7%, 29.3% 25%, 32.1% 25%, 32.1% 31.2%, 31% 31.2%, 31% 37.5%,
-    31% 37.5%, 31% 43.7%, 32.8% 43.7%, 32.8% 50%, 36.1% 50%, 36.1% 56.2%, 38.3% 56.2%,
-    38.3% 62.5%, 35% 62.5%, 35% 68.7%, 21.5% 68.7%, 21.5% 75%, 7.4% 75%, 7.4% 81.2%,
-    0% 81.2%, 0% 87.5%, 0% 93.7%, 0% 100%, 100% 100%, 100% 0%);
+  shape-outside:polygon(100% 0%, 100% 6.2%, 100% 12.5%, 39% 12.5%, 39% 18.7%,
+    33.7% 18.7%, 33.7% 25%, 33.1% 25%, 33.1% 31.2%, 33.7% 31.2%, 33.7% 37.5%, 35.7% 37.5%,
+    35.7% 43.7%, 34.7% 43.7%, 34.7% 50%, 35.8% 50%, 35.8% 56.2%, 38.8% 56.2%, 38.8% 62.5%,
+    40.1% 62.5%, 40.1% 68.7%, 34.5% 68.7%, 34.5% 75%, 20.6% 75%, 20.6% 81.2%, 7.3% 81.2%,
+    7.3% 87.5%, 4.1% 87.5%, 4.1% 93.7%, 0.8% 93.7%, 0.8% 100%, 100% 100%, 100% 0%);
   shape-margin:clamp(12px,1.6vw,26px);
   pointer-events:none;
 }
@@ -757,6 +757,13 @@ html.fp-tilt-on [data-tilt].is-tilting::after { opacity: 1; }
    rail, so a wrapped second button was centring itself under the first and reading as an
    indent rather than a stack. */
 .fp-stage-left .fp-links{ justify-content:flex-start; }
+/* INLINE-FLEX, SO THE BUTTONS OBEY THE SILHOUETTE RATHER THAN THE BOX.
+   A block-level flex container establishes its own formatting context, and such a box avoids
+   a float's whole RECTANGLE — the shape does not apply to it. Beside a cut-out that means the
+   buttons are held off the empty air beside the shoulder as though it were solid, and once
+   the frame was restored to its full width there was no longer room for both on one line.
+   Inline-level puts them in a line box, and line boxes are exactly what the shape governs. */
+.fp-stage-copy .fp-links{ display:inline-flex; vertical-align:top; }
 .fp-stage-right{
   grid-column:3;
   display:flex;
@@ -801,11 +808,11 @@ html.fp-tilt-on [data-tilt].is-tilting::after { opacity: 1; }
      svh, not vh: vh counts the area behind mobile browser chrome, which is the band that
      showed as dead space under the figure. */
   --fp-hero-h:clamp(360px, calc(100svh - 250px), 700px);
-  /* THE CUT-OUT'S OWN RATIO — assets/founder-2026.png, 948 x 1000. Everything the figure
+  /* THE CUT-OUT'S OWN RATIO — assets/founder-2026.png, 1000 x 1000. Everything the figure
      needs is derived from this one number: its rendered width, and the width of the grid
      track that holds the text columns clear of it. Written out twice they would disagree the
      first time the asset was swapped, and the columns would land on the shoulders. */
-  --fp-figure-ratio:calc(948 / 1000);
+  --fp-figure-ratio:calc(1000 / 1000);
   /* The figure is as tall as the hero plus the bleed, so its width follows from that ratio.
      Deriving it rather than hand-tuning a number is what keeps the text columns exactly
      beside the figure at every viewport instead of only at the one I happened to measure —

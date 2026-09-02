@@ -183,7 +183,12 @@ console.log('silhouette ', 'x ' + bb.x0 + '..' + bb.x1 + '  y ' + bb.y0 + '..' +
 const cw = bb.x1 - bb.x0 + 1, ch = bb.y1 - bb.y0 + 1;
 console.log('trimmed    ', cw + 'x' + ch,
   '(' + Math.round((1 - (cw * ch) / (img.w * img.h)) * 100) + '% of the frame was empty margin)');
-let outImg = crop(img, bb.x0, bb.y0, cw, ch);
+/* KEEP THE FRAME. Passing "keep" leaves the export exactly as it came: the silhouette runs
+   to the left and right edges at the shoulders, so ANY horizontal trim cuts the arms off
+   square — which is the one thing that makes a cut-out read as a rectangular photo. */
+const KEEP = process.argv[6] === "keep";
+let outImg = KEEP ? img : crop(img, bb.x0, bb.y0, cw, ch);
+if (KEEP) console.log('keep-frame  no trim, no ratio crop — the body reaches the edges');
 
 /* HOLD THE ESTABLISHED RATIO. The figure is sized by HEIGHT and its width follows from this
    ratio, so a wider frame means a wider figure and less room for the text columns. Trimming

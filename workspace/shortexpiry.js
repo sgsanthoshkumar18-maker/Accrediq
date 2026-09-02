@@ -8,13 +8,15 @@
  * is loaded by workspace/crashcart.js in the browser AND required by api/crash-cart-alert.js
  * on the server — the same module, not a copy of it.
  *
- * THE WINDOW IS "AT MOST N MONTHS LEFT", NOT "EXPIRING IN THE NTH MONTH".
- * Asked for as "in August, alert me about November — three months out". Read literally
- * that alerts on the November cohort and says nothing about an ampoule expiring in
- * September, which is nearer and worse. Short expiry in a pharmacy means shelf life at or
- * below the threshold, so that is what this computes; the report is then grouped BY MONTH,
- * so the three-months-out cohort still appears as its own heading. Nothing is hidden and
- * nothing nearer is missed.
+ * THE WINDOW IS WHOLE MONTHS, IN INDIAN STANDARD TIME.
+ * "At most N months left" is still the rule, but the edge is the END of the target month,
+ * not the same day-of-month N months out. In September, with a three-month policy, every
+ * batch stamped December is short — the 1st and the 31st alike. That is how a crash cart is
+ * actually checked: against the month printed on the pack, not against a rolling date. The
+ * earlier day-anchored version flagged stock up to 2 December and left the rest of the month
+ * standing, and it gave two people entering the same ampoule a week apart two answers.
+ * Anything already past its last usable DAY is "expired" — that stays a date, because an
+ * expired ampoule is expired on the day, not at the end of its month.
  *
  * EXPIRY IS END-OF-MONTH UNLESS A DAY IS GIVEN.
  * A pack printed "11/2026" is usable to the last day of November, not the first. Treating
@@ -58,19 +60,42 @@
     return Math.round((b - a) / 86400000);
   }
 
-  /* The far edge of the window: today plus N calendar months, clamped to the end of the
-     target month. Adding 90 days instead would put the boundary in a different place
-     depending on which months you crossed, and a pharmacist checking the maths by hand
-     would get a different answer from the software. */
+  /* TODAY IN INDIAN STANDARD TIME, NOT UTC.
+     The whole rule now turns on which MONTH it is, and UTC is five and a half hours behind
+     IST — so for the first five and a half hours of every Indian day the server would still
+     be on yesterday, and on the 1st of a month it would still be in the PREVIOUS MONTH. That
+     would quietly shift the entire window by a month for anyone opening the page early, and
+     for the cron job, which runs at 02:00. IST has no daylight saving, so a fixed offset is
+     exact rather than an approximation. */
+  var IST_OFFSET_MS = (5 * 60 + 30) * 60 * 1000;
+  function todayIST() {
+    return new Date(Date.now() + IST_OFFSET_MS).toISOString().slice(0, 10);
+  }
+
+  /* THE WINDOW IS WHOLE MONTHS, NOT A ROLLING DATE.
+     This used to be "today plus N months to the day" — on 2 September it flagged everything
+     up to 2 December and left 3–31 December alone. No pharmacy works that way. A crash cart
+     is checked by the month printed on the pack: in September you pull anything stamped
+     December, whatever the day. Anchoring on the day of entry also meant two people entering
+     the same stock a week apart got two different answers about the same ampoule.
+
+     So the edge is the LAST day of the target month, always. September + 3 gives
+     2026-12-31, and every batch expiring anywhere in December is short. */
   function windowEnd(todayIso, months) {
-    var m = /^(\d{4})-(\d{2})-(\d{2})$/.exec(String(todayIso || ""));
+    var m = /^(\d{4})-(\d{2})-\d{2}$/.exec(String(todayIso || ""));
     if (!m) return "";
-    var y = +m[1], mo = +m[2], d = +m[3];
+    var y = +m[1], mo = +m[2];
     var targetMonth = mo + months;
     var targetYear = y + Math.floor((targetMonth - 1) / 12);
     targetMonth = ((targetMonth - 1) % 12) + 1;
     var lastOfTarget = new Date(Date.UTC(targetYear, targetMonth, 0)).getUTCDate();
-    return targetYear + "-" + pad(targetMonth) + "-" + pad(Math.min(d, lastOfTarget));
+    return targetYear + "-" + pad(targetMonth) + "-" + pad(lastOfTarget);
+  }
+
+  /* The target month itself, for labelling: "everything expiring in December 2026 or before"
+     is what the rule actually says, and it is what the screen and the email should print. */
+  function windowMonth(todayIso, months) {
+    return windowEnd(todayIso, months).slice(0, 7);
   }
 
   function normaliseMonths(v) {
@@ -84,7 +109,7 @@
      "expiring soon" where it reads as something to get round to. */
   function classify(item, opts) {
     var o = opts || {};
-    var todayIso = o.today || new Date().toISOString().slice(0, 10);
+    var todayIso = o.today || todayIST();
     var months = normaliseMonths(o.months);
     var expiry = lastUsableDay(item && (item.expires_on || item.expiry));
     if (!expiry) return { state: "unknown", expiry: "", daysLeft: null };
@@ -102,7 +127,7 @@
      carried along — the pharmacist walks to a trolley, not to a spreadsheet row. */
   function review(carts, items, opts) {
     var o = opts || {};
-    var todayIso = o.today || new Date().toISOString().slice(0, 10);
+    var todayIso = o.today || todayIST();
     var months = normaliseMonths(o.months);
     var byId = {};
     (carts || []).forEach(function (c) { byId[c.id] = c; });
@@ -131,6 +156,7 @@
 
     return {
       today: todayIso, months: months, windowEnds: windowEnd(todayIso, months),
+      windowMonth: windowMonth(todayIso, months),
       expired: flagged.filter(function (f) { return f.state === "expired"; }),
       short: flagged.filter(function (f) { return f.state === "short"; }),
       all: flagged,
@@ -178,6 +204,8 @@
     ALLOWED_MONTHS: ALLOWED_MONTHS,
     lastUsableDay: lastUsableDay,
     windowEnd: windowEnd,
+    windowMonth: windowMonth,
+    todayIST: todayIST,
     normaliseMonths: normaliseMonths,
     classify: classify,
     review: review,

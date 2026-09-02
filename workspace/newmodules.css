@@ -288,3 +288,19 @@ input[type="date"]:hover::-webkit-calendar-picker-indicator{opacity:1;}
   .cc-batch .ws-f,.cc-usedrow .ws-f{flex:1 1 100%;}
   .cc-batch-x{width:100%;}
 }
+
+/* ---- copying an item list from one crash cart to another ----
+   The rows reuse .cc-batch, so a copied row and a batch row look like the same kind of thing,
+   which they are. Only the two controls that have no equivalent there are new. */
+.cc-copy-take{display:flex;align-items:center;gap:6px;font-size:12px;font-weight:600;
+  color:var(--fg-muted);white-space:nowrap;align-self:center;}
+.cc-copy-take input{width:15px;height:15px;accent-color:var(--accent-solid);}
+/* The bulk-fill row. Laid out on one line because it is one thought — "they all expire on
+   this date" — and stacking it made it read as three unrelated fields. */
+.cc-copy-all{display:flex;gap:10px;align-items:flex-end;flex-wrap:wrap;
+  border:1px dashed var(--border);border-radius:var(--r-sm);padding:12px 14px;margin-bottom:12px;}
+.cc-copy-all label{flex:0 0 auto;align-self:center;font-size:12px;font-weight:600;
+  color:var(--fg-muted);}
+.cc-copy-all input{flex:1 1 150px;}
+/* Copied names are not editable here: the point is that the list matches the other cart. */
+.cc-batch input[readonly]{opacity:.75;cursor:default;}

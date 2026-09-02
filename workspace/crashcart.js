@@ -33,7 +33,10 @@
   var carts = [], items = [], events = [], settings = { months: 3 }, tab = "action";
 
   function id(p) { return p + "_" + Math.random().toString(36).slice(2, 11); }
-  function today() { return new Date().toISOString().slice(0, 10); }
+  /* IST, not the browser's own clock. The window is decided by which MONTH it is, so a
+     laptop left on a foreign timezone — or simply on UTC — would put a hospital in Chennai a
+     month out on the 1st. The rule is the same one the server uses, from the same module. */
+  function today() { return E.todayIST(); }
   function months() { return E.normaliseMonths(settings && settings.months); }
   function review() { return E.review(carts, items, { today: today(), months: months() }); }
   function cartById(cid) { return carts.filter(function (c) { return c.id === cid; })[0]; }
@@ -210,8 +213,9 @@
           return '<option value="' + m + '"' + (m === r.months ? " selected" : "") + ">" +
                  m + " months</option>";
         }).join("") + "</select></label>" +
-      '<span class="tr-hint">Any batch expiring on or before <b>' + esc(r.windowEnds) +
-      "</b> is flagged. Applies to every batch in every cart.</span>";
+      '<span class="tr-hint">Every batch expiring in <b>' + esc(E.monthLabel(r.windowMonth)) +
+      "</b> or earlier is flagged &mdash; the whole month, whatever the day printed on the " +
+      "pack. Applies to every batch in every cart.</span>";
 
     document.getElementById("ccPanel").innerHTML =
         tab === "action" ? actionPanel(r)
@@ -324,6 +328,149 @@
         el.textContent = "Batch " + (n + 1);
       });
     });
+  }
+
+
+  /* ============ copying an item list from one cart to another ============
+   *
+   * WHY THIS EXISTS. Every crash cart in a hospital holds the SAME list of drugs — that is
+   * the point of a crash cart. What differs between the trolley in Deluxe Ward and the one in
+   * Tag Ward is the batch numbers and the expiry dates, not the contents. Typing thirty drug
+   * names and quantities again for each ward is the single longest job in this module, and
+   * every retype is a chance to leave a drug out of one trolley.
+   *
+   * WHAT IS COPIED, AND WHAT IS NOT. The item, its strength, and the QUANTITY — and quantity
+   * is the total held for that drug, added up across however many batches it happens to be
+   * split into. Two ampoules of adrenaline in one batch and two in two batches are both
+   * "two adrenaline"; the split is an accident of delivery, not part of the cart's design.
+   * Batch and expiry are deliberately NOT copied. They are the two things that genuinely
+   * differ, and carrying them over would put a wrong expiry into a crash cart, which is the
+   * worst outcome this whole module exists to prevent. They are typed here, once per row.
+   */
+  function cartsWithItems(exceptId) {
+    return carts.filter(function (c) {
+      return c.id !== exceptId && itemsOf(c.id).length;
+    }).sort(function (a, b) { return itemsOf(b.id).length - itemsOf(a.id).length; });
+  }
+
+  /* The offer. Raised when a cart is empty and another one is not — which is exactly the
+     moment someone is about to retype a list that already exists. It is a choice, never an
+     action: nothing is written until the next form is filled in and saved. */
+  function offerCopy(targetId) {
+    var target = cartById(targetId);
+    var sources = cartsWithItems(targetId);
+    if (!target || !sources.length) { itemForm(null, targetId); return; }
+    var src = sources[0];
+    var n = groupItems(itemsOf(src.id)).length;
+
+    modal("<h3>Copy the list from " + esc(src.name) + "?</h3>" +
+      '<p class="tr-hint">' + esc(src.name) + " already has <b>" + n + " item" +
+        (n === 1 ? "" : "s") + "</b> on it, and " + esc(target.name) +
+        " has none yet. Crash carts normally carry the same drugs in the same quantities, so " +
+        "the list can be brought across and you fill in only the batch and expiry for " +
+        esc(target.name) + ".</p>" +
+      '<div class="ws-modal-actions">' +
+        '<button type="button" class="btn btn-ghost" id="ccCopyNo" data-target="' +
+          esc(targetId) + '">Type it myself</button>' +
+        '<button type="button" class="btn btn-accent" id="ccCopyYes" data-src="' + esc(src.id) +
+          '" data-target="' + esc(targetId) + '">Copy the list</button></div>');
+  }
+
+  function copyRow(g, n) {
+    return '<div class="cc-batch" data-copyrow>' +
+      '<span class="cc-batch-n">' + n + "</span>" +
+      '<label class="cc-copy-take"><input type="checkbox" data-c="take" checked> Include</label>' +
+      '<div class="ws-f"><label>Item</label><input data-c="name" readonly value="' +
+        esc(g.name || "") + '"></div>' +
+      '<div class="ws-f"><label>Strength / form</label><input data-c="strength" readonly value="' +
+        esc(g.strength || "") + '"></div>' +
+      '<div class="ws-f"><label>Quantity *</label><input data-c="quantity" type="number" min="0" ' +
+        'required value="' + esc(g.total) + '"></div>' +
+      '<div class="ws-f"><label>Batch number</label><input data-c="batch" value=""></div>' +
+      '<div class="ws-f"><label>Expiry *</label><input data-c="expires_on" type="date" required ' +
+        'value=""></div>' +
+      "</div>";
+  }
+
+  function copyForm(targetId, sourceId) {
+    var target = cartById(targetId);
+    var groups = groupItems(itemsOf(sourceId));
+    if (!target || !groups.length) { itemForm(null, targetId); return; }
+
+    modal("<h3>Copy " + groups.length + " item" + (groups.length === 1 ? "" : "s") +
+        " into " + esc(target.name) + "</h3>" +
+      '<form id="ccCopyForm" class="ws-form" data-target="' + esc(targetId) + '">' +
+      '<div class="ws-f ws-f-wide"><label>Copy from</label><select name="source_id">' +
+        cartsWithItems(targetId).map(function (c) {
+          return '<option value="' + esc(c.id) + '"' + (c.id === sourceId ? " selected" : "") +
+                 ">" + esc(c.name) + " (" + groupItems(itemsOf(c.id)).length + " items)</option>";
+        }).join("") + "</select></div>" +
+
+      /* One expiry, applied down the column. A delivery usually lands as one batch with one
+         expiry, so typing it thirty times is thirty chances to fat-finger a year. It only
+         ever FILLS the rows — each one stays editable, because a cart restocked twice will
+         genuinely hold two expiries. */
+      '<div class="ws-f ws-f-wide cc-copy-all"><label>Set every expiry to</label>' +
+        '<input type="date" id="ccCopyAllExp">' +
+        '<button type="button" class="btn btn-ghost btn-sm" id="ccCopyApply">Apply to all</button>' +
+        '<input type="text" id="ccCopyAllBatch" placeholder="and batch (optional)">' +
+        "</div>" +
+
+      '<div id="ccCopyRows">' +
+        groups.map(function (g, i) { return copyRow(g, i + 1); }).join("") + "</div>" +
+
+      '<p class="tr-hint">Names and quantities come from ' +
+        esc((cartById(sourceId) || {}).name || "the other cart") +
+        ". Batch and expiry are left blank on purpose &mdash; they are what differs between " +
+        "trolleys, and copying them across would put a wrong expiry into a crash cart. " +
+        "Untick anything this cart does not carry.</p>" +
+      '<div class="ws-modal-actions">' +
+        '<button type="button" class="btn btn-ghost" id="ccCancel">Cancel</button>' +
+        '<button class="btn btn-accent" type="submit">Add to ' + esc(target.name) +
+        "</button></div></form>");
+
+    document.getElementById("ccCopyApply").addEventListener("click", function () {
+      var d = document.getElementById("ccCopyAllExp").value;
+      var b = document.getElementById("ccCopyAllBatch").value;
+      [].forEach.call(document.querySelectorAll("#ccCopyRows [data-copyrow]"), function (row) {
+        if (!row.querySelector('[data-c="take"]').checked) return;
+        if (d) row.querySelector('[data-c="expires_on"]').value = d;
+        if (b) row.querySelector('[data-c="batch"]').value = b;
+      });
+    });
+
+    document.querySelector('#ccCopyForm [name="source_id"]')
+      .addEventListener("change", function (e) { copyForm(targetId, e.target.value); });
+  }
+
+  async function saveCopied(f) {
+    var targetId = f.getAttribute("data-target");
+    var rows = [].slice.call(f.querySelectorAll("[data-copyrow]")).filter(function (r) {
+      return r.querySelector('[data-c="take"]').checked;
+    });
+    if (!rows.length) throw new Error("nothing was ticked");
+
+    /* Validated BEFORE anything is written. A half-copied list is worse than none: the cart
+       would look stocked while missing whatever came after the bad row. */
+    rows.forEach(function (r) {
+      if (!r.querySelector('[data-c="expires_on"]').value) {
+        throw new Error("every item needs an expiry — use the “Set every expiry to” box if they share one");
+      }
+    });
+
+    for (var i = 0; i < rows.length; i++) {
+      var r = rows[i];
+      await S.adapter.put(ITEMS, {
+        id: id("cci"),
+        cart_id: targetId,
+        name: String(r.querySelector('[data-c="name"]').value || "").trim(),
+        strength: String(r.querySelector('[data-c="strength"]').value || "").trim() || null,
+        batch: String(r.querySelector('[data-c="batch"]').value || "").trim() || null,
+        quantity: Math.max(0, Number(r.querySelector('[data-c="quantity"]').value) || 0),
+        expires_on: r.querySelector('[data-c="expires_on"]').value
+      });
+    }
+    W.toast(rows.length + " item" + (rows.length === 1 ? "" : "s") + " copied across");
   }
 
   /* ---------------- "was the crash cart opened?" ---------------- */
@@ -730,7 +877,14 @@
         return;
       }
       var ai = e.target.closest("[data-additem]");
-      if (ai) { itemForm(null, ai.getAttribute("data-additem")); return; }
+      if (ai) {
+        /* An empty cart beside a stocked one is the moment the list is about to be retyped.
+           Offer to bring it across instead; itemForm() is still one click away. */
+        var tid = ai.getAttribute("data-additem");
+        if (!itemsOf(tid).length && cartsWithItems(tid).length) offerCopy(tid);
+        else itemForm(null, tid);
+        return;
+      }
       var ec = e.target.closest("[data-editcart]");
       if (ec) {
         var c = cartById(ec.getAttribute("data-editcart"));
@@ -748,6 +902,7 @@
         if (f.id === "ccCartForm") await saveCart(f);
         else if (f.id === "ccItemForm") await saveItem(f);
         else if (f.id === "ccOpenForm") await saveOpened(f);
+        else if (f.id === "ccCopyForm") await saveCopied(f);
         else if (f.id === "ccDlForm") { await doDownload(f); close(); return; }
       } catch (err) {
         W.toast("Could not save: " + (err && err.message || err), "bad");
@@ -778,6 +933,14 @@
     document.getElementById("ccModal").addEventListener("click", async function (e) {
       if (e.target === e.currentTarget) { close(); return; }
       if (e.target.id === "ccCancel") { close(); return; }
+      if (e.target.id === "ccCopyNo") {
+        itemForm(null, e.target.getAttribute("data-target"));
+        return;
+      }
+      if (e.target.id === "ccCopyYes") {
+        copyForm(e.target.getAttribute("data-target"), e.target.getAttribute("data-src"));
+        return;
+      }
       if (e.target.id === "ccItemDel") {
         var f = document.getElementById("ccItemForm");
         var rid = f.getAttribute("data-id");

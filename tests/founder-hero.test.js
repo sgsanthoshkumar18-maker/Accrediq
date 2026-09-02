@@ -146,15 +146,29 @@ check('the shipping cut-out matches what the CSS expects', () => {
   }
   const ALPHA = bpp - 1;                       /* alpha is the last channel either way */
 
-  /* No empty band above the hair. 205 rows of the original source's 1005 were transparent —
-     a fifth of the frame — so at any box height the figure rendered a fifth smaller than its
-     box and stopped short of the name it was supposed to stand in front of. */
-  let firstRow = -1;
-  for (let y = 0; y < h && firstRow < 0; y++)
-    for (let x = 0; x < w; x++) if (px[y * stride + x * bpp + ALPHA] > 16) { firstRow = y; break; }
-  assert.strictEqual(firstRow, 0,
-    rel + ' has ' + firstRow + 'px of empty space above the hair; the figure will render that ' +
-    'much smaller than its box and stop short of the name');
+  /* THE ARMS MUST REACH THE FRAME. This replaces an earlier rule that required the hair to
+     start on row 0. That rule was written when the text column stopped at the figure's BOX, so
+     every transparent row cost the figure real size — but it was satisfied by trimming, and
+     trimming a frame whose shoulders already touch both edges squares the arms off. A squared
+     arm is the exact thing that makes a cut-out read as a rectangular photo dropped into the
+     page, which is what the trimmed version was rejected for.
+     The band above the hair is now harmless: the copy flows around the SILHOUETTE, so empty
+     frame is space the text runs into rather than space it is held off by. */
+  /* NOT ASSERTED HERE: that the sides are uncropped. It cannot be. A frame cropped in to the
+     shoulders and a frame that simply ends at the shoulders look identical from the shipped
+     file — in both, the body reaches the edge. The rule is a product decision and it is
+     recorded where it can be acted on, in the comment above `photo:` in founder-data.js:
+     downscale the export, never trim it horizontally. What IS checkable is below. */
+  const alphaAt = (x, y) => px[y * stride + x * bpp + ALPHA];
+  const rowHasBody = y => { for (let x = 0; x < w; x++) if (alphaAt(x, y) > 16) return true; return false; };
+
+  /* The band above the hair is allowed now, but not unboundedly: past roughly a quarter of the
+     frame the figure is small enough in its box that the composition falls apart. */
+  let firstRow = 0;
+  while (firstRow < h && !rowHasBody(firstRow)) firstRow++;
+  assert.ok(firstRow / h < 0.25,
+    rel + ' is ' + Math.round(firstRow / h * 100) + '% empty above the hair; past a quarter ' +
+    'the figure renders too small inside its own box');
 
   /* The CSS ratio has to match the file, or the figure letterboxes inside its box and the
      black band comes back from the other direction. Both the figure's width and the grid
