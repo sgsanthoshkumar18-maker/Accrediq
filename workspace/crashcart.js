@@ -215,7 +215,20 @@
         }).join("") + "</select></label>" +
       '<span class="tr-hint">Every batch expiring in <b>' + esc(E.monthLabel(r.windowMonth)) +
       "</b> or earlier is flagged &mdash; the whole month, whatever the day printed on the " +
-      "pack. Applies to every batch in every cart.</span>";
+      "pack. Applies to every batch in every cart.</span>" +
+      /* Who is written to is part of the protocol, so it is stated beside it rather than
+         buried in a settings page — and the people who cannot change it can still SEE it,
+         which is what stops "I never got the email" being unanswerable. */
+      '<span class="tr-hint cc-who">' + (function () {
+        var list = alertAddresses();
+        var who = list.length
+          ? "Monday alerts go to <b>" + esc(list.join(", ")) + "</b>, plus the owner."
+          : "Monday alerts go to <b>everyone who could restock</b> &mdash; nobody has been " +
+            "named yet.";
+        return who + (canAssign()
+          ? ' <button type="button" class="tr-edit" id="ccWho">Change</button>'
+          : "");
+      })() + "</span>";
 
     document.getElementById("ccPanel").innerHTML =
         tab === "action" ? actionPanel(r)
@@ -524,6 +537,72 @@
         W.toast("Saved. Email alerts are not switched on for this site yet", "bad");
       }
     } catch (e) { /* the save already succeeded; a failed receipt must never undo it */ }
+  }
+
+
+  /* ============ who receives the crash cart alerts ============
+   *
+   * A crash cart's contents are not something every editor in the hospital needs in their
+   * inbox every Monday. The quality manager or the director names the people who actually
+   * restock — usually a pharmacist and a ward sister rather than one person — and the weekly
+   * alert goes to them and to the account owner, and to nobody else.
+   *
+   * Naming nobody is a valid state and keeps the old behaviour: everyone whose role could act
+   * on it. A hospital that has never opened this setting must not silently stop being told
+   * its adrenaline has expired.
+   *
+   * The ENTRY receipt is a different thing and is not governed by this list: it goes to
+   * whoever just typed, because it is a receipt for what they did. */
+  var ASSIGNERS = ["owner", "admin", "quality_manager", "director"];
+
+  function canAssign() {
+    try {
+      if (!S.isConfigured || !S.isConfigured()) return true;
+      var u = W.user;
+      if (!u) return false;
+      return ASSIGNERS.indexOf(String(u.role || "").toLowerCase()) > -1;
+    } catch (e) { return false; }
+  }
+
+  function alertAddresses() {
+    return String((settings && settings.alert_email) || "")
+      .split(/[,;\s]+/).map(function (a) { return a.trim(); })
+      .filter(function (a) { return a.indexOf("@") > 0; });
+  }
+
+  function recipientsForm() {
+    var list = alertAddresses();
+    modal("<h3>Who receives the crash cart alerts?</h3>" +
+      '<form id="ccWhoForm" class="ws-form">' +
+      '<div class="ws-f ws-f-wide"><label>Email addresses</label>' +
+        '<textarea name="alert_email" rows="4" placeholder="pharmacist@hospital.org, ' +
+          'sister.icu@hospital.org">' + esc(list.join(", ")) + "</textarea></div>" +
+      '<p class="tr-hint">One per line, or separated by commas. <b>Only these people</b> get ' +
+        "the Monday alert &mdash; nobody else in the hospital is written to. The account " +
+        "owner is always included, so narrowing this list cannot lock the owner out.</p>" +
+      '<p class="tr-hint">Leave it empty to fall back to everyone whose role could restock ' +
+        "(owner, admin, quality manager, director, editor).</p>" +
+      '<p class="tr-hint">This does not affect the receipt sent the moment stock is entered ' +
+        "&mdash; that always goes to whoever typed it.</p>" +
+      '<div class="ws-modal-actions">' +
+        '<button type="button" class="btn btn-ghost" id="ccCancel">Cancel</button>' +
+        '<button class="btn btn-accent" type="submit">Save</button></div></form>');
+  }
+
+  async function saveRecipients(f) {
+    var raw = String(new FormData(f).get("alert_email") || "");
+    var list = raw.split(/[,;\s]+/).map(function (a) { return a.trim(); })
+                  .filter(function (a) { return a.length; });
+    var bad = list.filter(function (a) { return a.indexOf("@") < 1 || a.indexOf(".") < 0; });
+    if (bad.length) throw new Error(bad[0] + " does not look like an email address");
+    var value = list.join(", ") || null;
+    settings = await S.adapter.put(SETTINGS,
+      Object.assign({}, settings, { alert_email: value })) || settings;
+    settings.alert_email = value;
+    W.toast(list.length
+      ? "Alerts will go to " + list.length + " address" + (list.length === 1 ? "" : "es") +
+        ", plus the owner"
+      : "Alerts fall back to everyone who could restock");
   }
 
   /* ---------------- "was the crash cart opened?" ---------------- */
@@ -910,6 +989,13 @@
       render();
     });
 
+    document.getElementById("ccPolicy").addEventListener("click", function (e) {
+      if (e.target.id !== "ccWho") return;
+      if (!canAssign()) { W.toast("Only the owner, an admin, the quality manager or the " +
+        "director can change who is written to", "bad"); return; }
+      recipientsForm();
+    });
+
     document.getElementById("ccPolicy").addEventListener("change", async function (e) {
       if (e.target.id !== "ccMonths") return;
       var next = E.normaliseMonths(e.target.value);
@@ -956,6 +1042,7 @@
         else if (f.id === "ccItemForm") { await saveItem(f); scheduleReceipt(); }
         else if (f.id === "ccOpenForm") { await saveOpened(f); scheduleReceipt(); }
         else if (f.id === "ccCopyForm") { await saveCopied(f); scheduleReceipt(); }
+        else if (f.id === "ccWhoForm") await saveRecipients(f);
         else if (f.id === "ccDlForm") { await doDownload(f); close(); return; }
       } catch (err) {
         W.toast("Could not save: " + (err && err.message || err), "bad");
