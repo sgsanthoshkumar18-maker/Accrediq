@@ -7,6 +7,27 @@
  * blur rather than appearing, and a section whose parts arrive in a deliberate order instead
  * of all at once.
  *
+ * THIS FILE HOLDS STATES; cinematic.js HOLDS MOVEMENT. That split is deliberate and it is
+ * the fix for the bug this system had three times over. A CSS transition only runs if the
+ * browser resolves the start value in one style change event and the end value in a later
+ * one — so a reveal driven by a class flip is a reveal that works *if the timing happens to
+ * work out*. On a page that renders its hero from data after DOMContentLoaded, injects its
+ * portrait on img.onload, and has motion.js holding an opacity:0 on <body> for the first two
+ * frames, the timing kept not working out: one element animated and its neighbours simply
+ * appeared, with nothing wrong in the computed styles because nothing WAS wrong declaratively.
+ *
+ * So the transitions are gone from the variants below. What is left is two states — the
+ * hidden one an element sits in before its turn, and the resting one it occupies afterwards —
+ * and cinematic.js moves between them with element.animate(), which is handed both keyframes
+ * explicitly and therefore cannot be skipped. It also cannot be masked: in the cascade,
+ * transitions outrank animations, so leaving a transition declared here would have quietly
+ * overridden the very thing meant to replace it.
+ *
+ * The numbers still live here, and cinematic.js reads them out of these custom properties at
+ * start-up. Retuning the whole system is still five numbers in one place. (It reads them once,
+ * so the mobile block below applies to the load that starts on a phone — reveals run at page
+ * entry, not on resize, so recomputing them would buy nothing.)
+ *
  * OPT-IN, ALWAYS. Every effect needs an attribute. Nothing changes appearance until it is
  * asked for, so this can be added a section at a time and can never silently alter a page.
  *
@@ -15,7 +36,7 @@
  *
  * ------------------------------------------------------------------------------
  * TUNING — change these and everything follows. They are the only numbers worth
- * touching; each effect is expressed in terms of them.
+ * touching; each effect is expressed in terms of them, here and in cinematic.js.
  * ------------------------------------------------------------------------------ */
 :root{
   --cine-dur: 900ms;          /* how long one element takes to arrive          */
@@ -28,7 +49,7 @@
   --cine-ease: cubic-bezier(.16, 1, .3, 1);
 }
 
-/* Hidden until observed. Scoped under html.aq-cine so that if the script fails to load,
+/* Hidden until revealed. Scoped under html.aq-cine so that if the script fails to load,
    nothing is ever left invisible — the page simply renders without the effect. */
 html.aq-cine [data-cine]{ will-change: transform, opacity; }
 
@@ -38,8 +59,6 @@ html.aq-cine [data-cine]{ will-change: transform, opacity; }
 html.aq-cine [data-cine="rise"]{
   opacity:0;
   transform:translate3d(0, var(--cine-shift), 0);
-  transition:opacity var(--cine-dur) var(--cine-ease) var(--cine-delay, 0ms),
-             transform var(--cine-dur) var(--cine-ease) var(--cine-delay, 0ms);
 }
 
 /* ---------------------------------------------------------------- 2. wipe
@@ -49,9 +68,6 @@ html.aq-cine [data-cine="wipe"]{
   clip-path:inset(0 0 100% 0);
   opacity:0;
   transform:translate3d(0, calc(var(--cine-shift) * .5), 0);
-  transition:clip-path calc(var(--cine-dur) * 1.15) var(--cine-ease) var(--cine-delay, 0ms),
-             opacity calc(var(--cine-dur) * .6) linear var(--cine-delay, 0ms),
-             transform calc(var(--cine-dur) * 1.15) var(--cine-ease) var(--cine-delay, 0ms);
 }
 
 /* ---------------------------------------------------------------- 3. image
@@ -63,10 +79,6 @@ html.aq-cine [data-cine="image"]{
   opacity:0;
   transform:scale(var(--cine-scale));
   filter:blur(var(--cine-blur));
-  transition:clip-path calc(var(--cine-dur) * 1.25) var(--cine-ease) var(--cine-delay, 0ms),
-             transform calc(var(--cine-dur) * 1.4) var(--cine-ease) var(--cine-delay, 0ms),
-             filter calc(var(--cine-dur) * 1.1) var(--cine-ease) var(--cine-delay, 0ms),
-             opacity calc(var(--cine-dur) * .5) linear var(--cine-delay, 0ms);
 }
 
 /* ---------------------------------------------------------------- 3b. drop
@@ -76,14 +88,22 @@ html.aq-cine [data-cine="drop"]{
   opacity:0;
   transform:translate3d(0, calc(var(--cine-shift) * -1.4), 0);
   clip-path:inset(100% 0 0 0);
-  transition:opacity calc(var(--cine-dur) * .8) linear var(--cine-delay, 0ms),
-             transform calc(var(--cine-dur) * 1.2) var(--cine-ease) var(--cine-delay, 0ms),
-             clip-path calc(var(--cine-dur) * 1.2) var(--cine-ease) var(--cine-delay, 0ms);
+}
+
+/* ---------------------------------------------------------------- 3c. rise-slow
+   The portrait. It comes up from below the fold of the composition and is the last thing to
+   settle, so it is slower than everything else and travels further — the eye should follow it
+   up rather than notice it has appeared. No blur and no scale here: the reference simply
+   raises the figure, and adding focus-pull on top made it busy. The distance is a percentage
+   of the figure's own height, so it holds at any size. */
+html.aq-cine [data-cine="riseslow"]{
+  opacity:0;
+  transform:translate3d(0, 26%, 0);
 }
 
 /* ---------------------------------------------------------------- 4. letters
    Per-word, for a short heading only. The script splits the text; each word carries its own
-   index so the stagger is computed in CSS rather than by writing inline styles per word. */
+   index, which the stagger is computed from. */
 html.aq-cine [data-cine="letters"]{ opacity:1; }
 html.aq-cine [data-cine="letters"] .cine-w{
   display:inline-block;
@@ -94,16 +114,40 @@ html.aq-cine [data-cine="letters"] .cine-w i{
   display:inline-block;
   font-style:inherit;
   transform:translate3d(0, 105%, 0);
-  transition:transform calc(var(--cine-dur) * .95) var(--cine-ease);
-  transition-delay:calc(var(--cine-delay, 0ms) + var(--cine-i, 0) * var(--cine-stagger));
 }
 
-/* ------------------------------------------------------- the honest failure mode
-   is-cine-in only ASKS for a transition. If the transition never runs, the element keeps its
-   hidden start state indefinitely — and "drop" starts at clip-path:inset(100% 0 0 0), which
-   is invisible regardless of opacity. That is a blank headline, not a missed animation.
-   is-cine-shown is the hard end state: no transition, !important, nothing left to go wrong.
-   It is applied by the backstop timer and whenever the page was hidden at reveal time. */
+/* ---------------------------------------------------------------- arrived
+   The resting state, and the reason the class can be applied BEFORE the animation starts:
+   whatever happens to the animation — never started, cancelled by a resize, unsupported —
+   what is left behind is the finished element rather than a hidden one. */
+html.aq-cine [data-cine].is-cine-in{
+  opacity:1;
+  transform:none;
+  clip-path:none;
+  filter:none;
+}
+html.aq-cine [data-cine="letters"].is-cine-in .cine-w i{ transform:translate3d(0,0,0); }
+
+/* --------------------------------------------- while the reveal is playing
+   TRANSITIONS OUTRANK ANIMATIONS IN THE CASCADE. So any `transition` an element already
+   carries for its own reasons quietly takes the property over and the reveal is replaced by
+   whatever that transition says. This is not hypothetical: .fp-photo still has
+   `transition: transform 220ms ease` from its days as a small circular avatar, and it was
+   overriding the founder portrait's 1800ms rise with a 220ms snap — which is precisely why the
+   figure was the one element on that page that never looked animated.
+
+   cinematic.js puts this class on before it changes the state and takes it off when the last
+   track finishes, so nothing can shadow the reveal while it runs and the element's own hover
+   effects work normally again the moment it is over. */
+html.aq-cine [data-cine].is-cine-run,
+html.aq-cine [data-cine].is-cine-run .cine-w i{
+  transition:none !important;
+}
+
+/* ------------------------------------------------------- the hard end state
+   is-cine-shown is what the backstop applies: !important, so it outranks even a running
+   animation, for the case where an element is somehow still holding its first keyframe.
+   cinematic.js cancels the animations alongside it, so the two cannot disagree. */
 html.aq-cine [data-cine].is-cine-shown,
 html.aq-cine [data-cine="letters"].is-cine-shown .cine-w i{
   opacity:1 !important;
@@ -113,18 +157,11 @@ html.aq-cine [data-cine="letters"].is-cine-shown .cine-w i{
   transition:none !important;
 }
 
-/* ---------------------------------------------------------------- arrived */
-html.aq-cine [data-cine].is-cine-in{
-  opacity:1;
-  transform:none;
-  clip-path:inset(0 0 0 0);
-  filter:none;
-}
-html.aq-cine [data-cine="letters"].is-cine-in .cine-w i{ transform:translate3d(0,0,0); }
-
 /* ------------------------------------------------------- 5. micro-interactions
-   Applied to things that are already interactive. The easing is the same one the reveals
-   use, which is most of what makes a set of small effects feel like one system. */
+   Applied to things that are already interactive. These stay CSS transitions: a hover is a
+   state the pointer holds, not an entrance that has to be guaranteed to run. The easing is
+   the same one the reveals use, which is most of what makes a set of small effects feel like
+   one system. */
 html.aq-cine [data-cine-hover]{
   transition:transform 420ms var(--cine-ease), opacity 420ms var(--cine-ease);
 }
@@ -143,7 +180,8 @@ html.aq-cine [data-cine-underline]:focus-visible::after{ transform:scaleX(1); }
 
 /* ---------------------------------------------------------------- honesty
    Reduced motion gets the content, in place, immediately. Not a shorter animation — none.
-   The script also stops observing, so nothing is left hidden waiting for a scroll. */
+   The script also returns before observing anything, so nothing is left hidden waiting for a
+   scroll. */
 @media (prefers-reduced-motion: reduce){
   html.aq-cine [data-cine],
   html.aq-cine [data-cine="letters"] .cine-w i{
@@ -152,6 +190,7 @@ html.aq-cine [data-cine-underline]:focus-visible::after{ transform:scaleX(1); }
     clip-path:none !important;
     filter:none !important;
     transition:none !important;
+    animation:none !important;
   }
   html.aq-cine [data-cine-hover],
   html.aq-cine [data-cine-underline]::after{ transition:none !important; }
@@ -174,24 +213,5 @@ html.aq-cine [data-cine-underline]:focus-visible::after{ transform:scaleX(1); }
   html.aq-cine [data-cine]{
     opacity:1 !important; transform:none !important;
     clip-path:none !important; filter:none !important;
-  }
-}
-
-/* ---------------------------------------------------------------- rise-slow
-   The portrait. It comes up from below the fold of the composition and is the last thing to
-   settle, so it is slower than everything else and travels further — the eye should follow it
-   up rather than notice it has appeared. No blur and no scale here: the reference simply
-   raises the figure, and adding focus-pull on top made it busy. */
-html.aq-cine [data-cine="riseslow"]{
-  opacity:0;
-  /* A longer travel than the other variants: at 16% it read as appearing rather than
-     rising. The figure is the last thing to arrive and should be seen to come up. */
-  transform:translate3d(0, 26%, 0);
-  transition:opacity calc(var(--cine-dur) * 1.1) var(--cine-ease) var(--cine-delay, 0ms),
-             transform calc(var(--cine-dur) * 2) var(--cine-ease) var(--cine-delay, 0ms);
-}
-@media (prefers-reduced-motion: reduce){
-  html.aq-cine [data-cine="riseslow"]{
-    opacity:1 !important; transform:none !important; transition:none !important;
   }
 }

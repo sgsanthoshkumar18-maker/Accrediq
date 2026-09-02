@@ -36,6 +36,9 @@ function run(opts) {
       classList: {
         _o: null,
         add(c) { this._o._cls[c] = true; },
+        /* The reveal puts a guard class on while it plays and takes it off afterwards, so
+           remove() has to be real — a stub that throws would abort the escape hatches. */
+        remove(...cs) { cs.forEach(c => { delete this._o._cls[c]; }); },
         contains(c) { return !!this._o._cls[c]; }
       },
       /* height/width matter: the module treats a zero-size box as "not rendered yet" and
@@ -49,6 +52,16 @@ function run(opts) {
       querySelectorAll() { return []; },
       get textContent() { return e.text || ''; },
       set innerHTML(v) { this._html = v; },
+      /* The reveal is driven by element.animate(), so the fake element has to record what it
+         was asked to play — that recording is what the timing checks below read. */
+      _anims: [],
+      animate(keys, opts) {
+        const a = { keys, opts, id: null, cancelled: false,
+                    cancel() { this.cancelled = true; } };
+        this._anims.push(a);
+        return a;
+      },
+      getAnimations() { return this._anims; },
       _idx: i
     };
   });
@@ -71,7 +84,17 @@ function run(opts) {
       this.unobserve = () => {};
       this.disconnect = () => { disconnected = true; };
     },
-    getComputedStyle: () => ({ getPropertyValue: () => '90ms' }),
+    /* cinematic.css is still the single place the numbers live; the module reads them out of
+       these custom properties at start-up. Answering each one separately is what lets the
+       timing checks below assert real durations rather than a placeholder. */
+    getComputedStyle: () => ({
+      getPropertyValue: (k) => ({
+        '--cine-dur': '900ms', '--cine-stagger': '90ms', '--cine-shift': '26px',
+        '--cine-blur': '12px', '--cine-scale': '1.06',
+        '--cine-ease': 'cubic-bezier(.16, 1, .3, 1)'
+      }[k] || ''),
+      opacity: '1', clipPath: 'none'
+    }),
     /* A visible tab: the frame arrives. Nested rAF is used by the on-screen reveal, so this
        has to run the callback rather than merely record it. */
     requestAnimationFrame: opts.noRaf ? undefined : (fn) => { fn(); return 1; },
@@ -100,10 +123,15 @@ function run(opts) {
     }
   };
 
+  /* A browser that can animate. opts.noAnimate takes it away, which is the check that the
+     module still REVEALS when it cannot MOVE. */
+  const El = function () {};
+  El.prototype.animate = opts.noAnimate ? undefined : function () {};
+
   new Function('window', 'document', 'matchMedia', 'IntersectionObserver',
-               'getComputedStyle', 'setTimeout', 'requestAnimationFrame', js)(
+               'getComputedStyle', 'setTimeout', 'requestAnimationFrame', 'Element', js)(
     win, doc, win.matchMedia, win.IntersectionObserver, win.getComputedStyle,
-    win.setTimeout, win.requestAnimationFrame);
+    win.setTimeout, win.requestAnimationFrame, El);
 
   return {
     armed: html.contains('aq-cine'),
@@ -163,13 +191,37 @@ check('elements already on screen arrive without needing a scroll', () => {
  * synchronous run, so the browser resolved the final style once and painted it — no start
  * value, no transition. Below-the-fold elements were always fine, because the observer fires
  * them in a later frame. The gap has to be forced for the ones already on screen. */
-check('above-the-fold elements get a painted start state before arriving', () => {
-  assert.ok(/void document\.body\.offsetWidth/.test(js),
-    'the forced reflow is gone — the hidden state never reaches the pipeline and the hero snaps');
-  assert.ok(/requestAnimationFrame\(function \(\) \{ requestAnimationFrame\(go\)/.test(js),
-    'the on-screen reveal must be deferred a frame, or it coalesces with the hidden state');
-  assert.ok(/setTimeout\(go, \d+\)/.test(js),
-    'rAF does not fire in a hidden tab; a timer must run the same step');
+check('above-the-fold elements are animated explicitly, not by flipping a class', () => {
+  /* THE FIX. A class flip only ASKS for a transition, and the ask is granted only if the
+     browser happened to resolve the hidden state in an earlier style change event. Three
+     separate things on the founder page collapse that gap — a hero rendered from data after
+     DOMContentLoaded, a portrait injected on img.onload, and motion.js holding opacity:0 on
+     <body> for the first two frames — and when it collapses the element simply appears.
+     element.animate() is handed both keyframes, so there is no gap to lose. */
+  const r = run({ els: [{ attrs: { 'data-cine': 'rise', 'data-cine-delay': '360' },
+                          rect: { top: 100, bottom: 160 } }] });
+  const anims = r.els[0]._anims;
+  assert.ok(anims.length >= 1, 'the on-screen element was revealed but never animated');
+  const a = anims[0];
+  assert.strictEqual(a.opts.delay, 360, 'data-cine-delay must reach the animation');
+  assert.strictEqual(a.opts.duration, 900, 'the duration must come from --cine-dur');
+  assert.strictEqual(a.opts.fill, 'backwards',
+    'without fill:backwards the element sits at its resting state during its delay and the ' +
+    'stagger is lost — everything appears at once, then moves');
+  assert.strictEqual(a.keys[0].opacity, 0, 'the animation must start from the hidden state');
+  assert.strictEqual(a.keys[1].transform, 'none', 'the animation must end at rest');
+  assert.strictEqual(a.id, 'cine',
+    'animations must be tagged so a replay cancels its own and nothing else');
+
+  /* The class still goes on, and goes on FIRST. It is the resting state, so an animation that
+     never starts leaves the content visible rather than hidden — the failure mode this whole
+     file exists to prevent. */
+  assert.strictEqual(r.shown, 1, 'the class must be applied regardless of the animation');
+  const noAnim = run({ els: [{ attrs: { 'data-cine': 'rise' }, rect: { top: 100, bottom: 160 } }],
+                       noAnimate: true });
+  assert.strictEqual(noAnim.shown, 1,
+    'a browser without element.animate must still be shown the content');
+  assert.strictEqual(noAnim.els[0]._anims.length, 0, 'it should not have tried to animate');
 
   /* THE FIVE-SECOND NAME. A deferred script runs BEFORE DOMContentLoaded, so a page that
      renders in a DOMContentLoaded handler is measured while still empty — the hero was a
@@ -192,11 +244,37 @@ check('above-the-fold elements get a painted start state before arriving', () =>
     'a re-scan on load is the safety net for pages that never call refresh()');
   assert.ok(/AQCine\.refresh\(\)/.test(read('profile/founder.js')),
     'founder.js renders on DOMContentLoaded and must tell the reveal module when it is done');
-  assert.ok(/if \(played\) return;/.test(js),
-    'the two paths must be idempotent — whichever lands first wins');
-  /* The observer path must NOT be given the same treatment: it already fires in its own
-     frame, and deferring it again would just delay every reveal on the page. */
+  assert.ok(/if \(el\.classList\.contains\("is-cine-in"\)\) return;/.test(js),
+    'runIn must be idempotent — refresh() and the load re-scan both call it');
   assert.ok(/io\.observe\(el\)/.test(js), 'the observer path is gone');
+});
+
+/* THE ONE THAT ACTUALLY BROKE THE PORTRAIT.
+ * Transitions outrank animations in the cascade, so a `transition` an element carries for its
+ * own reasons silently takes the property over. .fp-photo still has `transition: transform
+ * 220ms ease` from its days as a small circular avatar, and it was replacing the founder
+ * portrait's 1800ms rise with a 220ms snap — which is why that one element never looked
+ * animated while its neighbours did. */
+check('no other transition can shadow a reveal while it plays', () => {
+  const r = run({ els: [{ attrs: { 'data-cine': 'riseslow' }, rect: { top: 100, bottom: 700 } }] });
+  assert.ok(r.els[0].classList.contains('is-cine-run'),
+    'the guard class is not applied — a competing transition would win the property');
+  assert.ok(/\.is-cine-run[\s\S]{0,120}transition:none !important/.test(css),
+    'the guard class must actually suppress transitions, and !important is what it takes');
+
+  /* It has to come OFF again, or that element loses its own hover effects for the rest of the
+     visit. Two ways out, because animation events are dispatched during the rendering
+     lifecycle and a hidden or throttled tab does not run one. */
+  assert.ok(/last\.onfinish = done/.test(js) && /last\.oncancel = done/.test(js),
+    'the guard must be released when the reveal ends, cancellation included');
+  assert.ok(/setTimeout\(done, lastEnd \+ \d+\)/.test(js),
+    'a finish event that never arrives would leave the guard on forever — a timer must ' +
+    'release it too');
+
+  /* And every hard-reveal path has to drop it as well, or the escape hatches leave it behind. */
+  const outs = js.match(/remove\("is-cine-run"\)/g) || [];
+  assert.ok(outs.length >= 3,
+    'showAll, the backstop and the visibilitychange recheck must each drop the guard');
 });
 
 check('there is a last-resort reveal so nothing can stay hidden', () => {
@@ -241,9 +319,15 @@ check('it animates only transform, opacity, clip-path and filter', () => {
 check('speed and intensity are tunable from one place', () => {
   ['--cine-dur', '--cine-stagger', '--cine-shift', '--cine-blur', '--cine-scale', '--cine-ease']
     .forEach(v => assert.ok(css.includes(v + ':'), 'the tuning variable ' + v + ' is gone'));
+  /* The numbers still live in the CSS; the module reads them out at start-up rather than
+     restating them, so one change still retunes the whole system. */
+  ['--cine-dur', '--cine-stagger', '--cine-shift', '--cine-blur', '--cine-scale', '--cine-ease']
+    .forEach(v => assert.ok(js.includes('"' + v + '"'),
+      js + '' && 'cinematic.js hardcodes a number instead of reading ' + v + ' from the CSS'));
   /* Durations must be derived from --cine-dur, not written as literals per effect. */
-  assert.ok(/calc\(var\(--cine-dur\)/.test(css),
-    'effect durations should be derived from --cine-dur so one change retunes the system');
+  assert.ok(/DUR \* t\.mul/.test(js) && /DUR \* 0\.95/.test(js),
+    'effect durations should be multiples of --cine-dur so one change retunes the system');
+  assert.ok(!/duration: \d{3,}/.test(js), 'a literal duration crept in');
 });
 
 /* It must not fight the animation layer that already exists. */
