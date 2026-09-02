@@ -38,7 +38,14 @@ function run(opts) {
         add(c) { this._o._cls[c] = true; },
         contains(c) { return !!this._o._cls[c]; }
       },
-      getBoundingClientRect() { return e.rect || { top: 5000, bottom: 5200 }; },
+      /* height/width matter: the module treats a zero-size box as "not rendered yet" and
+         defers judging it, so a rect without them would be skipped rather than placed. */
+      getBoundingClientRect() {
+        const r = e.rect || { top: 5000, bottom: 5200 };
+        return { top: r.top, bottom: r.bottom,
+                 height: r.height !== undefined ? r.height : (r.bottom - r.top),
+                 width: r.width !== undefined ? r.width : 400 };
+      },
       querySelectorAll() { return []; },
       get textContent() { return e.text || ''; },
       set innerHTML(v) { this._html = v; },
@@ -65,13 +72,24 @@ function run(opts) {
       this.disconnect = () => { disconnected = true; };
     },
     getComputedStyle: () => ({ getPropertyValue: () => '90ms' }),
-    setTimeout: () => 0
+    /* A visible tab: the frame arrives. Nested rAF is used by the on-screen reveal, so this
+       has to run the callback rather than merely record it. */
+    requestAnimationFrame: opts.noRaf ? undefined : (fn) => { fn(); return 1; },
+    /* The 4s backstop must NOT fire during a test, or every case would look like it passed. */
+    setTimeout: () => 0,
+    /* The module re-scans on load, because a deferred script runs before DOMContentLoaded and
+       may have measured a page whose content was not rendered yet. */
+    addEventListener() {},
+    removeEventListener() {}
   };
   if (opts.noIO) delete win.IntersectionObserver;
 
   let listeners = [];
   const doc = {
     documentElement: html,
+    /* The on-screen reveal reads a layout property to flush the hidden state before adding
+       the end state — reading it is the point, so the stub just has to answer. */
+    body: { offsetWidth: 1440 },
     hidden: false,
     /* The module re-checks on visibilitychange, because a tab backgrounded during load runs
        no transitions and an element can be told to arrive and never move. */
@@ -83,8 +101,9 @@ function run(opts) {
   };
 
   new Function('window', 'document', 'matchMedia', 'IntersectionObserver',
-               'getComputedStyle', 'setTimeout', js)(
-    win, doc, win.matchMedia, win.IntersectionObserver, win.getComputedStyle, win.setTimeout);
+               'getComputedStyle', 'setTimeout', 'requestAnimationFrame', js)(
+    win, doc, win.matchMedia, win.IntersectionObserver, win.getComputedStyle,
+    win.setTimeout, win.requestAnimationFrame);
 
   return {
     armed: html.contains('aq-cine'),
@@ -138,6 +157,41 @@ check('elements already on screen arrive without needing a scroll', () => {
   assert.strictEqual(r.observed, 1, 'only the off-screen element should be observed');
 });
 
+/* THE BUG THAT MADE THE HERO NOT ANIMATE.
+ * A CSS transition needs two computed values in two different frames. Above-the-fold elements
+ * were getting the hidden state (via html.aq-cine) and the end state (is-cine-in) inside one
+ * synchronous run, so the browser resolved the final style once and painted it — no start
+ * value, no transition. Below-the-fold elements were always fine, because the observer fires
+ * them in a later frame. The gap has to be forced for the ones already on screen. */
+check('above-the-fold elements get a painted start state before arriving', () => {
+  assert.ok(/void document\.body\.offsetWidth/.test(js),
+    'the forced reflow is gone — the hidden state never reaches the pipeline and the hero snaps');
+  assert.ok(/requestAnimationFrame\(function \(\) \{ requestAnimationFrame\(go\)/.test(js),
+    'the on-screen reveal must be deferred a frame, or it coalesces with the hidden state');
+  assert.ok(/setTimeout\(go, \d+\)/.test(js),
+    'rAF does not fire in a hidden tab; a timer must run the same step');
+
+  /* THE FIVE-SECOND NAME. A deferred script runs BEFORE DOMContentLoaded, so a page that
+     renders in a DOMContentLoaded handler is measured while still empty — the hero was a
+     zero-height box at a negative offset, failed the on-screen test, went to the observer,
+     and was rescued by the backstop four seconds later. Re-scanning is the fix. */
+  assert.ok(/function scan\(\)/.test(js), 'the re-scannable path is gone');
+  assert.ok(/if \(!r\.height && !r\.width\) return;/.test(js),
+    'a zero-size box means the content has not rendered — it must be left for the next scan, ' +
+    'not judged off-screen');
+  assert.ok(/window\.AQCine = \{ refresh: scan \}/.test(js),
+    'refresh() must be exported so a late-rendering page can say when it is ready');
+  assert.ok(/addEventListener\("load", scan\)/.test(js),
+    'a re-scan on load is the safety net for pages that never call refresh()');
+  assert.ok(/AQCine\.refresh\(\)/.test(read('profile/founder.js')),
+    'founder.js renders on DOMContentLoaded and must tell the reveal module when it is done');
+  assert.ok(/if \(played\) return;/.test(js),
+    'the two paths must be idempotent — whichever lands first wins');
+  /* The observer path must NOT be given the same treatment: it already fires in its own
+     frame, and deferring it again would just delay every reveal on the page. */
+  assert.ok(/io\.observe\(el\)/.test(js), 'the observer path is gone');
+});
+
 check('there is a last-resort reveal so nothing can stay hidden', () => {
   assert.ok(/setTimeout\(/.test(js), 'the fallback timer is gone');
 
@@ -187,7 +241,12 @@ check('speed and intensity are tunable from one place', () => {
 
 /* It must not fight the animation layer that already exists. */
 check('it does not duplicate or override motion.js', () => {
-  assert.ok(!/scrollTo|requestAnimationFrame/.test(js),
+  /* The concern is a competing SCROLL controller, not rAF as such: one frame of deferral is
+     what gives an above-the-fold transition a start state, and that is not scrolling.
+     Comments are stripped first — the module's header explains why it does not drive the
+     scroll, and matching that explanation would fail the check it is describing. */
+  const code = js.replace(/\/\*[\s\S]*?\*\//g, '').replace(/^\s*\/\/.*$/gm, '');
+  assert.ok(!/scrollTo|scrollBy|scrollIntoView|addEventListener\(\s*['"](?:wheel|scroll)['"]/.test(code),
     'scrolling belongs to motion.js — a second controller would fight it');
   assert.ok(!/data-split|aq-reveal|aq-in/.test(js),
     'the existing reveal and split systems must be left alone');

@@ -169,16 +169,72 @@
     return;
   }
 
-  all.forEach(function (el) {
-    /* Anything already on screen at load arrives immediately rather than waiting for a
-       scroll that may never come — on a short page, or when a visitor lands mid-document. */
-    var r = el.getBoundingClientRect();
-    if (r.top < window.innerHeight * 0.92 && r.bottom > 0) {
-      el.classList.add("is-cine-in");
-      return;
-    }
-    io.observe(el);
-  });
+  /* THE ABOVE-THE-FOLD ELEMENTS NEED A PAINTED START STATE TO ANIMATE FROM.
+     This is why the hero never animated while the sections further down did.
+
+     A CSS transition needs two computed values in two different frames. Everything above the
+     fold was getting `aq-cine` (which applies the hidden state) and `is-cine-in` (the end
+     state) inside the SAME synchronous script run — the browser never painted in between, so
+     it resolved the final style once and drew it. No start value, no transition: the hero
+     simply appeared. The elements below the fold were fine all along, because the observer
+     fires them in a later frame, which is exactly the gap the ones on screen were missing.
+
+     The fix is to hand the browser that gap: force a reflow so the hidden state is real, then
+     add the end state on the next frame. requestAnimationFrame does not fire in a hidden or
+     background tab, so a timer runs the same step — both are idempotent, whichever lands
+     first wins, and content is never left waiting on a frame that may never come. */
+  /* SCAN, PLAY, AND BE ABLE TO SCAN AGAIN.
+     A deferred script runs BEFORE DOMContentLoaded fires. Pages that render their content in
+     a DOMContentLoaded handler — founder.js is one — therefore populate the DOM *after* this
+     module has already measured it. The hero was being measured while it was still an empty
+     zero-height box at a negative offset, so it failed the on-screen test, went to the
+     observer, and was rescued four seconds later by the backstop. That was the five-second
+     name: not a slow animation, a missed one.
+
+     refresh() is the answer, and it is exported: a page that renders late calls it when its
+     content is in, and anything now on screen plays properly. */
+  function playNow(list) {
+    if (!list.length) return;
+    /* Reading a layout property flushes the hidden state to the rendering pipeline. Without
+       this the class change below is coalesced with it and the transition is skipped. */
+    void document.body.offsetWidth;
+    var played = false;
+    var go = function () {
+      if (played) return;
+      played = true;
+      list.forEach(function (el) { el.classList.add("is-cine-in"); });
+    };
+    try { requestAnimationFrame(function () { requestAnimationFrame(go); }); }
+    catch (e) { go(); }
+    setTimeout(go, 80);
+  }
+
+  function scan() {
+    var onScreen = [];
+    all.forEach(function (el) {
+      if (el.classList.contains("is-cine-in")) return;      /* already dealt with */
+      var r = el.getBoundingClientRect();
+      /* A zero-height box is not evidence of anything — it usually means the content has not
+         been rendered yet. Leave it for the next scan rather than deciding on nothing. */
+      if (!r.height && !r.width) return;
+      if (r.top < window.innerHeight * 0.92 && r.bottom > 0) { onScreen.push(el); return; }
+      io.observe(el);
+    });
+    playNow(onScreen);
+  }
+
+  scan();
+
+  /* Belt and braces for pages this module does not know about: re-scan once the document is
+     fully parsed and again after load, so late-rendered content is never left to the backstop.
+     scan() skips anything already arrived, so repeating it is free. */
+  if (document.readyState === "loading") {
+    document.addEventListener("DOMContentLoaded", scan);
+  }
+  window.addEventListener("load", scan);
+
+  /* Exported so a page that builds its own DOM can say when it is ready. */
+  window.AQCine = { refresh: scan };
 
   /* LAST RESORT. If something has gone wrong — an observer that never fires, a layout that
      settles late, a browser quirk — content must not stay hidden. After a few seconds,

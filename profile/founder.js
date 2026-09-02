@@ -406,6 +406,10 @@
 
   function init() {
     renderHead();
+    /* The reveal module is deferred, which means it ran BEFORE this DOMContentLoaded handler
+       and measured a hero that was still empty. Now that the content is in, tell it to look
+       again — otherwise the name is left to its four-second backstop. */
+    if (window.AQCine && window.AQCine.refresh) window.AQCine.refresh();
     renderStats();
     renderLens();
     renderExperience();
