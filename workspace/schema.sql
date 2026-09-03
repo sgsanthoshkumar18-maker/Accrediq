@@ -2241,6 +2241,13 @@ alter table public.code_blue_events
   add column if not exists tag_before   text,        -- the seal broken to get in
   add column if not exists tag_after    text;        -- the seal applied on closing
 
+-- THE SAME CONTRACT THE REST OF THE SCHEMA KEEPS. workspace/store.js stamps updated_at on
+-- every write, so a table without the column is refused outright by PostgREST — and this one
+-- is written by "Was the crash cart opened?", which means recording a code blue would have
+-- failed for every real hospital with an error about a schema cache. Found by
+-- tests/schema-contract.test.js while fixing the same omission on the dashboard tables.
+alter table public.code_blue_events add column if not exists updated_at timestamptz not null default now();
+
 comment on column public.code_blue_events.items_used_flag is
   'A cart can be opened without anything being taken — a drill, or a seal replaced. The '
   'event is still worth recording, and the stock is not touched.';
@@ -2277,7 +2284,8 @@ create table if not exists public.qd_departments (
   -- "Emergency" by a dropdown built from somebody else's list.
   head        text,
   position    int  not null default 0,      -- the order the hospital reads them in
-  created_at  timestamptz not null default now()
+  created_at  timestamptz not null default now(),
+  updated_at  timestamptz not null default now()
 );
 
 create table if not exists public.qd_metrics (
@@ -2294,7 +2302,8 @@ create table if not exists public.qd_metrics (
   -- and colouring both green when they rise would be actively misleading.
   higher_is_better boolean not null default true,
   position    int  not null default 0,
-  created_at  timestamptz not null default now()
+  created_at  timestamptz not null default now(),
+  updated_at  timestamptz not null default now()
 );
 
 create table if not exists public.qd_readings (
@@ -2307,8 +2316,18 @@ create table if not exists public.qd_readings (
   achieved    numeric,
   note        text,
   created_at  timestamptz not null default now(),
+  updated_at  timestamptz not null default now(),
   unique (metric_id, month)                  -- one reading per metric per month, updated in place
 );
+
+-- EVERY WRITE CARRIES updated_at. The workspace store stamps it on the way out for every
+-- table it touches, so a table without the column is refused by PostgREST with
+-- "Could not find the 'updated_at' column ... in the schema cache" before row-level security
+-- is even consulted. Added separately as well as in the create above, so a database that
+-- already ran the first version of this block is repaired by running it again.
+alter table public.qd_departments add column if not exists updated_at timestamptz not null default now();
+alter table public.qd_metrics     add column if not exists updated_at timestamptz not null default now();
+alter table public.qd_readings    add column if not exists updated_at timestamptz not null default now();
 
 create index if not exists qd_metrics_dept_idx   on public.qd_metrics (dept_id);
 create index if not exists qd_readings_metric_idx on public.qd_readings (metric_id, month);
@@ -2333,5 +2352,24 @@ begin
        using (org_id = public.my_org() and public.has_access() and public.can_edit())
        with check (org_id = public.my_org() and public.has_access() and public.can_edit())$f$,
        t, t);
+  end loop;
+end $$;
+
+-- org_id is stamped by the database from the caller's own session, exactly as it is for every
+-- other hospital table. Without this the insert arrives with no org_id, the write policy's
+-- WITH CHECK compares null against my_org(), and every save is refused — and the alternative,
+-- letting the browser send org_id, means the browser could send SOMEBODY ELSE'S.
+--
+-- It has to come AFTER the create statements above: schema.sql runs top to bottom in one pass,
+-- and attaching a trigger to a table that does not exist yet fails the whole script.
+do $$
+declare t text;
+begin
+  foreach t in array array['qd_departments','qd_metrics','qd_readings']
+  loop
+    execute format('drop trigger if exists set_org_%I on public.%I', t, t);
+    execute format(
+      'create trigger set_org_%I before insert on public.%I
+         for each row execute function public.set_org_id()', t, t);
   end loop;
 end $$;

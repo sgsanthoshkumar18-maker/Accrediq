@@ -144,10 +144,20 @@
       '<p class="tr-hint">Call it what your hospital calls it. Nothing here is matched ' +
         "against a standard list &mdash; a department that exists only in your hospital is " +
         "exactly what this page is for.</p>" +
+      /* SAY WHAT COMES NEXT. This step asks two questions and the next one asks fifteen, so on
+         its own it reads as though the whole setup is a name and an HOD — which is a fair
+         reading, and it is wrong. The KRAs, KPIs, targets, committees, SOPs and training are
+         all on the following step, which opens by itself the moment this is saved. */
+      (d ? "" :
+        '<p class="qd-next"><b>Next:</b> what this department is measured on &mdash; its KRAs ' +
+        "and KPIs with their targets, how many committees and SOPs it should have and how " +
+        "many it has, and its training record. That step opens as soon as you save this " +
+        "one.</p>") +
       '<div class="ws-modal-actions">' +
         (d ? '<button type="button" class="btn btn-ghost" id="qdDeptDel">Delete</button>' : "") +
         '<button type="button" class="btn btn-ghost" id="qdCancel">Cancel</button>' +
-        '<button class="btn btn-accent" type="submit">Save</button></div></form>');
+        '<button class="btn btn-accent" type="submit">' +
+          (d ? "Save" : "Save and continue") + "</button></div></form>");
   }
 
   async function saveDept(f) {

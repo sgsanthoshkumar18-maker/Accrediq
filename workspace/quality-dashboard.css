@@ -68,3 +68,9 @@
   .qd-mrow{padding-left:14px;padding-top:26px;}
   .qd-mrow .ws-f.qd-narrow{flex:1 1 120px;}
 }
+
+/* "What happens after I press Save." The first step asks two questions and the second asks
+   fifteen, so without this the setup reads as though a department is just a name and an HOD. */
+.qd-next{border-left:3px solid var(--accent-bright);background:var(--bg);padding:11px 14px;
+  border-radius:var(--r-sm);font-size:13px;line-height:1.6;color:var(--fg-muted);margin:2px 0 4px;}
+.qd-next b{color:var(--fg);}
