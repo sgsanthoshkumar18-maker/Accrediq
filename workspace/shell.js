@@ -278,7 +278,14 @@
       }
 
       var host = document.getElementById("wsGate");
-      if (!host) return true;
+      if (!host) { W.clearSkeleton(); return true; }
+
+      /* SIGNED OUT IS AN ANSWER, NOT A STALL. The placeholder belongs to "we are still
+         finding out"; once there is a sign-in panel on screen the finding out is over. Left
+         behind, it shimmers beside the form and then, twelve seconds later, replaces itself
+         with "the workspace could not reach the server" — on a page whose server answered
+         immediately. Every workspace page did this to every signed-out visitor. */
+      W.clearSkeleton();
 
       if (S.mode === "local") {
         // No backend is connected, so there is nothing to authenticate against. Site

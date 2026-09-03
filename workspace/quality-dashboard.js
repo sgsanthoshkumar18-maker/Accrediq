@@ -655,6 +655,21 @@
   async function init() {
     if (!S || !W || !C) return;
     esc = W.esc;
+
+    /* THE GATE, THE SKELETON AND THE BODY — in that order, exactly as every other workspace
+       page does it. Leaving this out is what made the page sit on its loading placeholder
+       until the shell's twelve-second timeout replaced it with "this is taking longer than it
+       should". Nothing was slow and nothing was unreachable: the placeholder is cleared by
+       whoever called the gate, and nobody had. */
+    if (!(await W.gate())) return;
+    var g = document.getElementById("wsGate");
+    if (g) g.style.display = "none";
+    if (W.clearSkeleton) W.clearSkeleton();
+    var body = document.getElementById("wsBody");
+    if (body) body.style.display = "";
+    W.renderNav("qualitydashboard");
+    W.renderModeNotice();
+
     wire();
     try { await refresh(); } catch (e) {
       var host = document.getElementById("qdPanel");

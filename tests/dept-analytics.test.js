@@ -110,11 +110,23 @@ check('the dashboard loads the analytics module', () => {
   assert.ok(/workspace\/dept-analytics\.js\?v=/.test(html), 'script not loaded');
   assert.ok(/AQDeptAnalytics\.render\(detail, d, !!startInEdit\)/.test(html), 'drill-down not wired');
   assert.ok(/AQDeptAnalytics\.merged\(src\)/.test(html), 'grid tiles do not show saved edits');
-  /* The edit entry point must be gated on the module's own permission check, not merely
-     hidden with CSS — a hidden button is still a button. */
-  assert.ok(/AQDeptAnalytics\.canEdit\(\)/.test(html),
-    'the edit entry point is not gated on canEdit()');
-  assert.ok(/id="deptEditMode" hidden/.test(html),
+  /* THE GENERAL DASHBOARD IS READ-ONLY NOW.
+     It shows the same 22 departments to every hospital, so there was nothing on it that was
+     any one hospital's to change — and "Edit my hospital's figures" sat there implying
+     otherwise, editing a list that was not theirs. A hospital's own figures belong to its own
+     departments, which is what workspace/quality-dashboard.html builds.
+
+     The rule this replaces still applies to anything that comes back: an edit entry point may
+     not be merely hidden with CSS, because a hidden button is still a button. So either there
+     is no entry point, or it is gated on the module's own permission check. */
+  const hasEntryPoint = /deptEditMode|editPicking/.test(html);
+  assert.ok(!hasEntryPoint || /AQDeptAnalytics\.canEdit\(\)/.test(html),
+    'an edit entry point is present but is not gated on canEdit()');
+  assert.ok(/quality-dashboard\.html/.test(html),
+    'the dashboard must point a hospital at the one place its own figures can be set');
+  /* Same rule, conditional on the button existing at all: if it ever comes back it must ship
+     hidden and be revealed only for permitted roles, never rendered and then removed. */
+  assert.ok(!hasEntryPoint || /id="deptEditMode" hidden/.test(html),
     'the edit button must ship hidden and only be revealed for permitted roles');
   const stamps = new Set((html.match(/\?v=[0-9a-zA-Z._-]+/g) || []));
   assert.strictEqual(stamps.size, 1, 'mixed cache stamps: ' + [...stamps].join(', '));
