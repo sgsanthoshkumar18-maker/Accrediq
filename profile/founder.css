@@ -875,8 +875,20 @@ html.fp-tilt-on [data-tilt].is-tilting::after { opacity: 1; }
   .fp-stage-right .fp-tags{ justify-content:center; }
   .fp-stage-photo{ order:-1; }
   .fp-stage-name{ margin-bottom:-.2em; }
-  /* Stacked there is no hero height to fill, so the figure is sized by width again. */
-  .fp-stage .fp-photo{ width:clamp(200px,62vw,320px); height:auto; max-width:none; }
+  /* Stacked there is no hero height to fill, so the figure is sized by width again.
+     SHOWN FROM THE TOP, NOT WHOLE. Measured on the shipping cut-out, the shoulders run to
+     0.8% of the left edge and 0.0% of the right — they were already cropped square in the
+     photograph before it ever reached this site. Desktop never shows that: the figure is bled
+     past the section floor and clipped there, so the eye never reaches the widest part.
+     Stacked, the whole square is on screen and both shoulders end flush against nothing,
+     which is exactly the "cut at the borders" this layout exists to avoid.
+     A box four fifths as tall as it is wide, filled by cover from the top, simply stops above
+     that: what shows is the head and upper chest, where the body has a quarter of the frame
+     clear on each side. Nothing is squashed — only less of it is shown. */
+  .fp-stage .fp-photo{
+    width:clamp(200px,62vw,320px); height:auto; max-width:none;
+    aspect-ratio:1.25;
+  }
   /* THE ONE PLACE THE CUT-OUT CAN STILL READ AS A RECTANGLE. The source photograph ends at
      the chest, so its bottom row is a straight edge across the full width of the shirt. On
      desktop that never shows: the figure is bled past the section floor and clipped there.
@@ -888,6 +900,15 @@ html.fp-tilt-on [data-tilt].is-tilting::after { opacity: 1; }
      so naming a colour here would be stating something that has no effect — and this file
      allows no hardcoded colour inside a media query. */
   .fp-stage .fp-photo img{
+    /* CENTRED ON THE FACE, NOT ON THE FRAME. The head sits at 55–56% of the source's width
+       across every band of the torso — the subject is standing slightly to one side of his own
+       shoulders, which is what a photograph of a person normally looks like. In a wide desktop
+       composition that reads as natural; in a small box on a phone it reads as a picture hung
+       crooked. Shifting by the measured difference puts the face on the middle of the box.
+       object-position cannot do this: the box and the image are the same width here, so there
+       is no horizontal slack for it to bite on. The vacated strip is transparent and the page
+       behind it is the same ground, so nothing shows. */
+    transform:translateX(-4.5%);
     -webkit-mask-image:linear-gradient(to bottom, currentColor 80%, transparent 100%);
     mask-image:linear-gradient(to bottom, currentColor 80%, transparent 100%);
   }

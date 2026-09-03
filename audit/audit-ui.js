@@ -183,7 +183,9 @@
     h += '<div class="aud-row-act"><div class="aud-seg">' + statusButtons(r.code, st) + "</div>" +
       '<textarea class="aud-note" data-note="' + esc(r.code) +
       '" rows="2" placeholder="' +
-      (st === "na" ? "Why is this not applicable? (required)" : "Evidence seen / observation") +
+      /* No longer labelled required: finishing is not gated on it any more, and a field that says
+         it is mandatory when nothing enforces it teaches people to distrust every other label. */
+      (st === "na" ? "Why is this not applicable?" : "Evidence seen / observation") +
       '">' + esc(st === "na" ? (f.justification || "") : (f.evidence || "")) + "</textarea>";
 
     h += '<div class="aud-fix" style="display:' + (open ? "" : "none") + '">' +
@@ -463,31 +465,37 @@
   /* ------------------------------- finish ------------------------------- */
 
   async function finish() {
+    /* TOLD, NOT BLOCKED.
+     * This used to refuse to finish until every non-conformity carried an owner and a closure
+     * date and every Not Applicable carried a reason. The intent was right — those are the
+     * fields an internal audit skips and then cannot answer for at assessment — but the
+     * mechanism was wrong. An auditor walking a ward does not have the responsible person's
+     * name for every finding at the moment they see it; some of that is settled afterwards,
+     * with the head of department. Refusing to close the audit until it is all filled in does
+     * not produce better records, it produces an audit left open, or twelve fields filled with
+     * "TBD" to get past the gate — which is worse than an honest blank, because a blank can be
+     * found later and "TBD" reads as an answer.
+     *
+     * So the same list is still computed and still shown, prominently, and the audit still
+     * finishes. What is missing is carried into the finished report, where it is a visible gap
+     * rather than a silent one. */
     var blocks = A.blockers(session);
     if (blocks.length) {
       W.toast(blocks.length + " finding" + (blocks.length === 1 ? "" : "s") +
-        " still need an owner, a date or a reason.", "bad");
-      // Show only the offending rows rather than making the user hunt for them.
-      filter = { status: "all", chapter: "all", q: "" };
-      renderFilters();
-      renderList();
-      var first = null;
-      blocks.forEach(function (b) {
-        var n = el("audList").querySelector('[data-row="' + CSS.escape(b.code) + '"]');
-        if (n) { n.classList.add("aud-blocked"); if (!first) first = n; }
-      });
-      if (first) first.scrollIntoView({ behavior: "smooth", block: "center" });
+        " still need an owner, a date or a reason — finishing anyway.");
       el("audBlockers").innerHTML =
-        '<div class="aud-blockmsg"><b>Finish is blocked.</b> Every non-conformity and partial ' +
-        "compliance needs a responsible person and a target closure date, and every Not " +
-        "Applicable needs a reason. This is the step internal audits usually skip, which is " +
-        "exactly why it is enforced here.<ul>" +
+        '<div class="aud-blockmsg"><b>Finished with ' + blocks.length + " open detail" +
+        (blocks.length === 1 ? "" : "s") + ".</b> Every non-conformity and partial compliance " +
+        "should end up with a responsible person and a target closure date, and every Not " +
+        "Applicable with a reason. These are the ones still without. You can reopen this audit " +
+        "and fill them in at any time.<ul>" +
         blocks.slice(0, 12).map(function (b) {
           return "<li><b>" + esc(b.code) + "</b> " + esc(b.why) + "</li>";
         }).join("") +
         (blocks.length > 12 ? "<li>…and " + (blocks.length - 12) + " more</li>" : "") +
         "</ul></div>";
-      return;
+    } else {
+      el("audBlockers").innerHTML = "";
     }
 
     A.tick(session);
