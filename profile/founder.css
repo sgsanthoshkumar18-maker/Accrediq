@@ -835,6 +835,23 @@ html.fp-tilt-on [data-tilt].is-tilting::after { opacity: 1; }
      set by hand, the columns overlapped the shoulders by 53px everywhere else. */
   --fp-figure-w:min(calc((var(--fp-hero-h) + var(--fp-gap-to-next)) * var(--fp-figure-ratio)), 64vw, 780px);
 }
+/* THE FIGURE GIVES WAY BEFORE THE COLUMNS DO.
+   At 64vw the figure takes so much of a narrow page that the side rails fall to 128px, which
+   is where the role chips wrap four lines deep and the hero reads as broken rather than as a
+   composition. 52vw with a 640px ceiling holds the rails between 185px and 233px from 901px
+   upward — measured — and the chips settle to two lines at worst.
+
+   THERE IS A STEP AT 1150px AND IT IS DELIBERATE. The figure goes 597 to 696 as this block
+   releases, and the rails 233 to 184. Smoothing it out means raising the cap to about 61vw,
+   which drags the rails back to 142px at 950px and reintroduces exactly the problem this
+   exists to solve. Below 1150 the rails matter more than the figure's size; above it there is
+   room for both. The step is only visible to someone dragging a desktop window across that
+   width, which is a far smaller cost than a cramped hero on every tablet. */
+@media (max-width:1149px){
+  .fp-stage{
+    --fp-figure-w:min(calc((var(--fp-hero-h) + var(--fp-gap-to-next)) * var(--fp-figure-ratio)), 52vw, 640px);
+  }
+}
 .fp-stage .fp-statband{ margin-top:var(--fp-gap-to-next); }
 .fp-stage .fp-photo{
   /* SIZED BY HEIGHT, NOT WIDTH. The figure is as tall as the hero, and its width follows from
@@ -869,16 +886,14 @@ html.fp-tilt-on [data-tilt].is-tilting::after { opacity: 1; }
 }
 
 /* ---------- responsive ---------- */
-/* THE THREE-COLUMN HERO NEEDS REAL WIDTH, AND 900px IS NOT IT.
-   Measured on the shipping page: at 950px the side rails are 128px each and every one of the
-   six role chips wraps; at 1000px they are 137px. That is the layout a phone was getting —
-   the navigation had already switched to its drawer at 980px, so the header was in mobile
-   dress while the hero underneath was still trying to be a three-column composition squeezed
-   into a third of the room it needs. The two breakpoints have to agree, and they have to
-   agree at the width where the composition actually works, which is about 1100px: below that
-   the right rail cannot hold a role chip on one line and the whole thing reads as broken
-   rather than as designed. */
-@media (max-width:1100px){
+/* THE COMPOSITION IS THE POINT, SO IT STAYS DOWN TO 900px.
+   It was briefly stacked below 1100px to escape a 128px side rail, and that was the wrong
+   trade: the rail was starved by the FIGURE being allowed 64vw, not by the layout being
+   impossible at that width. Narrowing the figure below 1150px gives the rails 200px and
+   more (see --fp-figure-w in the block further down) and the hero still reads as the
+   composition it was designed as, which is what a tablet and a large phone should get.
+   Only genuinely narrow screens stack, where three columns really cannot work. */
+@media (max-width:900px){
   .fp-stage-grid{
     grid-template-columns:1fr;
     justify-items:center;
