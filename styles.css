@@ -1046,7 +1046,24 @@ a.tile:hover .more{text-decoration:underline;}
   border-radius:999px;padding:7px 12px;font-size:12.5px;color:var(--fg-faint);cursor:pointer;font-family:var(--font-body);}
 .aq-search-btn:hover{border-color:var(--brand-2);color:var(--accent-text);}
 .aq-search-btn kbd{font-family:var(--font-mono);font-size:9.5px;border:1px solid var(--border);border-radius:4px;padding:1px 4px;}
-@media (max-width:700px){.aq-search-btn span{display:none;} .aq-search-btn kbd{display:none;}}
+/* THE SEARCH BUTTON GIVES UP ITS LABEL BEFORE THE HEADER GIVES UP THE PAGE.
+   Measured on every page: between 981px and 1149px the bar holds the brand, six horizontal
+   nav items and a 437px action group, and the total runs 91px past the viewport — so the
+   whole document scrolls sideways. On a phone whose viewport lands in that band the browser
+   answers by zooming the page out to fit, which is why a phone screenshot came back looking
+   like a shrunken desktop rather than a mobile layout.
+   The label and the shortcut hint are the only 90px in that group that carry no function a
+   magnifier does not already carry, so they are what goes. The horizontal navigation stays,
+   which is the point — collapsing it into a drawer on a laptop was tried and rejected. */
+@media (max-width:1149px){
+  .aq-search-btn span{display:none;}
+  .aq-search-btn kbd{display:none;}
+  /* And the bar tightens up rather than overflowing. Losing the search label recovered 90 of
+     the 91px; these two recover the rest with room to spare, and neither is visible as a
+     change — 6px of gap and 4px of padding either side of a nav item. */
+  .nav-actions{gap:6px;}
+  .main-nav a,.nav-dd-trigger{padding-left:9px;padding-right:9px;}
+}
 
 /* ---------- Edition banner ---------- */
 .aq-edition{background:transparent;border-bottom:0;

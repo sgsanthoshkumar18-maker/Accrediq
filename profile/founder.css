@@ -86,8 +86,17 @@
 .fp-tag {
   font-size: 11.5px;
   font-weight: 600;
-  padding: 5px 11px;
-  border-radius: 999px;
+  padding: 6px 12px;
+  line-height: 1.45;
+  /* 16px, NOT 999px — and the difference only shows when a chip wraps.
+     A radius is clamped to half the box, so on a single line (27px tall) 16px still resolves
+     to a full stadium and nothing changes. On a chip that has wrapped to three lines, 999px
+     curves the ends into a 32px arc that cuts across the first and last lines of text, which
+     is the "letters coming out of the circular space". At 16px a wrapped chip is a rounded
+     rectangle, which is what it should have been all along. Some labels — "Consultant —
+     Clinical Documentation Designer (NABH, JCI)" — wrap even in a 213px rail at 1440px, so
+     wrapping is not an edge case to design around, it is the normal case. */
+  border-radius: 16px;
   background: rgba(255, 255, 255, .08);
   border: 1px solid rgba(255, 255, 255, .14);
   color: var(--fg);
@@ -182,7 +191,14 @@
    The side is set by a class from JS, not :nth-child — the education list restarts the
    sequence and CSS counting would put two entries on the same side across the two lists. */
 
-.fp-timeline { position: relative; padding: 8px 0; }
+/* THE ENTRANCE MUST NOT WIDEN THE PAGE.
+   Each card starts 26px to one side and slides in. For the right-hand column that start
+   position is 26px past the content edge, which the document dutifully counts as width — so
+   the whole page scrolled sideways by 11px until the cards had animated, on every viewport
+   narrow enough that the margin could not absorb it. An animation's off-screen start is not
+   content and should not be measurable; clip is the right tool because, unlike hidden, it
+   does not turn this into a scroll container and so cannot trap the sticky header. */
+.fp-timeline { position: relative; padding: 8px 0; overflow-x: clip; }
 
 /* The unlit track. The lit portion is .fp-spine, drawn over it by founder-motion.js. */
 .fp-timeline::before {
@@ -853,7 +869,16 @@ html.fp-tilt-on [data-tilt].is-tilting::after { opacity: 1; }
 }
 
 /* ---------- responsive ---------- */
-@media (max-width:900px){
+/* THE THREE-COLUMN HERO NEEDS REAL WIDTH, AND 900px IS NOT IT.
+   Measured on the shipping page: at 950px the side rails are 128px each and every one of the
+   six role chips wraps; at 1000px they are 137px. That is the layout a phone was getting —
+   the navigation had already switched to its drawer at 980px, so the header was in mobile
+   dress while the hero underneath was still trying to be a three-column composition squeezed
+   into a third of the room it needs. The two breakpoints have to agree, and they have to
+   agree at the width where the composition actually works, which is about 1100px: below that
+   the right rail cannot hold a role chip on one line and the whole thing reads as broken
+   rather than as designed. */
+@media (max-width:1100px){
   .fp-stage-grid{
     grid-template-columns:1fr;
     justify-items:center;
