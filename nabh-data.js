@@ -1,13 +1,41 @@
 /* AQcredix objective-element data.
  *
- * THE WORDING HERE IS AQCREDIX'S OWN. Every standard statement and element description
- * is our description of the system capability a hospital needs — not the text of the
- * NABH standard, and not a substitute for it. The site shows a notice saying so before
- * anyone reads it (see the standards notice in app.js).
+ * THE WORDING HERE IS AQCREDIX'S OWN. Not the text of the NABH standard, and not a
+ * substitute for it. The site shows a notice saying so before anyone reads it (see the
+ * standards notice in app.js).
+ *
+ * IT IS WRITTEN IN TWO VOICES, AND THAT IS A MIGRATION IN PROGRESS RATHER THAN AN
+ * INCONSISTENCY TO TIDY AWAY.
+ *
+ *   1. CAPABILITY VOICE — most of the file. "Standardized Treatment Framework: central
+ *      configuration repository ensuring care pathways align with..." This describes the
+ *      system capability a hospital needs. It was chosen deliberately, and the reason is
+ *      worth keeping in mind: a mandatory requirement can only be phrased so many ways, so
+ *      writing in the voice of a standard risks landing on the standard's own sentence by
+ *      accident. Describing the capability instead cannot converge that way.
+ *
+ *   2. HIS OWN VOICE — MOM 1, 2 and 3 so far, standard titles and element titles alike.
+ *      "There shall be a documented protocol for the hospital pharmacy's activities."
+ *      Written by Dr Santhoshkumar as an ID clinical pharmacist, from his own understanding
+ *      of what each element requires, and edited here for grammar only. This reads as a
+ *      restatement of the requirement, which is more useful to a hospital than a description
+ *      of a feature — and it is his to write, because it is his account of the standard and
+ *      not the standard's words.
+ *
+ * Voice 2 is where the file is heading; voice 1 is what has not been rewritten yet. Both
+ * remain AQcredix's own wording, which is the only property that actually matters.
+ *
+ * THE CHECK THAT KEEPS THIS HONEST. Every rewrite is measured against every string already
+ * stored on the site before it is written, and refused if it shares a seven-word run with
+ * any of them — the same threshold tests/mom-explain.test.js enforces on the explanation
+ * layer. MOM 1-3 came in at five words at worst, and that was "at least once a year".
+ * The check cannot see the published standard itself, so it proves independence from what is
+ * here, not from NABH's book. Keep writing from understanding, never with the book open.
  *
  * WHAT IS DELIBERATELY KEPT: the element codes and the Core/Commitment/Achievement/
  * Excellence tier. Codes are how an assessor and a quality manager talk to each other —
- * strip them and the product stops being usable for the one job it exists to do.
+ * strip them and the product stops being usable for the one job it exists to do. A title
+ * rewrite must never disturb them; they drive the audit scope and the dashboard.
  *
  * Generated from the chapter specification documents. Do not paste standard text back
  * into this file.
