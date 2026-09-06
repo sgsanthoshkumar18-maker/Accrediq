@@ -105,7 +105,7 @@
          are telling every visitor where the book is. It also means nobody can claim they
          mistook this site for the official text. rel="noopener" because target=_blank
          without it hands the new tab a reference back to this window. -->
-    <div class="aq-edition">Element codes follow the <b>NABH Hospital Accreditation Standards, 6th Edition</b> — effective 1 January 2025. The descriptions are AQcredix&rsquo;s own wording, not the official text. For exact wording see <a href="https://nabh.co/programmes/hospitals-accreditation-programme-hco/" target="_blank" rel="noopener noreferrer">NABH</a>.</div>
+    <div class="aq-edition">Element codes follow the <b>NABH Hospital Accreditation Standards, 6th Edition</b> — effective 1 January 2025. The descriptions are AQcredix&rsquo;s own wording, not the official text. For exact wording see <a href="https://nabh.co/explore-nabh-standards/" target="_blank" rel="noopener noreferrer">NABH</a>.</div>
     <header class="site-header">
       <div class="bar wrap">
         <a href="${base}index.html" class="brand brand-nomark">
@@ -697,7 +697,7 @@
       return /\/standards\/?$/i.test(p);
     } catch (e) { return false; }
   }
-  var NABH_URL = "https://nabh.co/programmes/hospitals-accreditation-programme-hco/";
+  var NABH_URL = "https://nabh.co/explore-nabh-standards/";
 
 
   function show() {
