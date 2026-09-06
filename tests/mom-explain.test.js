@@ -130,7 +130,7 @@ ok(/mechanical rewrite/.test(R('nabh-explain.js')),
   const pages = [];
   function scan(dir, prefix) {
     fs.readdirSync(path.join(ROOT, dir)).forEach(f => {
-      if (f.endsWith('.html')) pages.push(prefix + f);
+      if (f.endsWith('.html') && f[0] !== '_') pages.push(prefix + f);
     });
   }
   scan('.', '');

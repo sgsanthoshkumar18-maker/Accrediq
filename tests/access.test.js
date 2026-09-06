@@ -61,8 +61,15 @@ eq(/e\.key === "aq-sb-session"/.test(gate), true,
 const boot = /<script>\(function\(\)\{try\{[\s\S]*?\}\)\(\);<\/script>/.exec(html)[0];
 eq(/var DEF="neon"/.test(boot), true, 'neon is the shipped default');
 eq(/aq-palette"\)\|\|DEF/.test(boot), true, 'a first-time visitor gets the default, not blue');
-eq(/catch\(e\)\{[^}]*data-palette","neon"/.test(boot), true,
-   'private browsing still gets the house palette');
+/* Private browsing throws on localStorage. The snippet used to answer that by forcing
+   neon dark, on the reasoning that the house look beat a palette nobody chose. Now that
+   light is the cold start, the honest answer for a visitor we can read nothing about is
+   the same one every other first-time visitor gets: light, which is simply no attribute
+   at all. An empty catch is therefore the assertion, not an oversight. */
+eq(/\}catch\(e\)\{\}/.test(boot), true,
+   'private browsing falls back to the same light default as any first visit');
+eq(/catch\(e\)\{[^}]*data-palette","neon"/.test(boot), false,
+   'private browsing is no longer forced into neon dark');
 eq(/localStorage.setItem\("aq-palette", "default"\)/.test(gate), false,
    'the gate no longer reverts a non-owner to the blue palette');
 

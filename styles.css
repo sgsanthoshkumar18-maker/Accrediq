@@ -2000,6 +2000,37 @@ body.aq-locked{
    Built entirely from tokens, so it is correct in Clinical Light, the blue dark theme and
    neon without a per-theme rule. The one literal is the backdrop scrim: a dark scrim is
    right on every ground, because its job is to push the page back, not to match it. */
+/* ---- "Keep dark mode?" ------------------------------------------------------
+   Raised once per visit when the visitor turns dark on, and only while dark is
+   not already remembered for them. Deliberately NOT the .aq-notice modal below:
+   that one blocks the page, and blocking someone's reading to ask about a colour
+   is out of proportion to the question. This sits in the corner, answers itself
+   as "just this visit" if ignored, and never appears twice in a session.
+   Colours come from the same tokens as everything else — no new hue enters the
+   site for the sake of one strip. */
+.aq-keepdark{
+  position:fixed;right:18px;bottom:18px;z-index:280;max-width:min(330px,calc(100vw - 36px));
+  background:var(--bg-elevated);border:1px solid var(--border);border-radius:var(--r-lg);
+  box-shadow:var(--shadow-2);padding:14px 16px;
+  opacity:0;transform:translateY(10px);
+  transition:opacity .22s ease,transform .22s ease;
+}
+.aq-keepdark.in{opacity:1;transform:none;}
+.aq-keepdark p{margin:0 0 11px;font-size:14px;font-weight:600;color:var(--fg);line-height:1.4;}
+.aq-keepdark p span{display:block;margin-top:3px;font-size:12.5px;font-weight:400;color:var(--fg-muted);}
+.aq-keepdark-btns{display:flex;gap:8px;justify-content:flex-end;flex-wrap:wrap;}
+.aq-keepdark button{font:inherit;font-size:13px;font-weight:600;cursor:pointer;
+  border-radius:999px;padding:8px 15px;border:1px solid var(--border);
+  background:transparent;color:var(--fg-muted);}
+.aq-keepdark button:hover{border-color:var(--border-strong);color:var(--fg);}
+/* Scoped through the parent so it outranks `.aq-keepdark button` above — that selector
+   is (0,1,1) and a bare class is (0,1,0), so the primary action rendered transparent. */
+.aq-keepdark .aq-keepdark-yes{background:var(--accent-solid);border-color:var(--accent-solid);color:#fff;}
+.aq-keepdark .aq-keepdark-yes:hover{filter:brightness(1.08);color:#fff;}
+@media (prefers-reduced-motion:reduce){
+  .aq-keepdark{transition:none;transform:none;}
+}
+
 .aq-notice{
   position:fixed;inset:0;z-index:300;
   display:flex;align-items:center;justify-content:center;

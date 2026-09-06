@@ -96,7 +96,11 @@ function walk(dir, out) {
     if (skip.has(n)) continue;
     const full = path.join(dir, n);
     if (fs.statSync(full).isDirectory()) walk(full, out);
-    else if (n.endsWith('.html') && !skipFile.has(n)) out.push(full);
+    /* A leading underscore marks a design sample, not a site page — the same names
+       .gitignore keeps out of the deploy. They load styles.css to be judged against
+       the real theme and nothing else, so holding them to the page contract fails
+       them for doing exactly what they exist to do. */
+    else if (n.endsWith('.html') && !skipFile.has(n) && n[0] !== '_') out.push(full);
   }
   return out;
 }

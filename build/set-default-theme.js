@@ -1,9 +1,9 @@
 /* One-off maintenance script: normalise the theme boot snippet across every page.
  *
- * The snippet had drifted into three different versions across 42 pages, and all of them
- * treated light as the default — a stored value was needed to get dark or neon. The house
- * look is neon dark, so absence of a preference must now mean neon dark, and only an
- * explicit "light"/"default" (written by the toggles) opts out.
+ * The snippet had drifted into three different versions across 42 pages. It was then
+ * normalised the other way — absence of a preference meant neon dark — because neon dark
+ * was the house look. Reader feedback reversed that: a first visit now opens light, and
+ * dark is something the visitor chooses and is then asked whether to keep.
  *
  * It has to run inline in <head>, before any stylesheet paints, or the page flashes white
  * before the attribute lands. That is why this is duplicated into every file rather than
@@ -36,28 +36,47 @@ const SNIPPET =
   'var own=localStorage.getItem("aq-is-owner")==="1";' +
   'if(p.has("dark")){localStorage.setItem("aq-theme",p.get("dark")==="0"?"light":"dark");}' +
   'if(own&&p.has("neon")){localStorage.setItem("aq-palette",p.get("neon")==="0"?"default":"neon");}' +
-  'var t=localStorage.getItem("aq-theme")||"dark";' +
+  /* LIGHT IS THE COLD START. Readers said so: a site that opens black is a choice
+     made for them, and for a hospital quality manager opening it at a desk in
+     daylight it reads as a consumer app, not a reference. So absence of any
+     preference means light.
+
+     Three values are consulted, in this order, and the order is the whole design:
+       1. localStorage "aq-theme"  — a decision the visitor asked us to remember
+       2. sessionStorage "aq-theme-s" — dark chosen for THIS visit only, so it
+          holds across page navigations and is gone tomorrow
+       3. light
+     Choosing dark writes only (2). It is promoted to (1) when the visitor answers
+     yes to the small prompt the toggle raises. */
+  'var t=localStorage.getItem("aq-theme");' +
+  'if(!t){try{t=sessionStorage.getItem("aq-theme-s");}catch(e2){}}' +
+  'if(!t){t="light";}' +
   /* Anything that is not the literal string "default" means neon. A plain ||DEF
      fallback only covered a MISSING value, so any other string left behind by an older
      build — or a stale "default" written by a bug since fixed — quietly opted the device
      out of the house look with no way back. Neon is the floor; only the owner's
      published "default" lifts it. */
   'var q=localStorage.getItem("aq-palette")||DEF;if(q!=="default"){q="neon";}' +
-  'if(t!=="light"){document.documentElement.setAttribute("data-theme","dark");}' +
+  /* Only the literal "dark" darkens. The old test was t!=="light", which darkened on
+     any stray value — harmless when dark was the default, wrong now that light is. */
+  'if(t==="dark"){document.documentElement.setAttribute("data-theme","dark");}' +
   // Neon is a true-black palette and unreadable over light, so it only rides with dark.
-  'if(q==="neon"&&t!=="light"){document.documentElement.setAttribute("data-palette","neon");}' +
-  '}catch(e){' +
-  // Private browsing throws on localStorage. Ship the house look rather than falling
-  // back to a palette the visitor was never meant to see.
-  'document.documentElement.setAttribute("data-theme","dark");' +
-  'document.documentElement.setAttribute("data-palette","neon");' +
-  '}})();<\/script>';
+  'if(q==="neon"&&t==="dark"){document.documentElement.setAttribute("data-palette","neon");}' +
+  '}catch(e){}' +
+  /* Private browsing throws on localStorage. Nothing to do: no attribute means light,
+     which is now exactly the right answer for a visitor we know nothing about. */
+  '})();<\/script>';
 
 const BOOT = /<script>\(function\(\)\{try\{[\s\S]*?\}\)\(\);<\/script>/;
 
 function walk(dir, out) {
   for (const name of fs.readdirSync(dir)) {
-    if (name === "node_modules" || name === ".git") continue;
+    /* build/ holds og-card.html, which is a template rendered offscreen to produce the
+       social image — it has no visitor and no theme, and stamping a boot snippet into it
+       made it look like a site page to the test that checks every page loads the motion
+       layer. tests/ and docs/ are excluded for the same reason: not pages. */
+    if (name === "node_modules" || name === ".git" ||
+        name === "build" || name === "tests" || name === "docs") continue;
     const full = path.join(dir, name);
     const st = fs.statSync(full);
     if (st.isDirectory()) walk(full, out);

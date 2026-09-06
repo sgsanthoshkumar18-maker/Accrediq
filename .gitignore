@@ -9,3 +9,9 @@ videos/media/
 # CSV lookup tables that the site never loads — and Vercel deploys whatever is
 # committed here, so it stays out of the history.
 .claude/skills/
+
+# Design samples for review. Vercel serves anything committed at the root, so an
+# un-ignored _sample.html would be live at aqcredix.com/_sample.html the moment
+# it is pushed. Promote a sample by moving it to a real page name, never by
+# letting it reach production under its working name.
+_*.html

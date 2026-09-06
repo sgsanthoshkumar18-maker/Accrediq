@@ -218,6 +218,91 @@
     } catch (e) {}
   }
 
+  /* ---------------------------------------------------------------- theme
+
+     The site opens light. Dark is the visitor's to choose — and choosing it does NOT
+     silently become permanent, because a preference stored without being asked for is
+     a preference the visitor cannot find later to undo. So:
+
+       going dark   -> sessionStorage only. It holds while they browse, and tomorrow
+                       the site opens light again, exactly as it did the first time.
+       the prompt   -> once per visit, and never once dark is already remembered:
+                       "Keep dark mode?" Yes promotes it to localStorage.
+       going light  -> written to localStorage, because that IS an explicit choice,
+                       and the session value is cleared so it cannot fight it.
+
+     Both entry points — the header button and the keyboard path — route through these
+     two functions, so the rules cannot drift apart again. */
+
+  function applyDark() {
+    const html = document.documentElement;
+    html.setAttribute("data-theme", "dark");
+    try {
+      sessionStorage.setItem("aq-theme-s", "dark");
+      /* Coming back to dark returns the palette the owner published. Absence of a
+         stored value means the shipped default, which is neon. */
+      if (localStorage.getItem("aq-palette") !== "default") {
+        html.setAttribute("data-palette", "neon");
+      }
+    } catch (err) {}
+    announceTheme();
+    askToKeepDark();
+  }
+
+  function applyLight() {
+    const html = document.documentElement;
+    html.removeAttribute("data-theme");
+    /* Neon is a true-black palette and is unreadable over a light theme, so it steps
+       aside while light is on. The stored palette is left alone, so the owner's neon
+       comes back when they switch to dark again. */
+    html.removeAttribute("data-palette");
+    try {
+      localStorage.setItem("aq-theme", "light");
+      sessionStorage.removeItem("aq-theme-s");
+    } catch (err) {}
+    announceTheme();
+  }
+
+  /* A quiet strip, not a modal. The visitor asked for a colour, not for a decision to
+     block their reading; if they ignore it, ignoring it is a valid answer and means
+     "just this visit". It removes itself after twenty seconds for the same reason. */
+  function askToKeepDark() {
+    let remembered = null, asked = null;
+    try {
+      remembered = localStorage.getItem("aq-theme");
+      asked = sessionStorage.getItem("aq-theme-asked");
+    } catch (err) { return; }
+    if (remembered === "dark") return;   // already theirs; nothing to offer
+    if (asked) return;                   // asked once this visit is enough
+    if (document.querySelector(".aq-keepdark")) return;
+    try { sessionStorage.setItem("aq-theme-asked", "1"); } catch (err) {}
+
+    const box = document.createElement("div");
+    box.className = "aq-keepdark";
+    box.setAttribute("role", "status");
+    box.innerHTML =
+      '<p>Keep dark mode?<span>Otherwise the site opens light next time.</span></p>' +
+      '<div class="aq-keepdark-btns">' +
+        '<button type="button" class="aq-keepdark-no">Just this visit</button>' +
+        '<button type="button" class="aq-keepdark-yes">Keep it dark</button>' +
+      "</div>";
+    document.body.appendChild(box);
+    requestAnimationFrame(function () { box.classList.add("in"); });
+
+    let timer = null;
+    function close() {
+      if (timer) clearTimeout(timer);
+      box.classList.remove("in");
+      setTimeout(function () { box.remove(); }, 240);
+    }
+    box.querySelector(".aq-keepdark-yes").addEventListener("click", function () {
+      try { localStorage.setItem("aq-theme", "dark"); } catch (err) {}
+      close();
+    });
+    box.querySelector(".aq-keepdark-no").addEventListener("click", close);
+    timer = setTimeout(close, 20000);
+  }
+
   function initHeaderFooter() {
     const currentKey = document.body.getAttribute("data-page") || "";
     const base = getBase();
@@ -246,32 +331,8 @@
     if (themeBtn) {
       themeBtn.addEventListener("click", (e) => {
         e.stopPropagation();
-        const html = document.documentElement;
-        const goingLight = html.getAttribute("data-theme") === "dark";
-        if (goingLight) {
-          html.removeAttribute("data-theme");
-          /* Neon is a true-black palette and is unreadable over a light theme, so it
-             steps aside while light is on. The stored preference is left alone, so the
-             owner's neon comes back when they switch to dark again. */
-          html.removeAttribute("data-palette");
-          try { localStorage.setItem("aq-theme", "light"); } catch (err) {}
-        } else {
-          html.setAttribute("data-theme", "dark");
-          try {
-            localStorage.setItem("aq-theme", "dark");
-            /* Restore whatever palette is published. This button gives everyone dark
-               and light and nothing else — it never CHANGES the palette — but coming
-               back to dark must return the visitor to the look the owner published.
-               Gating the restore on ownership meant a subscriber who tried light once
-               was stranded on blue for good, because nothing else ever re-applies the
-               attribute within a page's life. Absence of a stored value means the
-               shipped default, which is neon. */
-            if (localStorage.getItem("aq-palette") !== "default") {
-              html.setAttribute("data-palette", "neon");
-            }
-          } catch (err) {}
-        }
-        announceTheme();
+        if (document.documentElement.getAttribute("data-theme") === "dark") applyLight();
+        else applyDark();
       });
     }
 
@@ -488,22 +549,8 @@
   function togglePalette() { setPalette("neon"); }
 
   function toggleTheme() {
-    const html = document.documentElement;
-    const isDark = html.getAttribute("data-theme") === "dark";
-    if (isDark) {
-      html.removeAttribute("data-theme");
-      try { localStorage.setItem("aq-theme", "light"); } catch (err) {}
-    } else {
-      html.setAttribute("data-theme", "dark");
-      try {
-        localStorage.setItem("aq-theme", "dark");
-        // Mirrors the header button: returning to dark returns the published palette.
-        if (localStorage.getItem("aq-palette") !== "default") {
-          html.setAttribute("data-palette", "neon");
-        }
-      } catch (err) {}
-    }
-    announceTheme();
+    if (document.documentElement.getAttribute("data-theme") === "dark") applyLight();
+    else applyDark();
   }
 
   function initOwnerThemeToggle() {

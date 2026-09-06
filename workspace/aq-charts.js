@@ -357,7 +357,12 @@ window.AQCharts = (function () {
       var h = (r.v / hi) * ih;
       bodyBars += '<rect class="aqc-bar" x="' + (cx - barW / 2).toFixed(1) + '" y="' +
         (T + ih - h).toFixed(1) + '" width="' + barW.toFixed(1) + '" height="' +
-        Math.max(h, 0).toFixed(1) + '" rx="3" fill="' + (o.tone || "var(--warn)") + '">' +
+        /* Brand blue, not amber. A Pareto bar is a magnitude, not a warning: every bar
+           on the chart is a real finding, so colouring them all amber shouts at the
+           reader about nothing in particular and reads as a foreign colour on a site
+           whose whole palette is blue. Amber stays reserved for status that has
+           actually slipped. */
+        Math.max(h, 0).toFixed(1) + '" rx="3" fill="' + (o.tone || "var(--accent-bright)") + '">' +
         "<title>" + esc(r.label) + ": " + r.v + "</title></rect>" +
         '<text class="aqc-axis aqc-parlabel" x="' + cx.toFixed(1) + '" y="' + (T + ih + 15) +
         '" text-anchor="middle">' + esc(String(r.label).slice(0, 12)) + "</text>";

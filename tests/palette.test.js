@@ -16,15 +16,15 @@ eq(/own&&p.has\("neon"\)/.test(boot), true, 'only the owner may CHANGE the palet
    of it, and — more importantly — must re-home any device whose localStorage still holds
    it. "anything not default becomes neon" does that with no migration step. */
 eq(/blood/i.test(boot), false, 'the boot snippet carries no trace of the removed palette');
-eq(/q!=="default"&&t!=="light"/.test(boot), true, 'every visitor APPLIES the published palette');
-eq(/q!=="default"&&t!=="light"/.test(boot), true, 'no palette rides over the light theme');
+eq(/q==="neon"&&t==="dark"/.test(boot), true, 'every visitor APPLIES the published palette');
+eq(/q==="neon"&&t==="dark"/.test(boot), true, 'no palette rides over anything but dark');
 eq(/localStorage.getItem\("aq-is-owner"\)==="1"/.test(boot), true, 'boot reads the owner flag');
 // The shipped default is now neon: falling back to "default" made the site open blue on
 // a cold load and only turn neon after site_settings had been fetched and cached, which
 // looked like needing two or three refreshes.
 eq(/aq-palette"\)\|\|DEF/.test(boot), true, 'palette falls back to the shipped default');
 eq(/var DEF="neon"/.test(boot), true, 'the shipped default is neon');
-eq(/aq-theme"\)\|\|"dark"/.test(boot), true, 'theme still defaults to dark for everyone');
+eq(/if\(!t\)\{t="light";\}/.test(boot), true, 'theme now defaults to LIGHT for everyone');
 
 // --- the typed shortcut is owner-gated
 eq(/function setPalette\(name\) \{[\s\S]{0,400}?if \(!isOwnerBrowser\(\)\) return;/.test(app), true,
@@ -41,7 +41,11 @@ eq(/localStorage.setItem\("aq-palette", "neon"\)/.test(btn), false,
 /* It restores the PUBLISHED palette for everyone. Gating the restore on ownership left
    a subscriber who tried light once stranded on blue for the rest of that page's life,
    because nothing else re-applies the attribute after boot. */
-eq(/aq-palette"\) !== "default"/.test(btn), true,
+/* The button no longer carries the rule itself — both toggles route through applyDark,
+   which is the point: one place to get it right. So the button is checked for routing,
+   and the rule is checked where it now lives. */
+eq(/applyDark\(\)/.test(btn), true, 'the header button routes through the shared dark path');
+eq(/aq-palette"\) !== "default"/.test(app), true,
    'returning to dark restores the published palette for every user');
 eq(/isOwnerBrowser\(\)/.test(btn), false, 'the restore is not owner-gated');
 
@@ -185,16 +189,36 @@ const neonRules = css.split('\n')
 eq(/\.page-head\{[^}]*border-bottom/.test(css), false,
    'the page head no longer draws a rule under itself');
 
-/* DARK IS THE DEFAULT, ON EVERY DEVICE.
-   A first-time visitor with nothing stored must get dark — on a phone, a laptop, and on a
-   machine whose OS is set to light. Two things have to hold for that: the stored-preference
-   lookup falls back to "dark", and no stylesheet follows prefers-color-scheme. The second is
-   the one that would silently undo the first, because it needs no code change to appear —
-   a single media query anywhere in any stylesheet is enough. */
-eq(/localStorage\.getItem\("aq-theme"\)\|\|"dark"/.test(boot), true,
-   'a visitor with no stored preference must default to dark');
-eq(/if\(t!=="light"\)\{document\.documentElement\.setAttribute\("data-theme","dark"\)/.test(boot), true,
-   'anything other than an explicit "light" resolves to dark');
+/* LIGHT IS THE DEFAULT, ON EVERY DEVICE.
+   Reversed from dark on reader feedback. A first-time visitor with nothing stored must get
+   light — on a phone, a laptop, and on a machine whose OS is set to dark. Two things have
+   to hold: the lookup ends at "light", and no stylesheet follows prefers-color-scheme. The
+   second is the one that would silently undo the first, because it needs no code change to
+   appear — a single media query anywhere in any stylesheet is enough. */
+eq(/if\(!t\)\{t="light";\}/.test(boot), true,
+   'a visitor with no stored preference must default to light');
+eq(/if\(t==="dark"\)\{document\.documentElement\.setAttribute\("data-theme","dark"\)/.test(boot), true,
+   'ONLY the literal "dark" darkens — no stray value may');
+
+/* DARK IS A SESSION CHOICE UNTIL THE VISITOR SAYS OTHERWISE.
+   The toggle writes sessionStorage; only answering "Keep it dark" promotes it to
+   localStorage. If applyDark ever wrote localStorage directly, the prompt would be
+   decoration and the site would quietly keep a preference nobody agreed to. */
+eq(/sessionStorage\.getItem\("aq-theme-s"\)/.test(boot), true,
+   'boot honours a dark chosen for this visit only');
+const dark = /function applyDark\(\)[\s\S]*?\n  \}/.exec(app)[0];
+eq(/sessionStorage\.setItem\("aq-theme-s", "dark"\)/.test(dark), true,
+   'turning dark on writes the session value');
+eq(/localStorage\.setItem\("aq-theme", "dark"\)/.test(dark), false,
+   'turning dark on must NOT persist it without being asked');
+eq(/askToKeepDark\(\)/.test(dark), true, 'turning dark on raises the prompt');
+const keep = /function askToKeepDark\(\)[\s\S]*?\n  \}/.exec(app)[0];
+eq(/remembered === "dark"/.test(keep), true, 'no prompt once dark is already remembered');
+eq(/localStorage\.setItem\("aq-theme", "dark"\)/.test(app), true,
+   'answering yes is the one path that persists dark');
+const light = /function applyLight\(\)[\s\S]*?\n  \}/.exec(app)[0];
+eq(/sessionStorage\.removeItem\("aq-theme-s"\)/.test(light), true,
+   'going back to light clears the session value so it cannot fight the stored one');
 {
   const root = path.join(__dirname, '..');
   const sheets = [];
