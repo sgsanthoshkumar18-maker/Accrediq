@@ -74,3 +74,34 @@
 .qd-next{border-left:3px solid var(--accent-bright);background:var(--bg);padding:11px 14px;
   border-radius:var(--r-sm);font-size:13px;line-height:1.6;color:var(--fg-muted);margin:2px 0 4px;}
 .qd-next b{color:var(--fg);}
+
+/* ---- Findings, evidence and training ----------------------------------------
+   The second half of the overview. It gets a heading rather than just more panels
+   because it answers a different question from everything above it: attainment is
+   where the hospital stands, findings are why. */
+.qd-section{font-size:clamp(18px,2vw,23px);margin:34px 0 4px;}
+.qd-section-actions{justify-content:flex-start;margin:0 0 16px;}
+
+/* Nothing recorded yet — say what the three charts will be built from, so the empty
+   state is an instruction and not an apology. */
+.qd-findings-cta p{max-width:66ch;}
+
+/* An "Edit" that lives inside a table cell. A full button would out-weigh the row it
+   sits in, so it reads as a link and behaves as a button. */
+.qd-linkbtn{font:inherit;font-size:12.5px;font-weight:600;color:var(--accent-text);
+  background:none;border:0;padding:2px 0;cursor:pointer;
+  border-bottom:1px solid transparent;}
+.qd-linkbtn:hover{border-bottom-color:var(--accent-text);}
+
+/* Destructive, and coloured as such only on hover — a red button sitting permanently in
+   a form invites the eye to the one action nobody wants taken by accident. */
+.qd-danger{color:var(--nc);}
+.qd-danger:hover{background:var(--nc-tint);border-color:var(--nc);}
+
+/* Two classes this page has been emitting with no rule behind them — .aqc-note since the
+   first version, .ws-f-actions from the findings work. Both rendered as bare defaults: the
+   note as full-size body text competing with the heading above it, the button row as
+   buttons sitting on the text baseline. */
+.aqc-note{font-size:12.5px;line-height:1.6;color:var(--fg-muted);margin:0 0 12px;max-width:70ch;}
+.ws-f-actions{display:flex;gap:9px;flex-wrap:wrap;align-items:center;justify-content:flex-end;
+  margin-top:14px;}

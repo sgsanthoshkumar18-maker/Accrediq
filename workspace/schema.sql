@@ -2320,6 +2320,58 @@ create table if not exists public.qd_readings (
   unique (metric_id, month)                  -- one reading per metric per month, updated in place
 );
 
+-- ONE FINDING, ONE ROW — and three charts fall out of it.
+-- The donut (which chapter), the Pareto (why it happened) and the open-findings trend are
+-- all the same table read three ways. Asking the hospital to type three separate summaries
+-- instead would guarantee they disagree with each other by the second month.
+--
+-- raised_month and closed_month are what make the trend possible: open at the end of any
+-- month M is everything raised on or before M that was not closed until after it. Storing a
+-- bare "open count" per month instead would make the number un-auditable — nobody could ask
+-- WHICH findings, which is the first thing an assessor asks.
+create table if not exists public.qd_findings (
+  id            text primary key,
+  org_id        uuid references public.orgs(id) on delete cascade,
+  -- Always the FIRST of the month, like qd_readings, so two hospitals' Septembers compare.
+  raised_month  date not null,
+  closed_month  date,                          -- null while still open
+  -- Chapter code as the hospital writes it: 'MOM', 'HIC', 'COP'. Free text, not an enum —
+  -- NABH renumbers between editions and a hospital mid-migration would fail every insert.
+  chapter       text,
+  -- The Pareto groups on this string, so it is offered as a picklist of the hospital's own
+  -- previous answers in the UI. Free text underneath, because the eighth cause is always
+  -- one nobody listed.
+  cause         text,
+  dept_id       text references public.qd_departments(id) on delete set null,
+  severity      text not null default 'nc',    -- nc | observation | oi
+  note          text,
+  created_at    timestamptz not null default now(),
+  updated_at    timestamptz not null default now()
+);
+
+-- The hospital-level month record: the two rings and the "N of M elements evidenced" line.
+-- Deliberately NOT per department — these are whole-hospital obligations, and splitting them
+-- by department would invite a total that means nothing.
+--
+-- Committees are absent on purpose. The workspace already runs a committee calendar, and
+-- asking for the same figure twice creates two answers and no way to tell which is right.
+create table if not exists public.qd_obligations (
+  id                  text primary key,
+  org_id              uuid references public.orgs(id) on delete cascade,
+  month               date not null,
+  evidence_filed_pct  numeric,
+  training_closed_pct numeric,
+  elements_evidenced  int,
+  elements_total      int,
+  -- The assessment window. Read from the most recent month that carries one, so it is
+  -- entered once and not retyped every month.
+  assessment_date     date,
+  note                text,
+  created_at          timestamptz not null default now(),
+  updated_at          timestamptz not null default now(),
+  unique (org_id, month)                       -- one record per hospital per month
+);
+
 -- EVERY WRITE CARRIES updated_at. The workspace store stamps it on the way out for every
 -- table it touches, so a table without the column is refused by PostgREST with
 -- "Could not find the 'updated_at' column ... in the schema cache" before row-level security
@@ -2328,20 +2380,27 @@ create table if not exists public.qd_readings (
 alter table public.qd_departments add column if not exists updated_at timestamptz not null default now();
 alter table public.qd_metrics     add column if not exists updated_at timestamptz not null default now();
 alter table public.qd_readings    add column if not exists updated_at timestamptz not null default now();
+alter table public.qd_findings    add column if not exists updated_at timestamptz not null default now();
+alter table public.qd_obligations add column if not exists updated_at timestamptz not null default now();
 
 create index if not exists qd_metrics_dept_idx   on public.qd_metrics (dept_id);
 create index if not exists qd_readings_metric_idx on public.qd_readings (metric_id, month);
+create index if not exists qd_findings_month_idx  on public.qd_findings (raised_month);
+create index if not exists qd_findings_open_idx   on public.qd_findings (closed_month);
+create index if not exists qd_oblig_month_idx     on public.qd_obligations (month);
 
 alter table public.qd_departments enable row level security;
 alter table public.qd_metrics     enable row level security;
 alter table public.qd_readings    enable row level security;
+alter table public.qd_findings    enable row level security;
+alter table public.qd_obligations enable row level security;
 
 -- Same shape as every other hospital table: your own org, and only while the subscription is
 -- live. Written as a loop so a policy cannot drift between the three.
 do $$
 declare t text;
 begin
-  foreach t in array array['qd_departments','qd_metrics','qd_readings']
+  foreach t in array array['qd_departments','qd_metrics','qd_readings','qd_findings','qd_obligations']
   loop
     execute format('drop policy if exists %I_read on public.%I', t, t);
     execute format($f$create policy %I_read on public.%I for select to authenticated
@@ -2365,7 +2424,7 @@ end $$;
 do $$
 declare t text;
 begin
-  foreach t in array array['qd_departments','qd_metrics','qd_readings']
+  foreach t in array array['qd_departments','qd_metrics','qd_readings','qd_findings','qd_obligations']
   loop
     execute format('drop trigger if exists set_org_%I on public.%I', t, t);
     execute format(

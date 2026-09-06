@@ -105,5 +105,59 @@ eq(/\.qd-badge\.nc\{color:var\(--nc\)/.test(CSS), true, 'and so does needs-atten
 eq(/#[0-9a-fA-F]{3,8}\b/.test(CSS.replace(/\/\*[\s\S]*?\*\//g, '')), false,
    'no hardcoded colour anywhere in the stylesheet');
 
+/* ------------------------------------------------------------------ findings
+
+   The open-findings line is the one derivation here with no visible symptom when it is
+   wrong: it draws a confident curve either way. "Open at the end of month M" means raised
+   on or before M and not closed until AFTER M — the off-by-one that closes a finding in
+   the month it was raised and still counts it as open all month is exactly the kind of
+   thing a hospital would report upwards without noticing. */
+const openAtMonth = (function () {
+  const body = SRC.match(/function openAtMonth\(iso\) \{[\s\S]*?\n  \}/)[0];
+  return new Function('findings', 'return (' + body.replace('function openAtMonth', 'function') + ')');
+})();
+
+const FS = [
+  { raised_month: '2026-01-01', closed_month: null },          // still open
+  { raised_month: '2026-01-01', closed_month: '2026-01-01' },  // raised and closed same month
+  { raised_month: '2026-02-01', closed_month: '2026-04-01' },
+  { raised_month: '2026-05-01', closed_month: null }
+];
+const at = (m) => openAtMonth(FS)(m);
+
+eq(at('2025-12-01'), 0, 'nothing is open before the first finding was raised');
+eq(at('2026-01-01'), 1, 'a finding closed in the month it was raised is NOT open at month end');
+eq(at('2026-02-01'), 2, 'the January one still open, plus February');
+eq(at('2026-03-01'), 2, 'a finding closed in April is still open through March');
+eq(at('2026-04-01'), 1, 'and is gone by the end of April');
+eq(at('2026-06-01'), 2, 'both still-open findings count in a later month');
+
+/* A hospital two months in must not be shown ten months of flat zero — that reads as
+   "nothing went wrong", not "we were not using this yet". */
+eq(/function findingMonths\(\)/.test(SRC), true, 'the trend is drawn only over recorded months');
+eq(/for \(var m = 0; m < 12/.test(SRC), false, 'no fixed twelve-month window is assumed');
+
+/* One table, read three ways. If the schema ever grew a stored per-month open count, the
+   number on the chart and the findings behind it could disagree with nothing to reconcile. */
+eq(/create table if not exists public\.qd_findings/.test(SQL), true, 'findings are rows, not a summary');
+eq(/raised_month\s+date not null/.test(SQL), true, 'every finding carries the month it was raised');
+eq(/closed_month\s+date\b/.test(SQL), true, 'and an optional month it was closed');
+eq(/open_count/.test(SQL), false, 'no stored open count that could drift from the rows');
+
+/* Both new tables must carry updated_at and be inside the RLS and org-stamp loops, or every
+   save is refused — the exact failure that broke qd_departments and code_blue_events before. */
+['qd_findings', 'qd_obligations'].forEach((t) => {
+  eq(new RegExp('alter table public\\.' + t + '\\s+add column if not exists updated_at').test(SQL),
+     true, t + ' carries updated_at');
+  eq(new RegExp('alter table public\\.' + t + '\\s+enable row level security').test(SQL), true,
+     t + ' has row level security on');
+  eq((SQL.match(new RegExp("'" + t + "'", 'g')) || []).length >= 2, true,
+     t + ' is in the policy loop AND the set_org_id trigger loop');
+});
+
+/* Committees are deliberately absent from the month record: the workspace already runs a
+   committee calendar, and two sources for one figure is two answers. */
+eq(/committees_held_pct/.test(SQL), false, 'the month record does not re-ask for committees');
+
 console.log(pass + ' passed, ' + fail + ' failed');
 process.exit(fail ? 1 : 0);

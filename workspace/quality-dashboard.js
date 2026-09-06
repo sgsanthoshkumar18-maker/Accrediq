@@ -35,8 +35,10 @@
   var S = window.AQStore, W = window.AQWorkspace, C = window.AQCharts, esc;
 
   var DEPTS = "qd_departments", METRICS = "qd_metrics", READINGS = "qd_readings";
+  var FINDINGS = "qd_findings", OBLIG = "qd_obligations";
 
   var depts = [], metrics = [], readings = [], view = "overview", openDept = null;
+  var findings = [], oblig = [];
 
   function id(p) { return p + "_" + Math.random().toString(36).slice(2, 11); }
 
@@ -108,6 +110,77 @@
     return { key: "nc", label: "Needs attention", tone: "var(--nc)" };
   }
 
+  /* ------------------------------------------------------- findings, derived
+
+     One table, read four ways. The hospital records a finding once — when it was raised,
+     which chapter, why it happened, and when it was closed — and the donut, the Pareto and
+     the open-findings line all fall out of that. Asking for three separate summaries would
+     guarantee they disagree by the second month, and none of them could be audited back to
+     a finding an assessor could ask to see. */
+
+  /* Open at the END of a month: raised on or before it, and not closed until after it.
+     A stored "open count" per month could not answer WHICH, which is the first question. */
+  function openAtMonth(iso) {
+    return findings.filter(function (f) {
+      if (!f.raised_month || f.raised_month > iso) return false;
+      return !f.closed_month || f.closed_month > iso;
+    }).length;
+  }
+
+  /* The months the hospital has actually recorded something in — never a fixed twelve.
+     A hospital two months into using this must not be shown ten months of flat zero, which
+     reads as "nothing went wrong" rather than "we were not here yet". */
+  function findingMonths() {
+    var seen = {};
+    findings.forEach(function (f) { if (f.raised_month) seen[f.raised_month] = 1; });
+    oblig.forEach(function (o) { if (o.month) seen[o.month] = 1; });
+    return Object.keys(seen).sort();
+  }
+
+  function tally(rows, key) {
+    var by = {};
+    rows.forEach(function (f) {
+      var k = (f[key] || "").trim() || "Not stated";
+      by[k] = (by[k] || 0) + 1;
+    });
+    return Object.keys(by).map(function (k) { return { label: k, v: by[k] }; })
+      .sort(function (a, b) { return b.v - a.v; });
+  }
+
+  function openFindings() {
+    return findings.filter(function (f) { return !f.closed_month; });
+  }
+
+  /* The newest month record, and separately the newest assessment date on any of them —
+     the date is entered once and must not have to be retyped every month to stay visible. */
+  function latestOblig() {
+    return oblig.slice().sort(function (a, b) {
+      return String(b.month || "").localeCompare(String(a.month || ""));
+    })[0] || null;
+  }
+  function assessmentDate() {
+    var withDate = oblig.filter(function (o) { return o.assessment_date; })
+      .sort(function (a, b) { return String(b.month).localeCompare(String(a.month)); });
+    return withDate.length ? withDate[0].assessment_date : null;
+  }
+  function daysToAssessment() {
+    var d = assessmentDate();
+    if (!d) return null;
+    var ms = new Date(d + "T00:00:00Z").getTime() - Date.now();
+    return Math.max(0, Math.round(ms / 86400000));
+  }
+
+  /* Causes the hospital has already used, offered back as a datalist. Free text underneath,
+     because the eighth cause is always one nobody thought to list — but without the list,
+     "Incomplete documentation" and "incomplete docs" become two bars on the same Pareto. */
+  function knownCauses() {
+    var seen = {};
+    findings.forEach(function (f) { if (f.cause) seen[f.cause.trim()] = 1; });
+    return Object.keys(seen).sort();
+  }
+
+  var CHAPTERS = ["AAC", "COP", "MOM", "PRE", "HIC", "PSQ", "ROM", "FMS", "HRM", "IMS"];
+
   var KIND_LABEL = { kra: "KRA", kpi: "KPI", committee: "Committee",
                      sop: "SOP", training: "Learning & development", custom: "Custom" };
 
@@ -170,6 +243,48 @@
       head: String(fd.get("head") || "").trim() || null,
       position: rid ? (depts.filter(function (x) { return x.id === rid; })[0] || {}).position || 0
                     : depts.length
+    });
+  }
+
+  /* ---- findings and the month record ---- */
+
+  /* A <input type="month"> gives "2026-09". Everything downstream compares months as ISO
+     dates, so it is normalised to the first here rather than at four separate read sites. */
+  function firstOf(v) {
+    var s = String(v || "").trim();
+    return /^\d{4}-\d{2}$/.test(s) ? s + "-01" : (s || null);
+  }
+
+  async function saveFinding(f) {
+    var fd = new FormData(f), rid = f.getAttribute("data-id");
+    var raised = firstOf(fd.get("raised"));
+    if (!raised) throw new Error("a finding needs the month it was raised");
+    await S.adapter.put(FINDINGS, {
+      id: rid || id("qdf"),
+      raised_month: raised,
+      closed_month: firstOf(fd.get("closed")),
+      chapter: String(fd.get("chapter") || "").trim().toUpperCase() || null,
+      /* Trimmed but not case-folded: the Pareto groups on this string, and a hospital that
+         writes "Expired stock on shelf" deserves to see it back in its own words. The
+         datalist of previous answers is what keeps the groups from splitting. */
+      cause: String(fd.get("cause") || "").trim() || null,
+      dept_id: String(fd.get("dept") || "") || null,
+      severity: String(fd.get("severity") || "nc"),
+      note: String(fd.get("note") || "").trim() || null
+    });
+  }
+
+  async function saveOblig(f) {
+    var fd = new FormData(f), month = f.getAttribute("data-month");
+    var existing = oblig.filter(function (x) { return x.month === month; })[0];
+    await S.adapter.put(OBLIG, {
+      id: (existing && existing.id) || id("qdo"),
+      month: month,
+      evidence_filed_pct: num(fd.get("evidence")),
+      training_closed_pct: num(fd.get("training")),
+      elements_evidenced: num(fd.get("done")),
+      elements_total: num(fd.get("total")),
+      assessment_date: String(fd.get("assess") || "") || null
     });
   }
 
@@ -337,6 +452,192 @@
 
   /* ================================ the dashboard ================================ */
 
+  /* ONE FINDING. Short on purpose: a quality manager records these while walking a ward,
+     and a form long enough to need a desk is a form that gets filled in from memory a week
+     later. Everything optional except the month, because a finding you cannot categorise
+     yet is still a finding, and losing it to a required field is the worse outcome. */
+  function findingForm(f) {
+    f = f || {};
+    var causes = knownCauses();
+    modal("<h3>" + (f.id ? "Edit finding" : "Record a finding") + "</h3>" +
+      '<form id="qdFindingForm"' + (f.id ? ' data-id="' + esc(f.id) + '"' : "") + ">" +
+      '<div class="ws-form">' +
+        '<div class="ws-f"><label>Month raised *</label>' +
+          '<input name="raised" type="month" required value="' +
+          esc((f.raised_month || thisMonth()).slice(0, 7)) + '"></div>' +
+        '<div class="ws-f"><label>Chapter</label><input name="chapter" list="qdChapters" ' +
+          'value="' + esc(f.chapter || "") + '" placeholder="MOM"></div>' +
+        '<datalist id="qdChapters">' +
+          CHAPTERS.map(function (c) { return '<option value="' + c + '">'; }).join("") +
+        "</datalist>" +
+        '<div class="ws-f ws-f-wide"><label>Why did it happen?</label>' +
+          '<input name="cause" list="qdCauses" value="' + esc(f.cause || "") + '" ' +
+          'placeholder="Incomplete documentation" autocomplete="off"></div>' +
+        '<datalist id="qdCauses">' +
+          causes.map(function (c) { return '<option value="' + esc(c) + '">'; }).join("") +
+        "</datalist>" +
+        '<div class="ws-f"><label>Department</label><select name="dept">' +
+          '<option value="">&mdash; not specific &mdash;</option>' +
+          depts.map(function (d) {
+            return '<option value="' + esc(d.id) + '"' +
+              (f.dept_id === d.id ? " selected" : "") + ">" + esc(d.name) + "</option>";
+          }).join("") + "</select></div>" +
+        '<div class="ws-f"><label>Kind</label><select name="severity">' +
+          ["nc:Non-conformity", "observation:Observation", "oi:Opportunity"].map(function (o) {
+            var p = o.split(":");
+            return '<option value="' + p[0] + '"' +
+              ((f.severity || "nc") === p[0] ? " selected" : "") + ">" + p[1] + "</option>";
+          }).join("") + "</select></div>" +
+        '<div class="ws-f"><label>Month closed</label>' +
+          '<input name="closed" type="month" value="' +
+          esc(f.closed_month ? f.closed_month.slice(0, 7) : "") + '"></div>' +
+        '<div class="ws-f ws-f-wide"><label>Note</label>' +
+          '<input name="note" value="' + esc(f.note || "") + '" ' +
+          'placeholder="Anything the next reader needs"></div>' +
+      "</div>" +
+      /* Leaving "month closed" empty is what keeps a finding on the open line. Saying so
+         here saves the support message asking why the count never falls. */
+      '<p class="tr-hint">Leave <b>month closed</b> empty while the finding is still open ' +
+        "&mdash; that is what keeps it on the open-findings line.</p>" +
+      '<div class="ws-modal-actions">' +
+        (f.id ? '<button type="button" class="btn btn-ghost qd-danger" id="qdDelFinding">Delete</button>' : "") +
+        '<button type="button" class="btn btn-ghost" id="qdCancel">Cancel</button>' +
+        '<button type="submit" class="btn btn-primary">Save finding</button></div></form>');
+  }
+
+  /* THE MONTH RECORD. Two percentages and one count — whole-hospital, never per department,
+     because a departmental split of "evidence filed" adds up to a total that means nothing.
+     Committees are absent on purpose: the workspace already runs a committee calendar, and
+     asking for the same figure twice produces two answers and no way to tell which is right. */
+  function obligForm(month) {
+    var o = oblig.filter(function (x) { return x.month === month; })[0] || {};
+    var known = assessmentDate();
+    modal("<h3>" + esc(monthLabel(month)) + " &mdash; evidence and obligations</h3>" +
+      '<form id="qdObligForm" data-month="' + esc(month) + '">' +
+      '<div class="ws-form">' +
+        '<div class="ws-f"><label>Evidence filed (%)</label>' +
+          '<input name="evidence" type="number" step="any" min="0" max="100" value="' +
+          esc(o.evidence_filed_pct == null ? "" : o.evidence_filed_pct) + '" placeholder="78"></div>' +
+        '<div class="ws-f"><label>Training closed (%)</label>' +
+          '<input name="training" type="number" step="any" min="0" max="100" value="' +
+          esc(o.training_closed_pct == null ? "" : o.training_closed_pct) + '" placeholder="61"></div>' +
+        '<div class="ws-f"><label>Elements evidenced</label>' +
+          '<input name="done" type="number" step="1" min="0" value="' +
+          esc(o.elements_evidenced == null ? "" : o.elements_evidenced) + '" placeholder="651"></div>' +
+        '<div class="ws-f"><label>Elements in scope</label>' +
+          '<input name="total" type="number" step="1" min="0" value="' +
+          esc(o.elements_total == null ? "" : o.elements_total) + '" placeholder="745"></div>' +
+        '<div class="ws-f ws-f-wide"><label>Assessment date</label>' +
+          '<input name="assess" type="date" value="' +
+          esc(o.assessment_date || known || "") + '"></div>' +
+      "</div>" +
+      '<p class="tr-hint">The assessment date is carried forward &mdash; enter it once and ' +
+        "every later month keeps counting down to it.</p>" +
+      '<div class="ws-modal-actions">' +
+        '<button type="button" class="btn btn-ghost" id="qdCancel">Cancel</button>' +
+        '<button type="submit" class="btn btn-primary">Save month</button></div></form>');
+  }
+
+  /* The findings half of the overview. Rendered only once there is something to draw —
+     an empty donut beside an empty Pareto is four panels of nothing saying "broken". */
+  function findingsPanels() {
+    var open = openFindings();
+    var months = findingMonths();
+    var ob = latestOblig();
+    var days = daysToAssessment();
+
+    if (!findings.length && !oblig.length) {
+      return '<div class="aqc-panel qd-findings-cta">' +
+        "<h3>Findings, evidence and training</h3>" +
+        "<p class=\"aqc-note\">Record a finding once &mdash; when it was raised, which chapter, " +
+          "and why it happened &mdash; and three charts build themselves from it: findings by " +
+          "chapter, why findings happen, and how many are still open month by month.</p>" +
+        '<div class="ws-f-actions"><button class="btn btn-ghost" id="qdAddMonth2">' +
+          "Enter this month&rsquo;s evidence</button>" +
+          '<button class="btn btn-primary" id="qdAddFinding2">Record a finding</button></div></div>';
+    }
+
+    var trend = months.map(function (m) { return { m: shortMonth(m), v: openAtMonth(m) }; });
+    var rings = [];
+    if (ob && ob.evidence_filed_pct != null) {
+      rings.push({ label: "Evidence filed", pct: num(ob.evidence_filed_pct),
+                   tone: "var(--accent-bright)" });
+    }
+    if (ob && ob.training_closed_pct != null) {
+      rings.push({ label: "Training closed", pct: num(ob.training_closed_pct),
+                   tone: num(ob.training_closed_pct) >= 80 ? "var(--ok)" : "var(--nc)" });
+    }
+
+    var head =
+      '<div class="qd-cards">' +
+        C.card({ label: "Open findings", value: open.length, higherIsBetter: false,
+                 note: findings.length + " recorded in total" }) +
+        C.card({ label: "Closed", value: findings.length - open.length,
+                 note: "resolved and evidenced" }) +
+        (ob && ob.elements_total
+          ? C.card({ label: "Elements evidenced",
+                     value: (ob.elements_evidenced || 0) + " / " + ob.elements_total,
+                     note: monthLabel(ob.month) })
+          : "") +
+        (days != null
+          ? C.card({ label: "Assessment window", value: days, unit: " days",
+                     note: assessmentDate() })
+          : "") +
+      "</div>";
+
+    return head +
+      '<div class="qd-grid2">' +
+        '<div class="aqc-panel"><h3>Findings by chapter</h3>' +
+          '<p class="aqc-note">Every finding recorded, grouped by the chapter it was raised ' +
+            "against.</p>" +
+          C.pie(tally(findings, "chapter"),
+                { centre: String(findings.length), centreSub: "findings",
+                  empty: "No findings recorded yet." }) + "</div>" +
+        '<div class="aqc-panel"><h3>Why findings happen</h3>' +
+          '<p class="aqc-note">The line is the running share. Where it flattens, the rest is ' +
+            "detail &mdash; fix what is left of it.</p>" +
+          C.pareto(tally(findings, "cause"), { empty: "No causes recorded yet." }) + "</div>" +
+      "</div>" +
+      '<div class="qd-grid2">' +
+        '<div class="aqc-panel"><h3>Still open, month by month</h3>' +
+          '<p class="aqc-note">Raised on or before the month and not closed until after it. ' +
+            "Only months you have recorded are drawn.</p>" +
+          C.area(trend, { zeroBased: true, label: "Open findings by month",
+                          empty: "Two months of findings will draw the trend." }) + "</div>" +
+        '<div class="aqc-panel"><h3>Evidence and training</h3>' +
+          (rings.length
+            ? C.rings(rings, days == null ? {} : { centre: { value: String(days), label: "days" } })
+            : '<p class="aqc-empty">No month record entered yet.</p>') +
+          '<div class="ws-f-actions"><button class="btn btn-ghost" id="qdAddMonth2">' +
+            "Enter this month&rsquo;s figures</button></div>" +
+        "</div>" +
+      "</div>" +
+      '<div class="aqc-panel"><h3>Every finding</h3>' + findingTable() + "</div>";
+  }
+
+  function findingTable() {
+    if (!findings.length) return '<p class="aqc-empty">Nothing recorded yet.</p>';
+    var deptName = {};
+    depts.forEach(function (d) { deptName[d.id] = d.name; });
+    var rows = findings.slice().sort(function (a, b) {
+      return String(b.raised_month || "").localeCompare(String(a.raised_month || ""));
+    });
+    return '<div class="ws-tablewrap"><table class="ws-table"><thead><tr>' +
+      "<th>Raised</th><th>Chapter</th><th>Why</th><th>Department</th>" +
+      "<th>Status</th><th></th></tr></thead><tbody>" +
+      rows.map(function (f) {
+        return "<tr><td>" + esc(shortMonth(f.raised_month)) + "</td>" +
+          "<td>" + esc(f.chapter || "—") + "</td>" +
+          "<td>" + esc(f.cause || "—") + "</td>" +
+          "<td>" + esc(f.dept_id ? (deptName[f.dept_id] || "—") : "—") + "</td>" +
+          '<td>' + (f.closed_month
+            ? '<span class="qd-badge ok">Closed ' + esc(shortMonth(f.closed_month)) + "</span>"
+            : '<span class="qd-badge nc">Open</span>') + "</td>" +
+          '<td><button class="qd-linkbtn" data-editfinding="' + esc(f.id) + '">Edit</button></td>' +
+          "</tr>";
+      }).join("") + "</tbody></table></div>";
+  }
+
   function overview() {
     if (!depts.length) return setupIntro();
 
@@ -390,7 +691,15 @@
         C.bars(scored.map(function (x) {
           return { label: x.d.name, v: x.score == null ? 0 : x.score, tone: x.band.tone };
         }), { pct: true, max: 100, empty: "No figures entered yet." }) + "</div>" +
-      '<div class="qd-depts">' + scored.map(deptCard).join("") + "</div>";
+      '<div class="qd-depts">' + scored.map(deptCard).join("") + "</div>" +
+      /* The findings half sits BELOW the departments, not above. Attainment is the question
+         the hospital came to answer; findings are what explains it. Leading with the
+         findings would open the page on bad news out of context. */
+      '<h2 class="qd-section">Findings, evidence and training</h2>' +
+      '<div class="ws-f-actions qd-section-actions">' +
+        '<button class="btn btn-ghost" id="qdAddMonth2">This month&rsquo;s figures</button>' +
+        '<button class="btn btn-primary" id="qdAddFinding2">Record a finding</button></div>' +
+      findingsPanels();
   }
 
   function deptCard(x) {
@@ -555,6 +864,8 @@
       depts = (await S.adapter.list(DEPTS)) || [];
       metrics = (await S.adapter.list(METRICS)) || [];
       readings = (await S.adapter.list(READINGS)) || [];
+      findings = (await S.adapter.list(FINDINGS)) || [];
+      oblig = (await S.adapter.list(OBLIG)) || [];
       schemaMissing = false;
     } catch (err) {
       var msg = String((err && err.message) || err || "");
@@ -562,9 +873,9 @@
          up as a setup step — the hospital would go looking in the wrong place. */
       if (msg.indexOf("PGRST205") > -1 || /schema cache|does not exist/i.test(msg)) {
         schemaMissing = true;
-        depts = []; metrics = []; readings = [];
+        depts = []; metrics = []; readings = []; findings = []; oblig = [];
       } else {
-        depts = []; metrics = []; readings = [];
+        depts = []; metrics = []; readings = []; findings = []; oblig = [];
         var host = document.getElementById("qdPanel");
         if (host) {
           host.innerHTML = '<div class="ws-empty"><p><b>Could not load your dashboard.</b></p>' +
@@ -580,8 +891,9 @@
   function schemaNotice() {
     return '<div class="qd-intro">' +
       "<h2>One step of setup is missing</h2>" +
-      "<p>This page stores your departments and their measures in three tables that are not " +
-      "in your database yet. They ship with the platform &mdash; run " +
+      "<p>This page stores your departments, their measures, your findings and each " +
+      "month&rsquo;s evidence in five tables that are not in your database yet. They ship " +
+      "with the platform &mdash; run " +
       "<code>workspace/schema.sql</code> against your Supabase project (or just the block at " +
       "the end of it, headed <em>THE HOSPITAL&rsquo;S OWN QUALITY DASHBOARD</em>) and reload " +
       "this page.</p>" +
@@ -613,6 +925,16 @@
       if (ed) {
         var de = depts.filter(function (x) { return x.id === ed.getAttribute("data-editdept"); })[0];
         if (de) deptForm(de);
+        return;
+      }
+      if (e.target.id === "qdAddFinding2") { findingForm(); return; }
+      if (e.target.id === "qdAddMonth2") { obligForm(thisMonth()); return; }
+      var ef = e.target.closest("[data-editfinding]");
+      if (ef) {
+        var fe = findings.filter(function (x) {
+          return x.id === ef.getAttribute("data-editfinding");
+        })[0];
+        if (fe) findingForm(fe);
       }
     });
 
@@ -628,6 +950,8 @@
         if (f.id === "qdDeptForm") await saveDept(f);
         else if (f.id === "qdMetricsForm") await saveMetrics(f);
         else if (f.id === "qdMonthForm") await saveMonth(f);
+        else if (f.id === "qdFindingForm") await saveFinding(f);
+        else if (f.id === "qdObligForm") await saveOblig(f);
       } catch (err) {
         W.toast("Could not save: " + (err && err.message || err), "bad");
         return;
@@ -656,6 +980,19 @@
         }
         await S.adapter.remove(DEPTS, rid);
         openDept = null;
+        close();
+        await refresh();
+        return;
+      }
+      if (e.target.id === "qdDelFinding") {
+        var ff = document.getElementById("qdFindingForm");
+        var fid = ff && ff.getAttribute("data-id");
+        if (!fid) return;
+        /* Deleting a finding rewrites history on three charts at once, so it asks first —
+           and the wording says so, because "Delete?" reads as undoable and this is not. */
+        if (!confirm("Delete this finding? It will disappear from the chapter chart, the " +
+                     "Pareto and the open-findings trend.")) return;
+        await S.adapter.remove(FINDINGS, fid);
         close();
         await refresh();
       }
