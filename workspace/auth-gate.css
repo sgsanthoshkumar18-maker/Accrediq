@@ -15,7 +15,7 @@
 .aq-gate-box label{display:block;font-size:12px;font-weight:700;color:var(--fg-muted,#9A9FC2);margin:12px 0 5px;}
 .aq-gate-box input{width:100%;padding:10px 12px;border:1px solid var(--border,#272C50);border-radius:9px;
   background:var(--bg,#0a0d1f);color:var(--fg,#F1F2FA);font-family:inherit;font-size:14px;}
-.aq-gate-box input:focus{outline:none;border-color:var(--brand-2,#4C6FFF);}
+.aq-gate-box input:focus{border-color:var(--brand-2,#4C6FFF);}
 .aq-gate-box .btn{width:100%;margin-top:18px;justify-content:center;}
 .aq-gate-msg{font-size:12.5px;color:var(--warn,#F59E0B);margin-top:12px;line-height:1.55;}
 .aq-gate-back{display:inline-block;margin-top:18px;font-size:12.5px;color:var(--fg-faint,#7C81A6);

@@ -15,7 +15,7 @@
 .icd-row{display:flex;gap:8px;flex-wrap:wrap;margin-top:8px;}
 .icd-input{flex:1;min-width:180px;background:var(--bg);color:var(--fg);border:1px solid var(--border);
   border-radius:10px;padding:12px 14px;font-size:15px;font-family:var(--font-body);}
-.icd-input:focus{outline:none;border-color:var(--brand-2);}
+.icd-input:focus{border-color:var(--brand-2);}
 .icd-chips{display:flex;flex-wrap:wrap;gap:6px;margin-top:10px;}
 .icd-chip{font-size:11.5px;background:var(--brand-tint);color:var(--accent-text);border:1px solid transparent;
   border-radius:999px;padding:5px 12px;cursor:pointer;font-family:var(--font-body);}

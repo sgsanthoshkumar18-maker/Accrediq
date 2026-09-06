@@ -149,7 +149,7 @@
 .ct-f textarea{resize:vertical;min-height:110px;}
 .ct-f input::placeholder,.ct-f textarea::placeholder{color:var(--fg-faint);}
 .ct-f input:focus,.ct-f textarea:focus{
-  outline:none;border-color:var(--brand-2);box-shadow:0 0 0 3px var(--accent-bright-tint);
+  border-color:var(--brand-2);box-shadow:0 0 0 3px var(--accent-bright-tint);
 }
 /* Off-screen rather than display:none — some bots skip hidden inputs, and a field that is
    not rendered cannot be filled, which defeats the point of a honeypot. */

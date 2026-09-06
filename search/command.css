@@ -34,7 +34,6 @@
   color: var(--fg);
   font-size: 16px;
   padding: 18px 20px;
-  outline: none;
   font-family: inherit;
 }
 .cmdk-input::placeholder { color: var(--fg-faint); }

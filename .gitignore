@@ -4,3 +4,8 @@
 videos/media/
 *.mov
 *.MOV
+
+# Third-party design skill, installed for Claude Code only. Five megabytes of
+# CSV lookup tables that the site never loads — and Vercel deploys whatever is
+# committed here, so it stays out of the history.
+.claude/skills/

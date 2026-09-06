@@ -7,7 +7,7 @@
 .kyh-hint{font-size:11.5px;color:var(--fg-faint);line-height:1.55;margin-bottom:8px;}
 .kyh-input,.kyh-select{width:100%;background:var(--bg);color:var(--fg);border:1px solid var(--border);
   border-radius:10px;padding:12px 14px;font-size:14.5px;font-family:var(--font-body);line-height:1.6;}
-.kyh-input:focus,.kyh-select:focus{outline:none;border-color:var(--brand-2);}
+.kyh-input:focus,.kyh-select:focus{border-color:var(--brand-2);}
 .kyh-input{resize:vertical;min-height:150px;}
 .kyh-chips{display:flex;flex-wrap:wrap;gap:6px;margin-top:9px;}
 .kyh-chip{font-size:11.5px;background:var(--brand-tint);color:var(--accent-text);border:1px solid transparent;

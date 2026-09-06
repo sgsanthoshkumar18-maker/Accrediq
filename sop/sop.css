@@ -13,7 +13,7 @@
   border-radius:10px;padding:11px 13px;font-size:14px;font-family:var(--font-body);
 }
 .sop-textarea{resize:vertical;}
-.sop-textarea:focus,.sop-input:focus,.sop-select:focus{outline:none;border-color:var(--brand-2);}
+.sop-textarea:focus,.sop-input:focus,.sop-select:focus{border-color:var(--brand-2);}
 .sop-textarea.is-error{border-color:var(--nc);}
 .sop-chips{display:flex;flex-wrap:wrap;gap:6px;margin-top:9px;}
 .sop-chip{font-size:11.5px;background:var(--brand-tint);color:var(--accent-text);border:1px solid transparent;

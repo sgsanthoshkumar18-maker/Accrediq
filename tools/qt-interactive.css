@@ -18,7 +18,7 @@
   border:1px solid var(--border);border-radius:9px;padding:10px 12px;line-height:1.5;
   transition:border-color .15s ease,box-shadow .15s ease;}
 .qt-panel textarea{resize:vertical;min-height:44px;}
-.qt-panel input:focus,.qt-panel textarea:focus,.qt-panel select:focus{outline:none;
+.qt-panel input:focus,.qt-panel textarea:focus,.qt-panel select:focus{
   border-color:var(--brand-2);box-shadow:0 0 0 3px var(--brand-tint);}
 
 .fw-whys{display:grid;gap:14px;margin-bottom:20px;

@@ -16,7 +16,7 @@
 .sv-opt-lbl,.sv-opt{font-family:var(--font-body);}
 .sv-input{width:100%;background:var(--bg);color:var(--fg);border:1px solid var(--border);
   border-radius:10px;padding:11px 13px;font-size:15px;font-family:var(--font-body);}
-.sv-input:focus{outline:none;border-color:var(--brand-2);}
+.sv-input:focus{border-color:var(--brand-2);}
 .sv-opt-note,.sv-opt{font-size:14px;}
 .sv-start{width:100%;justify-content:center;margin-top:18px;}
 .sv-note{font-size:11px;color:var(--fg-faint);line-height:1.65;margin-top:14px;

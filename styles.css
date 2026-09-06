@@ -364,6 +364,19 @@
 
 *,*::before,*::after{box-sizing:border-box;}
 html{scroll-behavior:smooth;}
+
+/* The focus ring is defined once, further down this file, and nothing may switch it off.
+   Seventeen rules used to — outline:none — and put back either nothing at all or a border
+   that merely changed colour. A colour-only change is invisible to a colour-blind reader
+   and silent to a screen reader, so a keyboard user filling in the audit form had no way
+   to tell which field they were on. The rule below them was always right; it was simply
+   outranked. Do not write outline:none again: to quiet the ring for mouse users, the
+   browser already does that for you through :focus-visible. */
+
+/* The header, news bar and quote bar are sticky, so a ring on an element scrolled to the
+   very top would sit behind them. WCAG 2.2 "Focus Not Obscured" — measured, not guessed:
+   header 74 + news 38 + quote 34 = 146px on a wide screen, so 160 leaves a little air. */
+html{scroll-padding-top:160px;}
 body{
   margin:0;
   background:var(--bg);
@@ -944,7 +957,7 @@ a.tile:hover .more{text-decoration:underline;}
 .dash-toolbar{display:flex;gap:10px;flex-wrap:wrap;align-items:center;justify-content:space-between;margin-bottom:26px;}
 .dash-search{flex:1;min-width:220px;position:relative;}
 .dash-search input{width:100%;padding:13px 16px 13px 42px;border-radius:999px;border:1px solid var(--border);background:var(--bg-elevated);font-size:14.5px;font-family:var(--font-body);box-shadow:var(--shadow-1);}
-.dash-search input:focus{outline:none;border-color:var(--brand-2);}
+.dash-search input:focus{border-color:var(--brand-2);}
 .dash-search svg{position:absolute;left:15px;top:50%;transform:translateY(-50%);color:var(--fg-faint);}
 
 .dept-grid{display:grid;grid-template-columns:repeat(4,1fr);gap:16px;}
@@ -1069,7 +1082,7 @@ a.tile:hover .more{text-decoration:underline;}
 .aq-search-box{width:100%;max-width:620px;background:var(--bg-elevated);border:1px solid var(--border);
   border-radius:var(--r-lg);box-shadow:var(--shadow-2);overflow:hidden;}
 .aq-search-input-row{display:flex;align-items:center;gap:10px;padding:14px 16px;border-bottom:1px solid var(--border-soft);color:var(--fg-faint);}
-.aq-search-input-row input{flex:1;background:none;border:none;outline:none;color:var(--fg);
+.aq-search-input-row input{flex:1;background:none;border:none;color:var(--fg);
   font-size:15.5px;font-family:var(--font-body);}
 .aq-search-input-row input::placeholder{color:var(--fg-faint);}
 .aq-search-input-row kbd{font-family:var(--font-mono);font-size:10px;color:var(--fg-faint);

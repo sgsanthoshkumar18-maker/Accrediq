@@ -88,7 +88,7 @@
 /* ---------- edit mode ---------- */
 .da-edit-in{width:100%;background:var(--bg);color:var(--fg);border:1px solid var(--border-strong,var(--border));
   border-radius:var(--r-sm);padding:7px 9px;font:inherit;font-size:13px;}
-.da-edit-in:focus{outline:none;border-color:var(--brand-2);box-shadow:0 0 0 3px var(--brand-tint);}
+.da-edit-in:focus{border-color:var(--brand-2);box-shadow:0 0 0 3px var(--brand-tint);}
 .da-edit-in.mono{font-family:var(--font-mono);}
 .da-edit-bar{display:flex;flex-wrap:wrap;align-items:center;gap:10px;background:var(--accent-bright-tint,var(--surface-1));
   border-radius:var(--r-md);padding:12px 14px;font-size:13px;color:var(--fg-muted);}

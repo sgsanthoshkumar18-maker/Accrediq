@@ -32,7 +32,7 @@
 .ws-auth label{display:block;font-size:12.5px;font-weight:700;color:var(--fg-muted);margin:12px 0 5px;}
 .ws-auth input{width:100%;padding:10px 12px;border:1px solid var(--border);border-radius:9px;
   background:var(--bg);color:var(--fg);font-family:inherit;font-size:14px;}
-.ws-auth input:focus{outline:none;border-color:var(--brand-2);box-shadow:0 0 0 3px var(--brand-tint);}
+.ws-auth input:focus{border-color:var(--brand-2);box-shadow:0 0 0 3px var(--brand-tint);}
 .ws-auth .btn{width:100%;margin-top:18px;justify-content:center;}
 .ws-auth-tabs{display:flex;gap:4px;margin-bottom:6px;}
 .ws-auth-tabs button{flex:1;padding:9px;border:1px solid var(--border);background:transparent;
@@ -87,7 +87,7 @@
 .ws-filters input[type=search],.ws-filters select{padding:9px 12px;border:1px solid var(--border);
   border-radius:9px;background:var(--bg-elevated);color:var(--fg);font-family:inherit;font-size:13.5px;}
 .ws-filters input[type=search]{min-width:230px;flex:1;}
-.ws-filters input:focus,.ws-filters select:focus{outline:none;border-color:var(--brand-2);}
+.ws-filters input:focus,.ws-filters select:focus{border-color:var(--brand-2);}
 .ws-check{display:flex;align-items:center;gap:7px;font-size:13px;color:var(--fg-muted);cursor:pointer;}
 .ws-count{font-family:var(--font-mono);font-size:12px;color:var(--fg-faint);margin-bottom:12px;display:block;}
 
@@ -114,7 +114,7 @@
 @media (max-width:900px){.ws-el-meta{grid-template-columns:1fr 1fr;}}
 .ws-in{padding:7px 10px;border:1px solid var(--border);border-radius:8px;background:var(--bg);
   color:var(--fg);font-family:inherit;font-size:12.5px;min-width:0;}
-.ws-in:focus{outline:none;border-color:var(--brand-2);}
+.ws-in:focus{border-color:var(--brand-2);}
 .ws-in:disabled{opacity:.55;}
 .ws-el-status{display:flex;gap:5px;flex-shrink:0;}
 .ws-sbtn{-webkit-appearance:none;appearance:none;font:inherit;cursor:pointer;min-width:44px;
@@ -189,7 +189,7 @@
 .ws-f input,.ws-f select,.ws-f textarea{padding:9px 11px;border:1px solid var(--border);
   border-radius:8px;background:var(--bg);color:var(--fg);font-family:inherit;font-size:13.5px;}
 .ws-f textarea{resize:vertical;}
-.ws-f input:focus,.ws-f select:focus,.ws-f textarea:focus{outline:none;border-color:var(--brand-2);
+.ws-f input:focus,.ws-f select:focus,.ws-f textarea:focus{border-color:var(--brand-2);
   box-shadow:0 0 0 3px var(--brand-tint);}
 .ws-modal-actions{display:flex;gap:10px;justify-content:flex-end;margin-top:20px;}
 
@@ -215,7 +215,7 @@
 .ws-select{padding:9px 13px;border:1px solid var(--border);border-radius:999px;
   background:var(--bg-elevated);color:var(--fg);font-size:13px;font-weight:600;
   min-height:40px;cursor:pointer;font-family:inherit;}
-.ws-select:focus{outline:none;border-color:var(--brand-2);}
+.ws-select:focus{border-color:var(--brand-2);}
 @media (max-width:760px){.reg-filters{width:100%;}.ws-select{flex:1;}}
 
 /* Pin control. Sits beside the mode notice at the top of each workspace page. */
@@ -506,7 +506,6 @@
 .wsq .ws-modal-in{max-width:640px;padding:0;overflow:hidden;}
 #wsqInput{width:100%;padding:18px 22px;border:0;border-bottom:1px solid var(--border);
   background:transparent;color:var(--fg);font-size:16px;font-family:inherit;}
-#wsqInput:focus{outline:none;}
 #wsqResults{max-height:56vh;overflow-y:auto;padding:8px;}
 .wsq-empty{padding:26px 20px;text-align:center;font-size:13px;color:var(--fg-faint);}
 .wsq-group>span{display:block;font-size:10.5px;font-weight:700;text-transform:uppercase;
