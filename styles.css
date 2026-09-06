@@ -482,6 +482,53 @@ p{margin:0 0 0;}
   border-bottom:0;
 }
 .site-header .bar{display:flex;align-items:center;justify-content:space-between;padding:15px 28px;gap:20px;}
+
+/* ---------- the streak between the bands ----------
+   A ray of light under the navigation, under the health alerts and under the quote, so those
+   three rows read as lifted off the page rather than stacked on it.
+
+   IT IS ONE PIXEL AND NO MARKUP. A pseudo-element on each band, two gradient layers on it: a
+   constant line, and a narrow glint that travels across. Only background-position animates,
+   which the compositor handles, so this costs nothing per frame and nothing in layout.
+
+   THE FADE IS THE SHAPE OF THE LIGHT, NOT A SECOND EFFECT. A mask tapers the whole strip, so
+   the glint dims as it travels and dies out to the right instead of stopping at an edge. The
+   line itself is tapered by the same mask, which is why it reads as a ray with an origin
+   rather than a rule someone drew across the page.
+
+   Every colour is the accent token, so dark, light and neon follow with no per-theme branch. */
+.site-header::after,
+.aq-news::after,
+.aq-quote::after{
+  content:"";
+  position:absolute;left:0;right:0;bottom:0;height:1px;
+  pointer-events:none;
+  background-image:
+    linear-gradient(90deg, transparent 0%, var(--accent-bright) 50%, transparent 100%),
+    linear-gradient(90deg, var(--accent-bright) 0%, var(--accent-bright) 100%);
+  background-size:26% 100%, 100% 100%;
+  background-repeat:no-repeat;
+  background-position:-32% 0, 0 0;
+  -webkit-mask-image:linear-gradient(90deg,#000 0%,rgba(0,0,0,.34) 38%,transparent 100%);
+  mask-image:linear-gradient(90deg,#000 0%,rgba(0,0,0,.34) 38%,transparent 100%);
+  opacity:.85;
+  animation:aq-glint 5.5s linear infinite;
+}
+/* The pass takes just over half the cycle; the rest is the rest. A light that restarts the
+   instant it finishes reads as a loading bar, not as something passing through. */
+@keyframes aq-glint{
+  0%   {background-position:-32% 0, 0 0;}
+  55%  {background-position:132% 0, 0 0;}
+  100% {background-position:132% 0, 0 0;}
+}
+/* A moving light at the edge of vision is the first thing that becomes tiring, and for some
+   readers it is genuinely disabling. Reduced motion gets the static ray — not a slower
+   animation, none. The line stays, so nothing is lost but the movement. */
+@media (prefers-reduced-motion:reduce){
+  .site-header::after,
+  .aq-news::after,
+  .aq-quote::after{animation:none;background-position:0 0, 0 0;}
+}
 .brand{display:flex;align-items:center;gap:12px;font-family:var(--font-display);font-weight:700;font-size:19px;letter-spacing:-.02em;color:var(--fg);}
 .brand svg{flex-shrink:0;}
 .brand .full-name{display:block;font-family:var(--font-body);font-weight:600;font-size:9.5px;letter-spacing:.06em;text-transform:uppercase;color:var(--fg-faint);margin-top:1px;}
