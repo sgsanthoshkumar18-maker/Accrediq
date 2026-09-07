@@ -570,6 +570,50 @@ p{margin:0 0 0;}
 .brand .full-name i{font-style:normal;white-space:nowrap;}
 .brand-stack{display:flex;flex-direction:column;align-items:center;line-height:1.1;}
 
+/* ---- SWEEP + ARC -------------------------------------------------------------
+   A band of brand colour travels through the letters, A to x, while the logo's arc
+   draws itself around the circle — both on the same 1.5s curve, so the mark and the
+   name read as one gesture rather than two things that happen to move at once.
+
+   The gradient is painted INTO the glyphs with background-clip:text, so the light is
+   inside the letterforms; a shape passing over them would look like a reflection on
+   glass, which is a different and cheaper effect.
+
+   It runs ONCE per page load and never loops. This sits in the header of every page,
+   and a shimmer that repeats is charming for ten seconds and then it is a fly in the
+   room for the rest of the visit. */
+.brand-mark{gap:11px;}
+.brand-mk{flex:0 0 auto;display:block;}
+.brand-word{
+  background-image:linear-gradient(100deg,
+    var(--fg) 0%, var(--fg) 40%,
+    var(--accent-bright) 50%,
+    var(--fg) 60%, var(--fg) 100%);
+  background-size:280% 100%;
+  background-position:120% 0;
+  -webkit-background-clip:text;background-clip:text;
+  -webkit-text-fill-color:transparent;color:transparent;
+  animation:aq-brand-sweep 1.5s cubic-bezier(.4,0,.25,1) forwards;
+}
+@keyframes aq-brand-sweep{
+  from{background-position:120% 0;}
+  to{background-position:-40% 0;}
+}
+/* 96 is the circumference of an r=16 circle to the nearest whole number, which is what
+   lets the dash offset hide and then reveal exactly one full turn. */
+.brand-arc{stroke-dasharray:96;stroke-dashoffset:96;
+  animation:aq-brand-arc 1.5s cubic-bezier(.4,0,.25,1) forwards;}
+@keyframes aq-brand-arc{to{stroke-dashoffset:0;}}
+
+/* Anyone who has asked for less motion gets no sweep and no draw — and, critically, the
+   letters go back to being plain ink rather than being left stranded mid-gradient with a
+   transparent fill, which would render the brand invisible. */
+@media (prefers-reduced-motion:reduce){
+  .brand-word{animation:none;background-image:none;
+    -webkit-text-fill-color:var(--fg);color:var(--fg);}
+  .brand-arc{animation:none;stroke-dashoffset:0;}
+}
+
 /* THE STRAPLINE COSTS 210px AND THE HEADER CANNOT ALWAYS SPARE IT.
    Brand 210 + navigation 528 + actions 599 = 1337px of content in a 1124px bar, which is
    exactly the 125px of horizontal scrollbar this produced on a 1366px laptop. Measured, not
@@ -737,7 +781,6 @@ p{margin:0 0 0;}
 .hero h1{color:var(--fg);}
 /* Header brand without the mark. The mark moved to the hero, where it has room to be
    read; up here the wordmark carries the identity and the nav gets the space back. */
-.brand-nomark{gap:0;}
 
 /* Hero lockup: the mark sits left of the headline and is sized off the headline's own
    line-height, so it spans both lines exactly rather than being a guessed pixel value

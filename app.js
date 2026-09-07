@@ -108,8 +108,23 @@
     <div class="aq-edition">Element codes follow the <b>NABH Hospital Accreditation Standards, 6th Edition</b> — effective 1 January 2025. The descriptions are AQcredix&rsquo;s own wording, not the official text. For exact wording see <a href="https://nabh.co/explore-nabh-standards/" target="_blank" rel="noopener noreferrer">NABH</a>.</div>
     <header class="site-header">
       <div class="bar wrap">
-        <a href="${base}index.html" class="brand brand-nomark">
-          <span class="brand-stack">AQcredix<span class="full-name"><i>Accreditation &amp; Quality</i><i>Implementation Guidance Platform</i></span></span>
+        <!-- THE MARK IS BACK IN THE HEADER, and it takes tokens rather than the footer's
+             hardcoded #D8E0E6 / #4C6FFF, so the ring and the arc follow light, dark and
+             neon instead of staying a pale grey that vanishes on white.
+             aria-hidden because the link's own text already says AQcredix; announcing the
+             mark as well would read the brand twice to a screen reader. -->
+        <a href="${base}index.html" class="brand brand-mark">
+          <svg class="brand-mk" width="38" height="38" viewBox="0 0 40 40" fill="none" aria-hidden="true">
+            <!-- currentColor, not a border token. --border-strong resolves to the accent
+                 blue in the dark theme, which made the ring the same colour as the arc and
+                 left the draw with nothing to draw over. currentColor is the brand text
+                 colour — near-black on white, near-white on black — so at 18% it is a soft
+                 neutral in both, and the blue arc always reads against it. -->
+            <circle cx="20" cy="20" r="16" stroke="currentColor" stroke-opacity=".18" stroke-width="3.4"/>
+            <path class="brand-arc" d="M20 4a16 16 0 1 1-11.31 4.69" stroke="var(--accent-bright)" stroke-width="3.4" stroke-linecap="round"/>
+            <path d="M19.15 14.05H20.85L25.61 25.015H26.97V25.95H22.21V25.015H23.315L22 22H18L16.685 25.015H17.79V25.95H13.03V25.015H14.39ZM20 16.26L22.027 20.935H17.973Z" fill="var(--accent-bright)" fill-rule="evenodd"/>
+          </svg>
+          <span class="brand-stack"><span class="brand-word">AQcredix</span><span class="full-name"><i>Accreditation &amp; Quality</i><i>Implementation Guidance Platform</i></span></span>
         </a>
         <nav class="main-nav" id="mainNav">${links}<a href="${base}workspace/start.html" class="nav-workspace-menu">Enter your hospital</a><a href="${base}dashboard.html" class="nav-mobile-only">Quality Dashboard</a></nav>
         <div class="nav-actions">
