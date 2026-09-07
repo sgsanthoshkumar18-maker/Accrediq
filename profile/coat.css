@@ -1,82 +1,54 @@
 /* The scroll-scrubbed founder sequence.
  *
+ * TWO COLUMNS, AND THAT IS THE WHOLE POINT.
+ * The first version painted the headline across the middle of the figure. It looked
+ * composed in a mockup and was unreadable on the page: a serif line lying over a white
+ * coat, with the eyebrow lost entirely against his chest. Words and picture were competing
+ * for the same pixels and the words lost.
+ *
+ * So the figure holds one column and the copy flows up the other. The figure is pinned and
+ * turns; the text scrolls past it normally. Neither ever overlaps the other.
+ *
+ * IT PINS ON THE RIGHT, AND THAT IS DELIBERATE TOO.
+ * motion/motion.css pins .scrolly-sticky on the LEFT for the section immediately below
+ * this one. Pinning this one on the right makes the two alternate down the page — still,
+ * moving, still — instead of two consecutive sections with a frozen left edge, which reads
+ * as one long stuck panel.
+ *
  * THE SECTION IS NOT IN THE PAGE UNTIL A FRAME HAS DRAWN. display:none rather than
- * opacity, so a portfolio missing its renders has no gap in it at all — no empty
- * four-hundred-vh hole to scroll through, no black canvas. coat.js sets data-coat-ready
- * only once the first image has decoded. */
+ * opacity, so a portfolio missing its renders has no gap in it at all. coat.js sets
+ * data-coat-ready only once the first image has loaded.
+ */
 .coat { display: none; }
 .coat[data-coat-ready="1"] { display: block; }
 
-/* The scroll runway. Height is what buys the sequence its length: at 460vh the figure
-   turns and the camera pushes in over about four and a half screens of scrolling — slow
-   enough to read as deliberate, short enough that nobody feels trapped in it. */
-.coat {
-  --coat-run: 460vh;
-  position: relative;
-  height: var(--coat-run);
-  /* Sits against the page's own ground rather than declaring a colour of its own, so the
-     cut-out renders correctly on both themes from one set of frames. */
-  background: transparent;
-}
+.coat { position: relative; background: transparent; }
 
-.coat-stage {
-  position: sticky;
-  top: 0;
-  height: 100vh;
-  overflow: hidden;
-  isolation: isolate;
-}
-
-.coat-canvas {
-  display: block;
-  width: 100%;
-  height: 100%;
-  background: transparent;
-}
-
-/* ATMOSPHERE, NOT DECORATION.
-   A soft pool of light behind the figure and a darkening at the edges. Both strengthen as
-   the camera pushes in, which is what makes the move feel like a camera settling on a
-   subject rather than an image being scaled. Driven by --coat-p, the same measurement that
-   picks the frame, so they can never drift apart. Behind the canvas, never over it. */
-.coat-glow {
-  position: absolute;
-  inset: 0;
-  z-index: -1;
-  pointer-events: none;
-  background:
-    radial-gradient(58% 46% at 50% 46%,
-      color-mix(in srgb, var(--accent-bright) 13%, transparent) 0%,
-      transparent 70%);
-  opacity: calc(0.35 + var(--coat-p, 0) * 0.65);
-}
-.coat-vignette {
-  position: absolute;
-  inset: 0;
-  pointer-events: none;
-  background: radial-gradient(72% 62% at 50% 48%, transparent 55%,
-              color-mix(in srgb, var(--bg) 82%, transparent) 100%);
-  opacity: calc(0.28 + var(--coat-p, 0) * 0.5);
-}
-
-/* ---- the copy, in beats ----
-   Three lines that cross-fade as the figure turns, rather than one caption sitting there
-   for four screens. Stacked in the same grid cell so they occupy identical space and the
-   layout never shifts between them — a caption that moves as it changes reads as a bug. */
-.coat-copy {
-  position: absolute;
-  left: 0; right: 0;
-  bottom: clamp(46px, 9vh, 96px);
-  padding: 0 clamp(20px, 6vw, 68px);
+/* The runway is the TEXT COLUMN's natural height, not a hard --coat-run. Three blocks of
+   roughly a screen each is how long the section lasts, so adding or cutting a line changes
+   the pacing correctly instead of leaving a fixed height that no longer matches its
+   contents. Same reasoning as .scrolly-steps next door. */
+.coat-grid {
   display: grid;
-  pointer-events: none;
-  text-align: center;
+  grid-template-columns: minmax(0, 0.95fr) minmax(0, 1.3fr);
+  gap: clamp(28px, 4vw, 56px);
+  align-items: start;
 }
+
+.coat-text { padding: 12vh 0 14vh; min-width: 0; }
+
 .coat-beat {
-  grid-area: 1 / 1;
-  opacity: 0;
-  will-change: opacity, transform;
+  min-height: 84vh;
+  display: flex;
+  flex-direction: column;
+  justify-content: center;
+  /* Dimmed rather than hidden: the reader can see what is coming and what has passed,
+     which is what makes a scrolling column read as one argument rather than three slides. */
+  opacity: .3;
+  transition: opacity 420ms ease;
 }
+.coat-beat.is-on { opacity: 1; }
+
 .coat-beat .k {
   display: block;
   font-family: var(--font-mono);
@@ -84,32 +56,55 @@
   letter-spacing: .18em;
   text-transform: uppercase;
   color: var(--accent-text);
-  margin-bottom: 10px;
+  margin-bottom: 12px;
 }
 .coat-beat h2 {
   font-family: var(--font-display);
-  font-size: clamp(23px, 3.9vw, 44px);
-  line-height: 1.14;
+  font-size: clamp(24px, 2.9vw, 40px);
+  line-height: 1.16;
   letter-spacing: -.02em;
   text-wrap: balance;
-  margin: 0 auto;
-  max-width: 22ch;
+  margin: 0;
+  max-width: 18ch;
 }
 .coat-beat p {
-  margin: 10px auto 0;
-  max-width: 54ch;
+  margin: 12px 0 0;
+  max-width: 44ch;
   color: var(--fg-muted);
-  font-size: clamp(13.5px, 1.4vw, 16px);
-  line-height: 1.6;
+  font-size: clamp(14px, 1.15vw, 16px);
+  line-height: 1.65;
+}
+
+/* ---- the pinned figure ---- */
+.coat-stage {
+  position: sticky;
+  top: 0;
+  height: 100vh;
+  overflow: hidden;
+  isolation: isolate;
+  min-width: 0;
+}
+.coat-canvas { display: block; width: 100%; height: 100%; background: transparent; }
+
+/* A soft pool of light behind him, strengthening as the camera closes in. Behind the
+   canvas, never over it — an overlay on a cut-out would tint the coat. */
+.coat-glow {
+  position: absolute;
+  inset: 0;
+  z-index: -1;
+  pointer-events: none;
+  background: radial-gradient(56% 44% at 52% 46%,
+    color-mix(in srgb, var(--accent-bright) 14%, transparent) 0%, transparent 72%);
+  opacity: calc(0.3 + var(--coat-p, 0) * 0.7);
 }
 
 /* The one honest piece of chrome on a pinned section: without it a reader who cannot tell
-   the page is still moving assumes it has hung. */
+   the page is still moving assumes it has hung. Driven by --coat-p, the same measurement
+   that picks the frame, so the two can never disagree. */
 .coat-rail {
   position: absolute;
-  left: clamp(20px, 6vw, 68px);
-  right: clamp(20px, 6vw, 68px);
-  bottom: clamp(16px, 3.2vh, 32px);
+  left: 8%; right: 8%;
+  bottom: clamp(18px, 4vh, 40px);
   height: 2px;
   background: var(--border);
   border-radius: 2px;
@@ -122,31 +117,27 @@
   background: var(--accent-bright);
 }
 
-/* Touch and small screens: scrolly.js does not pin here and neither does this. A pinned
-   section fights the address bar resizing as you scroll on touch, and a phone has too
-   little height for a pinned figure and its caption to share. The sequence still loads,
-   thinned to a quarter, and sits as one tall image with the copy beneath it. */
-@media (max-width: 1024px) {
-  .coat { --coat-run: auto; height: auto; padding: 8px 0 26px; }
-  .coat-stage { position: static; height: min(66vh, 460px); overflow: visible; }
+/* Touch and small screens: scrolly.js does not pin below 900px and neither does this. A
+   pinned column fights the address bar resizing as you scroll on touch, and a phone has too
+   little width for two columns to share. The figure sits above the copy, full width, and
+   the sequence still loads — thinned to a quarter in coat.js. */
+@media (max-width: 900px) {
+  .coat-grid { grid-template-columns: 1fr; gap: 4px; }
+  .coat-stage { position: static; height: min(64vh, 460px); order: -1; }
+  .coat-text { padding: 4px 0 22px; }
+  .coat-beat { min-height: 0; opacity: 1; transition: none; }
+  .coat-beat + .coat-beat { margin-top: 26px; }
+  .coat-beat h2 { font-size: clamp(21px, 5.4vw, 30px); max-width: none; }
   .coat-rail { display: none; }
-  .coat-vignette { display: none; }
-  .coat-copy { position: static; margin-top: 18px; }
-  /* Stacked rather than cross-faded: with no scroll to drive them, three beats layered on
-     one another would be three lines of text on top of each other. */
-  .coat-beat { grid-area: auto; opacity: 1 !important; transform: none !important;
-               visibility: visible !important; }
-  .coat-beat + .coat-beat { margin-top: 18px; }
-  .coat-beat h2 { font-size: clamp(20px, 5.2vw, 28px); }
 }
 
-/* Reduced motion: one frame, no runway, no push-in, and only the first line. The pose and
-   the point, and none of the movement. */
+/* Reduced motion: one frame, no pinning, every line readable at once. The content is the
+   point; the pinning and the turn are decoration. */
 @media (prefers-reduced-motion: reduce) {
-  .coat { --coat-run: auto; height: auto; padding: 8px 0 26px; }
-  .coat-stage { position: static; height: min(64vh, 440px); overflow: visible; }
-  .coat-rail, .coat-vignette { display: none; }
-  .coat-copy { position: static; margin-top: 18px; }
-  .coat-beat { grid-area: auto; }
-  .coat-beat + .coat-beat { display: none; }
+  .coat-grid { grid-template-columns: 1fr; gap: 4px; }
+  .coat-stage { position: static; height: min(62vh, 440px); order: -1; }
+  .coat-text { padding: 4px 0 22px; }
+  .coat-beat { min-height: 0; opacity: 1; transition: none; }
+  .coat-beat + .coat-beat { margin-top: 26px; }
+  .coat-rail { display: none; }
 }

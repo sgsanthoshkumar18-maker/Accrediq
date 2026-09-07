@@ -47,34 +47,48 @@
      the one to be careful with: at 1.16 the drawn height on a 900px stage is about 1044px
      against an 1100px source, so it is still a crop rather than a magnification. Raising it
      much past 1.2 starts to soften the image on tall screens. */
-  var ZOOM_FROM = 0.80, ZOOM_TO = 1.16;
+  var ZOOM_FROM = 0.86, ZOOM_TO = 1.20;
   /* Where the frame settles vertically, as a fraction of the stage height. Positive moves
-     the image down, which lifts the framing towards the head and shoulders — the crane
+     the image down, so the push crops from the BOTTOM — the trousers, which the model cuts
+     off at the shin anyway — and ends framed on the coat and the face. That is the crane
      half of the move, and what stops a straight zoom feeling like a slide projector. */
-  var PAN_TO = 0.085;
+  var PAN_TO = 0.10;
+
+  /* MEASURED FROM THE FRAMES THEMSELVES, not guessed.
+     Sampling eight frames across the rotation: the figure fills 97.6% of the frame's HEIGHT
+     — there is essentially no vertical margin to crop — and at its widest, face-on with the
+     coat flared, spans 59.5% of the WIDTH. Across every frame the union of his extents runs
+     from 15.8% to 77.6%, so he is centred at 46.7% rather than 50%.
+
+     Both numbers earn their keep. The height figure says the image must be fitted to the
+     stage height, never "contained": contain in a narrow column would fit to width and
+     leave him small with air above and below. The width figure is what lets the push-in be
+     clamped so the column can crop the empty margins away without ever clipping him. */
+  var FIG_W = 0.62, FIG_CX = 0.467;
 
   /* Ease-out. A linear push-in reads as mechanical: it arrives at the close-up at the same
      speed it left the wide, and the shot never appears to settle. */
   function ease(t) { return 1 - Math.pow(1 - t, 2.2); }
 
-  /* One copy beat's opacity: ramp in, hold, ramp out. Written as four stops rather than a
-     duration so the beats can overlap deliberately — a cross-fade rather than a blink. */
-  function beatAlpha(p, a, b, c, d) {
-    if (p <= a || p >= d) return 0;
-    if (p < b) return (p - a) / (b - a);
-    if (p <= c) return 1;
-    return 1 - (p - c) / (d - c);
+  /* THE COPY SCROLLS PAST; IT IS NOT PAINTED OVER THE FIGURE.
+     It was, and it was unreadable — a serif headline sitting across a white coat, with the
+     eyebrow lost against his chest. The figure now holds one column and the words flow up
+     the other, so neither is ever competing with the other for the same pixels.
+
+     Which beat is emphasised is therefore a question about where each BLOCK is, not about
+     how far through the section the scroll is: the block nearest the middle of the viewport
+     is the one being read. That is the same rule scrolly.js uses for its steps, deliberately
+     — two sections on one page that decide "active" differently would drift apart the first
+     time either was edited. */
+  function activeBeat(beats) {
+    var mid = window.innerHeight / 2, best = -1, bestD = Infinity;
+    for (var i = 0; i < beats.length; i++) {
+      var r = beats[i].getBoundingClientRect();
+      var d = Math.abs((r.top + r.height / 2) - mid);
+      if (d < bestD) { bestD = d; best = i; }
+    }
+    return best;
   }
-  /* The first beat starts BEFORE the section does — negative stops — so it is already at
-     full opacity the instant the section pins rather than fading up from nothing over the
-     first few pixels of scroll. A headline that is invisible exactly when the reader
-     arrives is the one moment it most needs to be readable. The last one runs past 1 for
-     the same reason at the other end. */
-  var BEATS = [
-    [-0.30, -0.10, 0.26, 0.35],
-    [ 0.33,  0.42, 0.60, 0.69],
-    [ 0.66,  0.75, 1.10, 1.20]
-  ];
 
   function init() {
     var host = document.querySelector("[data-coat]");
@@ -117,9 +131,17 @@
       return true;
     }
 
-    /* Contain, then scale and offset by the camera move. Contain rather than cover because
-       the figure is a cut-out on transparency: cropping it to fill would cut the shoulders
-       off on a wide window. */
+    /* FITTED TO HEIGHT AND CLAMPED BY THE FIGURE, not "contained".
+       Contain fits to whichever side is tighter, which in a half-width column is the width
+       — and that would draw him small with empty air above and below, in a column whose
+       whole purpose is to make him bigger. Fitting to height fills the stage and lets the
+       column crop the frame's empty side margins, which the measurements say are 38% of its
+       width and contain nothing.
+
+       The clamp is what makes that safe. He is never wider than FIG_W of the frame, so the
+       largest scale at which he still fits the column is cw / (iw * FIG_W). The push-in
+       grows towards that and stops, so a narrow window crops empty pixels and never his
+       shoulders. */
     function draw(i, p) {
       var img = imgs[i];
       if (!img) return;
@@ -131,12 +153,18 @@
       if (!iw || !ih) return;
 
       var k = reduce ? 1 : ZOOM_FROM + (ZOOM_TO - ZOOM_FROM) * ease(p);
-      var s = Math.min(cw / iw, ch / ih) * k;
+      var s = (ch / ih) * k;
+      var fits = cw / (iw * FIG_W);
+      if (s > fits) s = fits;
+
       var w = iw * s, h = ih * s;
+      /* He sits left of the frame's centre, so centring the IMAGE would leave him visibly
+         off-centre in the column. Shifted by the measured difference instead. */
+      var dx = (0.5 - FIG_CX) * w;
       var dy = reduce ? 0 : ch * PAN_TO * ease(p);
 
       ctx.clearRect(0, 0, cw, ch);
-      ctx.drawImage(img, (cw - w) / 2, (ch - h) / 2 + dy, w, h);
+      ctx.drawImage(img, (cw - w) / 2 + dx, (ch - h) / 2 + dy, w, h);
       drawn = i; drawnAt = p;
     }
 
@@ -237,14 +265,14 @@
       host.style.setProperty("--coat-p", prog.toFixed(4));
       want = F.frameAt(prog, n);
 
-      for (var i = 0; i < beats.length; i++) {
-        var b = BEATS[i] || BEATS[BEATS.length - 1];
-        var a = reduce ? (i === 0 ? 1 : 0) : beatAlpha(prog, b[0], b[1], b[2], b[3]);
-        beats[i].style.opacity = a.toFixed(3);
-        /* Lifted slightly as it arrives and again as it leaves. Kept small: a copy block
-           that travels far reads as a slideshow rather than a camera settling. */
-        beats[i].style.transform = "translate3d(0," + ((1 - a) * 16).toFixed(1) + "px,0)";
-        beats[i].style.visibility = a < 0.01 ? "hidden" : "visible";
+      /* A class, with the fade in CSS — not an inline opacity written every scroll frame.
+         The transition then belongs to the stylesheet like every other state on the site,
+         and the handler is not touching style on three elements sixty times a second. */
+      if (beats.length) {
+        var on = reduce ? 0 : activeBeat(beats);
+        for (var i = 0; i < beats.length; i++) {
+          beats[i].classList.toggle("is-on", i === on);
+        }
       }
       paint();
     }

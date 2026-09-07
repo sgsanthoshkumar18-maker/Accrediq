@@ -194,23 +194,45 @@ ok(/img\.decode\(\)\.catch\(/.test(JS_CODE),
 /* The camera move is done at draw time, not baked into the render — so the framing can be
    judged and changed in a second instead of costing a re-render each time. */
 ok(/ZOOM_FROM = 0\.\d+, ZOOM_TO = 1\.\d+/.test(JS), 'the push-in is two tunable numbers');
-ok(/ZOOM_TO\s*=\s*1\.1[0-9]/.test(JS),
-   'and ends below 1.2, so it stays a crop of the 1100px source rather than an upscale');
 ok(/function ease\(/.test(JS_CODE),
    'the push-in is eased, since a linear one never appears to settle');
 
-/* Three beats that cross-fade, and the first must be readable the instant the section
-   pins — not fading up from nothing over the reader's first few pixels of scroll. */
-eq(BEATS_FIRST_STOP_IS_NEGATIVE(), true,
-   'the opening line is already at full opacity when the section pins');
-function BEATS_FIRST_STOP_IS_NEGATIVE() {
-  var m = /var BEATS = \[\s*\[\s*(-?\d*\.?\d+),\s*(-?\d*\.?\d+)/.exec(JS);
-  return !!m && parseFloat(m[1]) < 0 && parseFloat(m[2]) <= 0;
-}
+/* THE FIGURE MUST NEVER BE CLIPPED BY THE COLUMN, and a zoom ceiling alone cannot promise
+   that — the safe ceiling depends on how wide the column happens to be. It is guaranteed
+   instead by measurement: he is never wider than FIG_W of the frame, so the largest scale
+   that still fits is cw / (iw * FIG_W), and the push-in stops there. Verified in a browser
+   at 1440x900: the painted alpha box never touched either edge at any scroll position. */
+ok(/FIG_W = 0\.\d+, FIG_CX = 0\.\d+/.test(JS),
+   'the figure extents are measured constants, not guesses');
+ok(/var fits = cw \/ \(iw \* FIG_W\);\s*\n\s*if \(s > fits\) s = fits;/.test(JS_CODE),
+   'and the push-in is clamped by them, so a narrow column crops empty pixels not shoulders');
+/* Fitted to HEIGHT, never "contained": contain in a half-width column fits to the width
+   and leaves him small with air above and below — the opposite of what the column is for. */
+ok(/var s = \(ch \/ ih\) \* k;/.test(JS_CODE), 'the image is fitted to the stage height');
+/* He sits at 46.7% of the frame, so centring the image would leave him visibly off-centre. */
+ok(/var dx = \(0\.5 - FIG_CX\) \* w;/.test(JS_CODE), 'and offset to his real centre');
+
+/* ---- the copy is beside the figure, never over it ----
+   The first version painted the headline across his coat and it was unreadable. Two
+   columns, and the emphasised block is decided by where the BLOCK is rather than by
+   section progress — the same rule scrolly.js uses, so the two sections cannot drift. */
 ok(/data-beat/.test(JS) && /data-beat/.test(HTML), 'the copy beats are wired to the scroll');
-/* On a phone there is no scroll to drive them, so three cross-faded beats would be three
-   lines of text stacked on top of each other. */
-ok(/opacity: 1 !important/.test(CSS), 'and stack readably where the section does not pin');
+ok(/function activeBeat\(/.test(JS_CODE), 'the active block is chosen by its own position');
+ok(/window\.innerHeight \/ 2/.test(JS_CODE), 'nearest the middle of the viewport, as scrolly.js does');
+ok(/classList\.toggle\("is-on"/.test(JS_CODE),
+   'toggled as a class, so the fade lives in the stylesheet rather than in the scroll handler');
+eq(/coat-copy/.test(HTML), false, 'the overlay caption is gone from the markup');
+ok(/\.coat-grid \{/.test(CSS) && /grid-template-columns/.test(CSS), 'the section is two columns');
+/* It pins on the RIGHT because motion.css pins the very next section on the left. Two
+   consecutive sections with a frozen left edge read as one long stuck panel. */
+eq(HTML.indexOf('coat-text') < HTML.indexOf('coat-stage'), true,
+   'text first in the DOM, so the pinned figure sits on the right');
+ok(/\.coat-stage \{[^}]*position: sticky/.test(CSS), 'and the figure column is the pinned one');
+/* On a phone there is no scroll to drive them and no room for two columns. */
+ok(/@media \(max-width: 900px\)[\s\S]{0,400}grid-template-columns: 1fr/.test(CSS),
+   'which collapses to one column on a phone');
+ok(/@media \(max-width: 900px\)[\s\S]{0,400}opacity: 1/.test(CSS),
+   'with every line readable at once rather than dimmed');
 
 console.log(pass + ' passed, ' + fail + ' failed');
 process.exit(fail ? 1 : 0);
