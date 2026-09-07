@@ -144,10 +144,30 @@ eq(/coarse \? Math\.min\(total, 96\)/.test(JS), true,
 eq(/<canvas class="coat-canvas" role="img"/.test(HTML), true, 'the canvas is announced as an image');
 eq(/aria-label="A doctor in a lab coat, turning as the page scrolls"/.test(HTML), true,
    'with a description of what it shows');
-eq(/<div class="coat-bar" aria-hidden="true">/.test(HTML), true, 'the progress bar is decorative');
+eq(/<div class="coat-rail" aria-hidden="true">/.test(HTML), true, "the progress rail is decorative");
+eq(/<div class="coat-glow" aria-hidden="true"><\/div>/.test(HTML), true,
+   'and so is the glow behind the figure');
 
 /* The two things that change when the renders are replaced, and nothing else. */
-eq(/data-frames="420"/.test(HTML), true, 'the frame count is declared in the markup');
+/* THE DECLARED COUNT MUST MATCH WHAT IS ACTUALLY ON DISK, and this is the assertion that
+   catches the mismatch. Declaring more frames than exist means the loader spends the tail
+   of the scroll requesting files that 404; declaring fewer silently throws away renders
+   somebody waited seven minutes for. The sequence was thinned from 420 to 210 after the
+   render, which is exactly the kind of change that leaves these two out of step. */
+const declared = /data-frames="(\d+)"/.exec(HTML);
+ok(declared, 'the frame count is declared in the markup');
+const onDisk = fs.readdirSync(path.join(__dirname, '../profile/coat'))
+  .filter(f => /^coat-\d{4}\.webp$/.test(f)).length;
+eq(Number(declared[1]), onDisk,
+   'and it matches the ' + onDisk + ' frames actually in profile/coat/');
+/* One-based and contiguous: a gap would draw the nearest neighbour instead, which reads as
+   the figure sticking for a moment rather than as a missing file. */
+let contiguous = true;
+for (let i = 1; i <= onDisk; i++) {
+  if (!fs.existsSync(path.join(__dirname, '../profile/coat',
+      'coat-' + String(i).padStart(4, '0') + '.webp'))) contiguous = false;
+}
+ok(contiguous, 'the frames are numbered 1..' + onDisk + ' with no gaps');
 eq(/data-src="profile\/coat\/coat-#\.webp"/.test(HTML), true, 'and so is the path pattern');
 eq(/profile\/coat-frames\.js/.test(HTML) && /profile\/coat\.js/.test(HTML), true,
    'both scripts are loaded, maths before driver');
@@ -157,6 +177,40 @@ eq(HTML.indexOf('profile/coat-frames.js') < HTML.indexOf('profile/coat.js'), tru
 /* devicePixelRatio is capped: a phone reporting 3 would otherwise allocate nine times the
    canvas area for a difference nobody can see, on the device least able to afford it. */
 eq(/Math\.min\(2, window\.devicePixelRatio/.test(JS), true, 'the canvas is capped at 2x');
+
+/* THE DECODE TRAP — the bug that hid the whole section and logged nothing.
+   img.decode() in a hidden or backgrounded document does not reject. Its promise NEVER
+   SETTLES. Awaiting it before marking a frame ready meant a visitor whose tab was in the
+   background while the page loaded lost this section permanently: the frames arrived
+   200 OK, nothing was drawn, and no error appeared anywhere. The load event must be the
+   authority and decode must be fire-and-forget. */
+ok(/ok\(\);\s*\n\s*if \(img\.decode\)/.test(JS_CODE),
+   'a frame is marked ready on load, BEFORE decode is attempted');
+eq(/img\.decode\(\)\.then\(ok/.test(JS_CODE), false,
+   'readiness is never gated on the decode promise settling');
+ok(/img\.decode\(\)\.catch\(/.test(JS_CODE),
+   'and a decode rejection is swallowed rather than treated as a failed frame');
+
+/* The camera move is done at draw time, not baked into the render — so the framing can be
+   judged and changed in a second instead of costing a re-render each time. */
+ok(/ZOOM_FROM = 0\.\d+, ZOOM_TO = 1\.\d+/.test(JS), 'the push-in is two tunable numbers');
+ok(/ZOOM_TO\s*=\s*1\.1[0-9]/.test(JS),
+   'and ends below 1.2, so it stays a crop of the 1100px source rather than an upscale');
+ok(/function ease\(/.test(JS_CODE),
+   'the push-in is eased, since a linear one never appears to settle');
+
+/* Three beats that cross-fade, and the first must be readable the instant the section
+   pins — not fading up from nothing over the reader's first few pixels of scroll. */
+eq(BEATS_FIRST_STOP_IS_NEGATIVE(), true,
+   'the opening line is already at full opacity when the section pins');
+function BEATS_FIRST_STOP_IS_NEGATIVE() {
+  var m = /var BEATS = \[\s*\[\s*(-?\d*\.?\d+),\s*(-?\d*\.?\d+)/.exec(JS);
+  return !!m && parseFloat(m[1]) < 0 && parseFloat(m[2]) <= 0;
+}
+ok(/data-beat/.test(JS) && /data-beat/.test(HTML), 'the copy beats are wired to the scroll');
+/* On a phone there is no scroll to drive them, so three cross-faded beats would be three
+   lines of text stacked on top of each other. */
+ok(/opacity: 1 !important/.test(CSS), 'and stack readably where the section does not pin');
 
 console.log(pass + ' passed, ' + fail + ' failed');
 process.exit(fail ? 1 : 0);
