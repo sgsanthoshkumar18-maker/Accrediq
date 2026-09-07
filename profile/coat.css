@@ -22,7 +22,64 @@
 .coat { display: none; }
 .coat[data-coat-ready="1"] { display: block; }
 
-.coat { position: relative; background: transparent; }
+/* ============================ THE DARK STAGE ============================
+ *
+ * A full-bleed near-black band, on a page that is otherwise light. Deliberate, and the
+ * reason is what the section contains: the figure is a cut-out on transparency, and a
+ * cut-out on a pale ground sits ON the page while the same cut-out on a dark ground lifts
+ * OFF it. Every product hero that has ever made an object look expensive does this.
+ *
+ * IT IS DARK IN BOTH THEMES, WHICH IS WHY IT CARRIES ITS OWN COLOURS.
+ * The section does not follow --bg and --fg. If it did, the light theme would put dark text
+ * on a dark stage and the whole band would be unreadable. So it declares a small local
+ * palette and everything inside reads from that instead. These are the only hard-coded
+ * colours in the file and they are hard-coded precisely BECAUSE the band is one fixed
+ * visual world rather than a themed surface.
+ *
+ * The lift is three stacked radial gradients, not one: a cool pool behind his head and
+ * shoulders, a warmer core where the light would actually be, and a ground glow at his feet
+ * so he is standing on something rather than floating. One gradient reads as a spotlight
+ * sticker; three read as a room.
+ */
+.coat {
+  position: relative;
+  --coat-ink:    #EDF1FA;
+  --coat-ink-2:  #9FADC7;
+  --coat-accent: #7C9CFF;
+  --coat-line:   #232B3E;
+  isolation: isolate;
+  color: var(--coat-ink);
+  background:
+    radial-gradient(58% 42% at 68% 28%, rgba(96,132,255,.20) 0%, transparent 62%),
+    radial-gradient(40% 28% at 66% 52%, rgba(150,180,255,.10) 0%, transparent 70%),
+    radial-gradient(34% 12% at 66% 88%, rgba(120,155,255,.13) 0%, transparent 72%),
+    linear-gradient(180deg, #05070E 0%, #090C16 42%, #05070E 100%);
+}
+
+/* Full-bleed: the band runs edge to edge even though its contents stay in .wrap. A dark
+   panel with light page showing down both sides reads as a mistake rather than a device. */
+.coat::before {
+  content: "";
+  position: absolute;
+  inset: 0;
+  z-index: -2;
+  background: inherit;
+  /* The section is already full width; this only guarantees the paint reaches the edges
+     when an ancestor happens to constrain it. */
+  pointer-events: none;
+}
+
+/* Edges darkened so the band has a horizon rather than a hard border. */
+.coat-vignette {
+  position: absolute;
+  inset: 0;
+  z-index: -1;
+  pointer-events: none;
+  background:
+    linear-gradient(180deg, rgba(3,5,10,.92) 0%, transparent 16%, transparent 84%,
+      rgba(3,5,10,.92) 100%),
+    radial-gradient(78% 66% at 62% 48%, transparent 46%, rgba(3,5,10,.72) 100%);
+}
 
 /* The runway is the TEXT COLUMN's natural height, not a hard --coat-run. Three blocks of
    roughly a screen each is how long the section lasts, so adding or cutting a line changes
@@ -55,7 +112,7 @@
   font-size: 10px;
   letter-spacing: .18em;
   text-transform: uppercase;
-  color: var(--accent-text);
+  color: var(--coat-accent);
   margin-bottom: 12px;
 }
 .coat-beat h2 {
@@ -66,11 +123,18 @@
   text-wrap: balance;
   margin: 0;
   max-width: 18ch;
+  /* STATED, NOT INHERITED — and this is not belt-and-braces, it is the fix for a real bug.
+     styles.css gives every h2 its own `color: var(--fg)`, which in the light theme is
+     near-black. Setting `color` on the section did nothing here, because an element's own
+     rule beats anything it would otherwise inherit: the headline rendered rgb(7,10,18) on
+     a rgb(5,7,14) band and was invisible. Anything on this stage that sets a colour must
+     take it from the local palette explicitly. */
+  color: var(--coat-ink);
 }
 .coat-beat p {
   margin: 12px 0 0;
   max-width: 44ch;
-  color: var(--fg-muted);
+  color: var(--coat-ink-2);
   font-size: clamp(14px, 1.15vw, 16px);
   line-height: 1.65;
 }
@@ -86,16 +150,16 @@
 }
 .coat-canvas { display: block; width: 100%; height: 100%; background: transparent; }
 
-/* A soft pool of light behind him, strengthening as the camera closes in. Behind the
-   canvas, never over it — an overlay on a cut-out would tint the coat. */
+/* The pool of light behind him, breathing with the push-in so the stage appears to close
+   in with the camera rather than sitting still behind it. */
 .coat-glow {
   position: absolute;
   inset: 0;
   z-index: -1;
   pointer-events: none;
-  background: radial-gradient(56% 44% at 52% 46%,
-    color-mix(in srgb, var(--accent-bright) 14%, transparent) 0%, transparent 72%);
-  opacity: calc(0.3 + var(--coat-p, 0) * 0.7);
+  background: radial-gradient(48% 40% at 50% 42%,
+    rgba(124,156,255,.22) 0%, rgba(90,120,220,.07) 45%, transparent 74%);
+  opacity: calc(0.45 + var(--coat-p, 0) * 0.55);
 }
 
 /* The one honest piece of chrome on a pinned section: without it a reader who cannot tell
@@ -106,7 +170,7 @@
   left: 8%; right: 8%;
   bottom: clamp(18px, 4vh, 40px);
   height: 2px;
-  background: var(--border);
+  background: var(--coat-line);
   border-radius: 2px;
   overflow: hidden;
 }
@@ -114,7 +178,7 @@
   display: block;
   height: 100%;
   width: calc(var(--coat-p, 0) * 100%);
-  background: var(--accent-bright);
+  background: var(--coat-accent);
 }
 
 /* Touch and small screens: scrolly.js does not pin below 900px and neither does this. A

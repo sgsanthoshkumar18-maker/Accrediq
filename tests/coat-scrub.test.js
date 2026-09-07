@@ -234,5 +234,35 @@ ok(/@media \(max-width: 900px\)[\s\S]{0,400}grid-template-columns: 1fr/.test(CSS
 ok(/@media \(max-width: 900px\)[\s\S]{0,400}opacity: 1/.test(CSS),
    'with every line readable at once rather than dimmed');
 
+/* ---- the dark stage ----
+   A cut-out on a pale ground sits ON the page; the same cut-out on a dark ground lifts OFF
+   it. The band is therefore dark in BOTH themes, which is the whole reason it carries its
+   own palette instead of following --bg and --fg: in the light theme those would put
+   near-black text on a near-black stage. */
+ok(/--coat-ink:\s*#/.test(CSS) && /--coat-ink-2:\s*#/.test(CSS) && /--coat-accent:\s*#/.test(CSS),
+   'the stage declares its own palette rather than following the page tokens');
+/* THE BUG THIS LOCKS DOWN. styles.css gives every h2 its own `color: var(--fg)`, which
+   beats anything inherited from the section. Setting colour on .coat alone left the
+   headline rendering rgb(7,10,18) on a rgb(5,7,14) band — invisible, and it shipped that
+   way in a screenshot before it was caught. Measured after the fix: 17.79:1. */
+ok(/\.coat-beat h2 \{[\s\S]*?color: var\(--coat-ink\);/.test(CSS),
+   'and the headline states its colour explicitly, since a bare h2 rule outranks inheritance');
+ok(/\.coat-beat \.k \{[\s\S]*?color: var\(--coat-accent\)/.test(CSS),
+   'as does the eyebrow');
+ok(/\.coat-beat p \{[\s\S]*?color: var\(--coat-ink-2\)/.test(CSS), 'and the body copy');
+/* Every colour on the stage comes from the local palette. A --fg or --bg reaching in here
+   is the exact failure above, waiting to happen again. */
+/* Comments stripped first — this file explains the bug in prose that names the very token
+   the rule forbids, and a test that reads prose cannot tell an explanation from a usage. */
+const stageBlock = CSS.slice(CSS.indexOf('.coat {'), CSS.indexOf('@media (max-width: 900px)'))
+  .replace(/\/\*[\s\S]*?\*\//g, '');
+eq(/var\(--fg\b|var\(--fg-muted\)|var\(--bg\b/.test(stageBlock), false,
+   'no page foreground or background token reaches into the dark band');
+/* Three stacked gradients, not one: a single radial reads as a spotlight sticker. */
+ok((CSS.match(/radial-gradient/g) || []).length >= 4,
+   'the lift is layered gradients rather than one flat glow');
+ok(/\.coat-vignette/.test(CSS) && /coat-vignette/.test(HTML),
+   'and the band has a horizon rather than a hard edge against the light page');
+
 console.log(pass + ' passed, ' + fail + ' failed');
 process.exit(fail ? 1 : 0);
