@@ -48,8 +48,17 @@ const SNIPPET =
        3. light
      Choosing dark writes only (2). It is promoted to (1) when the visitor answers
      yes to the small prompt the toggle raises. */
-  'var t=localStorage.getItem("aq-theme");' +
-  'if(!t){try{t=sessionStorage.getItem("aq-theme-s");}catch(e2){}}' +
+  /* THE SESSION VALUE WINS. This order was the other way round and it broke the toggle
+     outright: switching to light once wrote localStorage "light" for good, and from then
+     on every dark choice — which only writes the session value — was read AFTER that
+     "light" and never reached. Dark reverted on every single navigation.
+
+     The session value is what the visitor chose a moment ago, in this tab. A stored value
+     is what they chose on some earlier visit. The recent choice must win, or the toggle is
+     decorative. */
+  'var t=null;' +
+  'try{t=sessionStorage.getItem("aq-theme-s");}catch(e2){}' +
+  'if(!t){t=localStorage.getItem("aq-theme");}' +
   'if(!t){t="light";}' +
   /* Anything that is not the literal string "default" means neon. A plain ||DEF
      fallback only covered a MISSING value, so any other string left behind by an older

@@ -272,8 +272,12 @@
        comes back when they switch to dark again. */
     html.removeAttribute("data-palette");
     try {
+      /* BOTH, and the session one matters most. Clearing the session value here and
+         writing only the stored one is what let a single visit to light outrank every
+         later choice of dark — the boot script reads the session first now, so light has
+         to claim it too or dark would never be released. */
+      sessionStorage.setItem("aq-theme-s", "light");
       localStorage.setItem("aq-theme", "light");
-      sessionStorage.removeItem("aq-theme-s");
     } catch (err) {}
     announceTheme();
   }
@@ -296,26 +300,31 @@
     box.className = "aq-keepdark";
     box.setAttribute("role", "status");
     box.innerHTML =
-      '<p>Keep dark mode?<span>Otherwise the site opens light next time.</span></p>' +
+      "<p>Always use dark mode?" +
+        "<span>Otherwise the site opens light again the next time you come back.</span></p>" +
       '<div class="aq-keepdark-btns">' +
         '<button type="button" class="aq-keepdark-no">Just this visit</button>' +
-        '<button type="button" class="aq-keepdark-yes">Keep it dark</button>' +
+        '<button type="button" class="aq-keepdark-yes">Always</button>' +
       "</div>";
     document.body.appendChild(box);
     requestAnimationFrame(function () { box.classList.add("in"); });
 
-    let timer = null;
+    /* NO TIMER. It used to remove itself after twenty seconds, which meant the one control
+       that makes dark permanent could vanish before it was read — and then dark quietly
+       reverted on the next page with nothing to explain why. It is a real question with two
+       real answers, so it waits for one of them. */
     function close() {
-      if (timer) clearTimeout(timer);
       box.classList.remove("in");
       setTimeout(function () { box.remove(); }, 240);
     }
     box.querySelector(".aq-keepdark-yes").addEventListener("click", function () {
-      try { localStorage.setItem("aq-theme", "dark"); } catch (err) {}
+      try {
+        localStorage.setItem("aq-theme", "dark");
+        sessionStorage.setItem("aq-theme-s", "dark");
+      } catch (err) {}
       close();
     });
     box.querySelector(".aq-keepdark-no").addEventListener("click", close);
-    timer = setTimeout(close, 20000);
   }
 
   function initHeaderFooter() {

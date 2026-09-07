@@ -638,16 +638,19 @@ p{margin:0 0 0;}
   border-radius:999px;
   padding:4px 6px;
 }
-.main-nav a{
+/* DIRECT children only. The dropdown panels hang inside .main-nav, and their items are
+   <a> elements too — a descendant selector here painted them white on a white card and
+   made Departments and Tools unreadable in the light theme. */
+.main-nav > a{
   padding:8px 13px;border-radius:999px;font-size:14px;font-weight:500;color:#fff;
   transition:background .15s ease,color .15s ease;
 }
 /* Hover and current-page states live INSIDE the blue now, so they cannot use the tinted
    background that worked against the page. A white veil at two strengths reads on the blue
    in both themes and needs no second colour. */
-.main-nav a:hover{color:#fff;background:rgba(255,255,255,.16);}
-.main-nav a.active{color:#fff;background:rgba(255,255,255,.24);font-weight:600;}
-.main-nav a.hot{color:#fff;}
+.main-nav > a:hover{color:#fff;background:rgba(255,255,255,.16);}
+.main-nav > a.active{color:#fff;background:rgba(255,255,255,.24);font-weight:600;}
+.main-nav > a.hot{color:#fff;}
 
 .nav-dropdown{position:relative;display:flex;}
 .nav-dd-trigger{
@@ -747,9 +750,9 @@ p{margin:0 0 0;}
   /* The blue bar is a desktop idea. Here .main-nav IS the drawer — a full-width sheet — and
      a solid blue sheet the height of the screen is a different proposition entirely. It goes
      back to page colours, and so does everything inside it. */
-  .main-nav a{padding:13px 16px;border-radius:10px;color:var(--fg-muted);}
-  .main-nav a:hover{color:var(--fg);background:var(--brand-tint);}
-  .main-nav a.active{color:var(--accent-text);background:var(--brand-tint);}
+  .main-nav > a{padding:13px 16px;border-radius:10px;color:var(--fg-muted);}
+  .main-nav > a:hover{color:var(--fg);background:var(--brand-tint);}
+  .main-nav > a.active{color:var(--accent-text);background:var(--brand-tint);}
   .main-nav .nav-dd-trigger{color:var(--fg-muted);padding:13px 16px;}
   .main-nav .nav-dd-trigger:hover{color:var(--fg);background:var(--brand-tint);}
   .main-nav .nav-dd-trigger.active{color:var(--accent-text);background:var(--brand-tint);}

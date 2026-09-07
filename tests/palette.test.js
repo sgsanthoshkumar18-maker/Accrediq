@@ -216,9 +216,33 @@ const keep = /function askToKeepDark\(\)[\s\S]*?\n  \}/.exec(app)[0];
 eq(/remembered === "dark"/.test(keep), true, 'no prompt once dark is already remembered');
 eq(/localStorage\.setItem\("aq-theme", "dark"\)/.test(app), true,
    'answering yes is the one path that persists dark');
+/* THE PRECEDENCE BUG, PINNED SO IT CANNOT COME BACK.
+   The boot snippet used to read localStorage first and the session value second. That meant
+   one visit to light wrote localStorage "light" for good, and every later choice of dark —
+   which only writes the session value — was read AFTER it and never reached. Dark reverted
+   on every navigation and the toggle was, in effect, decorative.
+
+   The session value is what the visitor chose a moment ago in this tab; the stored value is
+   what they chose on some earlier visit. The recent choice has to win. */
+eq(/var t=null;try\{t=sessionStorage\.getItem\("aq-theme-s"\)/.test(boot), true,
+   'boot reads the SESSION value first — the choice made a moment ago outranks an old one');
+eq(/if\(!t\)\{t=localStorage\.getItem\("aq-theme"\);\}/.test(boot), true,
+   'and falls back to the remembered preference only when this visit has no choice in it');
+eq(/localStorage\.getItem\("aq-theme"\);if\(!t\)\{try\{t=sessionStorage/.test(boot), false,
+   'never the other way round — that order is what broke the toggle');
+
+/* Light must claim the session value too, or dark could never be released now that the
+   session is read first. */
 const light = /function applyLight\(\)[\s\S]*?\n  \}/.exec(app)[0];
-eq(/sessionStorage\.removeItem\("aq-theme-s"\)/.test(light), true,
-   'going back to light clears the session value so it cannot fight the stored one');
+eq(/sessionStorage\.setItem\("aq-theme-s", "light"\)/.test(light), true,
+   'choosing light writes the session value as well, so it outranks a remembered dark');
+eq(/localStorage\.setItem\("aq-theme", "light"\)/.test(light), true,
+   'and is remembered for next time');
+
+/* The lock must not be able to disappear before it is read. */
+eq(/setTimeout\(close, \d+\)/.test(keep), false,
+   'the keep-dark prompt has no auto-dismiss timer — it is the only control that makes dark ' +
+   'permanent, and it used to remove itself after twenty seconds');
 {
   const root = path.join(__dirname, '..');
   const sheets = [];
