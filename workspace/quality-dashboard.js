@@ -106,7 +106,12 @@
   function band(score) {
     if (score == null) return { key: "none", label: "Not measured yet", tone: "var(--fg-faint)" };
     if (score >= 90) return { key: "ok", label: "On target", tone: "var(--ok)" };
-    if (score >= 70) return { key: "warn", label: "Below target", tone: "var(--warn)" };
+    /* Brand blue, not amber. "Below target" is the ordinary middle of the range — most
+       departments live here most of the time — and an amber bar for every one of them
+       turns the whole chart into a warning about nothing. Amber is kept for status that
+       has actually slipped, and it is a foreign colour on a site whose palette is blue.
+       Red still marks what genuinely needs attention. */
+    if (score >= 70) return { key: "warn", label: "Below target", tone: "var(--accent-bright)" };
     return { key: "nc", label: "Needs attention", tone: "var(--nc)" };
   }
 

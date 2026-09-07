@@ -38,7 +38,7 @@
 .qd-badge{font-size:11px;font-weight:700;padding:3px 9px;border-radius:99px;white-space:nowrap;
   border:1px solid var(--border);color:var(--fg-muted);}
 .qd-badge.ok{color:var(--ok);border-color:var(--ok);}
-.qd-badge.warn{color:var(--warn);border-color:var(--warn);}
+.qd-badge.warn{color:var(--accent-text);border-color:var(--accent-bright);}
 .qd-badge.nc{color:var(--nc);border-color:var(--nc);}
 
 /* ---- back bar on a department ---- */
