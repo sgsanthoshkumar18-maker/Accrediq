@@ -747,3 +747,13 @@
   border:1px solid var(--border);border-radius:999px;padding:4px 13px;white-space:nowrap;}
 .ws-team-link:hover{color:var(--accent-text);border-color:var(--brand-2);}
 .ws-team-link.active{color:var(--accent-text);border-color:var(--brand-2);}
+
+/* ---- reminder frequency, in the bell panel ----
+   The old control was a tickbox, so the only answers were "weekly" or "silence".
+   This is a choice plus a sentence saying exactly when the email lands — "monthly"
+   means nothing to a quality manager until somebody tells them it is the 1st. */
+.ws-bell-freq{display:flex;align-items:center;gap:9px;justify-content:space-between;}
+.ws-bell-freq select{font:inherit;font-size:12.5px;padding:5px 9px;border-radius:var(--r-sm);
+  border:1px solid var(--border);background:var(--bg);color:var(--fg);cursor:pointer;}
+.ws-bell-when{margin:2px 0 8px;font-size:11.5px;line-height:1.5;color:var(--fg-muted);
+  border-left:2px solid var(--accent-bright);padding-left:9px;}

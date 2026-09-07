@@ -70,7 +70,7 @@
     return '<div class="reg-stats">' +
       box(r.expired.length ? "bad" : "", r.expired.length, "Expired &mdash; remove now") +
       box(r.short.length ? "warn" : "ok", r.short.length, "Short expiry") +
-      box("", items.length, "Batches tracked") +
+      box("", items.length, "Entries tracked") +
       box("", carts.length, "Crash carts") + "</div>";
   }
 
@@ -81,7 +81,7 @@
         f.daysLeft + " days left</span>";
     return "<tr><td><b>" + esc(f.name) + "</b>" +
       (f.strength ? " " + esc(f.strength) : "") +
-      (f.batch ? '<span class="tr-sub">batch ' + esc(f.batch) + "</span>" : "") + "</td>" +
+      "</td>" +
       "<td>" + esc(f.cart) + "</td><td>" + esc(f.quantity) + "</td>" +
       "<td>" + esc(f.expiry) + "</td><td>" + left + "</td>" +
       '<td><button class="tr-edit" data-edit="' + esc(f.id) + '">Edit</button></td></tr>';
@@ -90,19 +90,19 @@
   function flaggedTable(list) {
     if (!list.length) return "";
     return '<div class="ws-tablewrap"><table class="ws-table">' +
-      "<tr><th>Item &amp; batch</th><th>Crash cart</th><th>Qty</th><th>Expires</th>" +
+      "<tr><th>Item</th><th>Crash cart</th><th>Qty</th><th>Expires</th>" +
       "<th>&nbsp;</th><th>&nbsp;</th></tr>" + list.map(flaggedRow).join("") + "</table></div>";
   }
 
   function actionPanel(r) {
     if (r.empty) {
       return '<div class="ws-empty"><p>Nothing is expiring inside your ' + r.months +
-        "-month window. Every batch in " + carts.length + " crash cart" +
+        "-month window. Every entry in " + carts.length + " crash cart" +
         (carts.length === 1 ? "" : "s") + " is in date.</p></div>";
     }
     var out = "";
     if (r.expired.length) {
-      out += '<div class="ev-summary none"><b>' + r.expired.length + " batch" +
+      out += '<div class="ev-summary none"><b>' + r.expired.length + " entry" +
         (r.expired.length === 1 ? " has" : "es have") + " already expired.</b> " +
         "Remove from the trolley now &mdash; this is not a reorder.</div>" +
         '<div class="ev-block"><h3>Expired</h3>' + flaggedTable(r.expired) + "</div>";
@@ -150,7 +150,7 @@
         "</div>" +
         (groups.length
           ? '<div class="ws-tablewrap"><table class="ws-table">' +
-            "<tr><th>Item</th><th>Batch</th><th>Qty</th><th>Expires</th><th>Status</th><th>&nbsp;</th></tr>" +
+            "<tr><th>Item</th><th>Qty</th><th>Expires</th><th>Status</th><th>&nbsp;</th></tr>" +
             groups.map(function (g) {
               return g.batches.map(function (i, n) {
                 var c2 = E.classify(i, { today: today(), months: months() });
@@ -162,9 +162,9 @@
                   (n === 0 ? "<b>" + esc(g.name) + "</b>" +
                     (g.strength ? " " + esc(g.strength) : "") +
                     (g.batches.length > 1 ? '<span class="tr-sub">' + g.batches.length +
-                      " batches &middot; " + g.total + " in cart</span>" : "")
+                      " expiry dates &middot; " + g.total + " in cart</span>" : "")
                    : "") + "</td>" +
-                  "<td>" + esc(i.batch || "—") + "</td>" +
+                  
                   "<td>" + esc(i.quantity) + "</td>" +
                   "<td>" + esc(i.expires_on || "—") + "</td><td>" + tag + "</td>" +
                   '<td><button class="tr-edit" data-edit="' + esc(i.id) + '">Edit</button></td></tr>';
@@ -191,11 +191,11 @@
         esc(ev.tag_after || "—") + "</p>" +
         (used.length
           ? '<div class="ws-tablewrap"><table class="ws-table">' +
-            "<tr><th>Item</th><th>Batch used</th><th>Qty</th><th>Replaced with</th></tr>" +
+            "<tr><th>Item</th><th>Expiry used</th><th>Qty</th><th>Replaced with</th></tr>" +
             used.map(function (u) {
-              return "<tr><td>" + esc(u.name || "") + "</td><td>" + esc(u.old_batch || "—") +
+              return "<tr><td>" + esc(u.name || "") + "</td><td>" + esc(u.old_expiry || "—") +
                 "</td><td>" + esc(u.qty || 0) + "</td><td>" +
-                (u.new_batch ? esc(u.new_batch) + " &middot; exp " + esc(u.new_expiry || "—") +
+                (u.new_expiry ? "exp " + esc(u.new_expiry) +
                   (u.new_qty ? " (" + esc(u.new_qty) + ")" : "") : "not replaced") +
                 "</td></tr>";
             }).join("") + "</table></div>"
@@ -213,9 +213,9 @@
           return '<option value="' + m + '"' + (m === r.months ? " selected" : "") + ">" +
                  m + " months</option>";
         }).join("") + "</select></label>" +
-      '<span class="tr-hint">Every batch expiring in <b>' + esc(E.monthLabel(r.windowMonth)) +
+      '<span class="tr-hint">Everything expiring in <b>' + esc(E.monthLabel(r.windowMonth)) +
       "</b> or earlier is flagged &mdash; the whole month, whatever the day printed on the " +
-      "pack. Applies to every batch in every cart.</span>" +
+      "pack. Applies to every entry in every cart.</span>" +
       /* Who is written to is part of the protocol, so it is stated beside it rather than
          buried in a settings page — and the people who cannot change it can still SEE it,
          which is what stops "I never got the email" being unanswerable. */
@@ -283,15 +283,22 @@
 
   /* ---------------- item form, with batches ---------------- */
 
+  /* NO BATCH NUMBER. A row is now just a quantity and an expiry date.
+     The register's job is to answer "what is in the trolley and when does it die" —
+     the batch number answered neither, and asking a nurse to copy a twelve-character
+     code off an ampoule at 2am is how a register stops being kept at all. The same
+     item can still hold several rows: that is how you record a second expiry when a
+     fresh pack arrives, without inventing a batch to hang it on.
+
+     The database column stays. Dropping it would destroy what is already recorded,
+     and an unused column costs nothing. */
   function batchFields(n, b) {
     b = b || {};
     return '<div class="cc-batch" data-batch>' +
-      '<span class="cc-batch-n">Batch ' + n + "</span>" +
-      '<div class="ws-f"><label>Batch number</label><input data-b="batch" value="' +
-        esc(b.batch || "") + '"></div>' +
+      '<span class="cc-batch-n">Expiry ' + n + "</span>" +
       '<div class="ws-f"><label>Quantity *</label><input data-b="quantity" type="number" ' +
         'min="0" required value="' + esc(b.quantity == null ? 1 : b.quantity) + '"></div>' +
-      '<div class="ws-f"><label>Expiry *</label><input data-b="expires_on" type="date" ' +
+      '<div class="ws-f"><label>Expires on *</label><input data-b="expires_on" type="date" ' +
         'required value="' + esc(b.expires_on || "") + '"></div>' +
       (n > 1 ? '<button type="button" class="cc-batch-x" data-rmbatch>Remove</button>' : "") +
       "</div>";
@@ -302,7 +309,7 @@
     /* Editing touches ONE batch row. Adding offers as many as the pharmacist has in hand,
        because a delivery arrives as several batches and closing the dialog between each is
        the difference between a five-minute job and a half-hour one. */
-    modal("<h3>" + (item ? "Edit batch" : "Add an item") + "</h3>" +
+    modal("<h3>" + (item ? "Edit this expiry" : "Add an item") + "</h3>" +
       '<form id="ccItemForm" class="ws-form"' + (item ? ' data-id="' + esc(i.id) + '"' : "") + ">" +
       '<div class="ws-f ws-f-wide"><label>Crash cart *</label><select name="cart_id" required>' +
         cartOptions(i.cart_id || cartId) + "</select></div>" +
@@ -312,7 +319,7 @@
         esc(i.strength || "") + '" placeholder="1mg/ml ampoule"></div>' +
       '<div id="ccBatches">' + batchFields(1, item ? i : null) + "</div>" +
       (item ? "" : '<button type="button" class="btn btn-ghost btn-sm" id="ccAddBatch">' +
-                   "+ Add another batch</button>") +
+                   "+ Add another expiry</button>") +
       '<p class="tr-hint">One item, one strength, and a row for each batch you hold. ' +
         "If the pack shows only a month, use the LAST day of it &mdash; stock printed " +
         "11/2026 is usable to 30 November.</p>" +
@@ -331,14 +338,14 @@
         var n = box.querySelectorAll("[data-batch]").length + 1;
         box.insertAdjacentHTML("beforeend", batchFields(n));
         var last = box.lastElementChild;
-        last.querySelector('[data-b="batch"]').focus();
+        last.querySelector('[data-b="quantity"]').focus();
       });
     }
     box.addEventListener("click", function (e) {
       if (!e.target.closest("[data-rmbatch]")) return;
       e.target.closest("[data-batch]").remove();
       [].forEach.call(box.querySelectorAll(".cc-batch-n"), function (el, n) {
-        el.textContent = "Batch " + (n + 1);
+        el.textContent = "Expiry " + (n + 1);
       });
     });
   }
@@ -399,7 +406,7 @@
         esc(g.strength || "") + '"></div>' +
       '<div class="ws-f"><label>Quantity *</label><input data-c="quantity" type="number" min="0" ' +
         'required value="' + esc(g.total) + '"></div>' +
-      '<div class="ws-f"><label>Batch number</label><input data-c="batch" value=""></div>' +
+      
       '<div class="ws-f"><label>Expiry *</label><input data-c="expires_on" type="date" required ' +
         'value=""></div>' +
       "</div>";
@@ -426,7 +433,7 @@
       '<div class="ws-f ws-f-wide cc-copy-all"><label>Set every expiry to</label>' +
         '<input type="date" id="ccCopyAllExp">' +
         '<button type="button" class="btn btn-ghost btn-sm" id="ccCopyApply">Apply to all</button>' +
-        '<input type="text" id="ccCopyAllBatch" placeholder="and batch (optional)">' +
+        
         "</div>" +
 
       '<div id="ccCopyRows">' +
@@ -434,7 +441,7 @@
 
       '<p class="tr-hint">Names and quantities come from ' +
         esc((cartById(sourceId) || {}).name || "the other cart") +
-        ". Batch and expiry are left blank on purpose &mdash; they are what differs between " +
+        ". Expiry dates are left blank on purpose &mdash; they are what differs between " +
         "trolleys, and copying them across would put a wrong expiry into a crash cart. " +
         "Untick anything this cart does not carry.</p>" +
       '<div class="ws-modal-actions">' +
@@ -444,11 +451,9 @@
 
     document.getElementById("ccCopyApply").addEventListener("click", function () {
       var d = document.getElementById("ccCopyAllExp").value;
-      var b = document.getElementById("ccCopyAllBatch").value;
       [].forEach.call(document.querySelectorAll("#ccCopyRows [data-copyrow]"), function (row) {
         if (!row.querySelector('[data-c="take"]').checked) return;
         if (d) row.querySelector('[data-c="expires_on"]').value = d;
-        if (b) row.querySelector('[data-c="batch"]').value = b;
       });
     });
 
@@ -478,7 +483,6 @@
         cart_id: targetId,
         name: String(r.querySelector('[data-c="name"]').value || "").trim(),
         strength: String(r.querySelector('[data-c="strength"]').value || "").trim() || null,
-        batch: String(r.querySelector('[data-c="batch"]').value || "").trim() || null,
         quantity: Math.max(0, Number(r.querySelector('[data-c="quantity"]').value) || 0),
         expires_on: r.querySelector('[data-c="expires_on"]').value
       });
@@ -637,7 +641,7 @@
       '<div class="ws-f"><label>Batch used *</label><select data-u="batch" required>' +
         '<option value="">Choose&hellip;</option>' +
         g.batches.map(function (b) {
-          return '<option value="' + esc(b.id) + '">' + esc(b.batch || "no batch number") +
+          return '<option value="' + esc(b.id) + '">' + esc(b.expires_on || "no expiry") +
                  " &middot; exp " + esc(b.expires_on) + " &middot; " + b.quantity +
                  " in cart</option>";
         }).join("") + "</select></div>" +
@@ -648,7 +652,6 @@
 
   function replBatchRow() {
     return '<div class="cc-usedrow" data-replrow>' +
-      '<div class="ws-f"><label>New batch</label><input data-r="batch"></div>' +
       '<div class="ws-f"><label>Quantity *</label>' +
         '<input data-r="qty" type="number" min="1" value="1" required></div>' +
       '<div class="ws-f"><label>New expiry *</label>' +
@@ -756,7 +759,7 @@
       stock.hidden = false;
       stock.innerHTML = "<b>In the cart now:</b><ul>" + g.batches.map(function (b) {
         var c2 = E.classify(b, { today: today(), months: months() });
-        return "<li>" + esc(b.batch || "no batch number") + " &middot; " + b.quantity +
+        return "<li>" + esc(b.expires_on || "no expiry") + " &middot; " + b.quantity +
                " &middot; expires " + esc(b.expires_on) +
                (c2.state === "expired" ? ' <span class="tr-tag bad">expired</span>'
                 : c2.state === "short" ? ' <span class="tr-tag warn">short</span>' : "") +
@@ -861,7 +864,6 @@
       await S.adapter.put(ITEMS, {
         id: rid && rows.length === 1 ? rid : id("cci"),
         cart_id: cartId, name: name, strength: strength,
-        batch: String(b.querySelector('[data-b="batch"]').value || "").trim() || null,
         quantity: Math.max(0, Number(b.querySelector('[data-b="quantity"]').value) || 0),
         expires_on: expiry
       });
@@ -891,8 +893,7 @@
         if (!g) continue;
 
         var repls = [].slice.call(block.querySelectorAll("[data-replrow]")).map(function (r) {
-          return { batch: String(r.querySelector('[data-r="batch"]').value || "").trim() || null,
-                   qty: Math.max(0, Number(r.querySelector('[data-r="qty"]').value) || 0),
+          return { qty: Math.max(0, Number(r.querySelector('[data-r="qty"]').value) || 0),
                    expiry: r.querySelector('[data-r="expiry"]').value };
         }).filter(function (r) { return r.expiry; });
 

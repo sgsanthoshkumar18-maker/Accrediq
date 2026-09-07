@@ -2432,3 +2432,100 @@ begin
          for each row execute function public.set_org_id()', t, t);
   end loop;
 end $$;
+
+-- ===========================================================================
+-- THE FIVE-SECTION QUALITY DASHBOARD, AND EMAIL FREQUENCY
+--
+-- Almost nothing new is created here. Incidents, committee meetings, code events
+-- and the readiness elements ALREADY exist and are already being filled in — the
+-- dashboard's job is to read them, not to ask for them a second time. A hospital
+-- that types its incidents on the incident page and then retypes them on a
+-- dashboard has two sets of numbers and no way to tell which is right.
+--
+-- So this block adds COLUMNS to what exists, and one small table for the two
+-- things nothing currently records.
+-- ===========================================================================
+
+-- ---------- Incident dashboard ----------
+-- Donabedian is the standard way a quality department classifies why something
+-- happened: was it the structure (equipment, staffing, layout), the process (how
+-- the work was done), or the outcome (what happened to the patient)? Free text
+-- rather than an enum so a hospital using a local variant is not blocked.
+alter table public.incidents add column if not exists donabedian text;   -- structure | process | outcome
+
+-- ---------- Committee dashboard ----------
+-- Attendance and quorum_met are already there. What is missing is what the meeting
+-- actually produced: a meeting with no actions is a meeting that did not need to happen,
+-- and an action that is never closed is the thing an assessor finds.
+alter table public.committee_meetings add column if not exists actions_raised int;
+alter table public.committee_meetings add column if not exists actions_closed int;
+alter table public.committee_meetings add column if not exists quorum_required int;
+
+-- ---------- Code alert dashboard ----------
+-- code_blue_events is currently only about the crash cart. A code alert is a drill or a
+-- real event with a colour, a team, and a performance — and "who did not turn up" is the
+-- single most useful number in the whole exercise.
+alter table public.code_blue_events add column if not exists code_colour text;      -- blue | red | pink | etc
+alter table public.code_blue_events add column if not exists is_drill boolean not null default false;
+alter table public.code_blue_events add column if not exists team_expected int;
+alter table public.code_blue_events add column if not exists team_present int;
+alter table public.code_blue_events add column if not exists absent_roles text;      -- who was missing
+alter table public.code_blue_events add column if not exists response_seconds int;
+alter table public.code_blue_events add column if not exists performance_score int;  -- 0..100
+alter table public.code_blue_events add column if not exists updated_at timestamptz not null default now();
+
+-- ---------- NABH readiness dashboard ----------
+-- Readiness itself is computed from public.elements, which the readiness page already
+-- writes. The only thing it cannot hold is WHO owns a chapter, so that is one small
+-- table keyed by chapter code — and an optional override, because a quality manager
+-- must be able to say "we are not as ready as the element count suggests" without
+-- having to fake the element data to prove it.
+create table if not exists public.chapter_owners (
+  id            text primary key,
+  org_id        uuid references public.orgs(id) on delete cascade,
+  chapter       text not null,               -- 'MOM', 'HIC', ...
+  champion      text,                        -- the person who owns it
+  champion_role text,
+  -- Null means "use the figure computed from the elements". A number here overrides it,
+  -- and the dashboard shows both so nobody can quietly mark themselves ready.
+  readiness_override int,
+  note          text,
+  created_at    timestamptz not null default now(),
+  updated_at    timestamptz not null default now(),
+  unique (org_id, chapter)
+);
+alter table public.chapter_owners add column if not exists updated_at timestamptz not null default now();
+create index if not exists chapter_owners_org_idx on public.chapter_owners (org_id);
+alter table public.chapter_owners enable row level security;
+
+do $$
+declare t text;
+begin
+  foreach t in array array['chapter_owners']
+  loop
+    execute format('drop policy if exists %I_read on public.%I', t, t);
+    execute format($f$create policy %I_read on public.%I for select to authenticated
+       using (org_id = public.my_org() and public.has_access())$f$, t, t);
+    execute format('drop policy if exists %I_write on public.%I', t, t);
+    execute format($f$create policy %I_write on public.%I for all to authenticated
+       using (org_id = public.my_org() and public.has_access() and public.can_edit())
+       with check (org_id = public.my_org() and public.has_access() and public.can_edit())$f$,
+       t, t);
+    execute format('drop trigger if exists set_org_%I on public.%I', t, t);
+    execute format(
+      'create trigger set_org_%I before insert on public.%I
+         for each row execute function public.set_org_id()', t, t);
+  end loop;
+end $$;
+
+-- ---------- Email reminder frequency ----------
+-- Every reminder in the platform used to be weekly because that is what was built first.
+-- A crash cart nearing expiry wants a daily nudge; an apex manual review does not.
+--
+-- 'off' is deliberately a value rather than a separate boolean. Two fields that can
+-- disagree — email_digest false with frequency 'daily' — is a bug waiting to be written,
+-- and email_digest is kept only so existing rows keep working.
+alter table public.notify_prefs add column if not exists digest_frequency text not null default 'weekly';
+  -- off | daily | weekly | monthly
+alter table public.notify_prefs add column if not exists crashcart_frequency text not null default 'monthly';
+alter table public.notify_prefs add column if not exists digest_hour smallint not null default 9;  -- IST

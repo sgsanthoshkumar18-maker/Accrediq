@@ -359,7 +359,10 @@ check('the reveal system adds no dependency, and none is loaded site-wide', () =
     .forEach(lib => assert.ok(!new RegExp(lib, 'i').test(code),
       'cinematic.js must not depend on ' + lib));
 
-  const pages = fs.readdirSync(ROOT).filter(f => /\.html$/.test(f));
+  /* A leading underscore marks a design sample — the same names .gitignore keeps out of the
+     deploy. They are allowed to load or discuss anything, because no visitor ever gets one;
+     holding them to the site's dependency budget fails the build over a file that never ships. */
+  const pages = fs.readdirSync(ROOT).filter(f => /\.html$/.test(f) && f[0] !== '_');
   const withGsap = pages.filter(f => /gsap/i.test(read(f)));
   assert.ok(withGsap.length <= 2,
     'GSAP has spread beyond the globe pages: ' + withGsap.join(', '));

@@ -15,8 +15,36 @@
   var S = window.AQStore, W = window.AQWorkspace, K = window.AQSchedule, D = window.AQDigest;
   if (!S || !K || !D) return;
 
-  var prefs = { email_digest: true, digest_dow: 1, department: null, overdue_only: false };
+  var prefs = { email_digest: true, digest_dow: 1, department: null, overdue_only: false,
+                digest_frequency: "weekly" };
   var digest = null;
+
+  /* HOW OFTEN A REMINDER ARRIVES, and — the part that matters — a plain sentence saying
+     exactly when. "Monthly" means nothing until somebody tells you it is the 1st; a
+     quality manager who does not know the day cannot plan around it, and will either
+     chase it or ignore it. Every schedule below is stated in full, in IST, because that
+     is the clock the rest of the platform runs on. */
+  var FREQ = [
+    ["off",     "Never"],
+    ["daily",   "Every day"],
+    ["weekly",  "Once a week"],
+    ["monthly", "Once a month"]
+  ];
+  var FREQ_WHEN = {
+    off:     "No reminder emails will be sent. Everything still appears here in the bell.",
+    daily:   "A reminder will arrive every morning at 9am IST.",
+    weekly:  "A reminder will arrive every Monday morning at 9am IST.",
+    monthly: "A reminder will arrive on the 1st of every month at 9am IST."
+  };
+  function currentFreq() {
+    var f = prefs.digest_frequency;
+    /* Rows written before this existed have no frequency, only the old boolean. Read it
+       rather than defaulting everybody back to weekly and re-subscribing people who had
+       deliberately turned email off. */
+    if (!f) f = prefs.email_digest === false ? "off" : "weekly";
+    return FREQ.some(function (x) { return x[0] === f; }) ? f : "weekly";
+  }
+  function freqSentence(f) { return FREQ_WHEN[f] || FREQ_WHEN.weekly; }
 
   async function load() {
     var names = ["compliance_tasks", "committees", "committee_meetings",
@@ -91,8 +119,23 @@
           '<button class="ws-bell-x" data-n="close" type="button" aria-label="Close">\u2715</button></div>' +
         body() +
         '<div class="ws-bell-foot">' +
-          '<label class="ws-bell-opt"><input type="checkbox" id="bellEmail"' +
-            (prefs.email_digest ? " checked" : "") + "><span>Email me a weekly summary</span></label>" +
+          /* HOW OFTEN, not whether. "Email me a weekly summary" was a tickbox, so the only
+             choices were weekly or silence — and somebody who wanted a daily nudge on an
+             expiring crash cart had to take a weekly one or nothing.
+
+             "Off" is a value in the same control rather than a separate switch. Two fields
+             that can disagree — the box unticked while the frequency says daily — is a bug
+             waiting to be written. */
+          '<label class="ws-bell-opt ws-bell-freq"><span>Email me a summary</span>' +
+            '<select id="bellFreq">' +
+              FREQ.map(function (f) {
+                return '<option value="' + f[0] + '"' +
+                  (currentFreq() === f[0] ? " selected" : "") + ">" + f[1] + "</option>";
+              }).join("") +
+            "</select></label>" +
+          /* And say what that actually means, in words, the moment it is chosen. A hospital
+             asked for this: "monthly" is ambiguous until somebody tells you it is the 1st. */
+          '<p class="ws-bell-when" id="bellWhen">' + esc(freqSentence(currentFreq())) + "</p>" +
           '<label class="ws-bell-opt"><input type="checkbox" id="bellOverdue"' +
             (prefs.overdue_only ? " checked" : "") + "><span>Overdue only</span></label>" +
           '<a class="btn btn-ghost btn-sm" href="' + base() + 'workspace/dashboard.html">Open my department</a>' +
@@ -103,8 +146,15 @@
     host.addEventListener("click", function (e) {
       if (e.target.closest('[data-n="close"]')) hide();
     });
-    var em = document.getElementById("bellEmail");
-    if (em) em.addEventListener("change", function () { savePrefs({ email_digest: this.checked }); });
+    var fq = document.getElementById("bellFreq");
+    if (fq) fq.addEventListener("change", function () {
+      var v = this.value;
+      var w = document.getElementById("bellWhen");
+      if (w) w.textContent = freqSentence(v);
+      /* email_digest is kept in step so anything still reading the old boolean — the
+         digest cron among them — keeps working while both exist. */
+      savePrefs({ digest_frequency: v, email_digest: v !== "off" });
+    });
     var ov = document.getElementById("bellOverdue");
     if (ov) ov.addEventListener("change", async function () {
       await savePrefs({ overdue_only: this.checked });
@@ -175,6 +225,10 @@
         digest_dow: prefs.digest_dow == null ? 1 : prefs.digest_dow,
         department: prefs.department || null,
         overdue_only: !!prefs.overdue_only,
+        /* The payload is an explicit column list, so a new preference that is not named
+           here is dropped in silence — the control would appear to work and change
+           nothing. */
+        digest_frequency: currentFreq(),
         updated_at: new Date().toISOString()
       });
       if (W && W.toast) W.toast("Saved", "ok");

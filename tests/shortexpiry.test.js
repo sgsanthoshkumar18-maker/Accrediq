@@ -164,8 +164,22 @@ const has = (re, m) => eq(re.test(CC), true, m);
 }
 
 /* What must not travel. */
-eq(/data-c="batch"[^>]*value=""/.test(CC), true,
-   'the batch field must start EMPTY — a copied batch number describes stock in another ward');
+/* THE BATCH NUMBER IS GONE, deliberately.
+   The register answers "what is in the trolley and when does it die". A batch number
+   answered neither, and asking a nurse to copy a twelve-character code off an ampoule at
+   three in the morning is how a register stops being kept at all. The same item still holds
+   several rows — that is how a second expiry is recorded when a fresh pack arrives — they
+   are just identified by their date now instead of by a code.
+
+   The database column survives, so nothing already recorded is destroyed; the UI simply
+   stops reading or writing it. These assertions pin that: no input, and no save path. */
+eq(/data-c="batch"|data-b="batch"/.test(CC), false,
+   'no batch input anywhere — an item row is a quantity and an expiry date');
+eq(/batch:\s*String\(/.test(CC), false,
+   'and nothing writes a batch number on save');
+eq(/data-b="expires_on"/.test(CC), true,
+   'the expiry date is still asked for — it is the whole point of the register');
+eq(/data-b="quantity"/.test(CC), true, 'and so is the quantity');
 eq(/data-c="expires_on"[^>]*required[^>]*\n?\s*'value=""/.test(CC) ||
    /expires_on"[^]{0,120}value=""/.test(CC), true,
    'the expiry field must start EMPTY — a copied expiry is a date nobody has read off a pack');
