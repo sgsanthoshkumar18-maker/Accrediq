@@ -220,11 +220,19 @@
          buried in a settings page — and the people who cannot change it can still SEE it,
          which is what stops "I never got the email" being unanswerable. */
       '<span class="tr-hint cc-who">' + (function () {
-        var list = alertAddresses();
-        var who = list.length
-          ? "Monday alerts go to <b>" + esc(list.join(", ")) + "</b>, plus the owner."
-          : "Monday alerts go to <b>everyone who could restock</b> &mdash; nobody has been " +
-            "named yet.";
+        var list = alertAddresses(), f = alertFreq();
+        /* The cadence is part of the sentence now that it can be changed. "Monday alerts"
+           printed on a hospital that chose daily would be a page contradicting itself. */
+        var when = f === "off" ? "No alert emails are sent"
+                 : f === "daily" ? "Daily alerts go"
+                 : f === "monthly" ? "Monthly alerts go"
+                 : "Monday alerts go";
+        var who = f === "off"
+          ? "No alert emails are sent &mdash; everything expiring is still flagged here."
+          : list.length
+            ? when + " to <b>" + esc(list.join(", ")) + "</b>, plus the owner."
+            : when + " to <b>everyone who could restock</b> &mdash; nobody has been " +
+              "named yet.";
         return who + (canAssign()
           ? ' <button type="button" class="tr-edit" id="ccWho">Change</button>'
           : "");
@@ -574,13 +582,50 @@
       .filter(function (a) { return a.indexOf("@") > 0; });
   }
 
+  /* HOW OFTEN, NOT WHETHER — the same control the bell uses, for the same reason.
+     The alert was Monday-only because Monday is what was built first, and a cart with stock
+     expiring this month wants telling more often than that. 'Off' is a value in the same
+     dropdown rather than a separate switch: two fields that can disagree — alerts on, never
+     sent — is a bug waiting to be written.
+
+     This one is set on the ORG, not on the person. The recipients already are: one address
+     list for the hospital, changed by whoever can assign. A per-person cadence would mean
+     the pharmacist and the ICU sister could each pick a different day for the same email. */
+  var FREQ = [
+    ["off",     "Never"],
+    ["daily",   "Every day"],
+    ["weekly",  "Every Monday"],
+    ["monthly", "Once a month"]
+  ];
+  var FREQ_WHEN = {
+    off:     "No alert emails will be sent. Everything expiring is still flagged on this page.",
+    daily:   "An alert goes out every morning at 9am IST while anything is expiring.",
+    weekly:  "An alert goes out every Monday morning at 9am IST.",
+    monthly: "An alert goes out on the 1st of every month at 9am IST."
+  };
+  function alertFreq() {
+    var f = settings && settings.alert_frequency;
+    return FREQ.some(function (x) { return x[0] === f; }) ? f : "weekly";
+  }
+  function freqSentence(f) { return FREQ_WHEN[f] || FREQ_WHEN.weekly; }
+
   function recipientsForm() {
     var list = alertAddresses();
+    var cur = alertFreq();
     modal("<h3>Who receives the crash cart alerts?</h3>" +
       '<form id="ccWhoForm" class="ws-form">' +
       '<div class="ws-f ws-f-wide"><label>Email addresses</label>' +
         '<textarea name="alert_email" rows="4" placeholder="pharmacist@hospital.org, ' +
           'sister.icu@hospital.org">' + esc(list.join(", ")) + "</textarea></div>" +
+      '<div class="ws-f ws-f-wide"><label>How often</label>' +
+        '<select name="alert_frequency" id="ccFreq">' +
+          FREQ.map(function (f) {
+            return '<option value="' + f[0] + '"' + (cur === f[0] ? " selected" : "") + ">" +
+                   f[1] + "</option>";
+          }).join("") + "</select></div>" +
+      /* And say what that means in words, the moment it is chosen. "Monthly" is ambiguous
+         until somebody tells you it is the 1st. */
+      '<p class="tr-hint cc-when" id="ccWhen">' + esc(freqSentence(cur)) + "</p>" +
       '<p class="tr-hint">One per line, or separated by commas. <b>Only these people</b> get ' +
         "the Monday alert &mdash; nobody else in the hospital is written to. The account " +
         "owner is always included, so narrowing this list cannot lock the owner out.</p>" +
@@ -591,6 +636,14 @@
       '<div class="ws-modal-actions">' +
         '<button type="button" class="btn btn-ghost" id="ccCancel">Cancel</button>' +
         '<button class="btn btn-accent" type="submit">Save</button></div></form>');
+
+    /* The sentence follows the dropdown immediately, before anything is saved. Choosing
+       "monthly" and being told what that means is the whole point of writing it out. */
+    var sel = document.getElementById("ccFreq");
+    if (sel) sel.addEventListener("change", function () {
+      var w = document.getElementById("ccWhen");
+      if (w) w.textContent = freqSentence(this.value);
+    });
   }
 
   async function saveRecipients(f) {
@@ -600,9 +653,16 @@
     var bad = list.filter(function (a) { return a.indexOf("@") < 1 || a.indexOf(".") < 0; });
     if (bad.length) throw new Error(bad[0] + " does not look like an email address");
     var value = list.join(", ") || null;
+    var freq = String(new FormData(f).get("alert_frequency") || "weekly");
+    if (!FREQ.some(function (x) { return x[0] === freq; })) freq = "weekly";
     settings = await S.adapter.put(SETTINGS,
-      Object.assign({}, settings, { alert_email: value })) || settings;
+      Object.assign({}, settings, { alert_email: value, alert_frequency: freq })) || settings;
     settings.alert_email = value;
+    settings.alert_frequency = freq;
+    if (freq === "off") {
+      W.toast("Alert emails turned off — expiries are still flagged on this page");
+      return;
+    }
     W.toast(list.length
       ? "Alerts will go to " + list.length + " address" + (list.length === 1 ? "" : "es") +
         ", plus the owner"

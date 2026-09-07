@@ -117,7 +117,31 @@ ok(/const cartsWorthSending = myCarts && !myCarts\.empty;/.test(api),
 /* Without last_sent_on an hourly cron sends twenty-four identical emails, which is the
    fastest possible way to make someone switch the digest off for good. */
 ok(/p\.last_sent_on === iso/.test(api), 'an email is sent at most once a day');
-ok(/Number\(p\.digest_dow\) !== dow/.test(api), 'and only on the chosen day');
+/* FREQUENCY IS FOUR ANSWERS NOW, NOT A TICKBOX AND A DAY.
+   The bell offers off / daily / weekly / monthly, and this is the only place that decides
+   what each of them means. If the sender and the page that offers the choice disagree, the
+   product lies to the user every week — somebody who picked "every day" would keep getting
+   a Monday email and have no way to tell why. */
+ok(/case "daily":\s*return true;/.test(api), 'daily means every day');
+ok(/case "monthly":\s*return dom === 1;/.test(api), 'monthly means the 1st, as the bell says');
+ok(/case "off":\s*return false;/.test(api), 'off actually stops the mail');
+ok(/case "weekly":\s*return Number\(prefDow == null \? 1 : prefDow\) === dow;/.test(api),
+   'and weekly still honours the day they chose');
+/* Rows written before the dropdown existed carry only the old boolean. Reading it is what
+   stops the migration re-subscribing people who had deliberately turned email off. */
+ok(/p\.email_digest === false \? "off" : "weekly"/.test(api),
+   'a row with no frequency falls back to what its old tickbox said');
+/* The crash cart's cadence belongs to the hospital, not the reader — its recipient list
+   already does. Split per-user, one person could set daily and still be mailed weekly,
+   because the sender reads the org's list and not theirs. */
+ok(/freqOf\(cartSet, "alert_frequency", "weekly"\)/.test(api),
+   'the crash cart alert takes its frequency from the org, beside its recipients');
+ok(/if \(!digestDue && !cartDue\) \{ skipped\+\+; continue; \}/.test(api),
+   'nothing is sent on a day that is neither a digest day nor a cart day');
+/* A cart day that is not a digest day must send the cart ALONE. Leaving the calendar in
+   would quietly turn a monthly cart alert into a weekly digest. */
+ok(/if \(!digestDue\) \{[\s\S]{0,220}digest\.empty = true;/.test(api),
+   'and a cart-only day carries no digest content');
 ok(/require\("\.\.\/calendar\/schedule\.js"\)/.test(api), 'it shares the app scheduling code');
 ok(/require\("\.\.\/workspace\/digest\.js"\)/.test(api), 'and the app digest code');
 

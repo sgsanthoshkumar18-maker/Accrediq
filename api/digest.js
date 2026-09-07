@@ -246,15 +246,38 @@ module.exports = async function handler(req, res) {
     const today = new Date();
     const iso = today.toISOString().slice(0, 10);
     const dow = today.getDay();
+    const dom = today.getDate();
+
+    /* IS A REMINDER DUE TODAY?
+       Frequency used to be a tickbox and a day of the week, so the only real choices were
+       weekly or silence. The workspace now offers off / daily / weekly / monthly, and this
+       is the one place that decides what each of them means — if the sender and the page
+       that offers the choice disagree, the product lies to the user every single week.
+
+       'off' is a value here rather than a separate boolean because two fields that can
+       disagree (email_digest true, frequency 'off') is a bug waiting to be written. The old
+       boolean is still read, so rows written before the dropdown existed keep working
+       exactly as they did. */
+    const dueOn = (freq, prefDow) => {
+      switch (freq) {
+        case "off":     return false;
+        case "daily":   return true;
+        case "monthly": return dom === 1;
+        case "weekly":  return Number(prefDow == null ? 1 : prefDow) === dow;
+        default:        return Number(prefDow == null ? 1 : prefDow) === dow;
+      }
+    };
+    const freqOf = (row, field, fallback) => {
+      const v = row && row[field];
+      return ["off", "daily", "weekly", "monthly"].includes(v) ? v : fallback;
+    };
 
     let sent = 0, skipped = 0, quiet = 0;
 
     for (const p of prefs) {
-      if (!p.email_digest) { skipped++; continue; }
-      /* Only on the day they chose, and only once. Without the last_sent_on check a cron
-         that runs hourly would send twenty-four identical emails, which is the fastest
-         possible way to make someone switch the digest off for good. */
-      if (Number(p.digest_dow) !== dow) { skipped++; continue; }
+      /* Only once a day whatever the cadence. Without the last_sent_on check a cron that
+         runs hourly would send twenty-four identical emails, which is the fastest possible
+         way to make someone switch the digest off for good. */
       if (p.last_sent_on === iso) { skipped++; continue; }
 
       const member = members.find(m => m.user_id === p.user_id);
@@ -263,10 +286,26 @@ module.exports = async function handler(req, res) {
       const org = member.org_id;
       const mine = rows => rows.filter(r => r.org_id === org);
 
+      /* The digest's own cadence, from the dropdown in the bell. A row written before that
+         existed carries only the old boolean, so it is read rather than defaulting everybody
+         back to weekly and re-subscribing people who had deliberately turned email off. */
+      const digestFreq = freqOf(p, "digest_frequency", p.email_digest === false ? "off" : "weekly");
+      const digestDue = dueOn(digestFreq, p.digest_dow);
+
       /* Only for the people this hospital has put on the crash cart. Everyone else's email
          simply has no such heading — the section's presence IS the assignment. */
       const cartSet = (cartSettings || []).find(x => x.org_id === org) || {};
-      const myCarts = assignedToCarts(member, cartSet)
+      /* THE CART'S CADENCE IS THE ORG'S, NOT THE READER'S — same as its recipient list.
+         One hospital, one schedule for the medicine trolley, because a cart nearing expiry
+         is not a matter of personal preference. It rides in the same email as the digest,
+         so a day can be a cart day, a digest day, or both, and each half is included only
+         when it is actually due. */
+      const cartFreq = freqOf(cartSet, "alert_frequency", "weekly");
+      const cartDue = dueOn(cartFreq, 1);
+
+      if (!digestDue && !cartDue) { skipped++; continue; }
+
+      const myCarts = (cartDue && assignedToCarts(member, cartSet))
         ? X.review(mine(carts || []), mine(cartItems || []),
                    { today: X.todayIST(), months: cartSet.months })
         : null;
@@ -302,6 +341,14 @@ module.exports = async function handler(req, res) {
          biomedical engineer with a clean register and an expiring ampoule in their crash cart
          has something to read, and the old test — which knew only about the digest — would
          have sent them nothing at all. */
+      /* A cart day that is not a digest day sends the cart alone. Leaving the calendar
+         section in would quietly turn a monthly cart alert into a weekly digest, which is
+         the opposite of what the person chose. */
+      if (!digestDue) {
+        digest.overdue = []; digest.soon = []; digest.never = []; digest.findings = [];
+        digest.empty = true;
+      }
+
       const cartsWorthSending = myCarts && !myCarts.empty;
       if (digest.empty && !cartsWorthSending) { quiet++; continue; }
 

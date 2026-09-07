@@ -2527,5 +2527,13 @@ end $$;
 -- and email_digest is kept only so existing rows keep working.
 alter table public.notify_prefs add column if not exists digest_frequency text not null default 'weekly';
   -- off | daily | weekly | monthly
-alter table public.notify_prefs add column if not exists crashcart_frequency text not null default 'monthly';
 alter table public.notify_prefs add column if not exists digest_hour smallint not null default 9;  -- IST
+
+-- The crash cart alert is NOT a per-user preference and must not live on notify_prefs.
+-- Its recipients are already an org-level list on crash_cart_settings — one address list
+-- for the whole hospital, set by whoever can assign — so its cadence belongs on the same
+-- row. Split across the two tables, a hospital could set 'daily' on their own preferences
+-- and still be mailed weekly, because the sender reads the org's list and not theirs.
+alter table public.crash_cart_settings
+  add column if not exists alert_frequency text not null default 'weekly';
+  -- off | daily | weekly | monthly

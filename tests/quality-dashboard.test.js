@@ -102,8 +102,24 @@ eq(/Math\.round\(\(r\.v \/ total\) \* 100\)/.test(CHARTS), true,
 /* Status colour is not the accent: "on target" must never be the same blue as "this is a link". */
 eq(/\.qd-badge\.ok\{color:var\(--ok\)/.test(CSS), true, 'on-target uses the status token');
 eq(/\.qd-badge\.nc\{color:var\(--nc\)/.test(CSS), true, 'and so does needs-attention');
-eq(/#[0-9a-fA-F]{3,8}\b/.test(CSS.replace(/\/\*[\s\S]*?\*\//g, '')), false,
-   'no hardcoded colour anywhere in the stylesheet');
+/* NO HARDCODED COLOUR — with exactly one declared exception, and it has to stay declared.
+   The ten code alert hues are the one place on this page where the colour IS the datum: a
+   Code Red bar drawn in the platform blue is unreadable to the people who use these names
+   every day. They are allowed as literals ONLY inside the :root / [data-theme="dark"] token
+   blocks, so both themes get a value that survives their own ground — two of them invert,
+   Code Black being invisible on dark and Code White on light. A literal anywhere else in
+   this stylesheet is the bug this rule was written to catch, and still fails. */
+const CSS_BODY = CSS
+  .replace(/\/\*[\s\S]*?\*\//g, '')
+  .replace(/(?::root|\[data-theme="dark"\])\{[^}]*--code-[\s\S]*?\}/g, '');
+eq(/#[0-9a-fA-F]{3,8}\b/.test(CSS_BODY), false,
+   'no hardcoded colour outside the declared code-alert token blocks');
+eq(/:root\{[\s\S]{0,400}--code-black:/.test(CSS), true, 'the code colours are tokens');
+eq(/\[data-theme="dark"\]\{[\s\S]{0,400}--code-black:/.test(CSS), true,
+   'and every one of them is redefined for the dark theme');
+eq(/"var\(--code-blue\)"/.test(SRC), true, 'the script names the token, never the hex');
+eq(/#[0-9a-fA-F]{6}/.test(SRC.replace(/\/\*[\s\S]*?\*\//g, '')), false,
+   'so no hex reaches the JavaScript at all');
 
 /* ------------------------------------------------------------------ findings
 
@@ -158,6 +174,122 @@ eq(/open_count/.test(SQL), false, 'no stored open count that could drift from th
 /* Committees are deliberately absent from the month record: the workspace already runs a
    committee calendar, and two sources for one figure is two answers. */
 eq(/committees_held_pct/.test(SQL), false, 'the month record does not re-ask for committees');
+
+/* ======================== THE FIVE SECTIONS ========================
+ *
+ * The board became five boards: KPI, Committee, Incident, Code alert, NABH readiness. The
+ * failure that matters here is not a missing chart — it is a section that invents a second
+ * copy of data another page already owns. A hospital with two incident tables has two
+ * incident counts and no way to tell an assessor which is true, and the same goes for
+ * committees and the element register. So the tests below check WHERE each section reads
+ * from at least as hard as they check what it draws.
+ */
+['kpi', 'committee', 'incident', 'code', 'nabh'].forEach((s) => {
+  eq(new RegExp('sec: "' + s + '"').test(SRC), true, s + ' section has tiles of its own');
+});
+eq(/SECTIONS = \[/.test(SRC), true, 'the five sections are declared once, as data');
+eq(/qd-tabs/.test(SRC) && /\.qd-tabs\{/.test(CSS), true, 'and rendered as a real tab strip');
+
+/* Only the KPI section owns tables. The other four read what the workspace already holds. */
+eq(/CMTES = "committees"/.test(SRC), true, 'committees are read, not re-created');
+eq(/INCIDENTS = "incidents"/.test(SRC), true, 'incidents are read from the incidents table');
+eq(/CODES = "code_blue_events"/.test(SRC), true, 'code alerts reuse the existing event log');
+eq(/S\.elements \? await S\.elements\(\)/.test(SRC), true,
+   'readiness reads the element register through the same helper the tracker uses');
+eq(/S\.readiness\(elementMap\)/.test(SRC), true,
+   'and scores it with the same weighted maths, so the two pages cannot disagree');
+/* The incident report itself belongs to the incidents page — sign-off chain, one-hour
+   window, the lot. A second short form here would create incidents that skip all of it. */
+eq(/href="incidents\.html"/.test(SRC), true, 'reporting an incident links out rather than duplicating the form');
+eq(/id="qdIncidentForm"/.test(SRC) && /Object\.keys\(cur\)\.forEach/.test(SRC), true,
+   'and classifying one PATCHES the existing row rather than replacing its payload');
+
+/* A missing table in one section must not blank the page. Four sections that loaded are
+   worth more than a setup notice for the fifth. */
+eq(/async function soft\(name\)/.test(SRC), true, 'a rejected read degrades to an empty section');
+eq(/host\.innerHTML = \(schemaMissing \? schemaNotice\(\) : ""\)/.test(SRC), true,
+   'and the qd_* setup notice sits above the board rather than replacing it');
+
+/* Layout is per section. One shared order list would drop a code alert tile into the KPI
+   grid the first time either was rearranged. */
+eq(/viewState\.order\[currentSection\(\)\] = o/.test(SRC), true, 'tile order is saved per section');
+eq(/aq-qd-view-v2/.test(SRC), true, 'and the key was bumped, since a v1 array is not a v2 object');
+
+/* Direction of travel is a THIRD answer here, not a default. More incidents reported can be
+   a worse month or a hospital that has finally started reporting properly, and colouring
+   that red teaches people to stop reporting. */
+eq(/higherIsBetter == null\) \? null :/.test(SRC), true,
+   'a movement with no good direction is drawn neutral, not green or red');
+
+/* The readiness override must never REPLACE the computed figure, or a chapter can mark
+   itself ready and nothing on the page disagrees. */
+eq(/readiness_override/.test(SRC) && /computed:/.test(SRC), true,
+   'the chapter row carries both the register figure and the hospital’s own');
+eq(/Register says/.test(SRC) && /They say/.test(SRC), true,
+   'and the table shows them side by side, never one instead of the other');
+
+/* The chapter list had HIC, which is the previous edition's code for what is now IPC. A
+   finding filed against HIC could never match the chapter readiness computes, so the
+   cross-filter silently found nothing. */
+eq(/return \["AAC"[^\]]*"IPC"[^\]]*\]/.test(SRC), true,
+   'the fallback chapter list says IPC, not the dead HIC code');
+eq(/"HIC",/.test(SRC), false, 'and HIC survives nowhere as a value');
+eq(/window\.NABH_DATA[\s\S]{0,120}Object\.keys\(D\.chapters\)/.test(SRC), true,
+   'and the chapter list is taken from the register rather than typed out again');
+
+/* Quorum and the action counts are the three figures nobody had anywhere to put. */
+eq(/quorum_required/.test(SRC) && /actions_raised/.test(SRC) && /actions_closed/.test(SRC),
+   true, 'a meeting records quorum and its action points');
+eq(/more actions closed than were raised/.test(SRC), true,
+   'and closing more than were raised is refused, not drawn as over 100%');
+eq(/attendance == null \|\| m\.quorum_required == null\) return null/.test(SRC), true,
+   'a meeting missing either figure is not counted either way');
+
+/* Donabedian is the field the incidents page never asked for, and the reason the count
+   becomes a direction to look in. */
+['structure', 'process', 'outcome'].forEach((d) => {
+  eq(new RegExp('"' + d + '"').test(SRC), true, 'incidents can be classified as ' + d);
+});
+
+/* A drill is marked as a drill rather than hidden in another table: an assessor asks how
+   the team performs, and the answer is worth less if the practice runs are excluded. */
+eq(/is_drill/.test(SRC), true, 'code alerts distinguish a real event from a mock drill');
+eq(/team_expected/.test(SRC) && /team_present/.test(SRC) && /absent_roles/.test(SRC), true,
+   'and record who was expected, who came, and who was missing');
+eq(/more of the team present than were expected/.test(SRC), true,
+   'more present than expected is refused');
+
+/* Every KPI gets its OWN line. An average cannot show a KPI that fell four months running
+   while its department's mean held steady. */
+eq(/id: "kpiEach"/.test(SRC), true, 'every KPI is drawn with its own trend');
+eq(/spark\.length > 1/.test(SRC), true,
+   'and a single reading draws no line, since a flat line reads as "no change"');
+
+/* ---- the schema the five sections need ---- */
+eq(/alter table public\.incidents add column if not exists donabedian/.test(SQL), true,
+   'incidents gained a donabedian column rather than a second table');
+['actions_raised', 'actions_closed', 'quorum_required'].forEach((c) => {
+  eq(new RegExp('committee_meetings add column if not exists ' + c).test(SQL), true,
+     'committee_meetings gained ' + c);
+});
+['code_colour', 'is_drill', 'team_expected', 'team_present', 'absent_roles',
+ 'response_seconds', 'performance_score'].forEach((c) => {
+  eq(new RegExp('code_blue_events add column if not exists ' + c).test(SQL), true,
+     'code_blue_events gained ' + c);
+});
+eq(/create table if not exists public\.chapter_owners/.test(SQL), true,
+   'chapter champions get their own small table');
+eq(/'chapter_owners'/.test(SQL), true, 'which is inside the RLS and org-stamp loops');
+eq(/unique \(org_id, chapter\)/.test(SQL), true,
+   'and one hospital cannot end up with two champions for one chapter');
+
+/* The crash cart's cadence lives beside its recipients, on the org — not on notify_prefs.
+   Split per-user, one person could pick daily and still be mailed weekly, because the
+   sender reads the org's address list and not theirs. */
+eq(/crash_cart_settings\s+add column if not exists alert_frequency/.test(SQL), true,
+   'the crash cart alert frequency is an org setting');
+eq(/notify_prefs add column if not exists crashcart_frequency/.test(SQL), false,
+   'and is not duplicated onto per-user preferences');
 
 console.log(pass + ' passed, ' + fail + ' failed');
 process.exit(fail ? 1 : 0);

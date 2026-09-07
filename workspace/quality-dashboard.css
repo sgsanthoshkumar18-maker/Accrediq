@@ -185,3 +185,96 @@
   .qd-tile,.qd-tile.s3,.qd-tile.s4,.qd-tile.s5,
   .qd-tile.s6,.qd-tile.s8{grid-column:span 12;}
 }
+
+/* =============================== THE FIVE SECTIONS ===============================
+   One board became five, and the tabs are the only navigation on the page. They are
+   sized and spaced as a real control rather than a row of links: the section you are
+   in has to be readable from across a desk, because everything below it changes
+   meaning depending on which one is lit. */
+.qd-tabs{display:flex;gap:6px;flex-wrap:wrap;margin-bottom:12px;padding:5px;
+  background:var(--bg-elevated);border:1px solid var(--border);border-radius:999px;}
+.qd-tab{font:inherit;font-size:13px;padding:8px 16px;border-radius:999px;cursor:pointer;
+  border:1px solid transparent;background:transparent;color:var(--fg-muted);
+  transition:background .14s ease,color .14s ease;}
+.qd-tab b{font-weight:600;}
+.qd-tab:hover{background:var(--surface-1);color:var(--fg);}
+.qd-tab.on{background:var(--accent-solid);color:var(--on-accent);}
+.qd-tab.on:hover{background:var(--accent-solid);color:var(--on-accent);}
+.qd-tab:focus-visible{outline:2px solid var(--accent-solid);outline-offset:2px;}
+
+.qd-bar-sub{font-size:12px;color:var(--fg-faint);}
+@media (max-width:900px){.qd-bar-sub{display:none;}}
+
+/* Said once, at the top, when a section cannot draw anything yet. */
+.qd-nudge{margin-bottom:14px;padding:11px 14px;font-size:13px;line-height:1.6;
+  background:var(--brand-tint);border:1px solid var(--accent-solid);
+  border-radius:var(--r-md);color:var(--fg);}
+.qd-intro-warn{border-color:var(--accent-solid);}
+.qd-foot{margin:8px 0 0;font-size:11.5px;line-height:1.55;color:var(--fg-faint);}
+.qd-unset{font-size:12px;color:var(--fg-faint);font-style:italic;}
+
+/* What the page will become, shown on the empty state. */
+.qd-secs{display:grid;grid-template-columns:repeat(auto-fit,minmax(190px,1fr));gap:10px;
+  margin:16px 0;}
+.qd-sec{padding:11px 13px;border:1px solid var(--border);border-radius:var(--r-md);
+  background:var(--bg-elevated);}
+.qd-sec b{display:block;font-family:var(--font-display);font-size:14px;margin-bottom:3px;}
+.qd-sec span{font-size:12px;line-height:1.5;color:var(--fg-muted);}
+
+/* ---- every KPI, with its own line ----
+   A card per KPI rather than a row per KPI: the sparkline needs its own width, and a
+   table cell that has to hold a chart makes every other column narrow for nothing. */
+.qd-kpis{display:grid;grid-template-columns:repeat(auto-fill,minmax(250px,1fr));gap:11px;}
+.qd-kpi{text-align:left;padding:11px 13px;border:1px solid var(--border);
+  border-radius:var(--r-md);background:var(--bg);cursor:pointer;min-width:0;}
+.qd-kpi:hover{border-color:var(--accent-solid);}
+.qd-kpi-h{display:flex;align-items:baseline;gap:7px;}
+.qd-kpi-h b{font-size:13.5px;line-height:1.35;min-width:0;overflow-wrap:anywhere;}
+.qd-kpi-d{font-size:11.5px;color:var(--fg-faint);margin:2px 0 9px;}
+.qd-kpi-n{display:flex;gap:14px;flex-wrap:wrap;margin-bottom:6px;}
+.qd-kpi-n i{display:block;font-style:normal;font-size:9.5px;letter-spacing:.06em;
+  text-transform:uppercase;color:var(--fg-faint);}
+.qd-kpi-n b{font-family:var(--font-mono);font-size:14px;font-weight:700;
+  font-variant-numeric:tabular-nums;}
+.qd-kpi-n b.ok{color:var(--ok);} .qd-kpi-n b.nc{color:var(--nc);}
+.qd-kpi-n b.warn{color:var(--accent-text);}
+.qd-kpi-none{font-size:11.5px;color:var(--fg-faint);padding:6px 0 2px;}
+
+/* The code colour is the datum, so it is drawn rather than named twice. */
+.qd-dot{display:inline-block;width:9px;height:9px;border-radius:50%;margin-right:6px;
+  vertical-align:baseline;}
+/* The distance between the register's figure and the champion's own. */
+.qd-gap{font-family:var(--font-mono);font-size:11px;font-weight:700;}
+.qd-gap.up{color:var(--ok);} .qd-gap.down{color:var(--nc);}
+.qd-gap.flat{color:var(--fg-muted);}
+
+.qd-tile.s9{grid-column:span 9;}
+@media (max-width:1150px){.qd-tile.s9{grid-column:span 12;}}
+
+/* ---- the code alert colours ----
+   These are the only literal hues on the page, and they earn it: the colour IS the datum.
+   A Code Red bar drawn in the platform blue would be unreadable to the very people who use
+   these names every day. They are tokens rather than hex in the script because two of them
+   invert: Code Black is invisible on the dark theme and Code White on the light one, so
+   each theme gets a value that survives its own ground.
+
+   Yellow is a deep gold rather than an amber. It has to stay legible on the light theme,
+   and an amber pill on a quality dashboard reads as a warning about nothing. */
+:root{
+  --code-blue:#2563EB; --code-red:#DC2626;   --code-pink:#DB2777;
+  --code-purple:#7C3AED; --code-yellow:#B7791F; --code-orange:#EA580C;
+  --code-brown:#92400E; --code-grey:#6B7280;  --code-black:#111827;
+  --code-white:#64748B;
+}
+[data-theme="dark"]{
+  --code-blue:#60A5FA; --code-red:#F87171;   --code-pink:#F472B6;
+  --code-purple:#A78BFA; --code-yellow:#D9A441; --code-orange:#FB923C;
+  --code-brown:#C08457; --code-grey:#9CA3AF;  --code-black:#CBD5E1;
+  --code-white:#F1F5F9;
+}
+
+/* Five pills need two comfortable rows on a phone rather than one squeezed line. */
+@media (max-width:600px){
+  .qd-tabs{gap:5px;padding:4px;}
+  .qd-tab{padding:7px 11px;font-size:12.5px;}
+}
