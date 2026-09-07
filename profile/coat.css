@@ -1,0 +1,112 @@
+/* The scroll-scrubbed lab coat.
+ *
+ * THE SECTION IS NOT IN THE PAGE UNTIL A FRAME HAS DRAWN. display:none rather than
+ * opacity, so a portfolio missing its renders has no gap in it at all — no empty
+ * four-hundred-vh hole to scroll through, no black canvas. coat.js sets data-coat-ready
+ * only after the first image has decoded AND painted. */
+.coat { display: none; }
+.coat[data-coat-ready="1"] { display: block; }
+
+/* The scroll runway. Height is what buys the animation its length: at 420vh the coat
+   turns over roughly four screens of scrolling, which is slow enough to read as
+   deliberate and short enough that nobody feels trapped in it. Tunable in one place
+   because it is the number most worth adjusting once there are real frames to judge. */
+.coat {
+  --coat-run: 420vh;
+  position: relative;
+  height: var(--coat-run);
+}
+
+/* The pinned frame. position:sticky, so the browser does the pinning and the scrollbar
+   keeps telling the truth about how long the page is. */
+.coat-stage {
+  position: sticky;
+  top: 0;
+  height: 100vh;
+  display: grid;
+  grid-template-columns: 1fr;
+  align-items: center;
+  overflow: hidden;
+}
+
+.coat-canvas {
+  display: block;
+  width: 100%;
+  height: 100%;
+  /* The renders are transparent PNGs converted to WebP, so the page's own ground shows
+     through and the section works on both themes without a second set of images. */
+  background: transparent;
+}
+
+/* The words that ride alongside. Placed over the sequence rather than beside it, because
+   a two-column layout would halve the width the coat is rendered at for the sake of text
+   that is only three lines long. */
+.coat-copy {
+  position: absolute;
+  left: 0; right: 0; bottom: clamp(28px, 7vh, 76px);
+  padding: 0 clamp(18px, 5vw, 60px);
+  pointer-events: none;
+  text-align: center;
+}
+.coat-eyebrow {
+  font-family: var(--font-mono);
+  font-size: 10px;
+  letter-spacing: .16em;
+  text-transform: uppercase;
+  color: var(--fg-faint);
+  margin: 0 0 8px;
+}
+.coat-copy h2 {
+  font-family: var(--font-display);
+  font-size: clamp(22px, 3.4vw, 40px);
+  line-height: 1.14;
+  letter-spacing: -.02em;
+  margin: 0 0 10px;
+  text-wrap: balance;
+}
+.coat-copy p {
+  margin: 0 auto;
+  max-width: 56ch;
+  font-size: clamp(13px, 1.35vw, 15.5px);
+  line-height: 1.65;
+  color: var(--fg-muted);
+}
+
+/* A thin read-out of how far through the turn the reader is. It is the one honest piece
+   of chrome on a pinned section: without it, a reader who cannot tell the page is still
+   moving assumes it has hung. Driven by --coat-p, which coat.js publishes from the same
+   measurement that picks the frame, so the bar and the coat can never disagree. */
+.coat-bar {
+  position: absolute;
+  left: clamp(18px, 5vw, 60px);
+  right: clamp(18px, 5vw, 60px);
+  bottom: clamp(14px, 3vh, 30px);
+  height: 2px;
+  background: var(--border);
+  border-radius: 2px;
+  overflow: hidden;
+}
+.coat-bar i {
+  display: block;
+  height: 100%;
+  width: calc(var(--coat-p, 0) * 100%);
+  background: var(--accent-bright);
+}
+
+/* Touch and small screens: scrolly.js does not pin here and neither does this. The
+   sequence still loads — thinned to a quarter in coat.js — and sits as a single tall
+   image the reader scrolls past, which is the same picture without the runway. */
+@media (max-width: 1024px) {
+  .coat { --coat-run: auto; height: auto; }
+  .coat-stage { position: static; height: min(72vh, 520px); }
+  .coat-bar { display: none; }
+  .coat-copy { position: static; margin-top: 14px; }
+}
+
+/* Reduced motion: one frame, no runway, no bar. The pose, and none of the movement. */
+@media (prefers-reduced-motion: reduce) {
+  .coat { --coat-run: auto; height: auto; }
+  .coat-stage { position: static; height: min(70vh, 500px); }
+  .coat-bar { display: none; }
+  .coat-copy { position: static; margin-top: 14px; }
+}
