@@ -544,17 +544,49 @@ p{margin:0 0 0;}
 }
 .brand{display:flex;align-items:center;gap:12px;font-family:var(--font-display);font-weight:700;font-size:19px;letter-spacing:-.02em;color:var(--fg);}
 .brand svg{flex-shrink:0;}
-.brand .full-name{display:block;font-family:var(--font-body);font-weight:600;font-size:9.5px;letter-spacing:.06em;text-transform:uppercase;color:var(--fg-faint);margin-top:1px;}
-.brand-stack{display:flex;flex-direction:column;line-height:1.1;}
+/* TWO LINES, NOT FOUR — and the wordmark centred over them.
+   The strapline used to be one long string wrapping inside whatever width the flex row
+   happened to leave it, which came out as four ragged lines with empty space to their
+   left. It is now two spans that each refuse to break, so the block is exactly as wide as
+   its longest line and exactly two lines tall, every time. The wordmark is centred over
+   that block rather than pinned to its left edge, which is what closes the gap. */
+.brand .full-name{display:flex;flex-direction:column;font-family:var(--font-body);
+  font-weight:600;font-size:9.5px;letter-spacing:.06em;text-transform:uppercase;
+  color:var(--fg-faint);margin-top:2px;line-height:1.32;}
+.brand .full-name i{font-style:normal;white-space:nowrap;}
+.brand-stack{display:flex;flex-direction:column;align-items:center;line-height:1.1;}
 
-.main-nav{display:flex;align-items:center;gap:2px;}
+/* Below this the strapline is wider than the room the header can spare, so it goes and the
+   wordmark carries the brand alone — which it can, at this size. */
+@media (max-width:1149px){
+  .brand .full-name{display:none;}
+  .brand-stack{align-items:flex-start;}
+}
+
+/* ONE BAR, NOT SIX BUTTONS.
+   The six sections were six separate pills that only appeared on hover, so at rest the
+   navigation read as loose words floating next to a solid blue Quality Dashboard button —
+   the one thing on the row with any weight. Making the whole group a single filled bar
+   gives the navigation the same standing as that button and reads as one object.
+
+   White on --accent-solid is 7.69:1, which is why the fill is that token and not
+   --accent-bright: the bright one is tuned to be read AS text, not sat under it. */
+.main-nav{
+  display:flex;align-items:center;gap:2px;
+  background:var(--accent-solid);
+  border-radius:999px;
+  padding:4px 6px;
+}
 .main-nav a{
-  padding:9px 13px;border-radius:999px;font-size:14px;font-weight:500;color:var(--fg-muted);
+  padding:8px 13px;border-radius:999px;font-size:14px;font-weight:500;color:#fff;
   transition:background .15s ease,color .15s ease;
 }
-.main-nav a:hover{color:var(--fg);background:var(--brand-tint);}
-.main-nav a.active{color:var(--accent-text);background:var(--brand-tint);font-weight:600;}
-.main-nav a.hot{color:var(--accent-text);}
+/* Hover and current-page states live INSIDE the blue now, so they cannot use the tinted
+   background that worked against the page. A white veil at two strengths reads on the blue
+   in both themes and needs no second colour. */
+.main-nav a:hover{color:#fff;background:rgba(255,255,255,.16);}
+.main-nav a.active{color:#fff;background:rgba(255,255,255,.24);font-weight:600;}
+.main-nav a.hot{color:#fff;}
 
 .nav-dropdown{position:relative;display:flex;}
 .nav-dd-trigger{
@@ -563,6 +595,12 @@ p{margin:0 0 0;}
   transition:background .15s ease,color .15s ease;
 }
 .nav-dd-trigger svg{transition:transform .15s ease;flex-shrink:0;}
+/* Departments and Tools sit inside the blue bar with the other four, so they take its
+   colours, not the page's. The panel they open is still a page-coloured card — it hangs
+   below the bar, over the page, and would be unreadable in blue-on-blue. */
+.main-nav .nav-dd-trigger{color:#fff;padding:8px 13px;}
+.main-nav .nav-dd-trigger:hover{color:#fff;background:rgba(255,255,255,.16);}
+.main-nav .nav-dd-trigger.active{color:#fff;background:rgba(255,255,255,.24);font-weight:600;}
 .nav-dd-trigger:hover{color:var(--fg);background:var(--brand-tint);}
 .nav-dd-trigger.active{color:var(--accent-text);background:var(--brand-tint);font-weight:600;}
 .nav-dropdown.open .nav-dd-trigger svg{transform:rotate(180deg);}
@@ -634,7 +672,7 @@ p{margin:0 0 0;}
   .main-nav{position:absolute;top:100%;left:0;right:0;z-index:70;
     max-height:calc(100vh - var(--aq-header-h,64px));
     max-height:calc(100dvh - var(--aq-header-h,64px));
-    background:var(--bg-elevated);flex-direction:column;align-items:stretch;
+    background:var(--bg-elevated);border-radius:0;flex-direction:column;align-items:stretch;
     padding:14px 14px calc(14px + env(safe-area-inset-bottom));gap:2px;
     transform:translateY(-8px);opacity:0;pointer-events:none;transition:opacity .2s ease,transform .2s ease;
     border-top:1px solid var(--border);border-bottom:1px solid var(--border);
@@ -645,7 +683,15 @@ p{margin:0 0 0;}
      the page underneath; it is flipped to flex only when open. */
   .main-nav.open{display:flex;transform:translateY(0);opacity:1;pointer-events:auto;}
   body.aq-nav-open{overflow:hidden;}
-  .main-nav a{padding:13px 16px;border-radius:10px;}
+  /* The blue bar is a desktop idea. Here .main-nav IS the drawer — a full-width sheet — and
+     a solid blue sheet the height of the screen is a different proposition entirely. It goes
+     back to page colours, and so does everything inside it. */
+  .main-nav a{padding:13px 16px;border-radius:10px;color:var(--fg-muted);}
+  .main-nav a:hover{color:var(--fg);background:var(--brand-tint);}
+  .main-nav a.active{color:var(--accent-text);background:var(--brand-tint);}
+  .main-nav .nav-dd-trigger{color:var(--fg-muted);padding:13px 16px;}
+  .main-nav .nav-dd-trigger:hover{color:var(--fg);background:var(--brand-tint);}
+  .main-nav .nav-dd-trigger.active{color:var(--accent-text);background:var(--brand-tint);}
   .nav-toggle{display:flex;}
   .nav-actions .btn{padding:9px 14px;font-size:13px;}
   .nav-dropdown{flex-direction:column;}

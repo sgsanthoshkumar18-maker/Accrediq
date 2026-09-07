@@ -109,7 +109,7 @@
     <header class="site-header">
       <div class="bar wrap">
         <a href="${base}index.html" class="brand brand-nomark">
-          <span class="brand-stack">AQcredix<span class="full-name">Accreditation &amp; Quality Implementation Guidance Platform</span></span>
+          <span class="brand-stack">AQcredix<span class="full-name"><i>Accreditation &amp; Quality</i><i>Implementation Guidance Platform</i></span></span>
         </a>
         <nav class="main-nav" id="mainNav">${links}<a href="${base}workspace/start.html" class="nav-workspace-menu">Enter your hospital</a><a href="${base}dashboard.html" class="nav-mobile-only">Quality Dashboard</a></nav>
         <div class="nav-actions">
@@ -163,7 +163,7 @@
         </div>
         <div class="footer-grid">
           <div class="footer-brand">
-            <a href="${base}index.html" class="brand">${shieldMark}<span class="brand-stack">AQcredix<span class="full-name">Accreditation &amp; Quality Implementation Guidance Platform</span></span></a>
+            <a href="${base}index.html" class="brand">${shieldMark}<span class="brand-stack">AQcredix<span class="full-name"><i>Accreditation &amp; Quality</i><i>Implementation Guidance Platform</i></span></span></a>
             <p>NABH accreditation, actually understood — every standard explained the way an assessor reads it.</p>
           </div>
           <div class="footer-col"><h4>Learn</h4>

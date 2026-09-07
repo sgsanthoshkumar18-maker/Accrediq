@@ -16,12 +16,12 @@
   width:100%;aspect-ratio:3/4;border-radius:24px;margin:auto;
   background:radial-gradient(circle at 38% 32%, rgba(79,70,229,.5), rgba(76,111,255,.22) 55%, transparent 75%);
   border:1px solid rgba(255,255,255,.14);
-  display:flex;align-items:center;justify-content:center;text-align:center;color:rgba(255,255,255,.6);font-size:13px;padding:20px;
+  display:flex;align-items:center;justify-content:center;text-align:center;color:var(--fg-muted);font-size:13px;padding:20px;
 }
 
 .helix-loading{
   position:absolute;inset:0;display:flex;align-items:center;justify-content:center;flex-direction:column;gap:10px;
-  color:rgba(255,255,255,.55);font-family:var(--font-mono);font-size:11.5px;letter-spacing:.05em;text-transform:uppercase;
+  color:var(--fg-muted);font-family:var(--font-mono);font-size:11.5px;letter-spacing:.05em;text-transform:uppercase;
   transition:opacity .4s ease;pointer-events:none;
 }
 .helix-loading .spin{width:26px;height:26px;border-radius:50%;border:2px solid rgba(76,111,255,.25);border-top-color:var(--brand-2);animation:helixspin .8s linear infinite;}
@@ -37,12 +37,12 @@
 .helix-tooltip b{display:block;font-size:10.5px;color:#4c6fff;margin-bottom:3px;}
 
 .helix-footer{display:flex;align-items:center;justify-content:space-between;gap:10px;flex-wrap:wrap;}
-.helix-stat{font-family:var(--font-mono);font-size:11px;color:rgba(255,255,255,.45);}
+.helix-stat{font-family:var(--font-mono);font-size:11px;color:var(--fg-faint);}
 .helix-legend{display:flex;gap:12px;flex-wrap:wrap;}
-.helix-legend span{display:flex;align-items:center;gap:5px;font-size:10.5px;color:rgba(255,255,255,.6);}
+.helix-legend span{display:flex;align-items:center;gap:5px;font-size:10.5px;color:var(--fg-muted);}
 .helix-legend i{width:8px;height:8px;border-radius:50%;display:inline-block;}
-.helix-hint{font-size:11px;color:rgba(255,255,255,.35);text-align:center;}
-.helix-hint b{color:rgba(255,255,255,.6);}
+.helix-hint{font-size:11px;color:var(--fg-faint);text-align:center;}
+.helix-hint b{color:var(--fg-muted);}
 
 @media (max-width:900px){
   .helix-stage{max-width:300px;}
