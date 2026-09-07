@@ -60,6 +60,54 @@
        live. Still reachable from every workspace page, still the same page. */
   ];
 
+  /* WHICH GROUP EACH PAGE BELONGS TO, and the order the groups read in.
+     Twenty destinations in one flat list is a list of twenty whatever container holds it.
+     The grouping is by WHEN somebody reaches for a page, not by what module built it:
+     "Daily" is the handful opened every morning, "Prove it" is what an assessor asks for,
+     and so on. A page with no group falls into "More" rather than disappearing. */
+  var GROUPS = [
+    ["Daily",     ["start", "dashboard", "qualitydashboard", "readiness"]],
+    ["Prove it",  ["evidence", "audits", "rounds", "accreditation"]],
+    ["Incidents", ["incidents", "capa"]],
+    ["Running",   ["calendar", "register", "training", "crashcart", "gatepass"]],
+    ["Records",   ["library", "apex", "documents"]],
+    ["Admin",     ["access", "import"]]
+  ];
+
+  /* One 24x24 glyph per page, drawn on a single shared stroke style so the rail reads as
+     one set rather than twenty clip-art pieces. Deliberately simple: at 19px on a rail,
+     detail becomes noise. Anything without an entry falls back to a dot, so a new page
+     added to PAGES never renders a broken icon. */
+  var ICONS = {
+    start:            'M3 11l9-8 9 8M5 10v10h14V10',
+    dashboard:        'M3 3h8v8H3zM13 3h8v5h-8zM13 12h8v9h-8zM3 15h8v6H3z',
+    qualitydashboard: 'M4 20V10M10 20V4M16 20v-7M22 20H2',
+    readiness:        'M12 3l8 4v6c0 4-3.4 7.4-8 8-4.6-.6-8-4-8-8V7zM9 12l2 2 4-4',
+    evidence:         'M14 3H7a2 2 0 0 0-2 2v14a2 2 0 0 0 2 2h10a2 2 0 0 0 2-2V8zM14 3v5h5M9 14h6M9 17h4',
+    audits:           'M9 4h6v3H9zM7 7h10a2 2 0 0 1 2 2v10a2 2 0 0 1-2 2H7a2 2 0 0 1-2-2V9a2 2 0 0 1 2-2M9 13l2 2 4-4',
+    rounds:           'M20 12a8 8 0 1 1-3-6.2M20 4v5h-5',
+    accreditation:    'M12 2l2.6 5.3 5.9.9-4.3 4.1 1 5.8-5.2-2.7-5.2 2.7 1-5.8L3.5 8.2l5.9-.9zM8 20l4 2 4-2',
+    incidents:        'M12 3l9.5 17H2.5zM12 9v5M12 17.5v.5',
+    capa:             'M4 20V6a2 2 0 0 1 2-2h6l2 3h4a2 2 0 0 1 2 2v6a2 2 0 0 1-2 2h-6l-2-3H6',
+    calendar:         'M4 6h16v14H4zM4 10h16M8 3v4M16 3v4M9 14h2M14 14h2',
+    register:         'M5 4h11l3 3v13H5zM8 9h8M8 13h8M8 17h5',
+    training:         'M12 4L2 9l10 5 10-5zM6 11.5V16c0 1.5 2.7 3 6 3s6-1.5 6-3v-4.5',
+    crashcart:        'M6 8h12l-1 12H7zM9 8V5a3 3 0 0 1 6 0v3M12 12v5M9.5 14.5h5',
+    gatepass:         'M3 8l9-4 9 4-9 4zM3 8v8l9 4 9-4V8M12 12v8',
+    library:          'M4 5h5v15H4zM10 5h4v15h-4zM16.5 5.6l3.4.9L17 20.4l-3.4-.9z',
+    apex:             'M6 3h9l4 4v14H6zM15 3v4h4M9 12h7M9 16h5',
+    documents:        'M8 3h8l4 4v10a2 2 0 0 1-2 2H8a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2M16 3v4h4M4 8v11a2 2 0 0 0 2 2h9',
+    access:           'M12 2a5 5 0 0 1 5 5v3H7V7a5 5 0 0 1 5-5M5 10h14v11H5zM12 14v3',
+    import:           'M12 3v11M8 10l4 4 4-4M4 18v2h16v-2'
+  };
+
+  function icon(key) {
+    var d = ICONS[key];
+    return '<svg class="ws-rail-ico" viewBox="0 0 24 24" fill="none" stroke="currentColor" ' +
+      'stroke-width="1.7" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">' +
+      (d ? '<path d="' + d + '"/>' : '<circle cx="12" cy="12" r="4"/>') + "</svg>";
+  }
+
   var ROLE_RANK = { owner: 4, admin: 3, editor: 2, viewer: 1 };
 
   function esc(s) {
@@ -121,18 +169,67 @@
         ? '<span class="ws-mode ws-mode-local" title="Data is stored in this browser only">Local mode</span>'
         : '<span class="ws-mode ws-mode-cloud">' + esc((W.user && W.user.role) || "") + "</span>";
 
+      // Owner-only tabs are hidden from everyone else. This is presentation, not
+      // security — access.html enforces it again server-side via RLS, because a
+      // hidden link is not a locked door.
+      function allowed(p) {
+        if (p.ownerOnly) return window.AQBilling && window.AQBilling.isOwner(W.user);
+        return W.canOpen(p.key);
+      }
+      var visible = PAGES.filter(allowed);
+      var byKey = {};
+      visible.forEach(function (p) { byKey[p.key] = p; });
+
+      /* THE RAIL, grouped. Rendered on every screen and hidden by CSS below 1100px, where
+         the flat row underneath takes over — one markup pass, no JS listening to width, so
+         a resize can never leave the two out of step.
+
+         The link carries the description in its title, so the tooltip answers "what is
+         this" for anyone who hovers a moment longer than the rail takes to open. */
+      var railHtml = GROUPS.map(function (g) {
+        var items = g[1].map(function (k) { return byKey[k]; }).filter(Boolean);
+        if (!items.length) return "";
+        return '<div class="ws-rail-group">' + esc(g[0]) + "</div>" +
+          items.map(function (p) {
+            return '<a href="' + p.href + '" class="ws-rail-link' +
+              (p.key === activeKey ? " active" : "") + '" title="' + esc(p.desc || p.label) + '">' +
+              icon(p.key) + '<span class="ws-rail-label">' + esc(p.label) + "</span></a>";
+          }).join("");
+      }).join("");
+
+      /* Anything in PAGES that no group claims still has to be reachable. Silence here
+         would mean a new page simply vanished from the navigation. */
+      var grouped = {};
+      GROUPS.forEach(function (g) { g[1].forEach(function (k) { grouped[k] = 1; }); });
+      var ungrouped = visible.filter(function (p) { return !grouped[p.key]; });
+      if (ungrouped.length) {
+        railHtml += '<div class="ws-rail-group">More</div>' + ungrouped.map(function (p) {
+          return '<a href="' + p.href + '" class="ws-rail-link' +
+            (p.key === activeKey ? " active" : "") + '" title="' + esc(p.desc || p.label) + '">' +
+            icon(p.key) + '<span class="ws-rail-label">' + esc(p.label) + "</span></a>";
+        }).join("");
+      }
+
+      /* The account block, repeated at the foot of the rail. On a wide screen the flat row
+         that normally carries it is hidden, and losing "who am I signed in as" and the way
+         out would be a real regression. Two sign-out buttons therefore exist; both are
+         wired below, and only one is ever on screen because CSS shows one navigation or
+         the other, never both. Distinct ids because an id must be unique. */
+      var railFoot =
+        '<div class="ws-rail-foot">' + modeChip +
+          (W.user && W.canOpen("team")
+            ? '<a href="team.html" class="ws-team-link' +
+              (activeKey === "team" ? " active" : "") + '">Team</a>' : "") +
+          (W.user ? '<span class="ws-who">' + esc(W.user.name || W.user.email) + "</span>" +
+                    '<button type="button" class="ws-signout" id="wsSignOutRail">Sign out</button>' : "") +
+        "</div>";
+
       el.innerHTML =
+        '<nav class="ws-rail" id="wsRail" aria-label="Hospital workspace">' +
+          '<div class="ws-rail-in">' + railHtml + railFoot + "</div></nav>" +
         '<div class="ws-nav-inner">' +
           '<div class="ws-nav-links">' +
-            PAGES.filter(function (p) {
-              // Owner-only tabs are hidden from everyone else. This is presentation, not
-              // security — access.html enforces it again server-side via RLS, because a
-              // hidden link is not a locked door.
-              if (p.ownerOnly) {
-                return window.AQBilling && window.AQBilling.isOwner(W.user);
-              }
-              return W.canOpen(p.key);
-            }).map(function (p) {
+            visible.map(function (p) {
               return '<a href="' + p.href + '" class="ws-nav-link' +
                 (p.key === activeKey ? " active" : "") + '">' + esc(p.label) + "</a>";
             }).join("") +
@@ -169,10 +266,14 @@
       var teamBtn = document.getElementById("wsTeamBtn");
       if (teamBtn) teamBtn.hidden = !(W.user && W.canOpen("team"));
 
-      var so = document.getElementById("wsSignOut");
-      if (so) so.addEventListener("click", async function () {
-        await S.signOut();
-        location.reload();
+      /* Both sign-out buttons — the one in the flat row and the one at the foot of the
+         rail. Wiring only the first left the rail's button dead on every wide screen. */
+      ["wsSignOut", "wsSignOutRail"].forEach(function (id) {
+        var so = document.getElementById(id);
+        if (so) so.addEventListener("click", async function () {
+          await S.signOut();
+          location.reload();
+        });
       });
     },
 

@@ -166,7 +166,7 @@ window.AQCharts = (function () {
         var h = ((pv / hi) * (H - T - B));
         var y = T + (H - T - B) - acc - h;
         acc += h;
-        seg += '<rect class="aqc-bar" x="' + (cx - barW / 2).toFixed(1) + '" y="' + y.toFixed(1) +
+        seg += '<rect class="aqc-bar" data-bar="' + esc(r.label) + '" x="' + (cx - barW / 2).toFixed(1) + '" y="' + y.toFixed(1) +
           '" width="' + barW.toFixed(1) + '" height="' + Math.max(h, 0).toFixed(1) +
           '" rx="3" fill="' + (p.tone || "var(--accent-bright)") + '">' +
           "<title>" + esc(r.label) + " — " + esc(p.label || "") + " " + esc(p.v) +
@@ -278,7 +278,7 @@ window.AQCharts = (function () {
       /* A single slice covering the whole circle cannot be drawn as an arc — the start and end
          points coincide and the path collapses. Draw the ring itself. */
       if (frac >= 0.9999) {
-        slices += '<circle class="aqc-slice" cx="' + C + '" cy="' + C + '" r="' + ((R + ring) / 2).toFixed(1) +
+        slices += '<circle class="aqc-slice" data-slice="' + esc(r.label) + '" cx="' + C + '" cy="' + C + '" r="' + ((R + ring) / 2).toFixed(1) +
           '" fill="none" stroke="' + (r.tone || "var(--accent-bright)") + '" stroke-width="' + (R - ring) + '"/>';
       } else {
         var big = frac > 0.5 ? 1 : 0;
@@ -286,7 +286,7 @@ window.AQCharts = (function () {
         var x1 = C + R * Math.cos(a1), y1 = C + R * Math.sin(a1);
         var ix1 = C + ring * Math.cos(a1), iy1 = C + ring * Math.sin(a1);
         var ix0 = C + ring * Math.cos(a0), iy0 = C + ring * Math.sin(a0);
-        slices += '<path class="aqc-slice" fill="' + (r.tone || "var(--accent-bright)") + '" d="' +
+        slices += '<path class="aqc-slice" data-slice="' + esc(r.label) + '" fill="' + (r.tone || "var(--accent-bright)") + '" d="' +
           "M" + x0.toFixed(1) + " " + y0.toFixed(1) +
           "A" + R + " " + R + " 0 " + big + " 1 " + x1.toFixed(1) + " " + y1.toFixed(1) +
           "L" + ix1.toFixed(1) + " " + iy1.toFixed(1) +
@@ -304,7 +304,7 @@ window.AQCharts = (function () {
         '" text-anchor="middle">' + esc(o.centreSub) + "</text>" : "");
 
     var key = clean.map(function (r) {
-      return '<li><i style="background:' + (r.tone || "var(--accent-bright)") + '"></i>' +
+      return '<li data-slice="' + esc(r.label) + '"><i style="background:' + (r.tone || "var(--accent-bright)") + '"></i>' +
         '<span>' + esc(r.label) + "</span><b>" + Math.round((r.v / total) * 100) + "%</b></li>";
     }).join("");
 
@@ -355,7 +355,7 @@ window.AQCharts = (function () {
     clean.forEach(function (r, i) {
       var cx = L + bw * i + bw / 2;
       var h = (r.v / hi) * ih;
-      bodyBars += '<rect class="aqc-bar" x="' + (cx - barW / 2).toFixed(1) + '" y="' +
+      bodyBars += '<rect class="aqc-bar" data-bar="' + esc(r.label) + '" x="' + (cx - barW / 2).toFixed(1) + '" y="' +
         (T + ih - h).toFixed(1) + '" width="' + barW.toFixed(1) + '" height="' +
         /* Brand blue, not amber. A Pareto bar is a magnitude, not a warning: every bar
            on the chart is a real finding, so colouring them all amber shouts at the
@@ -387,6 +387,167 @@ window.AQCharts = (function () {
       "</svg></div>";
   }
 
+  /* ------------------------------------------------------------------ radar
+
+     One subject across several dimensions at once. A row of six bars answers "how is
+     each" one at a time; the radar answers "what shape is this department" in a single
+     glance, which is the question a director actually asks. Six to eight axes is the
+     usable range — past that the polygon becomes a circle and says nothing. */
+  function radar(vals, labels, o) {
+    o = o || {};
+    if (!vals || vals.length < 3) {
+      return '<p class="aqc-empty">' + esc(o.empty || "At least three measures are needed.") + "</p>";
+    }
+    var W = 240, H = 214, cx = 120, cy = 106, R = 74, n = vals.length, i;
+    var ang = function (k) { return -Math.PI / 2 + (k / n) * Math.PI * 2; };
+    var rings = "";
+    for (var g = 1; g <= 4; g++) {
+      var pts = [];
+      for (i = 0; i < n; i++) {
+        pts.push((cx + R * g / 4 * Math.cos(ang(i))).toFixed(1) + "," +
+                 (cy + R * g / 4 * Math.sin(ang(i))).toFixed(1));
+      }
+      rings += '<polygon class="aqc-grid" points="' + pts.join(" ") + '" fill="none"/>';
+    }
+    var spokes = "", labs = "";
+    for (i = 0; i < n; i++) {
+      spokes += '<line class="aqc-grid" x1="' + cx + '" y1="' + cy + '" x2="' +
+        (cx + R * Math.cos(ang(i))).toFixed(1) + '" y2="' + (cy + R * Math.sin(ang(i))).toFixed(1) + '"/>';
+      labs += '<text class="aqc-axis" x="' + (cx + (R + 16) * Math.cos(ang(i))).toFixed(1) +
+        '" y="' + (cy + (R + 16) * Math.sin(ang(i)) + 3).toFixed(1) +
+        '" text-anchor="middle">' + esc(String(labels[i] || "").slice(0, 11)) + "</text>";
+    }
+    var poly = vals.map(function (v, k) {
+      var t = Math.max(0, Math.min(100, num(v) || 0)) / 100;
+      return (cx + R * t * Math.cos(ang(k))).toFixed(1) + "," + (cy + R * t * Math.sin(ang(k))).toFixed(1);
+    }).join(" ");
+    return '<div class="aqc-radar"><svg viewBox="0 0 ' + W + " " + H + '" role="img" aria-label="' +
+      esc(o.label || "Across several measures") + '">' + rings + spokes +
+      '<polygon points="' + poly + '" fill="color-mix(in srgb,var(--accent-bright) 26%,transparent)" ' +
+      'stroke="var(--accent-bright)" stroke-width="2"/>' + labs + "</svg></div>";
+  }
+
+  /* ----------------------------------------------------------------- bullet
+
+     Actual, against target, against what counts as acceptable — three facts in the width
+     of one bar. It is the densest honest way to answer "is this number good enough",
+     and unlike a gauge it stacks, so a dozen measures read as one block.
+     Rows are { k, v, target, ok }. */
+  function bullet(rows, o) {
+    o = o || {};
+    if (!rows || !rows.length) {
+      return '<p class="aqc-empty">' + esc(o.empty || "No measures with targets yet.") + "</p>";
+    }
+    var W = 460, rowH = 32, H = rows.length * rowH + 10, L = 128, R = 36;
+    var max = o.max || 100;
+    var body = rows.map(function (r, i) {
+      var y = i * rowH + 8, w = W - L - R;
+      var X = function (v) { return L + (Math.max(0, Math.min(max, num(v) || 0)) / max) * w; };
+      var hit = (num(r.v) || 0) >= (num(r.target) || 0);
+      return '<text class="aqc-axis aqc-bullet-k" x="' + (L - 8) + '" y="' + (y + 12) +
+          '" text-anchor="end">' + esc(String(r.k).slice(0, 20)) + "</text>" +
+        '<rect x="' + L + '" y="' + y + '" width="' + w + '" height="16" rx="3" fill="var(--surface-1)"/>' +
+        '<rect x="' + L + '" y="' + y + '" width="' + (X(r.ok) - L).toFixed(1) +
+          '" height="16" rx="3" fill="var(--surface-2)"/>' +
+        '<rect x="' + L + '" y="' + (y + 4) + '" width="' + (X(r.v) - L).toFixed(1) +
+          '" height="8" rx="2" fill="' + (hit ? "var(--ok)" : "var(--accent-bright)") + '">' +
+          "<title>" + esc(r.k) + ": " + r.v + " against a target of " + r.target + "</title></rect>" +
+        '<line x1="' + X(r.target).toFixed(1) + '" x2="' + X(r.target).toFixed(1) + '" y1="' + (y - 2) +
+          '" y2="' + (y + 18) + '" stroke="var(--nc)" stroke-width="2.4"/>' +
+        '<text class="aqc-axis aqc-bullet-v" x="' + (W - R + 5) + '" y="' + (y + 12) + '">' +
+          esc(r.v) + (o.pct === false ? "" : "%") + "</text>";
+    }).join("");
+    return '<div class="aqc-bullet"><svg viewBox="0 0 ' + W + " " + H + '" role="img" aria-label="' +
+      esc(o.label || "Actual against target") + '">' + body + "</svg></div>";
+  }
+
+  /* ---------------------------------------------------------------- scatter
+
+     Two measures at once, one dot per subject. Its job is to find the corner nobody
+     wants to be in — many findings AND slow to close — which no single ranked list can
+     show, because each list hides the other axis. Points are { label, x, y }. */
+  function scatter(points, o) {
+    o = o || {};
+    if (!points || !points.length) {
+      return '<p class="aqc-empty">' + esc(o.empty || "Nothing to plot yet.") + "</p>";
+    }
+    var W = 460, H = 214, L = 36, R = 12, T = 12, B = 32;
+    var mx = Math.max.apply(null, points.map(function (p) { return num(p.x) || 0; })) * 1.15 || 1;
+    var my = Math.max.apply(null, points.map(function (p) { return num(p.y) || 0; })) * 1.15 || 1;
+    var X = function (v) { return L + (v / mx) * (W - L - R); };
+    var Y = function (v) { return H - B - (v / my) * (H - T - B); };
+    var grid = "";
+    for (var i = 0; i <= 3; i++) {
+      var yv = my * i / 3;
+      grid += '<line class="aqc-grid" x1="' + L + '" x2="' + (W - R) + '" y1="' + Y(yv).toFixed(1) +
+        '" y2="' + Y(yv).toFixed(1) + '"/><text class="aqc-axis" x="' + (L - 5) + '" y="' +
+        (Y(yv) + 3).toFixed(1) + '" text-anchor="end">' + Math.round(yv) + "</text>";
+    }
+    var dots = points.map(function (p) {
+      /* The far corner is the only thing coloured differently, because it is the only
+         thing the chart exists to point at. */
+      var bad = (num(p.x) || 0) > mx / 2.2 && (num(p.y) || 0) > my / 2.2;
+      return '<circle class="aqc-pt" data-scatter="' + esc(p.label) + '" cx="' + X(num(p.x) || 0).toFixed(1) +
+        '" cy="' + Y(num(p.y) || 0).toFixed(1) + '" r="5.5" fill="' +
+        (bad ? "var(--nc)" : "var(--accent-bright)") + '" fill-opacity=".82"><title>' +
+        esc(p.label) + " — " + p.x + " and " + p.y + "</title></circle>";
+    }).join("");
+    return '<div class="aqc-scatter"><svg viewBox="0 0 ' + W + " " + H + '" role="img" aria-label="' +
+      esc(o.label || "Two measures compared") + '">' + grid + dots +
+      '<text class="aqc-axis" x="' + (W / 2) + '" y="' + (H - 5) + '" text-anchor="middle">' +
+        esc(o.xLabel || "") + "</text>" +
+      '<text class="aqc-axis" transform="rotate(-90 12 ' + (H / 2) + ')" x="12" y="' + (H / 2) +
+        '" text-anchor="middle">' + esc(o.yLabel || "") + "</text></svg></div>";
+  }
+
+  /* ---------------------------------------------------------------- heatmap
+
+     Every subject against every month. Twenty-two trend lines cannot be read; twenty-two
+     rows of coloured cells can, because a bad month becomes a dark square you can point
+     at in a meeting. Rows are { name, values: [] }; labels are the column headings.
+
+     Carries explicit width and height, not just a viewBox: an SVG with only a viewBox has
+     no intrinsic size, so a stylesheet's `width:100%` scales it to whatever the container
+     is and 22 rows of cells becomes three screens tall. */
+  function heatmap(rows, labels, o) {
+    o = o || {};
+    if (!rows || !rows.length || !labels || !labels.length) {
+      return '<p class="aqc-empty">' + esc(o.empty || "Not enough history to map yet.") + "</p>";
+    }
+    var cw = 34, chh = 19, L = 108, T = 18;
+    var W = L + labels.length * cw + 8, H = T + rows.length * chh + 14;
+    var lo = o.lo == null ? 55 : o.lo, hi = o.hi == null ? 100 : o.hi;
+    var bad = o.bad == null ? 70 : o.bad;
+    var head = labels.map(function (m, i) {
+      return '<text class="aqc-axis" x="' + (L + i * cw + cw / 2) + '" y="' + (T - 5) +
+        '" text-anchor="middle">' + esc(m) + "</text>";
+    }).join("");
+    var body = rows.map(function (r, y) {
+      return '<text class="aqc-axis" x="' + (L - 6) + '" y="' + (T + y * chh + 12) +
+          '" text-anchor="end">' + esc(String(r.name).slice(0, 15)) + "</text>" +
+        r.values.map(function (v, x) {
+          var n = num(v);
+          if (n == null) {
+            return '<rect x="' + (L + x * cw) + '" y="' + (T + y * chh) + '" width="' + (cw - 2) +
+              '" height="' + (chh - 2) + '" rx="2" fill="var(--surface-1)"><title>' +
+              esc(r.name) + " " + esc(labels[x]) + ": not measured</title></rect>";
+          }
+          var t = Math.max(0, Math.min(1, (n - lo) / (hi - lo)));
+          var fill = n < bad
+            ? "color-mix(in srgb,var(--nc) " + Math.round((1 - t) * 88 + 12) + "%,transparent)"
+            : "color-mix(in srgb,var(--accent-bright) " + Math.round(t * 90 + 10) + "%,transparent)";
+          return '<rect class="aqc-cell" data-heat="' + esc(r.name) + '" x="' + (L + x * cw) +
+            '" y="' + (T + y * chh) + '" width="' + (cw - 2) + '" height="' + (chh - 2) +
+            '" rx="2" fill="' + fill + '"><title>' + esc(r.name) + " " + esc(labels[x]) + ": " +
+            n + "</title></rect>";
+        }).join("");
+    }).join("");
+    return '<div class="aqc-heat"><svg width="' + W + '" height="' + H + '" viewBox="0 0 ' +
+      W + " " + H + '" role="img" aria-label="' + esc(o.label || "Heatmap") + '">' +
+      head + body + "</svg></div>";
+  }
+
   return { card: card, sparkline: sparkline, area: area, bars: bars, rings: rings,
-           legend: legend, callout: callout, pie: pie, pareto: pareto, esc: esc };
+           legend: legend, callout: callout, pie: pie, pareto: pareto,
+           radar: radar, bullet: bullet, scatter: scatter, heatmap: heatmap, esc: esc };
 })();

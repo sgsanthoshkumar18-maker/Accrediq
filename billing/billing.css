@@ -104,3 +104,9 @@
 /* .btn-lg was referenced and did not exist, so it silently did nothing. A payment button
    should be the largest control on the card. */
 .btn-lg{font-size:1.02rem;padding:15px 34px;}
+
+/* The email under the label in the subscriptions table. Monospace because it is an
+   identifier the owner reads character by character, and muted because the name above
+   it is the heading — but it is always present, which is the whole point. */
+.pw-who-mail{display:block;margin-top:2px;font-family:var(--font-mono);font-size:11.5px;
+  color:var(--fg-muted);word-break:break-all;}

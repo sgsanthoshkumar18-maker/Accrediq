@@ -154,3 +154,21 @@
 .aqc-dot{fill:var(--accent-bright);}
 .aqc-80{stroke:var(--fg-faint);stroke-width:1;stroke-dasharray:4 4;opacity:.7;}
 .aqc-parlabel{font-size:10px;}
+
+/* ---- radar, bullet, scatter, heatmap -------------------------------------
+   Four chart types added for the quality dashboard. They follow the same rule as
+   everything above: colour comes from tokens only, so light, dark and neon all
+   work without a second stylesheet. */
+.aqc-radar svg{width:100%;height:auto;display:block;max-width:250px;margin:0 auto;overflow:visible;}
+.aqc-bullet svg,.aqc-scatter svg{width:100%;height:auto;display:block;overflow:visible;}
+.aqc-bullet-k{font-weight:700;fill:var(--fg-muted);}
+.aqc-bullet-v{font-weight:700;fill:var(--fg);}
+.aqc-pt{cursor:pointer;transition:r .12s ease;}
+.aqc-pt:hover{r:7;}
+/* The heatmap carries its own width and height, so it must NOT be stretched. It scrolls
+   sideways inside its tile instead — 22 rows scaled to a full-width tile is three screens
+   of one chart. */
+.aqc-heat{overflow-x:auto;-webkit-overflow-scrolling:touch;}
+.aqc-heat svg{width:auto;max-width:none;height:auto;display:block;overflow:visible;}
+.aqc-cell{cursor:pointer;}
+.aqc-cell:hover{stroke:var(--fg);stroke-width:1.2;}

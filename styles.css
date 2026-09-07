@@ -473,12 +473,22 @@ p{margin:0 0 0;}
   transition:transform .18s ease, box-shadow .18s ease, background .18s ease, color .18s ease, border-color .18s ease;
   white-space:nowrap;
 }
-.btn:hover{border-color:var(--brand-2);color:var(--accent-text);}
+/* THIS HOVER IS FOR OUTLINE BUTTONS ONLY.
+   It turns the label blue, which is right on a transparent button and catastrophic on a
+   filled one: .btn:hover is (0,2,0) and .btn-primary's own colour is only (0,1,0), so
+   every filled button on the site turned blue-on-blue the moment a cursor touched it —
+   measured at 1.57:1 on the header's Quality Dashboard button, against 7.69:1 at rest.
+
+   Scoped with :not() rather than fixed by adding a colour to each filled variant, so a
+   filled button added in future is covered by default instead of inheriting the bug. */
+.btn:hover:not(.btn-accent):not(.btn-primary){border-color:var(--brand-2);color:var(--accent-text);}
 .btn:hover{transform:translateY(-1px);}
 .btn-accent{background:var(--accent-solid);color:var(--on-accent);box-shadow:0 10px 24px -10px color-mix(in srgb, var(--accent-bright) 55%, transparent);}
-.btn-accent:hover{background:#3a57e4;}
+/* The label is restated on hover as well as at rest. Belt and braces: it keeps the filled
+   buttons readable even if a later rule reintroduces a broad .btn:hover colour. */
+.btn-accent:hover{background:color-mix(in srgb, var(--accent-solid) 84%, var(--fg));color:var(--on-accent);}
 .btn-primary{background:var(--accent-solid);color:var(--on-brand);box-shadow:0 10px 24px -10px color-mix(in srgb, var(--brand-2) 50%, transparent);}
-.btn-primary:hover{background:var(--brand);}
+.btn-primary:hover{background:var(--brand);color:var(--on-brand);}
 .btn-ghost{background:transparent;border-color:var(--border);color:var(--fg);}
 .btn-ghost:hover{border-color:var(--brand-2);color:var(--accent-text);}
 .btn-ghost-dark{background:var(--surface-1);border-color:var(--fg-faint);color:var(--fg);}
@@ -552,13 +562,20 @@ p{margin:0 0 0;}
    that block rather than pinned to its left edge, which is what closes the gap. */
 .brand .full-name{display:flex;flex-direction:column;font-family:var(--font-body);
   font-weight:600;font-size:9.5px;letter-spacing:.06em;text-transform:uppercase;
-  color:var(--fg-faint);margin-top:2px;line-height:1.32;}
+  color:var(--fg-faint);margin-top:2px;line-height:1.32;
+  /* Both caption lines share the wordmark's centre axis. They were left-aligned under a
+     centred wordmark, which is what read as "misaligned": the short first line sat left
+     of the long second one, so nothing lined up with anything. */
+  text-align:center;}
 .brand .full-name i{font-style:normal;white-space:nowrap;}
 .brand-stack{display:flex;flex-direction:column;align-items:center;line-height:1.1;}
 
-/* Below this the strapline is wider than the room the header can spare, so it goes and the
-   wordmark carries the brand alone — which it can, at this size. */
-@media (max-width:1149px){
+/* THE STRAPLINE COSTS 210px AND THE HEADER CANNOT ALWAYS SPARE IT.
+   Brand 210 + navigation 528 + actions 599 = 1337px of content in a 1124px bar, which is
+   exactly the 125px of horizontal scrollbar this produced on a 1366px laptop. Measured, not
+   guessed. The strapline is the first thing to go because the wordmark carries the brand on
+   its own, and 1400 is the width at which the other two stop fitting beside it. */
+@media (max-width:1399px){
   .brand .full-name{display:none;}
   .brand-stack{align-items:flex-start;}
 }
@@ -1161,7 +1178,11 @@ a.tile:hover .more{text-decoration:underline;}
    The label and the shortcut hint are the only 90px in that group that carry no function a
    magnifier does not already carry, so they are what goes. The horizontal navigation stays,
    which is the point — collapsing it into a drawer on a laptop was tried and rejected. */
-@media (max-width:1149px){
+/* Raised from 1149 to 1399 along with the strapline. The blue navigation bar is wider than
+   the six loose words it replaced, so the width at which the row stops fitting moved with
+   it, and a 1366px laptop — the commonest screen this site is read on — landed on the wrong
+   side of the old number. */
+@media (max-width:1399px){
   .aq-search-btn span{display:none;}
   .aq-search-btn kbd{display:none;}
   /* And the bar tightens up rather than overflowing. Losing the search label recovered 90 of
@@ -1169,7 +1190,20 @@ a.tile:hover .more{text-decoration:underline;}
      change — 6px of gap and 4px of padding either side of a nav item. */
   .nav-actions{gap:6px;}
   .main-nav a,.nav-dd-trigger{padding-left:9px;padding-right:9px;}
+  .main-nav{padding:3px 4px;}
 }
+
+/* NOTHING MAY EVER SCROLL SIDEWAYS.
+   A page is read down, never across — a horizontal scrollbar on a website is always a bug,
+   and it hides content off the right edge where nobody looks for it. The rules above remove
+   the causes; this is the guarantee, so a single wide table or a long unbroken word added in
+   future cannot reintroduce one.
+
+   `clip`, not `hidden`: overflow:hidden on a root element creates a scroll container, which
+   silently breaks `position:sticky` on the header and every anchor jump on the site.
+   overflow-x:clip just clips, and leaves vertical scrolling and stickiness alone. */
+html{overflow-x:clip;}
+body{overflow-x:clip;max-width:100%;}
 
 /* ---------- Edition banner ---------- */
 .aq-edition{background:transparent;border-bottom:0;

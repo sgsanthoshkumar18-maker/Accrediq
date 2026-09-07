@@ -181,7 +181,11 @@ check('all local css and js references carry the same version stamp', () => {
      kpinet and friends) — they are self-contained experiments, not part of the site's
      asset graph. References INTO them are excluded here for the same reason. */
   const STANDALONE = /(galaxy2?|brain|dna|helix|radar|globe|hglobe|kpinet)\//;
-  const files = walk(ROOT, /\.html$/);
+  /* A leading underscore marks a design sample — the same names .gitignore keeps out of
+     the deploy, so no visitor ever gets a cached copy of one and the stamp is meaningless
+     on it. Holding samples to the deploy's cache contract fails the build for a file that
+     never ships. */
+  const files = walk(ROOT, /\.html$/).filter((f) => !path.basename(f).startsWith('_'));
   const stamps = new Set();
   const unstamped = [];
   for (const f of files) {

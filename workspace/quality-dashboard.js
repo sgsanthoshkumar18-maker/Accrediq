@@ -638,68 +638,359 @@
       }).join("") + "</tbody></table></div>";
   }
 
-  function overview() {
-    if (!depts.length) return setupIntro();
+  /* ===================================================================== TILES
 
-    var scored = depts.map(function (d) {
+     THE DASHBOARD IS A BOARD, NOT A PAGE. Eleven tiles of different weights, and three
+     things a page of charts cannot do:
+
+       CROSS-FILTER  Clicking a chapter redraws every other tile to that chapter alone.
+                     That is the difference between looking at a dashboard and asking it
+                     a question. The active filter is always shown and always dismissible
+                     — a filter you cannot see is a dashboard lying to you quietly.
+       EDIT          The hospital drags tiles into its own order, switches a tile between
+                     chart types, and hides what it does not use. Saved per browser, so
+                     it is still theirs next week.
+       DRILL         A department name anywhere opens that department, using the detail
+                     view this page already had.
+
+     Every figure carries its comparison. A bare number tells you where you are and never
+     whether it is working. */
+
+  var VIEW_KEY = "aq-qd-view-v1";
+  var view0 = { order: null, hidden: [], types: {}, chapter: null };
+  var viewState = (function () {
+    try {
+      var raw = JSON.parse(localStorage.getItem(VIEW_KEY) || "{}");
+      return {
+        order: raw.order || null,
+        hidden: Array.isArray(raw.hidden) ? raw.hidden : [],
+        types: raw.types && typeof raw.types === "object" ? raw.types : {},
+        chapter: raw.chapter || null
+      };
+    } catch (e) { return { order: null, hidden: [], types: {}, chapter: null }; }
+  })();
+  function saveView() {
+    try { localStorage.setItem(VIEW_KEY, JSON.stringify(viewState)); } catch (e) {}
+  }
+
+  var editing = false;
+
+  /* Findings filtered by whatever cross-filter is active. Every tile reads through this
+     rather than the raw array, which is what makes one click redraw the whole board. */
+  function shown() {
+    if (!viewState.chapter) return findings;
+    return findings.filter(function (f) { return f.chapter === viewState.chapter; });
+  }
+  function tallyShown(key) {
+    var by = {};
+    shown().forEach(function (f) {
+      var k = (f[key] || "").trim() || "Not stated";
+      by[k] = (by[k] || 0) + 1;
+    });
+    return Object.keys(by).map(function (k) { return { label: k, v: by[k] }; })
+      .sort(function (a, b) { return b.v - a.v; });
+  }
+  function openAtShown(iso) {
+    return shown().filter(function (f) {
+      if (!f.raised_month || f.raised_month > iso) return false;
+      return !f.closed_month || f.closed_month > iso;
+    }).length;
+  }
+
+  /* The comparison badge. Direction is never colour alone — the arrow carries it too. */
+  function vsBadge(d, label, higherIsBetter) {
+    if (d == null) return "";
+    d = Math.round(d * 10) / 10;
+    var good = d === 0 ? null : (higherIsBetter === false ? d < 0 : d > 0);
+    var cls = d === 0 ? "flat" : good ? "up" : "down";
+    var arrow = d === 0 ? "—" : d > 0 ? "▲" : "▼";
+    return '<span class="qd-vs"><b class="' + cls + '">' + arrow + " " + Math.abs(d) +
+      "</b> vs " + esc(label) + "</span>";
+  }
+
+  function scoredDepts() {
+    return depts.map(function (d) {
       var s = deptScore(d);
       return { d: d, score: s, band: band(s), metrics: metricsOf(d.id).length };
     });
-    var measured = scored.filter(function (x) { return x.score != null; });
-    var hospital = measured.length
-      ? Math.round(measured.reduce(function (n, x) { return n + x.score; }, 0) / measured.length)
-      : null;
+  }
 
-    /* The mix, so "how are we doing" has an answer before any single department is opened. */
-    var mix = ["ok", "warn", "nc", "none"].map(function (k) {
-      var b = band(k === "ok" ? 95 : k === "warn" ? 80 : k === "nc" ? 40 : null);
-      return { label: b.label, tone: b.tone,
-               v: scored.filter(function (x) { return x.band.key === k; }).length };
+  /* Every month the hospital has recorded anything in — never a fixed twelve. A hospital
+     two months in must not be shown ten months of flat zero, which reads as "nothing went
+     wrong" rather than "we were not here yet". */
+  function monthCols() {
+    var seen = {};
+    readings.forEach(function (r) { if (r.month) seen[r.month] = 1; });
+    findings.forEach(function (f) { if (f.raised_month) seen[f.raised_month] = 1; });
+    oblig.forEach(function (o) { if (o.month) seen[o.month] = 1; });
+    return Object.keys(seen).sort().slice(-12);
+  }
+
+  /* A department's score for one month, from the readings that existed by then. Returns
+     null for a month it did not measure, so the heatmap draws a blank rather than a zero. */
+  function scoreAt(dept, iso) {
+    var ms = metricsOf(dept.id), vals = [];
+    ms.forEach(function (m) {
+      var upTo = readingsOf(m.id).filter(function (r) { return r.month <= iso; });
+      if (!upTo.length) return;
+      var a = attainment(m, upTo[upTo.length - 1].achieved);
+      if (a != null) vals.push(Math.min(100, a));
     });
+    if (!vals.length) return null;
+    return Math.round(vals.reduce(function (n, v) { return n + v; }, 0) / vals.length);
+  }
 
-    /* Where the gap actually is. Ranked by how far each department is from its own targets,
-       not by score — a department at 40% with two measures matters less than one at 60% with
-       twenty, and the cumulative line is what shows that. */
-    var gaps = scored.filter(function (x) { return x.score != null && x.score < 100; })
-      .map(function (x) { return { label: x.d.name, v: (100 - x.score) * Math.max(1, x.metrics) }; });
+  var TILES = [
+    { id: "readiness", name: "Hospital attainment", size: "s3", types: ["figure"],
+      render: function () {
+        var sc = scoredDepts(), measured = sc.filter(function (x) { return x.score != null; });
+        var h = measured.length
+          ? Math.round(measured.reduce(function (n, x) { return n + x.score; }, 0) / measured.length)
+          : null;
+        var ob = latestOblig(), days = daysToAssessment();
+        return '<div class="qd-big">' + (h == null ? "—" : h) + (h == null ? "" : "<small>%</small>") + "</div>" +
+          '<div class="qd-vs-row">' + measured.length + " of " + depts.length + " departments measured</div>" +
+          '<div class="qd-mini">' +
+            '<div><span class="k">On target</span><span class="v">' +
+              sc.filter(function (x) { return x.band.key === "ok"; }).length + "</span></div>" +
+            '<div><span class="k">Need attention</span><span class="v">' +
+              sc.filter(function (x) { return x.band.key === "nc"; }).length + "</span></div>" +
+            (ob && ob.elements_total
+              ? '<div><span class="k">Evidenced</span><span class="v">' +
+                esc(ob.elements_evidenced || 0) + "</span></div>" +
+                '<div><span class="k">In scope</span><span class="v">' + esc(ob.elements_total) + "</span></div>"
+              : "") +
+            (days != null
+              ? '<div><span class="k">Days to window</span><span class="v">' + days + "</span></div>"
+              : "") +
+          "</div>";
+      } },
 
-    var cards =
-      '<div class="qd-cards">' +
-        C.card({ label: "Hospital attainment", value: hospital == null ? "—" : hospital + "%",
-                 sub: measured.length + " of " + depts.length + " departments measured" }) +
-        C.card({ label: "Departments", value: depts.length,
-                 sub: metrics.length + " measures tracked" }) +
-        C.card({ label: "On target", value: mix[0].v,
-                 sub: "at 90% of target or better" }) +
-        C.card({ label: "Need attention", value: mix[2].v,
-                 sub: "below 70% of target" }) +
+    { id: "mix", name: "Departments by band", size: "s4", types: ["donut", "bar"],
+      render: function (type) {
+        var sc = scoredDepts();
+        var mix = ["ok", "warn", "nc", "none"].map(function (k) {
+          var b = band(k === "ok" ? 95 : k === "warn" ? 80 : k === "nc" ? 40 : null);
+          return { label: b.label, tone: b.tone,
+                   v: sc.filter(function (x) { return x.band.key === k; }).length };
+        }).filter(function (r) { return r.v > 0; });
+        return type === "bar"
+          ? C.bars(mix, { height: 190, empty: "No figures entered yet." })
+          : C.pie(mix, { centre: String(depts.length), centreSub: "departments",
+                         empty: "No figures entered yet." });
+      } },
+
+    { id: "attainment", name: "Attainment by department", size: "s5", types: ["bar"],
+      note: "click a bar to open it",
+      render: function () {
+        return C.bars(scoredDepts().map(function (x) {
+          return { label: x.d.name, v: x.score == null ? 0 : x.score, tone: x.band.tone };
+        }), { pct: true, max: 100, empty: "No figures entered yet." });
+      } },
+
+    { id: "trend", name: "Open findings", size: "s4", types: ["area", "bar"],
+      render: function (type) {
+        var ms = monthCols();
+        if (ms.length < 2) {
+          return '<p class="aqc-empty">Two months of findings will draw the trend.</p>';
+        }
+        var series = ms.map(function (m) { return { m: shortMonth(m), v: openAtShown(m) }; });
+        var last = series[series.length - 1].v, prev = series[series.length - 2].v;
+        return '<div class="qd-big sm">' + last + "</div>" +
+          vsBadge(last - prev, "last month", false) +
+          '<div style="margin-top:8px">' +
+          (type === "bar"
+            ? C.bars(series.map(function (p) { return { label: p.m, v: p.v }; }), { height: 140 })
+            : C.area(series, { height: 140, zeroBased: true })) + "</div>";
+      } },
+
+    { id: "chapters", name: "Findings by chapter", size: "s4", types: ["donut", "bar"],
+      note: "click to filter the page",
+      render: function (type) {
+        var d = tallyShown("chapter");
+        return type === "bar"
+          ? C.bars(d, { height: 190, empty: "No findings recorded yet." })
+          : C.pie(d, { centre: String(shown().length), centreSub: "findings",
+                       empty: "No findings recorded yet." });
+      } },
+
+    { id: "causes", name: "Why findings happen", size: "s8", types: ["pareto", "bar"],
+      render: function (type) {
+        var d = tallyShown("cause");
+        return type === "pareto"
+          ? C.pareto(d, { empty: "No causes recorded yet." })
+          : C.bars(d, { height: 200, empty: "No causes recorded yet." });
+      } },
+
+    { id: "bullet", name: "Against target", size: "s6", types: ["bullet"],
+      render: function () {
+        /* Every metric that carries a target, expressed as a percentage of it, so five
+           different units can share one chart without lying about any of them. */
+        var rowsB = metrics.filter(function (m) { return num(m.target) != null; })
+          .map(function (m) {
+            var r = latest(m.id);
+            var a = r ? attainment(m, r.achieved) : null;
+            return a == null ? null : { k: m.name, v: Math.min(100, a), target: 100, ok: 80 };
+          }).filter(Boolean)
+          .sort(function (a, b) { return a.v - b.v; })
+          .slice(0, 8);
+        return C.bullet(rowsB, { empty: "Give a measure a target and it appears here." });
+      } },
+
+    { id: "scatter", name: "Findings against closure speed", size: "s6", types: ["scatter"],
+      note: "top-right needs help",
+      render: function () {
+        var by = {}, name = {};
+        depts.forEach(function (d) { name[d.id] = d.name; });
+        shown().forEach(function (f) {
+          if (!f.dept_id) return;
+          var k = name[f.dept_id];
+          if (!k) return;
+          by[k] = by[k] || { n: 0, d: 0, closed: 0 };
+          by[k].n++;
+          if (f.closed_month && f.raised_month) {
+            by[k].d += Math.max(0, Math.round(
+              (new Date(f.closed_month) - new Date(f.raised_month)) / 86400000));
+            by[k].closed++;
+          }
+        });
+        var pts = Object.keys(by).map(function (k) {
+          return { label: k, x: by[k].n, y: by[k].closed ? Math.round(by[k].d / by[k].closed) : 0 };
+        });
+        return C.scatter(pts, { xLabel: "FINDINGS RAISED", yLabel: "DAYS TO CLOSE",
+                                empty: "Record findings against a department to plot this." });
+      } },
+
+    { id: "rings", name: "Evidence and training", size: "s4", types: ["rings"],
+      render: function () {
+        var ob = latestOblig(), days = daysToAssessment();
+        var segs = [];
+        if (ob && ob.evidence_filed_pct != null) {
+          segs.push({ label: "Evidence filed", pct: num(ob.evidence_filed_pct),
+                      tone: "var(--accent-bright)" });
+        }
+        if (ob && ob.training_closed_pct != null) {
+          segs.push({ label: "Training closed", pct: num(ob.training_closed_pct),
+                      tone: num(ob.training_closed_pct) >= 80 ? "var(--ok)" : "var(--nc)" });
+        }
+        if (!segs.length) {
+          return '<p class="aqc-empty">No month record entered yet.</p>' +
+            '<div class="ws-f-actions"><button class="btn btn-ghost" id="qdAddMonth3">' +
+            "Enter this month&rsquo;s figures</button></div>";
+        }
+        return C.rings(segs, days == null ? {} : { centre: { value: String(days), label: "days" } });
+      } },
+
+    { id: "ageing", name: "Age of every open finding", size: "s4", types: ["bar"],
+      render: function () {
+        var open = shown().filter(function (f) { return !f.closed_month; });
+        if (!open.length) return '<p class="aqc-empty">Nothing is open.</p>';
+        var now = Date.now();
+        var buckets = [["<15d", 0], ["15–30d", 0], ["31–45d", 0], ["46–60d", 0], ["60d+", 0]];
+        open.forEach(function (f) {
+          var days = Math.max(0, Math.round((now - new Date(f.raised_month).getTime()) / 86400000));
+          var i = days < 15 ? 0 : days < 30 ? 1 : days < 45 ? 2 : days < 60 ? 3 : 4;
+          buckets[i][1]++;
+        });
+        /* Anything past thirty days is late, and the bar says so rather than the axis. */
+        return C.bars(buckets.map(function (b, i) {
+          return { label: b[0], v: b[1], tone: i >= 2 ? "var(--nc)" : "var(--accent-bright)" };
+        }), { height: 190 });
+      } },
+
+    { id: "heat", name: "Attainment, department by month", size: "s12", types: ["heatmap"],
+      note: "click a cell to open the department",
+      render: function () {
+        var ms = monthCols();
+        if (!ms.length) return '<p class="aqc-empty">No monthly figures yet.</p>';
+        return C.heatmap(depts.map(function (d) {
+          return { name: d.name, values: ms.map(function (m) { return scoreAt(d, m); }) };
+        }), ms.map(shortMonth), { label: "Attainment by department and month" }) +
+        C.legend([
+          { label: "Below 70%", tone: "var(--nc)" },
+          { label: "70–85%", tone: "color-mix(in srgb,var(--accent-bright) 45%,transparent)" },
+          { label: "Above 85%", tone: "var(--accent-bright)" },
+          { label: "Not measured", tone: "var(--surface-1)" }
+        ]);
+      } },
+
+    { id: "wall", name: "Every department", size: "s12", types: ["wall"],
+      note: "click one to open it",
+      render: function () {
+        return '<div class="qd-depts">' + scoredDepts().map(deptCard).join("") + "</div>";
+      } }
+  ];
+
+  function tileOrder() {
+    var ids = TILES.map(function (t) { return t.id; });
+    if (!viewState.order) return ids;
+    var kept = viewState.order.filter(function (id) { return ids.indexOf(id) > -1; });
+    ids.forEach(function (id) { if (kept.indexOf(id) < 0) kept.push(id); });
+    return kept;
+  }
+
+  function overview() {
+    if (!depts.length) return setupIntro();
+
+    var bar =
+      '<div class="qd-bar">' +
+        '<span class="qd-bar-t">Your dashboard</span>' +
+        (viewState.chapter
+          ? '<span class="qd-chip">Chapter: ' + esc(viewState.chapter) +
+            '<button type="button" id="qdChipX" aria-label="Clear the chapter filter">&times;</button></span>'
+          : "") +
+        '<span class="qd-bar-sp"></span>' +
+        '<button type="button" class="btn btn-ghost qd-bar-b" id="qdAddMonth2">This month&rsquo;s figures</button>' +
+        '<button type="button" class="btn btn-ghost qd-bar-b" id="qdAddFinding2">Record a finding</button>' +
+        '<button type="button" class="btn btn-ghost qd-bar-b' + (editing ? " on" : "") +
+          '" id="qdEdit">' + (editing ? "Done" : "Edit layout") + "</button>" +
+        (editing ? '<button type="button" class="btn btn-ghost qd-bar-b" id="qdResetView">Reset</button>' : "") +
       "</div>";
 
-    return cards +
-      '<div class="qd-grid2">' +
-        '<div class="aqc-panel"><h3>Where the hospital stands</h3>' +
-          C.pie(mix, { centre: hospital == null ? "—" : hospital + "%",
-                       centreSub: "attainment", title: "Departments by band" }) + "</div>" +
-        '<div class="aqc-panel"><h3>Biggest gap to target</h3>' +
-          '<p class="aqc-note">Ranked by how far a department is from its own targets, ' +
-            "weighted by how much it measures. The line is the running share &mdash; where it " +
-            "flattens, the rest is detail.</p>" +
-          C.pareto(gaps, { title: "Gap by department", empty: "Nothing is behind target." }) +
-        "</div>" +
-      "</div>" +
-      '<div class="aqc-panel"><h3>Attainment by department</h3>' +
-        C.bars(scored.map(function (x) {
-          return { label: x.d.name, v: x.score == null ? 0 : x.score, tone: x.band.tone };
-        }), { pct: true, max: 100, empty: "No figures entered yet." }) + "</div>" +
-      '<div class="qd-depts">' + scored.map(deptCard).join("") + "</div>" +
-      /* The findings half sits BELOW the departments, not above. Attainment is the question
-         the hospital came to answer; findings are what explains it. Leading with the
-         findings would open the page on bad news out of context. */
-      '<h2 class="qd-section">Findings, evidence and training</h2>' +
-      '<div class="ws-f-actions qd-section-actions">' +
-        '<button class="btn btn-ghost" id="qdAddMonth2">This month&rsquo;s figures</button>' +
-        '<button class="btn btn-primary" id="qdAddFinding2">Record a finding</button></div>' +
-      findingsPanels();
+    var grid = tileOrder().map(function (id) {
+      var t = TILES.filter(function (x) { return x.id === id; })[0];
+      if (!t) return "";
+      var isHidden = viewState.hidden.indexOf(id) > -1;
+      var type = viewState.types[id] || t.types[0];
+      var tools = editing
+        ? '<span class="qd-tools">' +
+            (t.types.length > 1
+              ? '<select data-tiletype="' + id + '" aria-label="Chart type">' +
+                t.types.map(function (ty) {
+                  return '<option value="' + ty + '"' + (ty === type ? " selected" : "") + ">" + ty + "</option>";
+                }).join("") + "</select>"
+              : "") +
+            '<button type="button" data-tilehide="' + id + '" title="Hide this tile">&minus;</button>' +
+          "</span>"
+        : "";
+      var body;
+      try { body = t.render(type); }
+      catch (err) {
+        /* One tile that throws must not take the page with it. Say which one, so the
+           fault is reportable rather than an unexplained gap. */
+        body = '<p class="aqc-empty">This tile could not be drawn.</p>';
+      }
+      return '<section class="qd-tile ' + t.size + (isHidden ? " is-hidden" : "") +
+        '" data-tile="' + id + '"' + (editing ? ' draggable="true"' : "") + ">" +
+        '<div class="qd-tile-h"><span class="qd-tile-n">' + esc(t.name) + "</span>" +
+          (t.note && !editing ? '<span class="qd-tile-note">' + esc(t.note) + "</span>" : "") +
+          tools + "</div>" +
+        '<div class="qd-tile-b">' + body + "</div></section>";
+    }).join("");
+
+    var tray = editing
+      ? '<div class="qd-tray"><h4>Hidden tiles</h4>' +
+          (viewState.hidden.length
+            ? viewState.hidden.map(function (id) {
+                var t = TILES.filter(function (x) { return x.id === id; })[0];
+                return t ? '<button type="button" class="btn btn-ghost qd-bar-b" data-tileshow="' +
+                  id + '">' + esc(t.name) + "</button>" : "";
+              }).join("")
+            : '<span class="qd-tray-none">Nothing hidden.</span>') +
+        "</div>"
+      : "";
+
+    return bar + '<div class="qd-grid' + (editing ? " is-editing" : "") + '">' + grid + "</div>" + tray;
   }
 
   function deptCard(x) {
@@ -928,7 +1219,61 @@
         return;
       }
       if (e.target.id === "qdAddFinding2") { findingForm(); return; }
-      if (e.target.id === "qdAddMonth2") { obligForm(thisMonth()); return; }
+      if (e.target.id === "qdAddMonth2" || e.target.id === "qdAddMonth3") {
+        obligForm(thisMonth()); return;
+      }
+
+      /* ---- the board's own controls ---- */
+      if (e.target.id === "qdEdit") {
+        editing = !editing; render();
+        return;
+      }
+      if (e.target.id === "qdResetView") {
+        if (!confirm("Put every tile back where it started and clear the filter?")) return;
+        viewState = { order: null, hidden: [], types: {}, chapter: null };
+        saveView(); render();
+        return;
+      }
+      if (e.target.id === "qdChipX") {
+        viewState.chapter = null; saveView(); render();
+        return;
+      }
+      var th = e.target.closest("[data-tilehide]");
+      if (th) {
+        viewState.hidden.push(th.getAttribute("data-tilehide"));
+        saveView(); render();
+        return;
+      }
+      var ts = e.target.closest("[data-tileshow]");
+      if (ts) {
+        var showId = ts.getAttribute("data-tileshow");
+        viewState.hidden = viewState.hidden.filter(function (x) { return x !== showId; });
+        saveView(); render();
+        return;
+      }
+      /* While the board is being rearranged, a click on a chart is a mis-click, not a
+         filter. Nothing below this line runs in edit mode. */
+      if (editing) return;
+
+      /* CROSS-FILTER. Only the chapter tile filters, and only on a chapter it actually
+         knows — clicking "Not stated" or a cause must not silently filter to nothing. */
+      var slice = e.target.closest("[data-slice]");
+      if (slice && e.target.closest('[data-tile="chapters"]')) {
+        var ch = slice.getAttribute("data-slice");
+        if (ch && ch !== "Other") {
+          viewState.chapter = viewState.chapter === ch ? null : ch;
+          saveView(); render(); window.scrollTo(0, 0);
+        }
+        return;
+      }
+      /* A department name, wherever it appears — the heatmap, the scatter, a bar. */
+      var byName = e.target.closest("[data-heat],[data-scatter],[data-bar]");
+      if (byName) {
+        var nm = byName.getAttribute("data-heat") || byName.getAttribute("data-scatter") ||
+                 byName.getAttribute("data-bar");
+        var hit = depts.filter(function (d) { return d.name === nm; })[0];
+        if (hit) { openDept = hit.id; render(); window.scrollTo(0, 0); return; }
+      }
       var ef = e.target.closest("[data-editfinding]");
       if (ef) {
         var fe = findings.filter(function (x) {
@@ -937,6 +1282,61 @@
         if (fe) findingForm(fe);
       }
     });
+
+    /* Switching a tile's chart type. A change event, not a click, because a <select>
+       fires the first and never reliably the second. */
+    document.getElementById("qdPanel").addEventListener("change", function (e) {
+      var sel = e.target.closest("[data-tiletype]");
+      if (!sel) return;
+      viewState.types[sel.getAttribute("data-tiletype")] = sel.value;
+      saveView(); render();
+    });
+
+    /* DRAG TO REORDER. Delegated to the panel rather than bound per tile, because render()
+       replaces every tile on each pass and per-tile listeners would be re-bound (and
+       leaked) each time. */
+    (function () {
+      var panel = document.getElementById("qdPanel"), dragging = null;
+      panel.addEventListener("dragstart", function (e) {
+        var t = e.target.closest("[data-tile]");
+        if (!t || !editing) return;
+        dragging = t.getAttribute("data-tile");
+        t.classList.add("is-drag");
+        try { e.dataTransfer.effectAllowed = "move"; e.dataTransfer.setData("text/plain", dragging); } catch (err) {}
+      });
+      panel.addEventListener("dragend", function (e) {
+        var t = e.target.closest("[data-tile]");
+        if (t) t.classList.remove("is-drag");
+        dragging = null;
+      });
+      panel.addEventListener("dragover", function (e) {
+        if (!editing || !dragging) return;
+        var t = e.target.closest("[data-tile]");
+        if (!t) return;
+        e.preventDefault();
+        t.classList.add("is-over");
+      });
+      panel.addEventListener("dragleave", function (e) {
+        var t = e.target.closest("[data-tile]");
+        if (t) t.classList.remove("is-over");
+      });
+      panel.addEventListener("drop", function (e) {
+        if (!editing || !dragging) return;
+        var t = e.target.closest("[data-tile]");
+        if (!t) return;
+        e.preventDefault();
+        t.classList.remove("is-over");
+        var target = t.getAttribute("data-tile");
+        if (target === dragging) return;
+        var o = tileOrder();
+        var from = o.indexOf(dragging), to = o.indexOf(target);
+        if (from < 0 || to < 0) return;
+        o.splice(to, 0, o.splice(from, 1)[0]);
+        viewState.order = o;
+        dragging = null;
+        saveView(); render();
+      });
+    })();
 
     var actions = document.getElementById("qdActions");
     if (actions) actions.addEventListener("click", function (e) {

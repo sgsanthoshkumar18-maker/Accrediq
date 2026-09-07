@@ -569,7 +569,16 @@ window.AQPaywall = (function () {
         others.map(function (r) {
           var live = r.status === "active" && r.expires_at &&
             new Date(r.expires_at) > new Date();
-          return "<tr><td>" + esc(r.name || r.email) + "</td>" +
+          /* THE EMAIL IS THE IDENTITY, and it was being hidden. A complimentary grant
+             stores name:"Complimentary", so `name || email` rendered six identical rows
+             reading "Complimentary" with no way to tell whose access was whose. The name
+             is kept where it is a real one, and the address is shown underneath it —
+             always, because that is the thing an owner needs to read off this table. */
+          var who = esc(r.email || "—");
+          if (r.name && r.name !== r.email) {
+            who = esc(r.name) + '<span class="pw-who-mail">' + esc(r.email || "no email on record") + "</span>";
+          }
+          return "<tr><td>" + who + "</td>" +
             "<td>" + esc((B.planOf(r.plan) || {}).label || r.plan) + "</td>" +
             '<td><span class="pw-badge ' + (live ? "ok" : r.status === "rejected" ? "bad" : "warn") +
               '">' + (live ? "Active" : r.status === "active" ? "Expired" : esc(r.status)) + "</span></td>" +

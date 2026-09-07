@@ -105,3 +105,83 @@
 .aqc-note{font-size:12.5px;line-height:1.6;color:var(--fg-muted);margin:0 0 12px;max-width:70ch;}
 .ws-f-actions{display:flex;gap:9px;flex-wrap:wrap;align-items:center;justify-content:flex-end;
   margin-top:14px;}
+
+/* ---- THE BOARD ---------------------------------------------------------------
+   Eleven tiles of different weights on one twelve-column grid. Size carries
+   meaning: the widest tile is the one that needs the most room to be read, not
+   the one that matters most — importance is carried by position instead, and
+   position is the hospital's to change. */
+.qd-bar{display:flex;align-items:center;gap:9px;flex-wrap:wrap;margin-bottom:16px;
+  padding:10px 13px;background:var(--bg-elevated);border:1px solid var(--border);
+  border-radius:var(--r-md);}
+.qd-bar-t{font-family:var(--font-display);font-weight:700;font-size:15px;}
+.qd-bar-sp{flex:1;}
+.qd-bar-b{font-size:12.5px;padding:7px 13px;}
+.qd-bar-b.on{background:var(--accent-solid);border-color:var(--accent-solid);color:var(--on-accent);}
+
+/* The active cross-filter. Always shown, always dismissible — a filter you cannot
+   see is a dashboard lying to you quietly. */
+.qd-chip{display:inline-flex;align-items:center;gap:8px;font-size:12.5px;font-weight:600;
+  background:var(--brand-tint);color:var(--accent-text);border:1px solid var(--accent-solid);
+  border-radius:999px;padding:4px 5px 4px 12px;}
+.qd-chip button{border:0;background:var(--accent-solid);color:var(--on-accent);cursor:pointer;
+  width:19px;height:19px;border-radius:50%;font:inherit;font-size:12px;line-height:1;padding:0;}
+
+.qd-grid{display:grid;grid-template-columns:repeat(12,1fr);gap:13px;align-items:start;}
+.qd-tile{grid-column:span 4;background:var(--bg-elevated);border:1px solid var(--border);
+  border-radius:var(--r-lg);padding:13px 15px;min-width:0;display:flex;flex-direction:column;}
+.qd-tile.s3{grid-column:span 3;} .qd-tile.s4{grid-column:span 4;}
+.qd-tile.s5{grid-column:span 5;} .qd-tile.s6{grid-column:span 6;}
+.qd-tile.s8{grid-column:span 8;} .qd-tile.s12{grid-column:span 12;}
+.qd-tile.is-hidden{display:none;}
+.qd-tile-h{display:flex;align-items:center;gap:8px;margin-bottom:8px;}
+.qd-tile-n{font-family:var(--font-mono);font-size:9.5px;letter-spacing:.1em;text-transform:uppercase;
+  color:var(--fg-faint);white-space:nowrap;overflow:hidden;text-overflow:ellipsis;}
+.qd-tile-note{font-size:11px;color:var(--fg-faint);margin-left:auto;white-space:nowrap;}
+.qd-tile-b{flex:1;min-width:0;}
+
+/* The headline figure, with its comparison underneath. */
+.qd-big{font-family:var(--font-display);font-weight:700;line-height:1;letter-spacing:-.02em;
+  font-size:clamp(30px,3.6vw,46px);font-variant-numeric:tabular-nums;}
+.qd-big.sm{font-size:clamp(24px,2.6vw,32px);}
+.qd-big small{font-size:.36em;color:var(--fg-muted);margin-left:3px;}
+.qd-vs{display:inline-flex;align-items:center;gap:5px;margin-top:6px;font-size:11.5px;
+  color:var(--fg-faint);}
+.qd-vs b{font-family:var(--font-mono);font-weight:700;font-variant-numeric:tabular-nums;}
+.qd-vs b.up{color:var(--ok);} .qd-vs b.down{color:var(--nc);} .qd-vs b.flat{color:var(--fg-muted);}
+.qd-vs-row{font-size:11.5px;color:var(--fg-faint);margin-top:6px;}
+.qd-mini{display:grid;grid-template-columns:1fr 1fr;gap:9px;margin-top:13px;}
+.qd-mini .k{display:block;font-size:10px;color:var(--fg-faint);text-transform:uppercase;
+  letter-spacing:.04em;}
+.qd-mini .v{display:block;font-family:var(--font-display);font-weight:700;font-size:18px;
+  font-variant-numeric:tabular-nums;}
+
+/* ---- edit mode ---- */
+.qd-grid.is-editing .qd-tile{border-style:dashed;border-color:var(--accent-solid);cursor:grab;}
+.qd-grid.is-editing .qd-tile.is-hidden{display:flex;opacity:.4;}
+.qd-tile.is-drag{opacity:.4;}
+.qd-tile.is-over{border-style:solid;box-shadow:0 0 0 3px var(--brand-tint);}
+.qd-tools{display:flex;gap:5px;margin-left:auto;}
+.qd-tools select,.qd-tools button{font:inherit;font-size:10.5px;border:1px solid var(--border);
+  background:var(--bg);color:var(--fg-muted);border-radius:6px;padding:2px 5px;cursor:pointer;}
+.qd-tray{margin-top:14px;padding:12px 14px;border:1px dashed var(--border);border-radius:var(--r-md);}
+.qd-tray h4{margin:0 0 8px;font-family:var(--font-mono);font-size:10px;letter-spacing:.08em;
+  text-transform:uppercase;color:var(--fg-faint);}
+.qd-tray .qd-bar-b{margin:0 6px 6px 0;}
+.qd-tray-none{font-size:12px;color:var(--fg-faint);}
+
+/* Anything the reader can act on says so. */
+.qd-tile[data-tile="chapters"] .aqc-slice,
+.qd-tile[data-tile="chapters"] .aqc-pie-key li,
+.qd-tile[data-tile="attainment"] .aqc-bar{cursor:pointer;}
+.qd-tile[data-tile="chapters"] .aqc-slice:hover,
+.qd-tile[data-tile="attainment"] .aqc-bar:hover{opacity:.82;}
+
+@media (max-width:1150px){
+  .qd-tile.s3,.qd-tile.s4,.qd-tile.s5{grid-column:span 6;}
+  .qd-tile.s6,.qd-tile.s8{grid-column:span 12;}
+}
+@media (max-width:700px){
+  .qd-tile,.qd-tile.s3,.qd-tile.s4,.qd-tile.s5,
+  .qd-tile.s6,.qd-tile.s8{grid-column:span 12;}
+}
