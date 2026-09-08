@@ -298,32 +298,49 @@ ok(/destination-in/.test(JS_CODE) && /source-in/.test(JS_CODE),
    'the halo is cut from the figure’s own silhouette');
 ok(/globalCompositeOperation = "source-atop"/.test(JS_CODE),
    'and spill is painted back ONTO the figure, so the light lands on the fabric');
-ok(/rgba\(255,255,255,/.test(JS_CODE),
-   'arcs are white-hot at the core, coloured only in the falloff, as an arc photographs');
-ok(/BOLTS = [1-5];/.test(JS), 'and are few enough to be a detail rather than the effect');
+/* LIGHTNING IS GONE and must not come back. It looked artificial and always would have:
+   drawn marks with hard edges sit ON a photoreal render rather than belonging to it. Dust
+   has no shape to get wrong, so a viewer reads it as air. */
+eq(/BOLTS/.test(JS_CODE), false, 'no lightning arcs remain');
+ok(/MOTES = \d+;/.test(JS), 'the field is drifting dust instead');
+ok(/moteSprite/.test(JS_CODE),
+   'stamped from one pre-rendered sprite, not a gradient rebuilt per mote per frame');
 
-/* ================= the assembly ================= */
+/* ================= the arrival ================= */
 
-ok(/ASSEMBLE_END/.test(JS), 'he assembles over a declared span of the scroll');
-ok(/revealField/.test(JS_CODE), 'from a per-pixel reveal-order field');
-/* Seeded at the chest, cheap downwards and expensive sideways, with the head last — that
-   ordering is what makes it read as a body forming rather than a stain spreading. */
-ok(/var sx = FIG_CX, sy = 0\.\d+;/.test(JS_CODE), 'seeded at his chest, not the canvas centre');
-ok(/head = v < 0\.\d+/.test(JS_CODE), 'with the head paying a surcharge so it arrives last');
-/* NORMALISED AGAINST THE BODY, NOT THE RECTANGLE. Dividing by the whole frame's maximum
-   uses a far corner of empty transparent space, which squashed every real value into the
-   bottom half of the range: he finished forming at 20% of the scroll and the rest of the
-   runway animated nothing. Bounds are the ones measured off the frames. */
-ok(/u >= 0\.158 && u <= 0\.776/.test(JS_CODE),
-   'and normalised against his measured bounds so the pacing uses the whole span');
-/* Once he is whole this must cost nothing: the masking is per-pixel work. */
-ok(/if \(t >= 1\) return null;/.test(JS_CODE),
-   'the finished figure skips the masking entirely');
-/* The halo during assembly must hug only what exists — keyed on the mask, not the frame,
-   or a canvas with no .src would crash it and a stale cache would glow around a body he
-   has not grown yet. */
-ok(/img\.src \? img\.src\.slice\(-24\) : "part" \+ maskAt/.test(JS_CODE),
-   'the halo cache handles the masked canvas and re-keys as he forms');
+/* THE DISSOLVE MASK IS GONE, and its failure is the reason for this test. It revealed him
+   through a per-pixel THRESHOLD computed at 132x198 and scaled up. A hard threshold has no
+   intermediate values to interpolate, so enlarging it produced chunky square blocks — it
+   read as a corrupted JPEG, not a formation. Nothing here may reintroduce one. */
+eq(/revealField|buildMask|createImageData/.test(JS_CODE), false,
+   'no per-pixel threshold mask — that is what produced the blocky artefact');
+ok(/function smokeAt/.test(JS_CODE), 'he arrives out of a puff of smoke instead');
+ok(/function zoomAt/.test(JS_CODE), 'growing from a speck, in two zoom stages');
+ok(/ZOOM_TINY = 0\.\d+/.test(JS), 'with a declared starting size');
+/* Only opacity and scale are in play, both continuous, so there is nothing to pixelate. */
+ok(/function figureAlpha/.test(JS_CODE), 'and fades up by opacity, never by a mask');
+/* Rotation is not paused for the arrival, or the opening is a still image being faded in. */
+ok(/var ang = p \* Math\.PI \* 2;/.test(JS_CODE), 'and turns the whole time it forms');
+
+/* ================= the head fades in ================= */
+
+/* Frame 180 has no head and 181 does, so untreated the head arrives in one frame. The
+   flare covered the moment but not the fact — it still read as a pop. */
+ok(/HEAD_AT = 180 \/ 420;/.test(JS), 'the head handover is declared');
+ok(/function headAlpha/.test(JS_CODE), 'and the head fades up across a scroll window');
+/* THE FIX THAT ACTUALLY WORKED, after one that did not. Drawing the two halves straight
+   onto the stage at different opacities left the pop in place, because the HALO is built by
+   blurring the figure and was reading the raw frame — head included, at full strength —
+   behind it. Composing once means halo, spill and figure all read the same picture and none
+   of them can know about a head that has not arrived. */
+ok(/function figureFor/.test(JS_CODE), 'the faded figure is composed once');
+ok(/drawField\(ctx, shown,[^)]*"halo"\)/.test(JS_CODE), 'and the halo reads from it');
+ok(/drawField\(ctx, shown,[^)]*"spill"\)/.test(JS_CODE), 'as does the light spill');
+/* A gradient, not a threshold — the same rule the dissolve broke. */
+ok(/createLinearGradient/.test(JS_CODE), 'the neck join is a gradient, so it cannot band');
+/* The common case must cost nothing: no offscreen work once the head is fully there. */
+ok(/if \(ha >= 1\) return img;/.test(JS_CODE),
+   'and a fully-arrived head skips the offscreen composition entirely');
 
 console.log(pass + ' passed, ' + fail + ' failed');
 process.exit(fail ? 1 : 0);

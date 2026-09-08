@@ -89,15 +89,39 @@
    *   2. SPILL painted back ONTO him with source-atop, so the colour lands on the fabric
    *      and falls off across his body. Light that never touches the subject is the tell
    *      that gives away every cheap overlay.
-   *   3. ARCS, finally — but few, soft, white-hot at the core and coloured only in their
-   *      falloff, which is how an electrical arc actually photographs. They are a detail on
-   *      top of the lighting, not the effect itself.
+   *   3. DUST, last and least. Motes hanging in the air, turning as he turns. This replaced
+   *      lightning for the same reason the halo exists: anything with a hard edge or a
+   *      deliberate shape announces that it was added afterwards. Dust has no shape to get
+   *      wrong, so a viewer reads it as air rather than as an effect.
    *
    * Everything is still a pure function of scroll position, so it all unwinds exactly.
    */
-  var BOLTS = 4;        // few. They are seasoning, not the dish.
-  var SEGS = 11;
-  var TICKS = 70;
+  /* THE HANDOVERS, AND WHY THE FIELD FLARES AT THEM.
+     The sequence is three renders end to end: the empty coat turning alone (frames 1-90),
+     the coat with a body inside it (91-180), and the whole man (181-420). Each join is one
+     frame in which a body, and then a head, simply exists where it did not before.
+     Un-marked, that reads as a dropped frame or a mistake in the render.
+     Lit, it reads as the reason. So the energy peaks exactly there and falls away over
+     about thirty frames either side — the light causes the arrival rather than merely
+     coinciding with it, which is the difference between an effect and an accident.
+
+     Expressed as scroll position, because the field is a function of scroll and never of
+     time: 90/420 and 180/420. */
+  var HANDOVERS = [90 / 420, 180 / 420];
+  var FLARE_W = 0.035;
+  function flare(p) {
+    var out = 0;
+    for (var i = 0; i < HANDOVERS.length; i++) {
+      var d = Math.abs(p - HANDOVERS[i]);
+      if (d < FLARE_W) {
+        /* Squared, so the peak is sharp and the tails are quiet. A linear ramp reads as a
+           slow swell and loses the sense that something happened at a moment. */
+        var t = 1 - d / FLARE_W;
+        out = Math.max(out, t * t);
+      }
+    }
+    return out;
+  }
   var HALO = [
     /* blur, spread, alpha — three passes make a falloff; one makes a sticker */
     { blur: 46, alpha: 0.34 },
@@ -136,6 +160,7 @@
      Rebuilt only when the FRAME changes, not on every scroll pixel: the blur is the one
      expensive operation here and the silhouette cannot have changed while the frame has
      not. */
+  var lastP = 0;   // the progress of the frame being drawn, for the halo cache key
   var silh = null, silhCtx = null, silhKey = "";
   function haloFor(img, w, h, rgb) {
     /* THE SOURCE IS SOMETIMES A CANVAS, NOT AN IMAGE. While he is assembling, the halo has
@@ -144,7 +169,10 @@
        mask's own threshold instead is not just a guard against a crash: caching the halo
        across two different assembly steps would draw the glow of a body he has not grown
        yet, which is the exact thing the masking exists to prevent. */
-    var id = img.src ? img.src.slice(-24) : "part" + maskAt;
+    /* A canvas has no .src. While the head is arriving the source IS a canvas, and its
+       contents change every scroll step, so the key must move with it — a cached halo here
+       would glow around a head that has not finished appearing. */
+    var id = img.src ? img.src.slice(-24) : "fade" + Math.round(headAlpha(lastP) * 100);
     var key = id + "|" + Math.round(w) + "x" + Math.round(h) + "|" + rgb;
     if (silhKey === key && silh) return silh;
     if (!silh) { silh = document.createElement("canvas"); silhCtx = silh.getContext("2d"); }
@@ -165,17 +193,17 @@
 
   function drawField(ctx, img, x0, y0, w, h, cx, cy, R, ang, rgb, strength, p, phase) {
     if (strength <= 0) return;
-    var tick = Math.floor(p * TICKS);
 
     if (phase === "halo") {
       var sil = haloFor(img, w, h, rgb);
       ctx.save();
       ctx.globalCompositeOperation = "lighter";
       for (var g = 0; g < HALO.length; g++) {
-        /* A gentle pulse tied to the strike tick, so the halo brightens with the arcs
-           rather than sitting at one level while they flash — which is what would give
-           away that the two are unrelated layers. */
-        var pulse = 0.82 + 0.18 * Math.abs(nz(tick * 31 + g));
+        /* A slow breathe rather than a flicker. It used to be keyed to the lightning's
+           strike tick; with dust there is nothing to strike, and a stepped pulse under a
+           drifting field would be the one hard edge in an effect built entirely out of
+           soft ones. Smooth, driven by scroll position, so it still unwinds exactly. */
+        var pulse = 0.87 + 0.13 * Math.sin(p * 17 + g * 2.1);
         ctx.globalAlpha = HALO[g].alpha * strength * pulse;
         /* filter is not universal; without it the halo simply becomes a soft double of the
            silhouette, which still reads as glow rather than as nothing. */
@@ -206,62 +234,88 @@
       return;
     }
 
-    /* ---- the arcs ---- */
-    var front = phase === "front";
+    /* ---- the dust ---- */
+    drawDust(ctx, cx, cy, R, ang, rgb, phase === "front", strength, p);
+  }
+
+  /* ---------------------------- THE DUST ----------------------------
+   *
+   * Motes hanging in the air around him, turning as he turns. This replaced lightning, and
+   * the reason is the same one that made the lightning look cheap in the first place: drawn
+   * marks sit on a picture, and anything with a hard edge or a deliberate shape announces
+   * that it was added afterwards. Dust has no shape to get wrong. It is soft, it is out of
+   * focus, and a viewer reads it as air rather than as an effect — which is exactly why the
+   * reference site uses it.
+   *
+   * IT DOES NOT FLICKER, AND THAT IS THE POINT.
+   * Lightning had to re-strike, which meant indexing strikes to scroll ticks. Dust simply
+   * drifts. Every mote has a fixed home in the volume around him and moves only because he
+   * turns and because it rises slowly with the scroll. Nothing is random per frame, so
+   * scrolling back does not merely reverse it — it retraces it exactly.
+   *
+   * DRAWN FROM A SPRITE, NOT A GRADIENT PER MOTE.
+   * A hundred and sixty radial gradients built every scroll frame is real work for no
+   * benefit; every mote is the same soft disc at a different size and opacity. So one disc
+   * is rendered once into a small offscreen canvas and stamped, which is a fraction of the
+   * cost and lets the count go high enough to read as air rather than as confetti.
+   *
+   * Split front and back around the figure like everything else on this stage, so motes
+   * pass behind his shoulder and drift back across the coat.
+   */
+  var MOTES = 160;
+
+  var moteCv = null, moteKey = "";
+  function moteSprite(rgb) {
+    if (moteCv && moteKey === rgb) return moteCv;
+    var S = 32;
+    moteCv = document.createElement("canvas");
+    moteCv.width = moteCv.height = S;
+    var c = moteCv.getContext("2d");
+    var g = c.createRadialGradient(S / 2, S / 2, 0, S / 2, S / 2, S / 2);
+    /* A hot-ish core and a long tail. Dust catching light is bright in the middle and
+       fades to nothing well before its edge; a disc with a defined rim reads as a dot. */
+    g.addColorStop(0, "rgba(" + rgb + ",1)");
+    g.addColorStop(0.25, "rgba(" + rgb + ",0.42)");
+    g.addColorStop(1, "rgba(" + rgb + ",0)");
+    c.fillStyle = g;
+    c.fillRect(0, 0, S, S);
+    moteKey = rgb;
+    return moteCv;
+  }
+
+  function drawDust(ctx, cx, cy, R, ang, rgb, front, strength, p) {
+    if (strength <= 0) return;
+    var sp = moteSprite(rgb);
     ctx.save();
     ctx.globalCompositeOperation = "lighter";
-    ctx.lineCap = "round";
-    ctx.lineJoin = "round";
+    for (var i = 0; i < MOTES; i++) {
+      var s = i * 7919;
+      /* A fixed home in a column of air around him: height, angle, distance from the axis.
+         Distance is biased outward so the volume does not crowd against his body, where
+         motes would read as marks ON the coat rather than as air in front of it. */
+      var hgt = nz(s) * 1.15;
+      var rad = 0.42 + Math.abs(nz(s + 2)) * 0.92;
+      /* Parallax: nearer motes swing further than distant ones as he turns. Locking them
+         all to exactly his rotation makes the air look welded to him. */
+      var lag = 0.80 + Math.abs(nz(s + 3)) * 0.35;
+      var phi = (nz(s + 1) * 0.5 + 0.5) * Math.PI * 2 + ang * lag;
+      /* And a slow rise with the scroll, at each mote's own rate, so the field breathes
+         instead of turning as one rigid shell. */
+      var rise = p * (0.05 + Math.abs(nz(s + 4)) * 0.22) * (nz(s + 5) > 0 ? 1 : -1);
 
-    for (var b = 0; b < BOLTS; b++) {
-      var seed = tick * 977 + b * 3571;
-      /* Not every bolt fires on every tick. Constant strikes read as a texture; gaps read
-         as electricity. */
-      if (nz(seed + 91) < -0.15) continue;
-      var fade = 0.55 + 0.45 * Math.abs(nz(seed + 61));
+      var z = Math.cos(phi) * rad;
+      if ((z >= 0) !== front) continue;
 
-      var a0 = orbitPoint(0.18 + Math.abs(nz(seed)) * 0.64, nz(seed + 1) * 0.5,
-                          0.66 + Math.abs(nz(seed + 7)) * 0.26, ang, cx, cy, R);
-      var a1 = orbitPoint(0.18 + Math.abs(nz(seed + 2)) * 0.64, nz(seed + 3) * 0.5 + 0.5,
-                          0.66 + Math.abs(nz(seed + 8)) * 0.26, ang, cx, cy, R);
-      var bow = nz(seed + 11) * 0.5;
+      var x = cx + Math.sin(phi) * rad * R;
+      var y = cy + (hgt + rise) * R;
+      /* Depth drives size and brightness together, which is what sells a flat canvas as a
+         volume of air rather than a sheet of dots. */
+      var d = (z / 1.34 + 1) / 2;
+      var size = (1.4 + 5.2 * d) * (R / 300) * (0.55 + Math.abs(nz(s + 6)) * 0.9);
+      var a = (0.05 + 0.30 * d) * (0.45 + Math.abs(nz(s + 7)) * 0.55) * strength;
 
-      var pts = [], i, t;
-      for (i = 0; i <= SEGS; i++) {
-        t = i / SEGS;
-        var bell = Math.sin(t * Math.PI);
-        pts.push({
-          x: a0.x + (a1.x - a0.x) * t + nz(seed + i * 31 + 5) * 0.13 * bell * R,
-          y: a0.y + (a1.y - a0.y) * t + nz(seed + i * 31 + 6) * 0.13 * bell * R,
-          z: a0.z + (a1.z - a0.z) * t + bow * bell
-        });
-      }
-
-      for (i = 0; i < SEGS; i++) {
-        var m = (pts[i].z + pts[i + 1].z) / 2;
-        if ((m >= 0) !== front) continue;
-        var d = (m + 1) / 2;
-        /* Ends taper to nothing. A bolt with squared-off ends is a drawn line; one that
-           fades out at both ends is a discharge. */
-        var taper = Math.sin((i / SEGS) * Math.PI);
-        var al = (0.10 + 0.34 * d) * fade * strength * taper;
-        var wd = (0.5 + 1.0 * d) * (R / 300) * taper;
-        ctx.beginPath();
-        ctx.moveTo(pts[i].x, pts[i].y);
-        ctx.lineTo(pts[i + 1].x, pts[i + 1].y);
-        /* Wide coloured bloom, then a narrow near-white core. An arc photographs as white
-           in the middle with the colour only in its falloff; a uniformly coloured line is
-           the single most artificial-looking part of drawn lightning. */
-        ctx.strokeStyle = "rgba(" + rgb + "," + (al * 0.16).toFixed(3) + ")";
-        ctx.lineWidth = wd * 7;
-        ctx.stroke();
-        ctx.strokeStyle = "rgba(" + rgb + "," + (al * 0.42).toFixed(3) + ")";
-        ctx.lineWidth = wd * 2.6;
-        ctx.stroke();
-        ctx.strokeStyle = "rgba(255,255,255," + (al * 0.5).toFixed(3) + ")";
-        ctx.lineWidth = wd * 0.7;
-        ctx.stroke();
-      }
+      ctx.globalAlpha = Math.min(1, a);
+      ctx.drawImage(sp, x - size, y - size, size * 2, size * 2);
     }
     ctx.restore();
   }
@@ -275,135 +329,164 @@
     return ((n >> 16) & 255) + "," + ((n >> 8) & 255) + "," + (n & 255);
   }
 
-  /* ====================== THE ASSEMBLY ======================
+  /* ====================== THE ARRIVAL ======================
    *
-   * He builds himself out of the middle of his own coat. A patch of chest appears first,
-   * the coat grows down and out of it, then the arms, then the head — and it all runs
-   * backwards on the way up, like everything else on this stage.
+   * The coat comes out of a puff of smoke, small and far away, and grows towards the reader
+   * while it turns. Then the smoke thins, the body arrives, then the head.
    *
-   * HOW IT WORKS, AND WHAT IT HONESTLY IS.
-   * Every pixel is given a REVEAL ORDER — a number from 0 to 1 saying how early it appears.
-   * Scroll position is a threshold across that field: pixels whose order is below it are
-   * drawn, pixels above it are not, and the narrow band either side of the threshold is
-   * painted as a glowing edge so the boundary crackles rather than being a clean wipe.
+   * WHY THIS REPLACED A DISSOLVE MASK, since the failure is worth remembering.
+   * The first attempt revealed him through a per-pixel threshold — a noise field, cheaply
+   * computed at 132x198 and scaled up. Scaled up is the problem: a hard threshold has no
+   * intermediate values to interpolate, so the browser enlarged it into CHUNKY SQUARE
+   * BLOCKS. It did not read as formation, it read as a corrupted JPEG. No amount of tuning
+   * the noise would have fixed that, because the artefact came from the hard edge itself.
    *
-   * The order is distance from a seed at his chest, deliberately squashed so it travels
-   * DOWN the coat faster than it travels sideways, with the head paying an extra penalty so
-   * it arrives last. Plus noise, which is what turns a growing ellipse into something that
-   * looks like it is being assembled.
+   * Smoke has no hard edge anywhere. The figure simply fades up through it while big soft
+   * puffs expand and thin out. Nothing is masked, nothing is thresholded, and there is
+   * nothing to pixelate — the only values in play are opacity and scale, both continuous.
    *
-   * This is a screen-space dissolve, not per-limb 3D assembly: the frames are flat images
-   * of a complete figure and carry no knowledge of where an arm ends. It follows the
-   * anatomy closely because the coat really is his middle and the head really is furthest
-   * from it — but it is worth being clear that the edge is following a distance field, not
-   * a sleeve. True limb-by-limb would mean rendering the coat, arms and head as separate
-   * passes in Blender.
-   *
-   * DONE AT LOW RESOLUTION ON PURPOSE. Thresholding a 600x900 canvas per scroll frame is
-   * half a million pixels of JavaScript. The field is built once at 132x198, thresholded
-   * there, and scaled up with the browser's own smoothing — which costs nothing and gives
-   * a softer edge than a per-pixel version would anyway.
+   * AND IT TURNS THE WHOLE TIME. The rotation is not paused for the arrival: the frame
+   * index runs from the very first pixel of scroll, so the coat is already turning as it
+   * forms, which is what stops the opening looking like a still image being faded in.
    */
-  var ASSEMBLE_END = 0.42;   // fully formed by this point in the scroll
-  var MW = 132, MH = 198;    // resolution of the reveal field
+  var ARRIVE = 0.15;    // the coat has fully arrived by here
+  var ZOOM_TINY = 0.22; // how small it starts — a speck at the back of the stage
+  var PUFFS = 44;
 
-  var field = null, fieldKey = "";
-  function revealField() {
-    if (field && fieldKey === MW + "x" + MH) return field;
-    var f = new Float32Array(MW * MH);
-    /* The seed: the middle of his chest, in the frame's own coordinates. FIG_CX is where he
-       actually is horizontally; 0.34 is chest height given he fills the frame top to bottom. */
-    var sx = FIG_CX, sy = 0.34;
-    var max = 0, i, x, y;
-    for (y = 0; y < MH; y++) {
-      for (x = 0; x < MW; x++) {
-        var u = x / MW, v = y / MH;
-        var dx = (u - sx) * 1.45;          // sideways is expensive: arms wait
-        var dy = (v - sy) * 0.72;          // downwards is cheap: the coat grows first
-        /* The head pays a surcharge so it is last, which is the order that reads as a body
-           assembling rather than a stain spreading. */
-        var head = v < 0.20 ? (0.20 - v) * 1.9 : 0;
-        var d = Math.sqrt(dx * dx + dy * dy) + head;
-        /* Two octaves of value noise. Without it the boundary is a clean ellipse and the
-           whole thing reads as a wipe; with it the edge breaks into fingers and flecks. */
-        var n = nz(((x * 3) | 0) + ((y * 7) | 0) * 131) * 0.055 +
-                nz(((x >> 2) | 0) * 17 + ((y >> 2) | 0) * 971) * 0.085;
-        var val = d + n;
-        f[y * MW + x] = val;
-        /* NORMALISE AGAINST THE BODY, NOT THE RECTANGLE — measured, and it matters.
-           The largest reveal order in the frame belongs to a far corner, which is empty
-           transparent space that never draws anything. Dividing by that squashed every
-           value a body pixel actually has into the bottom half of the range, so he finished
-           assembling at 20% of the scroll and the remaining 22% of the runway animated
-           nothing. The bounds here are the ones sampled from the frames: he spans 15.8% to
-           77.6% across and 2.2% to 99.8% down. */
-        if (u >= 0.158 && u <= 0.776 && v >= 0.022 && val > max) max = val;
-      }
-    }
-    for (i = 0; i < f.length; i++) f[i] = Math.min(1, f[i] / max);
-    field = f; fieldKey = MW + "x" + MH;
-    return field;
+  /* Zoom in two stages. The first is the arrival, fast and eased, from a speck up to the
+     wide shot. The second is the slow cinematic push that runs the rest of the section.
+     One continuous range could not do both: a single ease from 0.22 to 1.20 spends the
+     whole scroll growing and never settles into a shot. */
+  function zoomAt(p) {
+    if (p < ARRIVE) return ZOOM_TINY + (ZOOM_FROM - ZOOM_TINY) * ease(p / ARRIVE);
+    return ZOOM_FROM + (ZOOM_TO - ZOOM_FROM) * ease((p - ARRIVE) / (1 - ARRIVE));
   }
 
-  /* The mask for one threshold, plus the glowing shell just outside it. Cached on a
-     quantised threshold so a slow scroll does not rebuild it for every pixel of movement. */
-  var maskCv = null, maskCtx2 = null, maskAt = -1;
-  var edgeCv = null, edgeCtx = null;
-  function buildMask(t, rgb) {
-    var q = Math.round(t * 120);
-    if (maskAt === q) return;
-    if (!maskCv) {
-      maskCv = document.createElement("canvas"); maskCv.width = MW; maskCv.height = MH;
-      maskCtx2 = maskCv.getContext("2d");
-      edgeCv = document.createElement("canvas"); edgeCv.width = MW; edgeCv.height = MH;
-      edgeCtx = edgeCv.getContext("2d");
-    }
-    var f = revealField();
-    var m = maskCtx2.createImageData(MW, MH);
-    var e = edgeCtx.createImageData(MW, MH);
-    var col = rgb.split(",");
-    var cr = +col[0], cg = +col[1], cb = +col[2];
-    var soft = 0.055;               // width of the fade at the boundary
-    var shell = 0.075;              // how far the glowing shell reaches past it
-    for (var i = 0; i < f.length; i++) {
-      var v = f[i], o = i * 4;
-      /* Inside: fully drawn. Across the boundary: fading. Beyond: absent. */
-      var a = v <= t - soft ? 1 : v >= t ? 0 : (t - v) / soft;
-      m.data[o] = 255; m.data[o + 1] = 255; m.data[o + 2] = 255;
-      m.data[o + 3] = (a * 255) | 0;
-      /* The shell is brightest exactly at the frontier and dies away on both sides — the
-         line of light where the next part of him is about to arrive. */
-      var dEdge = Math.abs(v - t);
-      var ea = dEdge < shell ? (1 - dEdge / shell) : 0;
-      ea = ea * ea;
-      e.data[o] = cr; e.data[o + 1] = cg; e.data[o + 2] = cb;
-      e.data[o + 3] = (ea * 235) | 0;
-    }
-    maskCtx2.putImageData(m, 0, 0);
-    edgeCtx.putImageData(e, 0, 0);
-    maskAt = q;
+  /* How solid the figure is. Nothing at all for the first breath, then up through the
+     smoke. Kept clear of 0 and 1 at the ends so there is no visible step. */
+  function figureAlpha(p) {
+    if (p >= ARRIVE) return 1;
+    var t = p / ARRIVE;
+    return t <= 0.10 ? 0 : Math.min(1, (t - 0.10) / 0.62);
   }
 
-  /* The figure, masked to however much of him has formed. Returns a canvas to draw in place
-     of the frame — or null once he is whole, so the finished state costs nothing extra. */
-  var partCv = null, partCtx = null;
-  function assembled(img, w, h, t, rgb) {
-    if (t >= 1) return null;
-    buildMask(t, rgb);
+  /* How much smoke is left. Densest at the very start, gone shortly after he has arrived —
+     a little later than the figure finishes fading up, so the last wisps are still drifting
+     off him rather than stopping the instant he is solid. */
+  function smokeAt(p) {
+    var end = ARRIVE * 1.5;
+    if (p >= end) return 0;
+    var t = 1 - p / end;
+    return t * t;          // squared: thick at first, then thins away quickly
+  }
+
+  function drawSmoke(ctx, cx, cy, R, ang, rgb, front, strength, p) {
+    if (strength <= 0) return;
+    var sp = moteSprite(rgb);
+    ctx.save();
+    ctx.globalCompositeOperation = "lighter";
+    for (var i = 0; i < PUFFS; i++) {
+      var s = i * 5147 + 31;
+      /* Each puff starts near his middle and travels outward as the scroll advances, which
+         is what makes it read as a puff dispersing rather than a fog sitting still. */
+      var spread = 0.20 + (1 - strength) * (0.55 + Math.abs(nz(s + 3)) * 0.85);
+      var phi = (nz(s) * 0.5 + 0.5) * Math.PI * 2 + ang * 0.55;
+      var rad = spread * (0.5 + Math.abs(nz(s + 1)) * 1.1);
+      var z = Math.cos(phi) * rad;
+      if ((z >= 0) !== front) continue;
+
+      var x = cx + Math.sin(phi) * rad * R;
+      var y = cy + (nz(s + 2) * 0.85 + (1 - strength) * nz(s + 4) * 0.5) * R;
+      /* Puffs GROW as they fade. A cloud that shrinks reads as being sucked away; one that
+         expands while thinning is what dispersal actually looks like. */
+      var size = (0.26 + 0.40 * (1 - strength) + Math.abs(nz(s + 5)) * 0.22) * R;
+      var a = strength * (0.10 + Math.abs(nz(s + 6)) * 0.16);
+
+      ctx.globalAlpha = Math.min(1, a);
+      ctx.drawImage(sp, x - size, y - size, size * 2, size * 2);
+    }
+    ctx.restore();
+  }
+
+  /* ---------------------- THE HEAD FADES IN ----------------------
+   *
+   * Frame 180 has no head and frame 181 does, so without help the head arrives in a single
+   * frame. The flare covered the moment but not the fact: it still read as a pop.
+   *
+   * THE OBVIOUS FIX WOULD HAVE COST A RE-RENDER and this one does not. Cross-fading frame
+   * 180 into 181 would fade the head in, but the figure is also turning, so it would ghost
+   * two different rotations over each other. Rendering an overlapping headless run would
+   * work and means going back to Blender.
+   *
+   * Instead the frame is drawn TWICE from the same image: once masked to everything below
+   * the neck at full opacity, once masked to everything above it at a rising opacity. Same
+   * rotation in both halves, because it is the same frame — so the head fades up over the
+   * shoulders with nothing ghosting behind it.
+   *
+   * The mask is a LINEAR GRADIENT, not a threshold. That distinction is the whole reason
+   * the earlier dissolve failed: a hard cut has no intermediate values and turns into
+   * blocks when scaled. A gradient has nothing but intermediate values.
+   */
+  var HEAD_AT = 180 / 420;   // the frame where the head first exists
+  var HEAD_FADE = 0.075;     // and how much scroll it takes to arrive
+
+  function headAlpha(p) {
+    if (p <= HEAD_AT) return 1;              // no head in these frames anyway
+    if (p >= HEAD_AT + HEAD_FADE) return 1;  // fully arrived; draw normally
+    return (p - HEAD_AT) / HEAD_FADE;
+  }
+
+  var splitCv = null, splitCtx = null;
+  function splitCanvas(w, h) {
+    if (!splitCv) { splitCv = document.createElement("canvas"); splitCtx = splitCv.getContext("2d"); }
     var W = Math.max(1, Math.round(w)), H = Math.max(1, Math.round(h));
-    if (!partCv) { partCv = document.createElement("canvas"); partCtx = partCv.getContext("2d"); }
-    if (partCv.width !== W || partCv.height !== H) { partCv.width = W; partCv.height = H; }
-    var c = partCtx;
-    c.clearRect(0, 0, W, H);
-    c.drawImage(img, 0, 0, W, H);
+    if (splitCv.width !== W || splitCv.height !== H) { splitCv.width = W; splitCv.height = H; }
+    return splitCv;
+  }
+
+  /* Keeps the part of the frame on one side of the neck and throws the rest away, with a
+     soft band across the join so there is no visible seam at the collar. */
+  function maskHalf(c, cv, img, keepTop) {
+    c.clearRect(0, 0, cv.width, cv.height);
+    c.drawImage(img, 0, 0, cv.width, cv.height);
     c.globalCompositeOperation = "destination-in";
-    c.drawImage(maskCv, 0, 0, W, H);
-    /* The frontier, drawn onto the figure itself so the light sits on the forming edge
-       rather than hovering in front of it. */
-    c.globalCompositeOperation = "lighter";
-    c.drawImage(edgeCv, 0, 0, W, H);
+    /* The neck sits at about a quarter of the way down the frame — measured from the
+       renders, where the head spans the top 22% and the collar meets it just below. */
+    var neck = cv.height * 0.26, soft = cv.height * 0.055;
+    var g = c.createLinearGradient(0, neck - soft, 0, neck + soft);
+    g.addColorStop(0, keepTop ? "rgba(0,0,0,1)" : "rgba(0,0,0,0)");
+    g.addColorStop(1, keepTop ? "rgba(0,0,0,0)" : "rgba(0,0,0,1)");
+    c.fillStyle = g;
+    c.fillRect(0, 0, cv.width, cv.height);
     c.globalCompositeOperation = "source-over";
-    return partCv;
+    return cv;
+  }
+
+  /* THE FADED FIGURE AS A SINGLE IMAGE, and it has to be a single image.
+     The first attempt drew the two halves straight onto the stage at different opacities.
+     The head still popped, and the reason was upstream: the HALO is built by blurring the
+     figure silhouette, and it was being built from the raw frame — head included, at full
+     strength — and painted BEHIND the figure. So a head-shaped glow arrived in one frame
+     however gently the head itself faded up over it.
+
+     Composing here instead means the halo, the light spill and the figure all read from
+     the same picture, and none of them can know about a head that has not arrived. */
+  var outCv = null, outCtx = null;
+  function figureFor(img, w, h, p) {
+    var ha = reduce ? 1 : headAlpha(p);
+    if (ha >= 1) return img;          // the common case: no offscreen work at all
+    var cv = splitCanvas(w, h), c = splitCtx;
+    var W = cv.width, H = cv.height;
+    if (!outCv) { outCv = document.createElement("canvas"); outCtx = outCv.getContext("2d"); }
+    if (outCv.width !== W || outCv.height !== H) { outCv.width = W; outCv.height = H; }
+    var o = outCtx;
+    o.clearRect(0, 0, W, H);
+    o.globalAlpha = 1;
+    o.drawImage(maskHalf(c, cv, img, false), 0, 0);   // shoulders down, solid
+    o.globalAlpha = ha;
+    o.drawImage(maskHalf(c, cv, img, true), 0, 0);    // head, rising
+    o.globalAlpha = 1;
+    return outCv;
   }
 
   /* THE COPY SCROLLS PAST; IT IS NOT PAINTED OVER THE FIGURE.
@@ -495,7 +578,7 @@
       var iw = img.naturalWidth || img.width, ih = img.naturalHeight || img.height;
       if (!iw || !ih) return;
 
-      var k = reduce ? 1 : ZOOM_FROM + (ZOOM_TO - ZOOM_FROM) * ease(p);
+      var k = reduce ? 1 : zoomAt(p);
       var s = (ch / ih) * k;
       var fits = cw / (iw * FIG_W);
       if (s > fits) s = fits;
@@ -519,22 +602,42 @@
       var ang = p * Math.PI * 2;
       /* Faded up over the first tenth of the section rather than snapping on at the top
          edge, which reads as a glitch on the first pixel of scroll. */
-      var lift = reduce ? 0 : Math.min(1, p / 0.10);
+      /* Faded up over the first tenth so the field arrives rather than snapping on, then
+         driven hard at each handover. Capped at 1.9 rather than left to run: past about
+         twice the base level the halo starts to bloom over his shoulders and the flare
+         stops reading as light and starts reading as a white flash. */
+      var lift = reduce ? 0
+        : Math.min(1.9, Math.min(1, p / 0.10) + flare(p) * 1.15);
 
-      /* HOW MUCH OF HIM EXISTS YET. 0 at the top of the section, 1 once assembled — after
-         which `assembled` returns null and the finished state costs nothing extra. */
-      var built = Math.min(1, p / ASSEMBLE_END);
-      var shown = assembled(img, w, h, built, auraRgb) || img;
 
       /* Arcs behind, then the halo hugging his outline, then the man, then the light
          landing on him, then the arcs that pass in front. The halo takes its shape from
          `shown`, so while he is forming the glow hugs only the part of him that is
          there — a halo around the finished silhouette would give the whole thing away. */
+      /* Composed once, then used by everything. While the head is arriving this is a
+         canvas with the head at partial opacity; the rest of the time it is the frame
+         itself and costs nothing. */
+      lastP = p;
+      var shown = figureFor(img, w, h, p);
+      var fa = reduce ? 1 : figureAlpha(p);
+      var smk = reduce ? 0 : smokeAt(p);
+
       drawField(ctx, img, x0, y0, w, h, acx, acy, aR, ang, auraRgb, lift, p, "back");
-      drawField(ctx, shown, x0, y0, w, h, acx, acy, aR, ang, auraRgb, lift, p, "halo");
-      ctx.drawImage(shown, x0, y0, w, h);
-      drawField(ctx, shown, x0, y0, w, h, acx, acy, aR, ang, auraRgb, lift, p, "spill");
+      /* Scaled by how solid he is: a halo at full strength around a coat that has not
+         arrived yet would be a glow hanging in empty air. */
+      drawField(ctx, shown, x0, y0, w, h, acx, acy, aR, ang, auraRgb, lift * fa, p, "halo");
+      drawSmoke(ctx, acx, acy, aR, ang, auraRgb, false, smk, p);
+      /* The figure fades up through the smoke. globalAlpha rather than a mask: there is
+         no threshold anywhere, so there is nothing to pixelate when it is scaled. */
+      if (fa > 0) {
+        ctx.save();
+        ctx.globalAlpha = fa;
+        ctx.drawImage(shown, x0, y0, w, h);
+        ctx.restore();
+      }
+      drawField(ctx, shown, x0, y0, w, h, acx, acy, aR, ang, auraRgb, lift * fa, p, "spill");
       drawField(ctx, img, x0, y0, w, h, acx, acy, aR, ang, auraRgb, lift, p, "front");
+      drawSmoke(ctx, acx, acy, aR, ang, auraRgb, true, smk, p);
 
       drawn = i; drawnAt = p;
     }
