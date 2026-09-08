@@ -42,29 +42,82 @@
 }
 
 /* ---- the runway ----
-   Three stations with a travel between each. The height comes from the copy, so adding a
-   beat lengthens the journey correctly instead of leaving a fixed height that no longer
-   matches its contents. */
-.coat-text { position: relative; z-index: 1; }
+   THE SECTION DECLARES ITS OWN HEIGHT, and that is a deliberate reversal.
+   It used to take its height from the copy: three blocks of 104vh each, stacked in flow,
+   and the figure's position was a function of how far through that stack you were. Which
+   meant the pacing was a side effect of how long a paragraph happened to be — edit a
+   sentence and the pauses move.
 
-.coat-beat {
-  min-height: 104vh;
-  display: flex;
-  flex-direction: column;
-  justify-content: center;
-  /* Just under half the page, so the copy never reaches the middle where the figure
-     passes through on its way across. */
-  max-width: 42%;
-  opacity: .28;
-  transition: opacity 460ms ease;
+   Now the copy is positioned absolutely and scheduled by coat.js on explicit scroll
+   windows, so it contributes no height at all and the runway has to be stated. That is the
+   whole trade, and it is worth it: the holds are the point of the section. Six phases share
+   this height and roughly two thirds of it is spent standing still, which is what gives a
+   reader time to finish a paragraph before he moves again. Shortening this number speeds
+   everything up proportionally — it is the one dial for the whole thing. */
+.coat { min-height: 640vh; }
+
+/* ---- the figure ----
+   Full width and pinned, so the canvas can carry the figure anywhere across the page. The
+   travel is drawn, not laid out: moving a canvas element would move its backing store and
+   force a repaint of the whole stage on every scroll frame. */
+.coat-stage {
+  position: sticky;
+  top: 0;
+  height: 100vh;
+  /* PULLS THE COPY LAYER BACK OVER THE PINNED STAGE. Both layers pin to the top of the
+     viewport, but in flow the second would begin one whole screen below the first. A
+     negative margin equal to the height is how a sticky backdrop is overlapped without
+     taking either element out of flow. */
+  margin-bottom: -100vh;
+  overflow: hidden;
+  pointer-events: none;
+  z-index: 0;
 }
-.coat-beat.is-on { opacity: 1; }
+.coat-canvas { display: block; width: 100%; height: 100%; background: transparent; }
 
-/* ALTERNATING SIDES, opposite the figure at every station. The figure travels
-   left -> right -> left, so the copy sits right -> left -> right and the two never share
-   a side of the page. */
-.coat-beat:nth-child(odd)  { margin-left: auto;  text-align: right; }
-.coat-beat:nth-child(even) { margin-right: auto; text-align: left; }
+/* ---- the copy ----
+   A second pinned layer over the stage, holding all three blocks at once. Only one is ever
+   visible: coat.js writes each block's opacity from the scroll position, on windows that
+   sit strictly inside the phases where the figure is standing still.
+
+   OPACITY, NOT display OR visibility, and the reason is a screen reader. A block that is
+   display:none for four fifths of the section is a block that is missing from the page for
+   anyone not looking at it. At opacity 0 all three stages stay in the accessibility tree
+   and in the browser's find, in the order they are meant to be read. */
+.coat-copy {
+  position: sticky;
+  top: 0;
+  height: 100vh;
+  margin-bottom: -100vh;
+  z-index: 1;
+  /* The layer covers the whole viewport, so it must not swallow the page. Individual
+     blocks are switched back on by the script while they are legible — otherwise dragging
+     across the section selects three paragraphs nobody can see. */
+  pointer-events: none;
+}
+.coat-text { position: relative; height: 100%; }
+
+/* POSITIONED IN VIEWPORT UNITS, NOT INSIDE .wrap, because the figure is.
+   The copy used to live in the site's centred column while the figure's position was a
+   fraction of the full-bleed canvas. On a 2560px monitor those are two different
+   coordinate systems: the column's right edge sits at about 76% of the glass and the
+   figure stands at 72% of it, so the words landed on his shoulder on exactly the widest
+   screens. Both now measure from the same edge. */
+.coat-beat {
+  position: absolute;
+  top: 50%;
+  transform: translateY(-50%);
+  width: min(34vw, 460px);
+  opacity: 0;
+  pointer-events: none;
+  will-change: opacity;
+}
+/* The side he is NOT on. Stamped by coat.js from its own table of stations rather than
+   chosen by nth-child: he ends the section back where he started, so the first and last
+   blocks share a side, and counting elements would put the closing paragraph on top of
+   him. */
+.coat-beat[data-side="left"]  { left: max(28px, 6vw);  text-align: left; }
+.coat-beat[data-side="right"] { right: max(28px, 6vw); text-align: right; }
 
 .coat-beat .k {
   display: block;
@@ -73,8 +126,13 @@
   letter-spacing: .18em;
   text-transform: uppercase;
   color: var(--accent-text);
-  margin-bottom: 12px;
+  margin-bottom: 14px;
 }
+/* The stage's short name, after its number and quieter than it, on the same line. A second
+   eyebrow underneath would put three labels above one headline. */
+.coat-beat .k i { font-style: normal; color: var(--fg-muted); }
+.coat-beat .k i::before { content: " · "; }
+
 .coat-beat h2 {
   font-family: var(--font-display);
   font-size: clamp(24px, 3.1vw, 42px);
@@ -87,34 +145,40 @@
   color: var(--fg);
 }
 .coat-beat p {
-  margin: 12px 0 0;
-  max-width: 46ch;
+  margin: 14px 0 0;
   color: var(--fg-muted);
   font-size: clamp(14px, 1.15vw, 16.5px);
   line-height: 1.65;
 }
-.coat-beat:nth-child(odd) p { margin-left: auto; }
 
-/* ---- the figure ----
-   Full width and pinned, so the canvas can carry the figure anywhere across the page. The
-   travel is drawn, not laid out: moving a canvas element would move its backing store and
-   force a repaint of the whole stage on every scroll frame. */
-.coat-stage {
-  position: sticky;
-  top: 0;
-  height: 100vh;
-  /* PULLS THE COPY BACK OVER THE PINNED STAGE. The stage comes first in the DOM so it
-     paints behind, but without this the copy would begin one whole screen below it and the
-     two would never share the page. Negative margin equal to the height is how a sticky
-     backdrop is overlapped without taking either element out of flow — absolute positioning
-     would work too, but then the section would have no height of its own and the runway
-     would collapse. */
-  margin-bottom: -100vh;
-  overflow: hidden;
-  pointer-events: none;
-  z-index: 0;
+/* RULED, NOT BULLETED. Half of these lists sit against the right margin, and a bulleted
+   list that is right-aligned leaves its markers stranded in the middle of the column. A
+   hairline above each line separates them just as well and reads identically on either
+   side. */
+.coat-points {
+  list-style: none;
+  margin: 22px 0 0;
+  padding: 0;
+  display: grid;
+  gap: 10px;
 }
-.coat-canvas { display: block; width: 100%; height: 100%; background: transparent; }
+.coat-points li {
+  font-family: var(--font-mono);
+  font-size: 12.5px;
+  line-height: 1.55;
+  color: var(--fg-muted);
+  padding-top: 10px;
+  border-top: 1px solid var(--border);
+}
+
+/* A tall, narrow desktop window is the one shape where the two columns can still meet. The
+   figure is fitted to the stage HEIGHT, so a 1000x1200 window draws him roughly three
+   quarters of the page wide and he reaches across into the copy. Pull the copy in and let
+   the headline shrink rather than let them touch. */
+@media (min-width: 901px) and (max-aspect-ratio: 1/1) {
+  .coat-beat { width: min(27vw, 340px); }
+  .coat-beat h2 { font-size: clamp(20px, 2.4vw, 30px); }
+}
 
 /* A faint pool of light under the figure, following it across. Positioned by the script
    through two custom properties rather than by CSS, so it cannot drift from the figure. */
@@ -129,7 +193,8 @@
 }
 
 /* The one honest piece of chrome on a pinned section: without it a reader who cannot tell
-   the page is still moving assumes it has hung. */
+   the page is still moving assumes it has hung. It matters more than it did — two thirds
+   of this section is now spent deliberately not moving. */
 .coat-rail {
   position: absolute;
   left: 8%; right: 8%;
@@ -146,29 +211,54 @@
   background: var(--coat-aura);
 }
 
-/* Touch and small screens: no travel, no pinning. A figure crossing a 390px page has
-   nowhere to go, and a pinned stage fights the address bar resizing as you scroll. The
-   figure sits above the copy and the beats stack full width. */
+/* THE LENS BELOW TELLS THE SAME THREE STAGES, AND ONE OF THEM HAS TO GO.
+   Both are rendered from the same array in founder-data.js, and both were on the page at
+   once — the figure crossed straight down into a card repeating what he had just said.
+   The lens is the fallback, not the duplicate: this section is display:none until a frame
+   has actually decoded, so a deploy without the renders, a slow connection or a browser
+   that will not take WebP still gets the content, laid out conventionally. The moment the
+   figure is live, the fallback is what is redundant. */
+.coat[data-coat-ready="1"] ~ .fp-lens { display: none; }
+
+/* Touch and small screens: no travel, no pinning, no scheduling. A figure crossing a 390px
+   page covers about two of his own shoulder widths, and a pinned stage fights the address
+   bar resizing as you scroll. The figure sits above the copy, the blocks stack full width,
+   and all three are on screen at once — coat.js checks this same breakpoint and stops
+   writing opacity, so the stylesheet's values are the last word. */
 @media (max-width: 900px) {
+  .coat { min-height: 0; }
   .coat-stage { position: static; height: min(62vh, 440px); margin-bottom: 18px; }
-  .coat-beat {
-    min-height: 0;
-    max-width: none;
-    margin: 0 0 26px !important;
-    text-align: left !important;
+  .coat-copy { position: static; height: auto; margin-bottom: 0; pointer-events: auto; }
+  .coat-text { height: auto; padding: 0 20px; }
+  .coat-beat[data-side] {
+    position: static;
+    transform: none;
+    width: auto;
+    left: auto; right: auto;
+    text-align: left;
     opacity: 1;
-    transition: none;
+    pointer-events: auto;
+    margin: 0 0 32px;
   }
-  .coat-beat p { margin-left: 0 !important; }
+  .coat-beat h2 { font-size: clamp(22px, 6.2vw, 30px); }
   .coat-rail { display: none; }
 }
 
 /* Reduced motion: one frame, no travel, every line readable at once. */
 @media (prefers-reduced-motion: reduce) {
+  .coat { min-height: 0; }
   .coat-stage { position: static; height: min(60vh, 420px); margin-bottom: 18px; }
-  .coat-beat {
-    min-height: 0; max-width: none; opacity: 1; transition: none;
-    margin: 0 0 26px !important; text-align: left !important;
+  .coat-copy { position: static; height: auto; margin-bottom: 0; pointer-events: auto; }
+  .coat-text { height: auto; }
+  .coat-beat[data-side] {
+    position: static;
+    transform: none;
+    width: auto;
+    left: auto; right: auto;
+    text-align: left;
+    opacity: 1;
+    pointer-events: auto;
+    margin: 0 0 32px;
   }
   .coat-rail { display: none; }
 }

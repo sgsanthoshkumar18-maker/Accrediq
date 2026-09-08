@@ -106,6 +106,10 @@ eq(F.fileFor('x/#.webp', 8), 'x/0009.webp', 'padding holds at every magnitude');
 const JS = fs.readFileSync(path.join(__dirname, '../profile/coat.js'), 'utf8');
 const CSS = fs.readFileSync(path.join(__dirname, '../profile/coat.css'), 'utf8');
 const HTML = fs.readFileSync(path.join(__dirname, '../founder.html'), 'utf8');
+/* The three stages are RENDERED into the page rather than typed into it, so the
+   renderer is part of this section now: an assertion against founder.html alone would
+   pass on a page whose copy never arrives. */
+const FJS = fs.readFileSync(path.join(__dirname, '../profile/founder.js'), 'utf8');
 
 /* NO GSAP, NO LIBRARY. The reference implementation uses ScrollTrigger; this site has no
    build step and no node_modules, and seventy kilobytes to replace one division is the
@@ -204,54 +208,244 @@ ok(/function ease\(/.test(JS_CODE),
    at 1440x900: the painted alpha box never touched either edge at any scroll position. */
 ok(/FIG_W = 0\.\d+, FIG_CX = 0\.\d+/.test(JS),
    'the figure extents are measured constants, not guesses');
-ok(/var fits = cw \/ \(iw \* FIG_W\);\s*\n\s*if \(s > fits\) s = fits;/.test(JS_CODE),
+ok(/var fits = \(cw \* FIG_MAX\) \/ \(iw \* FIG_W\);\s*\n\s*if \(s > fits\) s = fits;/.test(JS_CODE),
    'and the push-in is clamped by them, so a narrow column crops empty pixels not shoulders');
+/* THE CLAMP IS A CEILING ON HIS WIDTH, NOT ON THE CANVAS, and that distinction was found
+   by measuring a 1000x1200 window: fitted to the stage HEIGHT he came out 74% of the page
+   wide and his shoulder finished eight thousandths of a page from the headline. Held under
+   half the stage he cannot cross the middle, so there is always clear ground on the far
+   side whichever station he is at — at every aspect ratio, not just the ones measured. */
+ok(/FIG_MAX = 0\.50;/.test(JS), 'and he is never drawn wider than half the stage');
+ok(parseFloat(/FIG_MAX = (0\.\d+);/.exec(JS)[1]) <= 0.5,
+   'which is what keeps him off the copy column on a tall narrow window');
 /* Fitted to HEIGHT, never "contained": contain in a half-width column fits to the width
    and leaves him small with air above and below — the opposite of what the column is for. */
 ok(/var s = \(ch \/ ih\) \* k;/.test(JS_CODE), 'the image is fitted to the stage height');
 /* He sits at 46.7% of the frame, so centring the image would leave him visibly off-centre. */
 /* He sits at 46.7% of the frame, so centring the IMAGE would leave him visibly off-centre
    wherever the path puts him. The correction now rides alongside the travel term. */
-ok(/\(0\.5 - FIG_CX\) \* w \+ \(journey\.x - 0\.5\) \* cw/.test(JS_CODE),
+ok(/\(0\.5 - FIG_CX\) \* w \+ \(here\.x - 0\.5\) \* cw/.test(JS_CODE),
    'and offset to his real centre, on top of wherever the journey has carried him');
 
-/* ---- the copy is beside the figure, never over it ----
-   The first version painted the headline across his coat and it was unreadable. Two
-   columns, and the emphasised block is decided by where the BLOCK is rather than by
-   section progress — the same rule scrolly.js uses, so the two sections cannot drift. */
-ok(/data-beat/.test(JS) && /data-beat/.test(HTML), 'the copy beats are wired to the scroll');
-ok(/function activeBeat\(/.test(JS_CODE), 'the active block is chosen by its own position');
-ok(/window\.innerHeight \/ 2/.test(JS_CODE), 'nearest the middle of the viewport, as scrolly.js does');
-ok(/classList\.toggle\("is-on"/.test(JS_CODE),
-   'toggled as a class, so the fade lives in the stylesheet rather than in the scroll handler');
-eq(/coat-copy/.test(HTML), false, 'the overlay caption is gone from the markup');
+/* ================== THE TIMELINE, RUN RATHER THAN READ ==================
+ *
+ * The pacing block is pure arithmetic with no DOM in it, so it can be lifted straight out
+ * of the file and exercised. That is the only way to assert the thing that actually
+ * matters here — that a paragraph is never on screen while the figure is moving. A regex
+ * can confirm the numbers were typed; only running them confirms they do not overlap.
+ *
+ * This has already caught the bug it exists for. The first table put block two's fade-out
+ * at 0.53 and started the second crossing at 0.52, so for a hundredth of the section the
+ * words were sliding out while he was setting off underneath them — invisible at a glance,
+ * and exactly what he asked not to happen. */
+const TL = (() => {
+  const a = JS.indexOf('  /* ========================= THE TIMELINE');
+  const b = JS.indexOf('  /* ======================== THE ENERGY FIELD');
+  if (a < 0 || b < a) throw new Error('timeline block not found in coat.js');
+  return new Function(JS.slice(a, b) +
+    '\nreturn { PHASES, BLOCKS, DIP, stateAt, blockAlpha, blockSide, isCrossing };')();
+})();
 
-/* ---- the journey ----
-   He forms on the left, crosses to the right while the body arrives, and crosses back
-   while the head does. The copy takes whichever side he is not on. */
-ok(/var STATIONS = \[/.test(JS), 'the path is declared as stations, not scattered offsets');
-ok(/\.coat-beat:nth-child\(odd\)\s*\{[^}]*margin-left: auto/.test(CSS),
-   'the copy alternates sides by odd/even');
-ok(/\.coat-beat:nth-child\(even\)\s*\{[^}]*margin-right: auto/.test(CSS),
-   'so adding a beat cannot land the words on top of him');
-/* Verified in a browser at 1440x900: the painted centre of mass tracked 0.28, 0.54, 0.74,
-   0.50, 0.27 across the scroll, and the copy sat at 56-89%, 10-43%, 56-89%. */
-ok(/max-width: 42%/.test(CSS), 'and never reaches the middle, where he passes through');
+/* ---- right, then left, then right ----
+   The direction is the request, so it is asserted as a direction and not as six numbers:
+   renaming the stations must not be able to quietly flip it. */
+const XS = TL.PHASES.map((p) => p.x);
+ok(XS[0] > 0.5, 'he forms on the RIGHT');
+ok(Math.min.apply(null, XS) < 0.5, 'crosses to the left');
+ok(XS[XS.length - 1] > 0.5, 'and ends back on the right');
+eq(XS[0], XS[XS.length - 1], 'the two right-hand stations are the same place, not nearly');
+eq(TL.PHASES.filter((p, i) => TL.isCrossing(i)).length, 2, 'exactly two crossings');
+
+/* Monotonic, and it reaches the final pose. A table that ends at f 0.98 leaves the last
+   nine frames of the render unseen, which is a whole second of animation nobody paid for. */
+let phasesRise = true, prevTo = 0, prevF = 0;
+TL.PHASES.forEach((ph) => {
+  if (!(ph.to > prevTo) || ph.f < prevF) phasesRise = false;
+  prevTo = ph.to; prevF = ph.f;
+});
+ok(phasesRise, 'the phases advance and the sequence never runs backwards inside one');
+eq(TL.PHASES[TL.PHASES.length - 1].f, 1, 'and the last phase completes the turn');
+ok(TL.PHASES[TL.PHASES.length - 1].to >= 1, 'with the table covering the whole runway');
+
+/* ---- THE ONE THAT MATTERS: no copy on screen while he is moving ----
+   Sampled densely across the whole section rather than at the boundaries, because a fade
+   is a ramp and the overlap this is looking for is a sliver. */
+let movingWithCopy = -1, twoAtOnce = -1;
+for (let i = 0; i <= 4000; i++) {
+  const p = i / 4000;
+  const st = TL.stateAt(p);
+  const alphas = TL.BLOCKS.map((_, k) => TL.blockAlpha(p, k));
+  const lit = alphas.filter((a) => a > 0).length;
+  if (st.moving && lit > 0 && movingWithCopy < 0) movingWithCopy = p;
+  if (lit > 1 && twoAtOnce < 0) twoAtOnce = p;
+}
+eq(movingWithCopy, -1, 'no block is on screen at any scroll position where he is travelling');
+eq(twoAtOnce, -1, 'and two blocks are never up together');
+
+/* Every block does actually get its turn at full strength — the cheapest way to satisfy
+   the test above is a schedule that shows nothing at all. */
+TL.BLOCKS.forEach((b, k) => {
+  const mid = (b[1] + b[2]) / 2;
+  eq(TL.blockAlpha(mid, k), 1, 'block ' + (k + 1) + ' reaches full opacity');
+  eq(TL.blockAlpha(0, k), 0, 'block ' + (k + 1) + ' is off at the top of the section');
+});
+
+/* ---- the pauses are long, and longer than the crossings ----
+   His complaint was speed: "people should have at least one, two, three seconds to read
+   it". Seconds cannot be asserted — a reader's scroll speed is theirs — but the share of
+   the section spent standing still can be, and it is the thing that buys the seconds. */
+let holdSpan = 0, crossSpan = 0, from = 0;
+TL.PHASES.forEach((ph, i) => {
+  const span = Math.min(1, ph.to) - from;
+  if (span > 0) { if (TL.isCrossing(i)) crossSpan += span; else holdSpan += span; }
+  from = Math.min(1, ph.to);
+});
+ok(holdSpan > crossSpan * 1.5, 'far more of the runway is spent standing still than travelling');
+ok(/\.coat \{ min-height: (\d{3})vh; \}/.test(CSS), 'and the runway states its own height');
+ok(parseInt(/\.coat \{ min-height: (\d{3})vh; \}/.exec(CSS)[1], 10) >= 500,
+   'a long one — the pauses are the point, and they are only as long as the scroll is');
+/* Each individual hold has to be worth stopping for, not just the total. */
+let shortestHold = 1; from = 0;
+TL.PHASES.forEach((ph, i) => {
+  if (!TL.isCrossing(i) && i > 0) shortestHold = Math.min(shortestHold, Math.min(1, ph.to) - from);
+  from = Math.min(1, ph.to);
+});
+ok(shortestHold > 0.12, 'and the shortest pause is still a real pause');
+
+/* ---- the frame remap, and why it exists ----
+   The renders join at frame 90 (a body appears) and frame 180 (a head does). Both joins
+   must fall inside a crossing: a limb arriving while he stands still reads as a dropped
+   frame, and no amount of lighting hides it. This is the assertion that makes the remap
+   worth its complexity, so it is checked against the render's own numbers. */
+[90 / 420, 180 / 420].forEach((join) => {
+  let at = -1;
+  for (let i = 0; i <= 20000 && at < 0; i++) {
+    if (TL.stateAt(i / 20000).f >= join) at = i / 20000;
+  }
+  ok(at > 0, 'the sequence reaches frame ' + Math.round(join * 420));
+  ok(TL.stateAt(at).moving,
+     'and frame ' + Math.round(join * 420) + ' arrives while he is in motion, not mid-pause');
+});
+
+/* ---- the copy takes the side he is not on ----
+   He no longer simply alternates: he ends where he began, so blocks one and three share a
+   side. nth-child counting would have put the closing paragraph on his shoulder, which is
+   why the side is derived from the station table instead. */
+eq(TL.BLOCKS.map((_, k) => TL.blockSide(k)), ['left', 'right', 'left'],
+   'left, right, left — always opposite the figure');
+ok(/beats\[bi\]\.setAttribute\("data-side", blockSide\(bi\)\)/.test(JS_CODE),
+   'and stamped onto the markup from that table, not written by hand');
+ok(/\.coat-beat\[data-side="left"\]/.test(CSS) && /\.coat-beat\[data-side="right"\]/.test(CSS),
+   'which is all the stylesheet needs to know');
+eq(/\.coat-beat:nth-child/.test(CSS), false, 'nothing counts elements to decide a side any more');
+
+/* ---- it still reverses exactly ----
+   Everything on this stage is a function of scroll position and never of time, which is
+   what lets a reader scrub back up and see the same thing they saw on the way down. */
+let reverses = true;
+for (let i = 0; i <= 1000; i++) {
+  const p = i / 1000;
+  const a = TL.stateAt(p), b = TL.stateAt(p);
+  if (a.x !== b.x || a.f !== b.f || a.dip !== b.dip) reverses = false;
+}
+ok(reverses, 'the state is a pure function of scroll position');
+/* And it is continuous: a jump in x is a teleport, which no easing can disguise. */
+let biggestStep = 0, prev = TL.stateAt(0).x;
+for (let i = 1; i <= 5000; i++) {
+  const x = TL.stateAt(i / 5000).x;
+  biggestStep = Math.max(biggestStep, Math.abs(x - prev));
+  prev = x;
+}
+ok(biggestStep < 0.005, 'and moves continuously, with no jump between phases');
+
+/* ---- the copy is scheduled, not laid out ----
+   It used to be three blocks in flow, emphasised by whichever sat nearest the middle of
+   the window — a second, independent notion of "where we are" that drifted from the
+   figure's the moment either was edited. Both now read one number. */
+eq(/function activeBeat\(/.test(JS_CODE), false, 'nothing measures a block against the viewport');
+eq(/classList\.toggle\("is-on"/.test(JS_CODE), false, 'and nothing toggles a CSS transition');
+ok(/beats\[i\]\.style\.opacity = a\.toFixed\(3\)/.test(JS_CODE),
+   'the opacity is written from the scroll position, so it unwinds with the figure');
+ok(/beats\[i\]\.style\.pointerEvents = a > 0\.5/.test(JS_CODE),
+   'and invisible words cannot be selected');
+
+/* ONE COPY OF THE STORY, NOT TWO. The three stages were typed into founder.html and also
+   rendered into the lens below it from founder-data.js, so the figure crossed down into a
+   card repeating what he had just said — the overlap in his screenshot. The markup now
+   holds an empty node and both are built from the same array. */
+eq(/data-beat/.test(HTML), false, 'the beats are no longer hard-coded in the page');
+ok(/id="fCoatText"/.test(HTML), 'just the node they are rendered into');
+ok(/coat\.innerHTML = F\.lens\.map/.test(FJS), 'and they come from the same lens data as the fallback');
+ok(/el\("fLensSteps"\)\.innerHTML = F\.lens\.map/.test(FJS), 'which still renders too');
+ok(/\.coat\[data-coat-ready="1"\] ~ \.fp-lens \{ display: none; \}/.test(CSS),
+   'with the fallback hidden only once the figure is actually live');
+/* Which is load-bearing, not tidiness: the coat section is display:none until a frame has
+   decoded, so on a deploy without the renders the lens is the only copy of the content. */
+ok(/\.coat\[data-coat-ready="1"\] \{ display: block; \}/.test(CSS),
+   'and the figure hidden until it has something to show');
+ok(/if \(!host\.querySelector\("\[data-beat\]"\)\) return;/.test(JS_CODE),
+   'the first pass bails without latching, so the aq:content pass still gets the section');
+
+/* ---- the two layers ----
+   The stage paints behind, so it comes first and the copy layer is pulled back over it by
+   a negative margin. Both are pinned; the section states its own height because absolutely
+   positioned copy contributes none. */
+eq(HTML.indexOf('coat-stage') < HTML.indexOf('coat-copy'), true, 'the stage comes first in the DOM');
+ok(/\.coat-stage \{[\s\S]*?position: sticky/.test(CSS), 'pinned while the page scrolls past it');
+ok(/\.coat-copy \{[\s\S]*?position: sticky/.test(CSS), 'and so is the copy over it');
+eq((CSS.match(/margin-bottom: -100vh;/g) || []).length, 2,
+   'both pulled back, or the copy starts a screen below the figure');
+ok(/\.coat-copy \{[\s\S]*?pointer-events: none;/.test(CSS),
+   'the copy layer covers the viewport, so it must not swallow the page');
+
+/* MEASURED IN THE SAME UNITS AS THE FIGURE, and this was a real bug on wide screens. The
+   copy sat inside the site's centred column while the figure's position is a fraction of
+   the full-bleed canvas: on a 2560px monitor the column's right edge is at about 76% of the
+   glass and he stands at 72% of it, so the words landed on his shoulder on exactly the
+   widest screens. Both now measure from the same edge. */
+ok(/\.coat-beat \{[\s\S]*?width: min\(34vw, 460px\);/.test(CSS), 'the copy is sized in viewport units');
+ok(/left: max\(28px, 6vw\)/.test(CSS) && /right: max\(28px, 6vw\)/.test(CSS),
+   'and inset from the same edge the figure is placed against');
+eq(/coat-copy[\s\S]{0,120}class="wrap"/.test(HTML), false,
+   'not nested in the centred column, which is a different coordinate system');
 /* Drawn, not laid out: translating the canvas element would move its backing store and
    repaint the whole stage every scroll frame for an identical result. */
-ok(/\(journey\.x - 0\.5\) \* cw/.test(JS_CODE), 'the travel is drawn onto a canvas that never moves');
+ok(/\(here\.x - 0\.5\) \* cw/.test(JS_CODE), 'the travel is drawn onto a canvas that never moves');
 ok(/function easeInOut/.test(JS_CODE),
    'and eased in and out, or a crossing reads as a jump cut rather than travel');
-/* The stage paints behind, so it comes first and is pulled back over by a negative margin.
-   Absolute positioning would leave the section with no height and collapse the runway. */
-eq(HTML.indexOf('coat-stage') < HTML.indexOf('coat-text'), true, 'the stage comes first in the DOM');
-ok(/\.coat-stage \{[\s\S]*?position: sticky/.test(CSS), 'pinned while the copy scrolls past it');
-ok(/margin-bottom: -100vh;/.test(CSS), 'and pulled back over by a negative margin');
-/* On a phone a figure crossing a 390px page has nowhere to go. */
-ok(/@media \(max-width: 900px\)[\s\S]{0,500}position: static/.test(CSS),
+
+/* TWO PROGRESSES, AND SWAPPING THEM IS SILENT. `p` is how far the reader has scrolled and
+   drives the shot — the push-in, the arrival, the smoke. `st.f` is how far he has turned
+   and drives the render — the frame, his angle, the two joins. Pinning the frame to scroll
+   would undo the whole remap and drop both joins inside a pause. */
+ok(/want = F\.frameAt\(st\.f, n\);/.test(JS_CODE), 'the frame comes from the sequence progress');
+ok(/var ang = st\.f \* Math\.PI \* 2;/.test(JS_CODE), 'so does his angle, so the dust turns with him');
+ok(/flare\(st\.f\)/.test(JS_CODE), 'and so does the flare, or it fires nowhere near its join');
+ok(/var k = reduce \? 1 : zoomAt\(p\);/.test(JS_CODE), 'while the camera push stays on the scroll');
+ok(/var ARRIVE = PHASES\[0\]\.to;/.test(JS_CODE),
+   'and the arrival ends exactly where the first phase does, rather than drifting into a pause');
+
+/* ---- the unpinned layouts ----
+   Under 900px and under reduced motion the stylesheet unpins everything and shows all
+   three blocks at once. The script has to agree, or it keeps writing opacity 0 over copy
+   the stylesheet has just made permanent and a phone shows three invisible paragraphs. */
+ok(/window\.matchMedia\("\(max-width: 900px\)"\)/.test(JS_CODE),
+   'the script reads the same breakpoint the stylesheet does');
+ok(/if \(flat\(\)\) \{ beats\[i\]\.style\.opacity = ""/.test(JS_CODE),
+   'and clears its inline opacity there rather than fighting the stylesheet');
+ok(/var here = flat\(\) \? \{ x: 0\.5, dip: 0 \} : st;/.test(JS_CODE),
+   'with the figure centred, since a 390px page has nowhere to travel');
+ok(/@media \(max-width: 900px\)[\s\S]{0,700}position: static/.test(CSS),
    'no pinning and no travel on a phone');
-ok(/@media \(max-width: 900px\)[\s\S]{0,500}opacity: 1/.test(CSS),
-   'with every line readable at once rather than dimmed');
+ok(/@media \(max-width: 900px\)[\s\S]{0,900}opacity: 1/.test(CSS),
+   'with every line readable at once rather than scheduled');
+ok(/@media \(prefers-reduced-motion: reduce\)[\s\S]{0,900}opacity: 1/.test(CSS),
+   'and the same for reduced motion');
+/* A tall, narrow desktop window is the one shape where the columns can still meet: he is
+   fitted to the stage HEIGHT, so a 1000x1200 window draws him three quarters of the page
+   wide and reaches across into the copy. */
+ok(/@media \(min-width: 901px\) and \(max-aspect-ratio: 1\/1\)/.test(CSS),
+   'a tall narrow window pulls the copy in rather than letting them touch');
 
 /* ---- no band, no box ----
    The section used to be a full-bleed near-black panel. It made the figure easy to light
@@ -338,8 +532,14 @@ ok(/function zoomAt/.test(JS_CODE), 'growing from a speck, in two zoom stages');
 ok(/ZOOM_TINY = 0\.\d+/.test(JS), 'with a declared starting size');
 /* Only opacity and scale are in play, both continuous, so there is nothing to pixelate. */
 ok(/function figureAlpha/.test(JS_CODE), 'and fades up by opacity, never by a mask');
-/* Rotation is not paused for the arrival, or the opening is a still image being faded in. */
-ok(/var ang = p \* Math\.PI \* 2;/.test(JS_CODE), 'and turns the whole time it forms');
+/* Rotation is not paused for the arrival, or the opening reads as a still image being
+   faded in. Asserted against the table as well as the source line, because the frame
+   index no longer tracks the scroll: what matters is that the sequence has actually
+   advanced by the time he is solid, not that some expression mentions an angle. */
+ok(/var ang = st\.f \* Math\.PI \* 2;/.test(JS_CODE), 'his angle comes from the sequence progress');
+ok(TL.stateAt(TL.PHASES[0].to / 2).f > 0, 'and he is already turning halfway through forming');
+ok(TL.stateAt(TL.PHASES[0].to).f * 420 > 15,
+   'with a real arc of the turn behind him by the time he is solid');
 
 /* ================= the head fades in ================= */
 

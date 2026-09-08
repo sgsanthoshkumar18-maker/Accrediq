@@ -254,6 +254,28 @@
       return '<div data-scrolly-step><div class="step">' + esc(l.step) + "</div>" +
         "<h3>" + esc(l.title) + "</h3><p>" + esc(l.body) + "</p></div>";
     }).join("");
+
+    /* THE SCROLL-SCRUBBED FIGURE NARRATES THE SAME THREE STAGES, from the same array.
+       They were typed into founder.html by hand, which meant two copies of the story on one
+       page: editing a stage here left the figure still narrating the old version of it, and
+       both were on screen at once. One source, rendered twice — coat.css hides whichever of
+       the two is not carrying the section.
+
+       Which SIDE each block takes is not decided here. coat.js stamps data-side from its own
+       table of stations, because that table is the only thing that knows where he is
+       standing while a given block is up. */
+    var coat = el("fCoatText");
+    if (coat) {
+      coat.innerHTML = F.lens.map(function (l) {
+        return '<div class="coat-beat" data-beat>' +
+          '<span class="k">' + esc(l.step) + '<i>' + esc(l.heading) + "</i></span>" +
+          "<h2>" + esc(l.title) + "</h2>" +
+          "<p>" + esc(l.body) + "</p>" +
+          '<ul class="coat-points">' + l.points.map(function (p) {
+            return "<li>" + esc(p) + "</li>";
+          }).join("") + "</ul></div>";
+      }).join("");
+    }
   }
 
   /* ------------------------------- timeline ------------------------------- */

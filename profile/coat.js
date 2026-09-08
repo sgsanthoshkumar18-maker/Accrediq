@@ -42,6 +42,16 @@
              window.matchMedia("(pointer: coarse)").matches;
   } catch (e) {}
 
+  /* THE LAYOUTS WHERE NOTHING TRAVELS. Under 900px the stylesheet unpins the stage and
+     stacks the copy, and reduced motion does the same: in both, all three blocks are on
+     screen at once and the figure stands still in the middle. The script has to agree with
+     that or it will keep writing an inline opacity of 0 over copy the stylesheet has just
+     made permanent, and a phone would show three invisible paragraphs. Read live rather
+     than captured once, because a window can be resized across the breakpoint. */
+  var flatMq = null;
+  try { flatMq = window.matchMedia("(max-width: 900px)"); } catch (e) {}
+  function flat() { return reduce || !!(flatMq && flatMq.matches); }
+
   /* THE CAMERA MOVE, as two numbers.
      Starts wide with air around the figure and ends closer on the upper body. ZOOM_TO is
      the one to be careful with: at 1.16 the drawn height on a 900px stage is about 1044px
@@ -66,9 +76,133 @@
      clamped so the column can crop the empty margins away without ever clipping him. */
   var FIG_W = 0.62, FIG_CX = 0.467;
 
+  /* AND A CEILING ON HOW WIDE HE MAY BE DRAWN, as a fraction of the stage width.
+     He is fitted to the stage HEIGHT, which is right on every ordinary screen and wrong on
+     a tall narrow one. Measured in a 1000x1200 window: the fit made him 74% of the page
+     wide, his painted alpha reached 0.322 from the left, and the copy column — already
+     pulled in by the stylesheet for exactly this shape — started at 0.330. Eight
+     thousandths of a page between a headline and his shoulder.
+
+     Narrowing the copy again would have been the wrong fix: it treats the symptom on one
+     window size and leaves the next one to be found by a reader. The clamp belongs on the
+     figure, where it holds at every aspect ratio at once. At 0.50 he never crosses the
+     middle of the stage, so at either station there is always half a page of clear ground
+     on the far side for the words. It costs nothing on ordinary screens: at 1440x900 the
+     deepest push-in draws him 0.465 wide and never reaches this at all. */
+  var FIG_MAX = 0.50;
+
   /* Ease-out. A linear push-in reads as mechanical: it arrives at the close-up at the same
      speed it left the wide, and the shot never appears to settle. */
   function ease(t) { return 1 - Math.pow(1 - t, 2.2); }
+
+  /* ========================= THE TIMELINE =========================
+   *
+   * SIX PHASES: he arrives on the RIGHT, holds while you read, crosses to the LEFT, holds,
+   * crosses back to the RIGHT, holds. Scroll position picks the phase; the phase drives
+   * where he is, how fast he is turning, and which block of copy is on screen.
+   *
+   * THE FIRST VERSION HAD NO PHASES AND IT SHOWED. His position came from one path function
+   * while the copy's opacity came from whichever block happened to be nearest the middle of
+   * the window, so the two were only loosely related: he was still travelling while a
+   * paragraph faded up over him, and the crossings went past far too fast to watch. Reading
+   * and moving were competing for the same seconds.
+   *
+   * NOW THEY ARE SEPARATED IN TIME, WHICH IS THE ONLY WAY TO GUARANTEE IT. A hold shows one
+   * block and he barely turns; a crossing shows NO copy at all and he travels. They cannot
+   * overlap because there is no scroll position at which both are scheduled — see BLOCKS
+   * below, whose windows sit strictly inside the holds.
+   *
+   * THE FRAME SEQUENCE IS REMAPPED, NOT LINEAR, and that remap is what makes the pacing
+   * affordable. The renders have two fixed joins: a body appears at frame 90 and a head at
+   * frame 180, which is 0.214 and 0.429 of the sequence. Advancing frames in step with
+   * scroll would drop both of those inside a hold, where a limb appearing while he stands
+   * still is exactly what a dropped frame looks like. Instead the sequence crawls through a
+   * hold and runs through a crossing, so both joins land mid-flight where the movement
+   * carries them — and the holds still cost real scrolling without costing rotation.
+   */
+  var PHASES = [
+    /* ends at   x (0 left .. 1 right)   sequence progress   what happens */
+    { to: 0.09, x: 0.72, f: 0.06 },   // forms out of smoke on the RIGHT
+    { to: 0.24, x: 0.72, f: 0.14 },   // HOLD — the first stage, barely turning
+    { to: 0.40, x: 0.28, f: 0.30 },   // crossing left: the body arrives mid-flight
+    { to: 0.55, x: 0.28, f: 0.40 },   // HOLD — the second stage
+    { to: 0.71, x: 0.72, f: 0.52 },   // crossing back right: the head arrives mid-flight
+    { to: 1.01, x: 0.72, f: 1.00 }    // HOLD — the closing stage, completing the turn
+  ];
+  /* A crossing is any phase that ends somewhere other than where the one before it did.
+     Derived rather than flagged: a hand-written "moving: true" is one edit away from
+     disagreeing with the x it sits next to. */
+  function isCrossing(i) { return i > 0 && PHASES[i].x !== PHASES[i - 1].x; }
+
+  /* How far he dips through a crossing, as a fraction of the stage height. Down and across
+     and back up, so it reads as a diagonal rather than a slide along a rail. */
+  var DIP = 0.11;
+
+  /* Ease in and out. A crossing that starts and stops abruptly reads as a jump cut; one
+     that accelerates away and decelerates in reads as travel. */
+  function easeInOut(t) {
+    return t < 0.5 ? 4 * t * t * t : 1 - Math.pow(-2 * t + 2, 3) / 2;
+  }
+
+  /* Everything the draw needs, from one walk of the table: where he is across the stage,
+     how far he has dipped, and how far through the rendered sequence he has turned. */
+  function stateAt(p) {
+    var from = 0, prevX = PHASES[0].x, prevF = 0;
+    for (var i = 0; i < PHASES.length; i++) {
+      var ph = PHASES[i];
+      if (p < ph.to) {
+        var span = ph.to - from;
+        var t = span > 0 ? (p - from) / span : 1;
+        t = t < 0 ? 0 : t > 1 ? 1 : t;
+        var e = easeInOut(t);
+        var moving = isCrossing(i);
+        return {
+          x: prevX + (ph.x - prevX) * e,
+          /* Frames ease through a crossing and run plainly through a hold. Easing the
+             rotation during a hold would make him visibly speed up and slow down while he
+             is supposed to be standing still, which is the one thing a hold must not do. */
+          f: prevF + (ph.f - prevF) * (moving ? e : t),
+          dip: moving ? Math.sin(e * Math.PI) * DIP : 0,
+          moving: moving
+        };
+      }
+      from = ph.to; prevX = ph.x; prevF = ph.f;
+    }
+    return { x: prevX, f: 1, dip: 0, moving: false };
+  }
+
+  /* WHEN EACH BLOCK OF COPY IS ON SCREEN: in, hold, out, as four scroll positions.
+     Every window sits strictly inside one of the holds above, so a block has finished
+     fading out before he starts moving and the next one does not begin until he has
+     stopped. That is the guarantee, and coat-scrub.test.js asserts it rather than trusting
+     these numbers to stay right: no window may overlap any crossing.
+     The gaps are deliberate. A beat of empty page between two statements is what stops the
+     section reading as a slideshow on a timer. */
+  var BLOCKS = [
+    [0.105, 0.140, 0.205, 0.235],
+    [0.410, 0.445, 0.520, 0.548],
+    /* The last block never fades. Measured at the foot of the section it was down to 0.74
+       with the runway spent, so a reader left the page on a half-dissolved paragraph. Held
+       to the end instead, the stage simply unpins and the whole tableau — figure, words and
+       all — scrolls away together, which is a far better exit than the words evaporating
+       off a figure that stays. */
+    [0.725, 0.760, 1.010, 1.020]
+  ];
+  function blockAlpha(p, i) {
+    var b = BLOCKS[i];
+    if (!b || p <= b[0] || p >= b[3]) return 0;
+    if (p < b[1]) return (p - b[0]) / (b[1] - b[0]);
+    if (p <= b[2]) return 1;
+    return 1 - (p - b[2]) / (b[3] - b[2]);
+  }
+
+  /* Which side of the page each block takes: the side he is NOT on while it is up.
+     Read from the table rather than written into the markup, so moving a station moves the
+     words with it instead of leaving them stranded on top of him. */
+  function blockSide(i) {
+    var mid = (BLOCKS[i][1] + BLOCKS[i][2]) / 2;
+    return stateAt(mid).x > 0.5 ? "left" : "right";
+  }
 
   /* ======================== THE ENERGY FIELD ========================
    *
@@ -105,8 +239,11 @@
      about thirty frames either side — the light causes the arrival rather than merely
      coinciding with it, which is the difference between an effect and an accident.
 
-     Expressed as scroll position, because the field is a function of scroll and never of
-     time: 90/420 and 180/420. */
+     Expressed as SEQUENCE progress, not scroll progress, and that distinction now matters:
+     the frames no longer advance in step with the scrollbar. A flare pinned to scroll would
+     fire in the middle of a hold, tens of frames away from the join it is meant to be
+     lighting. It is a function of how far he has TURNED, and never of time, so it still
+     unwinds exactly. 90/420 and 180/420. */
   var HANDOVERS = [90 / 420, 180 / 420];
   var FLARE_W = 0.035;
   function flare(p) {
@@ -352,7 +489,11 @@
    * index runs from the very first pixel of scroll, so the coat is already turning as it
    * forms, which is what stops the opening looking like a still image being faded in.
    */
-  var ARRIVE = 0.15;    // the coat has fully arrived by here
+  /* THE ARRIVAL IS MEASURED IN SCROLL, NOT IN FRAMES, and it ends exactly where the first
+     phase does. The sequence progress now runs at its own pace, so a fixed 0.15 here would
+     have left the last of the smoke drifting off him halfway into the first hold — with a
+     block of copy already up beside it. Tied to the table, the page cannot drift apart. */
+  var ARRIVE = PHASES[0].to;
   var ZOOM_TINY = 0.22; // how small it starts — a speck at the back of the stage
   var PUFFS = 44;
 
@@ -492,61 +633,6 @@
     return outCv;
   }
 
-  /* ---------------------- THE JOURNEY ----------------------
-   *
-   * He does not stand in one place. He forms on the LEFT, travels diagonally down and
-   * across to the RIGHT while the body arrives, then back down and across to the LEFT while
-   * the head arrives. Three stations, two crossings, and the copy sits on whichever side he
-   * is not.
-   *
-   * THE STATIONS ARE PLACED AROUND THE RENDER'S OWN HANDOVERS rather than at neat
-   * fractions. The body exists from frame 90 and the head from frame 180, which is scroll
-   * 0.214 and 0.429. Putting a crossing across each of those means the new part arrives
-   * while he is in motion, where a viewer reads it as part of the movement — the single
-   * cheapest way to stop an addition looking like a dropped frame.
-   *
-   * DRAWN, NOT LAID OUT. The figure moves by changing where it is painted on a canvas that
-   * never moves. Translating the canvas element instead would shift its backing store and
-   * force the whole stage to repaint on every scroll frame, for an identical result.
-   */
-  var STATIONS = [
-    /* until, x (0 left .. 1 right) */
-    { until: 0.17, x: 0.27 },   // forms out of smoke on the left
-    { until: 0.32, x: null },   // crossing: body arrives mid-flight at 0.214
-    { until: 0.42, x: 0.73 },   // settled on the right
-    { until: 0.58, x: null },   // crossing back: head arrives at 0.429
-    { until: 1.01, x: 0.27 }    // home on the left for the closing line
-  ];
-  /* How far he dips on a crossing, as a fraction of the stage height. He travels down and
-     across and comes back up into the next station, which is what makes it read as a
-     diagonal rather than a slide. */
-  var DIP = 0.13;
-
-  /* Ease in and out. A crossing that starts and stops abruptly reads as a jump cut; one
-     that accelerates away and decelerates in reads as travel. */
-  function easeInOut(t) {
-    return t < 0.5 ? 4 * t * t * t : 1 - Math.pow(-2 * t + 2, 3) / 2;
-  }
-
-  /* Where he is, 0 to 1 across the stage, and how far he has dipped. */
-  function pathAt(p) {
-    var from = 0, prevX = STATIONS[0].x;
-    for (var i = 0; i < STATIONS.length; i++) {
-      var st = STATIONS[i];
-      if (p < st.until) {
-        if (st.x !== null) return { x: st.x, dip: 0 };
-        /* A crossing: find the station either side of it and travel between them. */
-        var nextX = STATIONS[i + 1] ? STATIONS[i + 1].x : prevX;
-        var t = (p - from) / (st.until - from);
-        var e = easeInOut(Math.min(1, Math.max(0, t)));
-        return { x: prevX + (nextX - prevX) * e, dip: Math.sin(e * Math.PI) * DIP };
-      }
-      from = st.until;
-      if (st.x !== null) prevX = st.x;
-    }
-    return { x: prevX, dip: 0 };
-  }
-
   /* THE PALETTE IS READ FROM CSS, AND RE-READ WHEN THE THEME CHANGES.
      A white coat on the light theme's white page measures 1.04:1 — the rim is the only
      thing drawing the silhouette, so it has to be tighter and stronger there than on dark.
@@ -566,29 +652,15 @@
     skin.spill = n("--coat-spill", 0.10);
   }
 
-  /* THE COPY SCROLLS PAST; IT IS NOT PAINTED OVER THE FIGURE.
-     It was, and it was unreadable — a serif headline sitting across a white coat, with the
-     eyebrow lost against his chest. The figure now holds one column and the words flow up
-     the other, so neither is ever competing with the other for the same pixels.
-
-     Which beat is emphasised is therefore a question about where each BLOCK is, not about
-     how far through the section the scroll is: the block nearest the middle of the viewport
-     is the one being read. That is the same rule scrolly.js uses for its steps, deliberately
-     — two sections on one page that decide "active" differently would drift apart the first
-     time either was edited. */
-  function activeBeat(beats) {
-    var mid = window.innerHeight / 2, best = -1, bestD = Infinity;
-    for (var i = 0; i < beats.length; i++) {
-      var r = beats[i].getBoundingClientRect();
-      var d = Math.abs((r.top + r.height / 2) - mid);
-      if (d < bestD) { bestD = d; best = i; }
-    }
-    return best;
-  }
-
   function init() {
     var host = document.querySelector("[data-coat]");
     if (!host || host.getAttribute("data-coat-on") === "1") return;
+
+    /* THE COPY IS BUILT FROM founder-data.js, NOT TYPED INTO THE PAGE, so on the first pass
+       at DOMContentLoaded there may be no blocks here yet. Bail WITHOUT latching: claiming
+       the section now would shut the door on the aq:content pass that brings the words, and
+       the figure would travel the whole page past three empty holds. */
+    if (!host.querySelector("[data-beat]")) return;
     host.setAttribute("data-coat-on", "1");
 
     var total = parseInt(host.getAttribute("data-frames"), 10);
@@ -602,6 +674,14 @@
     if (!ctx) return;
 
     var beats = [].slice.call(host.querySelectorAll("[data-beat]"));
+    /* WHICH SIDE EACH BLOCK TAKES IS DECIDED HERE, NOT IN THE MARKUP OR BY nth-child.
+       PHASES is the only thing that knows which side he is standing on while a given block
+       is up, and he no longer simply alternates — he ends the section back where he began,
+       so blocks one and three share a side. Counting elements in CSS would put the last
+       paragraph directly on top of him. */
+    for (var bi = 0; bi < beats.length; bi++) {
+      if (BLOCKS[bi]) beats[bi].setAttribute("data-side", blockSide(bi));
+    }
 
     /* AUTHORED IN CSS, NOT HERE. The aura colour is a design decision that will be
        argued about, and a design decision that lives in a script is one nobody can change
@@ -652,7 +732,14 @@
        largest scale at which he still fits the column is cw / (iw * FIG_W). The push-in
        grows towards that and stops, so a narrow window crops empty pixels and never his
        shoulders. */
-    function draw(i, p) {
+    /* TWO DIFFERENT PROGRESSES, AND KEEPING THEM STRAIGHT IS THE WHOLE TRICK.
+       `p` is how far down the section the reader has scrolled: it drives the camera push,
+       the arrival and the smoke, all of which should feel continuous however long a hold
+       lasts. `st.f` is how far through the rendered sequence he has turned, which crawls
+       during a hold and runs during a crossing. Anything about the RENDER — the frame, his
+       angle, the two joins where a body and then a head appear — reads st.f. Anything about
+       the SHOT reads p. Swapping the two is silent and looks like a bug in the render. */
+    function draw(i, p, st) {
       var img = imgs[i];
       if (!img) return;
       if (drawn === i && Math.abs(drawnAt - p) < 0.0015) return;
@@ -664,16 +751,18 @@
 
       var k = reduce ? 1 : zoomAt(p);
       var s = (ch / ih) * k;
-      var fits = cw / (iw * FIG_W);
+      var fits = (cw * FIG_MAX) / (iw * FIG_W);
       if (s > fits) s = fits;
 
       var w = iw * s, h = ih * s;
       /* He sits left of the frame's centre, so centring the IMAGE would leave him visibly
          off-centre in the column. Shifted by the measured difference instead. */
-      var journey = reduce ? { x: 0.5, dip: 0 } : pathAt(p);
-      /* Centre the figure on the path position rather than on the canvas. */
-      var dx = (0.5 - FIG_CX) * w + (journey.x - 0.5) * cw;
-      var dy = reduce ? 0 : ch * (PAN_TO * ease(p) + journey.dip);
+      /* Unpinned layouts have nowhere to travel to: a figure crossing a 390px page covers
+         about two of his own shoulder widths and just looks unsteady. */
+      var here = flat() ? { x: 0.5, dip: 0 } : st;
+      /* Centre the figure on the journey position rather than on the canvas. */
+      var dx = (0.5 - FIG_CX) * w + (here.x - 0.5) * cw;
+      var dy = reduce ? 0 : ch * (PAN_TO * ease(p) + here.dip);
       var x0 = (cw - w) / 2 + dx, y0 = (ch - h) / 2 + dy;
 
       ctx.clearRect(0, 0, cw, ch);
@@ -685,7 +774,7 @@
       var aR = h * 0.30;
       /* The same angle the figure has turned through, so the ring and the man are locked
          together — and both unwind when the reader scrolls back up. */
-      var ang = p * Math.PI * 2;
+      var ang = st.f * Math.PI * 2;
       /* Faded up over the first tenth of the section rather than snapping on at the top
          edge, which reads as a glitch on the first pixel of scroll. */
       /* Faded up over the first tenth so the field arrives rather than snapping on, then
@@ -693,7 +782,7 @@
          twice the base level the halo starts to bloom over his shoulders and the flare
          stops reading as light and starts reading as a white flash. */
       var lift = reduce ? 0
-        : Math.min(1.9, Math.min(1, p / 0.10) + flare(p) * 1.15);
+        : Math.min(1.9, Math.min(1, p / 0.10) + flare(st.f) * 1.15);
 
 
       /* Arcs behind, then the halo hugging his outline, then the man, then the light
@@ -703,8 +792,8 @@
       /* Composed once, then used by everything. While the head is arriving this is a
          canvas with the head at partial opacity; the rest of the time it is the frame
          itself and costs nothing. */
-      lastP = p;
-      var shown = figureFor(img, w, h, p);
+      lastP = st.f;
+      var shown = figureFor(img, w, h, st.f);
       var fa = reduce ? 1 : figureAlpha(p);
       var smk = reduce ? 0 : smokeAt(p);
 
@@ -738,9 +827,9 @@
       host.setAttribute("data-coat-ready", "1");
     }
 
-    function paint() {
+    function paint(st) {
       var i = F.nearestLoaded(want, ready);
-      if (i >= 0) draw(i, prog);
+      if (i >= 0) draw(i, prog, st || stateAt(prog));
     }
 
     /* LOAD DECIDES, DECODE ONLY OPTIMISES — and getting that backwards hid the whole
@@ -822,20 +911,38 @@
 
       /* Published for CSS as well, so the vignette and the progress rail move against the
          same measurement that picks the frame rather than a second, slightly different one. */
+      var st = stateAt(prog);
       host.style.setProperty("--coat-p", prog.toFixed(4));
-      host.style.setProperty("--coat-x", (reduce ? 0.5 : pathAt(prog).x).toFixed(4));
-      want = F.frameAt(prog, n);
+      host.style.setProperty("--coat-x", (flat() ? 0.5 : st.x).toFixed(4));
+      /* The FRAME comes from the sequence progress, never from the scroll. This one line is
+         what buys the holds: two thirds of the section is spent standing still, and he is
+         still turning all the way round by the end of it. */
+      want = F.frameAt(st.f, n);
 
       /* A class, with the fade in CSS — not an inline opacity written every scroll frame.
          The transition then belongs to the stylesheet like every other state on the site,
          and the handler is not touching style on three elements sixty times a second. */
+      /* THE COPY IS DRIVEN BY THE SAME NUMBER AS THE FIGURE, which is what turns the
+         non-overlap from a hope into a fact. It used to be decided by which block sat
+         nearest the middle of the window — a second, independent notion of "where we are"
+         that drifted from the first the moment either was touched, and let a paragraph fade
+         up while he was still crossing underneath it.
+
+         INLINE OPACITY, NOT A CLASS AND A CSS TRANSITION. A transition plays on a clock, so
+         scrubbing back up the page would unwind the figure exactly and leave the words
+         catching up behind him. Everything on this stage is a pure function of scroll
+         position or none of it reverses. */
       if (beats.length) {
-        var on = reduce ? 0 : activeBeat(beats);
         for (var i = 0; i < beats.length; i++) {
-          beats[i].classList.toggle("is-on", i === on);
+          if (flat()) { beats[i].style.opacity = ""; beats[i].style.pointerEvents = ""; continue; }
+          var a = blockAlpha(prog, i);
+          beats[i].style.opacity = a.toFixed(3);
+          /* Invisible words must not be selectable, or dragging across the page picks up
+             three paragraphs nobody can see. */
+          beats[i].style.pointerEvents = a > 0.5 ? "auto" : "none";
         }
       }
-      paint();
+      paint(st);
     }
 
     function onScroll() {
