@@ -1,20 +1,29 @@
-/* AQcredix — our own summary of each Objective Element.
+/* AQcredix — a plainer second reading of an Objective Element.
  *
- * WHY THIS FILE EXISTS.
- * `nabh-data.js` holds wording close to the published NABH standard. That text is NABH's
- * copyright: it was free to READ on their site, which was never permission to reproduce it
- * in a commercial product, and since the standards moved behind a paywall the exposure is
- * both larger and more likely to be noticed.
+ * THIS HEADER USED TO SAY SOMETHING FRIGHTENING AND OUT OF DATE, so it is worth stating
+ * what changed. It described `nabh-data.js` as holding "wording close to the published NABH
+ * standard… NABH's copyright". That was true of an earlier draft of that file and is no
+ * longer true of it: `nabh-data.js` now carries AQcredix's own wording throughout, in two
+ * voices — a capability voice for most of the register, and Dr Santhoshkumar's own voice
+ * where it has been rewritten. Read its header for the full account.
  *
- * There is a second reason that matters more. Where that wording came from is not certain,
- * and text reproduced from memory can be subtly wrong — a "shall" for a "should", a
- * dropped clause. For a platform hospitals use to prepare for assessment, INACCURATE
- * standard text is worse than copied standard text: one is a legal problem, the other can
- * cause a hospital to fail an element.
+ * Leaving the old wording here was a real hazard rather than untidiness. Two files in one
+ * repository disagreeing about whether the product reproduces someone else's copyright is
+ * the kind of thing that gets read, believed, and acted on — by a future maintainer, or by
+ * somebody with a reason to look.
  *
- * So the site shows a summary written by Dr Santhoshkumar, and points to the published
- * standard as the authority. That is safer, and it is also the better product — the whole
- * argument for AQcredix is that the book is hard to read.
+ * WHY THIS FILE STILL EXISTS.
+ * Not as a legal shield — `nabh-data.js` does not need one. It exists because a hospital
+ * reading an element wants two different things at different moments: what the requirement
+ * IS, and what it means for them on a Tuesday. This file holds the second. Where a summary
+ * is present and reviewed, pages that opt in show it instead; everywhere else the register's
+ * own wording stands.
+ *
+ * Entries here are therefore optional extras, not a migration that has to be finished. The
+ * migration that matters is inside `nabh-data.js`, moving the register from capability voice
+ * into his own voice — and text written for that belongs THERE, not here. Three IPC entries
+ * remain below because they read better than what replaced them elsewhere; the rest of the
+ * IPC wording moved into the register in September 2026.
  *
  * HOW TO USE THIS FILE
  *   summary   what the element requires, in his own words. Plain English, not a reworded

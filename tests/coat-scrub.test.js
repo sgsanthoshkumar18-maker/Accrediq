@@ -264,5 +264,66 @@ ok((CSS.match(/radial-gradient/g) || []).length >= 4,
 ok(/\.coat-vignette/.test(CSS) && /coat-vignette/.test(HTML),
    'and the band has a horizon rather than a hard edge against the light page');
 
+/* ================= the energy field ================= */
+
+/* THE HASH BUG, LOCKED DOWN. The textbook version of this function is written for C where
+   integer multiplication wraps. In JavaScript every number is a double, so `n * n * 15731`
+   reaches 2^76 and the low bits — where a hash keeps all its entropy — are rounded away.
+   It produced 258 distinct values from 4000 inputs, handed every bolt the same coordinates
+   so they stacked into one thick bar, and returned exactly 1.000 for every jitter sample.
+   A glowing banana across his face, and nothing anywhere threw. */
+ok(/Math\.imul/.test(JS_CODE), 'the hash uses Math.imul for an exact 32-bit multiply');
+eq(/n \* \(n \* n \* 15731/.test(JS_CODE), false,
+   'and never the C-style multiply that silently loses its low bits in a double');
+(function () {
+  /* Run the real function, rather than trusting that it looks right. */
+  const m = /function nz\(n\) \{[\s\S]*?\n  \}/.exec(JS);
+  ok(m, 'the hash is extractable for testing');
+  const nz = new Function('return (' + m[0].replace(/^function nz/, 'function') + ')')();
+  const vals = [];
+  for (let i = 0; i < 4000; i++) vals.push(nz(i));
+  const distinct = new Set(vals.map(v => v.toFixed(4))).size;
+  ok(distinct > 3000, 'it yields well over 3000 distinct values from 4000 inputs (got ' + distinct + ')');
+  const mean = vals.reduce((a, b) => a + b, 0) / vals.length;
+  ok(Math.abs(mean) < 0.05, 'centred near zero (mean ' + mean.toFixed(4) + ')');
+  eq(nz(12345), nz(12345), 'and is deterministic, which is what lets the field scrub backwards');
+  /* The specific failure: seven bolts drawing at one place. */
+  const spread = new Set();
+  for (let b = 0; b < 7; b++) spread.add(nz(30 * 977 + b * 3571).toFixed(4));
+  eq(spread.size, 7, 'seven bolts get seven different positions, not one');
+})();
+
+/* Most of the effect must be LIGHT, not line art — that was the whole complaint. */
+ok(/destination-in/.test(JS_CODE) && /source-in/.test(JS_CODE),
+   'the halo is cut from the figure’s own silhouette');
+ok(/globalCompositeOperation = "source-atop"/.test(JS_CODE),
+   'and spill is painted back ONTO the figure, so the light lands on the fabric');
+ok(/rgba\(255,255,255,/.test(JS_CODE),
+   'arcs are white-hot at the core, coloured only in the falloff, as an arc photographs');
+ok(/BOLTS = [1-5];/.test(JS), 'and are few enough to be a detail rather than the effect');
+
+/* ================= the assembly ================= */
+
+ok(/ASSEMBLE_END/.test(JS), 'he assembles over a declared span of the scroll');
+ok(/revealField/.test(JS_CODE), 'from a per-pixel reveal-order field');
+/* Seeded at the chest, cheap downwards and expensive sideways, with the head last — that
+   ordering is what makes it read as a body forming rather than a stain spreading. */
+ok(/var sx = FIG_CX, sy = 0\.\d+;/.test(JS_CODE), 'seeded at his chest, not the canvas centre');
+ok(/head = v < 0\.\d+/.test(JS_CODE), 'with the head paying a surcharge so it arrives last');
+/* NORMALISED AGAINST THE BODY, NOT THE RECTANGLE. Dividing by the whole frame's maximum
+   uses a far corner of empty transparent space, which squashed every real value into the
+   bottom half of the range: he finished forming at 20% of the scroll and the rest of the
+   runway animated nothing. Bounds are the ones measured off the frames. */
+ok(/u >= 0\.158 && u <= 0\.776/.test(JS_CODE),
+   'and normalised against his measured bounds so the pacing uses the whole span');
+/* Once he is whole this must cost nothing: the masking is per-pixel work. */
+ok(/if \(t >= 1\) return null;/.test(JS_CODE),
+   'the finished figure skips the masking entirely');
+/* The halo during assembly must hug only what exists — keyed on the mask, not the frame,
+   or a canvas with no .src would crash it and a stale cache would glow around a body he
+   has not grown yet. */
+ok(/img\.src \? img\.src\.slice\(-24\) : "part" \+ maskAt/.test(JS_CODE),
+   'the halo cache handles the masked canvas and re-keys as he forms');
+
 console.log(pass + ' passed, ' + fail + ' failed');
 process.exit(fail ? 1 : 0);

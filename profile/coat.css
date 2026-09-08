@@ -47,6 +47,9 @@
   --coat-ink-2:  #9FADC7;
   --coat-accent: #7C9CFF;
   --coat-line:   #232B3E;
+  /* The aura. Read by coat.js at start-up and turned into canvas gradient stops, so the
+     colour of the orbit is a one-line change here rather than an edit to the script. */
+  --coat-aura:   #7C9CFF;
   isolation: isolate;
   color: var(--coat-ink);
   background:
