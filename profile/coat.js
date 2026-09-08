@@ -120,13 +120,19 @@
    * hold and runs through a crossing, so both joins land mid-flight where the movement
    * carries them — and the holds still cost real scrolling without costing rotation.
    */
+  /* THE THIRD PAUSE USED TO RUN TO 0.29 OF THE RUNWAY — 157vh, nearly twice either of the
+     others — and it read exactly as he described it: the section stopped rather than
+     finished. The pauses are even now, and the last one ends promptly so the pinned layer
+     releases and the page moves on to the next section. Against a 480vh travel that is
+     about 82vh of scrolling for each of the first two pauses and 96vh for the closing one,
+     which is where it was before for the first two — only the tail has been cut. */
   var PHASES = [
     /* ends at   x (0 left .. 1 right)   sequence progress   what happens */
-    { to: 0.09, x: 0.72, f: 0.06 },   // forms out of smoke on the RIGHT
-    { to: 0.24, x: 0.72, f: 0.14 },   // HOLD — the first stage, barely turning
-    { to: 0.40, x: 0.28, f: 0.30 },   // crossing left: the body arrives mid-flight
-    { to: 0.55, x: 0.28, f: 0.40 },   // HOLD — the second stage
-    { to: 0.71, x: 0.72, f: 0.52 },   // crossing back right: the head arrives mid-flight
+    { to: 0.10, x: 0.72, f: 0.06 },   // forms out of smoke on the RIGHT
+    { to: 0.27, x: 0.72, f: 0.14 },   // HOLD — the first stage, barely turning
+    { to: 0.45, x: 0.28, f: 0.30 },   // crossing left: the body arrives mid-flight
+    { to: 0.62, x: 0.28, f: 0.40 },   // HOLD — the second stage
+    { to: 0.80, x: 0.72, f: 0.52 },   // crossing back right: the head arrives mid-flight
     { to: 1.01, x: 0.72, f: 1.00 }    // HOLD — the closing stage, completing the turn
   ];
   /* A crossing is any phase that ends somewhere other than where the one before it did.
@@ -179,14 +185,14 @@
      The gaps are deliberate. A beat of empty page between two statements is what stops the
      section reading as a slideshow on a timer. */
   var BLOCKS = [
-    [0.105, 0.140, 0.205, 0.235],
-    [0.410, 0.445, 0.520, 0.548],
+    [0.115, 0.150, 0.235, 0.265],
+    [0.465, 0.500, 0.585, 0.612],
     /* The last block never fades. Measured at the foot of the section it was down to 0.74
        with the runway spent, so a reader left the page on a half-dissolved paragraph. Held
        to the end instead, the stage simply unpins and the whole tableau — figure, words and
        all — scrolls away together, which is a far better exit than the words evaporating
        off a figure that stays. */
-    [0.725, 0.760, 1.010, 1.020]
+    [0.815, 0.850, 1.010, 1.020]
   ];
   function blockAlpha(p, i) {
     var b = BLOCKS[i];

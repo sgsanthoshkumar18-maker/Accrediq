@@ -50,52 +50,68 @@
 
    Now the copy is positioned absolutely and scheduled by coat.js on explicit scroll
    windows, so it contributes no height at all and the runway has to be stated. That is the
-   whole trade, and it is worth it: the holds are the point of the section. Six phases share
-   this height and roughly two thirds of it is spent standing still, which is what gives a
-   reader time to finish a paragraph before he moves again. Shortening this number speeds
-   everything up proportionally — it is the one dial for the whole thing. */
-.coat { min-height: 640vh; }
+   whole trade, and it is worth it: the holds are the point of the section.
 
-/* ---- the figure ----
-   Full width and pinned, so the canvas can carry the figure anywhere across the page. The
-   travel is drawn, not laid out: moving a canvas element would move its backing store and
-   force a repaint of the whole stage on every scroll frame. */
-.coat-stage {
+   580vh, less one screen of pinning, leaves 480vh of travel: six phases share it, and each
+   of the three pauses gets roughly a screen of scrolling to itself. It was 640vh, which
+   gave the closing pause 157vh — nearly twice either of the others, and he complained that
+   the section sat there rather than moving on. The holds are now even, and the last one
+   ends promptly so the page can hand over to the next section. This number is the one dial
+   for the whole thing: everything else is a fraction of it. */
+.coat { min-height: 580vh; }
+
+/* ---- the pinned layer ----
+   ONE STICKY BOX WITH NO MARGINS, holding the figure and the copy as two absolute layers
+   inside it. That is not tidiness, it is the fix for a real bug.
+
+   IT WAS TWO SIBLING STICKY LAYERS OVERLAPPED BY margin-bottom: -100vh, AND THAT MARGIN
+   OVERRAN THE SECTION BY A FULL SCREEN. A sticky box is constrained so its MARGIN box
+   stays inside its containing block — and a -100vh bottom margin on a 100vh box makes that
+   margin box zero-height, so the browser kept it pinned for another 900px after the
+   section had ended. Measured at 1440x900: at 800px past the foot of the runway the stage
+   was still sitting at viewport top while the next section had scrolled up to 100px, which
+   is exactly how the experience timeline ended up printed across the figure's chest.
+
+   A single wrapper with an honest 100vh margin box releases at precisely the end of the
+   runway, so the whole tableau scrolls away together. It also means the layer order is
+   plain z-index between two siblings rather than a negative margin nobody can read. */
+.coat-pin {
   position: sticky;
   top: 0;
   height: 100vh;
-  /* PULLS THE COPY LAYER BACK OVER THE PINNED STAGE. Both layers pin to the top of the
-     viewport, but in flow the second would begin one whole screen below the first. A
-     negative margin equal to the height is how a sticky backdrop is overlapped without
-     taking either element out of flow. */
-  margin-bottom: -100vh;
+  z-index: 0;
+}
+
+/* The figure. Full width, so the canvas can carry him anywhere across the page. The travel
+   is drawn, not laid out: moving a canvas element would move its backing store and force a
+   repaint of the whole stage on every scroll frame. */
+.coat-stage {
+  position: absolute;
+  inset: 0;
+  z-index: 0;
   overflow: hidden;
   pointer-events: none;
-  z-index: 0;
 }
 .coat-canvas { display: block; width: 100%; height: 100%; background: transparent; }
 
 /* ---- the copy ----
-   A second pinned layer over the stage, holding all three blocks at once. Only one is ever
-   visible: coat.js writes each block's opacity from the scroll position, on windows that
-   sit strictly inside the phases where the figure is standing still.
+   The layer over the stage, holding all three blocks at once. Only one is ever visible:
+   coat.js writes each block's opacity from the scroll position, on windows that sit
+   strictly inside the phases where the figure is standing still.
 
    OPACITY, NOT display OR visibility, and the reason is a screen reader. A block that is
    display:none for four fifths of the section is a block that is missing from the page for
    anyone not looking at it. At opacity 0 all three stages stay in the accessibility tree
-   and in the browser's find, in the order they are meant to be read. */
-.coat-copy {
-  position: sticky;
-  top: 0;
-  height: 100vh;
-  margin-bottom: -100vh;
+   and in the browser's find, in the order they are meant to be read.
+
+   pointer-events off at the layer, back on per block while it is legible — otherwise
+   dragging across the section selects three paragraphs nobody can see. */
+.coat-text {
+  position: absolute;
+  inset: 0;
   z-index: 1;
-  /* The layer covers the whole viewport, so it must not swallow the page. Individual
-     blocks are switched back on by the script while they are legible — otherwise dragging
-     across the section selects three paragraphs nobody can see. */
   pointer-events: none;
 }
-.coat-text { position: relative; height: 100%; }
 
 /* POSITIONED IN VIEWPORT UNITS, NOT INSIDE .wrap, because the figure is.
    The copy used to live in the site's centred column while the figure's position was a
@@ -227,9 +243,9 @@
    writing opacity, so the stylesheet's values are the last word. */
 @media (max-width: 900px) {
   .coat { min-height: 0; }
+  .coat-pin { position: static; height: auto; }
   .coat-stage { position: static; height: min(62vh, 440px); margin-bottom: 18px; }
-  .coat-copy { position: static; height: auto; margin-bottom: 0; pointer-events: auto; }
-  .coat-text { height: auto; padding: 0 20px; }
+  .coat-text { position: static; padding: 0 20px; pointer-events: auto; }
   .coat-beat[data-side] {
     position: static;
     transform: none;
@@ -247,9 +263,9 @@
 /* Reduced motion: one frame, no travel, every line readable at once. */
 @media (prefers-reduced-motion: reduce) {
   .coat { min-height: 0; }
+  .coat-pin { position: static; height: auto; }
   .coat-stage { position: static; height: min(60vh, 420px); margin-bottom: 18px; }
-  .coat-copy { position: static; height: auto; margin-bottom: 0; pointer-events: auto; }
-  .coat-text { height: auto; }
+  .coat-text { position: static; pointer-events: auto; }
   .coat-beat[data-side] {
     position: static;
     transform: none;

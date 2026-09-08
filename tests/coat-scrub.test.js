@@ -386,17 +386,42 @@ ok(/\.coat\[data-coat-ready="1"\] \{ display: block; \}/.test(CSS),
 ok(/if \(!host\.querySelector\("\[data-beat\]"\)\) return;/.test(JS_CODE),
    'the first pass bails without latching, so the aq:content pass still gets the section');
 
-/* ---- the two layers ----
-   The stage paints behind, so it comes first and the copy layer is pulled back over it by
-   a negative margin. Both are pinned; the section states its own height because absolutely
-   positioned copy contributes none. */
-eq(HTML.indexOf('coat-stage') < HTML.indexOf('coat-copy'), true, 'the stage comes first in the DOM');
-ok(/\.coat-stage \{[\s\S]*?position: sticky/.test(CSS), 'pinned while the page scrolls past it');
-ok(/\.coat-copy \{[\s\S]*?position: sticky/.test(CSS), 'and so is the copy over it');
-eq((CSS.match(/margin-bottom: -100vh;/g) || []).length, 2,
-   'both pulled back, or the copy starts a screen below the figure');
-ok(/\.coat-copy \{[\s\S]*?pointer-events: none;/.test(CSS),
+/* ---- ONE PINNED LAYER, AND NO NEGATIVE MARGINS ----
+   THIS IS THE ASSERTION FOR THE BUG THAT SHIPPED. The figure and the copy were two sibling
+   sticky layers overlapped by margin-bottom: -100vh, and that margin quietly extended the
+   pinning a full screen past the end of the section. A sticky box is constrained so its
+   MARGIN box stays inside its containing block, and a -100vh bottom margin on a 100vh box
+   makes that margin box zero-height — so the browser had no reason to release it. Measured
+   at 1440x900: 800px past the foot of the runway the stage was still at viewport top while
+   the next section had scrolled up to 100px, and the experience timeline printed itself
+   across the figure's chest.
+
+   Nothing about the effect was wrong; the layout trick holding it up was. One sticky
+   wrapper with an honest margin box releases exactly at the end of the runway. The rule is
+   therefore not 'two margins' but NO negative margin anywhere in the pinned structure —
+   asserted as an absence, because that is the shape the bug took. */
+eq(/margin(-bottom)?:\s*-\d/.test(CSS.replace(/\/\*[\s\S]*?\*\//g, '')), false,
+   'nothing in the pinned structure is overlapped by a negative margin');
+eq((CSS.replace(/\/\*[\s\S]*?\*\//g, '').match(/position: sticky/g) || []).length, 1,
+   'and there is exactly one sticky box, so only one thing can overrun');
+ok(/\.coat-pin \{[\s\S]*?position: sticky;[\s\S]*?height: 100vh;/.test(CSS),
+   'the pin is one screen tall, which is what makes its release point the end of the runway');
+/* Layer order is now plain z-index between two absolute siblings rather than a margin
+   nobody can read: the stage paints behind, the copy over it. */
+eq(HTML.indexOf('coat-stage') < HTML.indexOf('fCoatText'), true, 'the stage comes first in the DOM');
+ok(/\.coat-stage \{[\s\S]*?position: absolute;[\s\S]*?z-index: 0;/.test(CSS), 'and paints behind');
+ok(/\.coat-text \{[\s\S]*?position: absolute;[\s\S]*?z-index: 1;/.test(CSS), 'with the copy over it');
+ok(/\.coat-text \{[\s\S]*?pointer-events: none;/.test(CSS),
    'the copy layer covers the viewport, so it must not swallow the page');
+
+/* THE RELEASE POINT, DERIVED RATHER THAN TRUSTED. A sticky box of height H inside a
+   containing block of height C stops being pinned once it has travelled C - H, and the
+   scroll progress coat.js measures is (-r.top) / (r.height - innerHeight) — the same
+   C - H. So with one un-margined 100vh pin the release lands exactly on prog 1, and the
+   tableau scrolls away the instant the last block has been read. Both numbers come from
+   the stylesheet, so this catches a runway height that stops agreeing with the pin. */
+eq(/\.coat-pin \{[\s\S]*?height: 100vh;/.test(CSS) && /r\.height - window\.innerHeight/.test(JS_CODE),
+   true, 'the pin releases on exactly the progress the script calls 1');
 
 /* MEASURED IN THE SAME UNITS AS THE FIGURE, and this was a real bug on wide screens. The
    copy sat inside the site's centred column while the figure's position is a fraction of
