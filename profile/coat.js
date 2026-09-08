@@ -124,9 +124,9 @@
   }
   var HALO = [
     /* blur, spread, alpha — three passes make a falloff; one makes a sticker */
-    { blur: 46, alpha: 0.34 },
-    { blur: 18, alpha: 0.26 },
-    { blur: 7,  alpha: 0.20 }
+    { blur: 1.00, alpha: 0.34 },
+    { blur: 0.39, alpha: 0.26 },
+    { blur: 0.15, alpha: 0.20 }
   ];
 
   /* Deterministic integer hash, -1..1. The same input always gives the same output, which
@@ -204,11 +204,14 @@
            drifting field would be the one hard edge in an effect built entirely out of
            soft ones. Smooth, driven by scroll position, so it still unwinds exactly. */
         var pulse = 0.87 + 0.13 * Math.sin(p * 17 + g * 2.1);
-        ctx.globalAlpha = HALO[g].alpha * strength * pulse;
+        ctx.globalAlpha = HALO[g].alpha * (skin.halo / 0.34) * strength * pulse;
         /* filter is not universal; without it the halo simply becomes a soft double of the
            silhouette, which still reads as glow rather than as nothing. */
-        try { ctx.filter = "blur(" + HALO[g].blur + "px)"; } catch (e) {}
-        var grow = HALO[g].blur * 0.35;
+        /* Blur radii are fractions of the theme's own radius, so one number in CSS moves the
+           whole falloff from a wide soft glow to a tight readable outline. */
+        var br = HALO[g].blur * skin.blur;
+        try { ctx.filter = "blur(" + br.toFixed(1) + "px)"; } catch (e) {}
+        var grow = br * 0.35;
         ctx.drawImage(sil, x0 - grow, y0 - grow, w + grow * 2, h + grow * 2);
         try { ctx.filter = "none"; } catch (e) {}
       }
@@ -225,8 +228,8 @@
       var lx = x0 + w * (0.5 + 0.42 * Math.cos(ang));
       var ly = y0 + h * 0.42;
       var gr = ctx.createRadialGradient(lx, ly, 0, lx, ly, Math.max(w, h) * 0.78);
-      gr.addColorStop(0, "rgba(" + rgb + "," + (0.26 * strength).toFixed(3) + ")");
-      gr.addColorStop(0.45, "rgba(" + rgb + "," + (0.10 * strength).toFixed(3) + ")");
+      gr.addColorStop(0, "rgba(" + rgb + "," + (skin.spill * strength).toFixed(3) + ")");
+      gr.addColorStop(0.45, "rgba(" + rgb + "," + (skin.spill * 0.4 * strength).toFixed(3) + ")");
       gr.addColorStop(1, "rgba(" + rgb + ",0)");
       ctx.fillStyle = gr;
       ctx.fillRect(x0, y0, w, h);
@@ -312,7 +315,7 @@
          volume of air rather than a sheet of dots. */
       var d = (z / 1.34 + 1) / 2;
       var size = (1.4 + 5.2 * d) * (R / 300) * (0.55 + Math.abs(nz(s + 6)) * 0.9);
-      var a = (0.05 + 0.30 * d) * (0.45 + Math.abs(nz(s + 7)) * 0.55) * strength;
+      var a = (0.05 + 0.30 * d) * (0.45 + Math.abs(nz(s + 7)) * 0.55) * strength * skin.dust;
 
       ctx.globalAlpha = Math.min(1, a);
       ctx.drawImage(sp, x - size, y - size, size * 2, size * 2);
@@ -489,6 +492,80 @@
     return outCv;
   }
 
+  /* ---------------------- THE JOURNEY ----------------------
+   *
+   * He does not stand in one place. He forms on the LEFT, travels diagonally down and
+   * across to the RIGHT while the body arrives, then back down and across to the LEFT while
+   * the head arrives. Three stations, two crossings, and the copy sits on whichever side he
+   * is not.
+   *
+   * THE STATIONS ARE PLACED AROUND THE RENDER'S OWN HANDOVERS rather than at neat
+   * fractions. The body exists from frame 90 and the head from frame 180, which is scroll
+   * 0.214 and 0.429. Putting a crossing across each of those means the new part arrives
+   * while he is in motion, where a viewer reads it as part of the movement — the single
+   * cheapest way to stop an addition looking like a dropped frame.
+   *
+   * DRAWN, NOT LAID OUT. The figure moves by changing where it is painted on a canvas that
+   * never moves. Translating the canvas element instead would shift its backing store and
+   * force the whole stage to repaint on every scroll frame, for an identical result.
+   */
+  var STATIONS = [
+    /* until, x (0 left .. 1 right) */
+    { until: 0.17, x: 0.27 },   // forms out of smoke on the left
+    { until: 0.32, x: null },   // crossing: body arrives mid-flight at 0.214
+    { until: 0.42, x: 0.73 },   // settled on the right
+    { until: 0.58, x: null },   // crossing back: head arrives at 0.429
+    { until: 1.01, x: 0.27 }    // home on the left for the closing line
+  ];
+  /* How far he dips on a crossing, as a fraction of the stage height. He travels down and
+     across and comes back up into the next station, which is what makes it read as a
+     diagonal rather than a slide. */
+  var DIP = 0.13;
+
+  /* Ease in and out. A crossing that starts and stops abruptly reads as a jump cut; one
+     that accelerates away and decelerates in reads as travel. */
+  function easeInOut(t) {
+    return t < 0.5 ? 4 * t * t * t : 1 - Math.pow(-2 * t + 2, 3) / 2;
+  }
+
+  /* Where he is, 0 to 1 across the stage, and how far he has dipped. */
+  function pathAt(p) {
+    var from = 0, prevX = STATIONS[0].x;
+    for (var i = 0; i < STATIONS.length; i++) {
+      var st = STATIONS[i];
+      if (p < st.until) {
+        if (st.x !== null) return { x: st.x, dip: 0 };
+        /* A crossing: find the station either side of it and travel between them. */
+        var nextX = STATIONS[i + 1] ? STATIONS[i + 1].x : prevX;
+        var t = (p - from) / (st.until - from);
+        var e = easeInOut(Math.min(1, Math.max(0, t)));
+        return { x: prevX + (nextX - prevX) * e, dip: Math.sin(e * Math.PI) * DIP };
+      }
+      from = st.until;
+      if (st.x !== null) prevX = st.x;
+    }
+    return { x: prevX, dip: 0 };
+  }
+
+  /* THE PALETTE IS READ FROM CSS, AND RE-READ WHEN THE THEME CHANGES.
+     A white coat on the light theme's white page measures 1.04:1 — the rim is the only
+     thing drawing the silhouette, so it has to be tighter and stronger there than on dark.
+     Those four numbers are design decisions and they live in the stylesheet; a design
+     decision inside a script is one nobody can change without a deploy. */
+  var skin = { rgb: "39,67,201", blur: 22, halo: 0.55, dust: 0.42, spill: 0.10 };
+  function readSkin(host) {
+    var cs = getComputedStyle(host);
+    function n(name, dflt) {
+      var v = parseFloat(cs.getPropertyValue(name));
+      return isFinite(v) ? v : dflt;
+    }
+    skin.rgb = toRgb((cs.getPropertyValue("--coat-aura") || "").trim() || "#2743C9");
+    skin.blur = n("--coat-halo-blur", 22);
+    skin.halo = n("--coat-halo-alpha", 0.55);
+    skin.dust = n("--coat-dust-alpha", 0.42);
+    skin.spill = n("--coat-spill", 0.10);
+  }
+
   /* THE COPY SCROLLS PAST; IT IS NOT PAINTED OVER THE FIGURE.
      It was, and it was unreadable — a serif headline sitting across a white coat, with the
      eyebrow lost against his chest. The figure now holds one column and the words flow up
@@ -530,8 +607,15 @@
        argued about, and a design decision that lives in a script is one nobody can change
        without a deploy. Read once at start-up from --coat-aura, with the accent as the
        fallback if the variable is ever removed. */
-    var auraRgb = toRgb(
-      (getComputedStyle(host).getPropertyValue("--coat-aura") || "").trim() || "#7C9CFF");
+    readSkin(host);
+    /* The theme can change while the page is open, and the rim must change with it or a
+       light-theme reader gets the pale glow that measures 2.45:1 on white. */
+    try {
+      var mq = window.matchMedia("(prefers-color-scheme: dark)");
+      if (mq.addEventListener) mq.addEventListener("change", function () { readSkin(host); drawn = -1; onScroll(); });
+    } catch (e) {}
+    new MutationObserver(function () { readSkin(host); drawn = -1; onScroll(); })
+      .observe(document.documentElement, { attributes: true, attributeFilter: ["data-theme"] });
 
     /* On a phone the sequence is thinned rather than dropped: the figure still turns all
        the way round, in fewer steps nobody can pick out on a 390px screen, for a quarter of
@@ -586,8 +670,10 @@
       var w = iw * s, h = ih * s;
       /* He sits left of the frame's centre, so centring the IMAGE would leave him visibly
          off-centre in the column. Shifted by the measured difference instead. */
-      var dx = (0.5 - FIG_CX) * w;
-      var dy = reduce ? 0 : ch * PAN_TO * ease(p);
+      var journey = reduce ? { x: 0.5, dip: 0 } : pathAt(p);
+      /* Centre the figure on the path position rather than on the canvas. */
+      var dx = (0.5 - FIG_CX) * w + (journey.x - 0.5) * cw;
+      var dy = reduce ? 0 : ch * (PAN_TO * ease(p) + journey.dip);
       var x0 = (cw - w) / 2 + dx, y0 = (ch - h) / 2 + dy;
 
       ctx.clearRect(0, 0, cw, ch);
@@ -622,11 +708,11 @@
       var fa = reduce ? 1 : figureAlpha(p);
       var smk = reduce ? 0 : smokeAt(p);
 
-      drawField(ctx, img, x0, y0, w, h, acx, acy, aR, ang, auraRgb, lift, p, "back");
+      drawField(ctx, img, x0, y0, w, h, acx, acy, aR, ang, skin.rgb, lift, p, "back");
       /* Scaled by how solid he is: a halo at full strength around a coat that has not
          arrived yet would be a glow hanging in empty air. */
-      drawField(ctx, shown, x0, y0, w, h, acx, acy, aR, ang, auraRgb, lift * fa, p, "halo");
-      drawSmoke(ctx, acx, acy, aR, ang, auraRgb, false, smk, p);
+      drawField(ctx, shown, x0, y0, w, h, acx, acy, aR, ang, skin.rgb, lift * fa, p, "halo");
+      drawSmoke(ctx, acx, acy, aR, ang, skin.rgb, false, smk, p);
       /* The figure fades up through the smoke. globalAlpha rather than a mask: there is
          no threshold anywhere, so there is nothing to pixelate when it is scaled. */
       if (fa > 0) {
@@ -635,9 +721,9 @@
         ctx.drawImage(shown, x0, y0, w, h);
         ctx.restore();
       }
-      drawField(ctx, shown, x0, y0, w, h, acx, acy, aR, ang, auraRgb, lift * fa, p, "spill");
-      drawField(ctx, img, x0, y0, w, h, acx, acy, aR, ang, auraRgb, lift, p, "front");
-      drawSmoke(ctx, acx, acy, aR, ang, auraRgb, true, smk, p);
+      drawField(ctx, shown, x0, y0, w, h, acx, acy, aR, ang, skin.rgb, lift * fa, p, "spill");
+      drawField(ctx, img, x0, y0, w, h, acx, acy, aR, ang, skin.rgb, lift, p, "front");
+      drawSmoke(ctx, acx, acy, aR, ang, skin.rgb, true, smk, p);
 
       drawn = i; drawnAt = p;
     }
@@ -737,6 +823,7 @@
       /* Published for CSS as well, so the vignette and the progress rail move against the
          same measurement that picks the frame rather than a second, slightly different one. */
       host.style.setProperty("--coat-p", prog.toFixed(4));
+      host.style.setProperty("--coat-x", (reduce ? 0.5 : pathAt(prog).x).toFixed(4));
       want = F.frameAt(prog, n);
 
       /* A class, with the fade in CSS — not an inline opacity written every scroll frame.

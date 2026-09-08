@@ -1,113 +1,70 @@
 /* The scroll-scrubbed founder sequence.
  *
- * TWO COLUMNS, AND THAT IS THE WHOLE POINT.
- * The first version painted the headline across the middle of the figure. It looked
- * composed in a mockup and was unreadable on the page: a serif line lying over a white
- * coat, with the eyebrow lost entirely against his chest. Words and picture were competing
- * for the same pixels and the words lost.
+ * NO BAND, NO BOX. The section used to be a full-bleed near-black panel, which made the
+ * figure easy to light but announced itself as a separate thing bolted onto the page. It
+ * now sits directly on whatever background the site has, in both themes, with no border
+ * and no container — the figure travels across the page rather than performing inside a
+ * rectangle.
  *
- * So the figure holds one column and the copy flows up the other. The figure is pinned and
- * turns; the text scrolls past it normally. Neither ever overlaps the other.
+ * THAT MAKES THE RIM LIGHT LOAD-BEARING RATHER THAN DECORATIVE, and the measurement is the
+ * argument: a white lab coat against the light theme's white page is 1.04:1. It is not
+ * subtle, it is invisible. The blue rim is what draws the silhouette, so it is stronger and
+ * tighter on light than on dark, and it uses the site's own accent — 7.24:1 on white —
+ * rather than the pale glow that worked against black and measures 2.45:1 here.
  *
- * IT PINS ON THE RIGHT, AND THAT IS DELIBERATE TOO.
- * motion/motion.css pins .scrolly-sticky on the LEFT for the section immediately below
- * this one. Pinning this one on the right makes the two alternate down the page — still,
- * moving, still — instead of two consecutive sections with a frozen left edge, which reads
- * as one long stuck panel.
- *
- * THE SECTION IS NOT IN THE PAGE UNTIL A FRAME HAS DRAWN. display:none rather than
- * opacity, so a portfolio missing its renders has no gap in it at all. coat.js sets
- * data-coat-ready only once the first image has loaded.
+ * SO THE AURA IS THEME-AWARE, AND THE VALUES LIVE HERE. coat.js reads all four at start-up
+ * and again whenever the theme changes; none of them are in the script.
  */
 .coat { display: none; }
 .coat[data-coat-ready="1"] { display: block; }
 
-/* ============================ THE DARK STAGE ============================
- *
- * A full-bleed near-black band, on a page that is otherwise light. Deliberate, and the
- * reason is what the section contains: the figure is a cut-out on transparency, and a
- * cut-out on a pale ground sits ON the page while the same cut-out on a dark ground lifts
- * OFF it. Every product hero that has ever made an object look expensive does this.
- *
- * IT IS DARK IN BOTH THEMES, WHICH IS WHY IT CARRIES ITS OWN COLOURS.
- * The section does not follow --bg and --fg. If it did, the light theme would put dark text
- * on a dark stage and the whole band would be unreadable. So it declares a small local
- * palette and everything inside reads from that instead. These are the only hard-coded
- * colours in the file and they are hard-coded precisely BECAUSE the band is one fixed
- * visual world rather than a themed surface.
- *
- * The lift is three stacked radial gradients, not one: a cool pool behind his head and
- * shoulders, a warmer core where the light would actually be, and a ground glow at his feet
- * so he is standing on something rather than floating. One gradient reads as a spotlight
- * sticker; three read as a room.
- */
 .coat {
   position: relative;
-  --coat-ink:    #EDF1FA;
-  --coat-ink-2:  #9FADC7;
-  --coat-accent: #7C9CFF;
-  --coat-line:   #232B3E;
-  /* The aura. Read by coat.js at start-up and turned into canvas gradient stops, so the
-     colour of the orbit is a one-line change here rather than an edit to the script. */
-  --coat-aura:   #7C9CFF;
-  isolation: isolate;
-  color: var(--coat-ink);
-  background:
-    radial-gradient(58% 42% at 68% 28%, rgba(96,132,255,.20) 0%, transparent 62%),
-    radial-gradient(40% 28% at 66% 52%, rgba(150,180,255,.10) 0%, transparent 70%),
-    radial-gradient(34% 12% at 66% 88%, rgba(120,155,255,.13) 0%, transparent 72%),
-    linear-gradient(180deg, #05070E 0%, #090C16 42%, #05070E 100%);
+  background: transparent;
+
+  /* LIGHT THEME — a tight, strong rim, because the page is white and the coat is white.
+     --coat-aura is --accent-solid, the blue already used for the nav and every button. */
+  --coat-aura: #2743C9;
+  --coat-halo-blur: 22;      /* px, read as a number by the script */
+  --coat-halo-alpha: 0.55;   /* the rim has to carry the silhouette on its own */
+  --coat-dust-alpha: 0.42;   /* dust on white needs to be darker and sparser to read */
+  --coat-spill: 0.10;        /* barely any: white fabric tints far too easily */
 }
 
-/* Full-bleed: the band runs edge to edge even though its contents stay in .wrap. A dark
-   panel with light page showing down both sides reads as a mistake rather than a device. */
-.coat::before {
-  content: "";
-  position: absolute;
-  inset: 0;
-  z-index: -2;
-  background: inherit;
-  /* The section is already full width; this only guarantees the paint reaches the edges
-     when an ancestor happens to constrain it. */
-  pointer-events: none;
+/* DARK THEME — the page is nearly black, the coat reads on its own, and the rim can go
+   back to being atmosphere rather than an outline: wider, softer, paler. */
+:root[data-theme="dark"] .coat {
+  --coat-aura: #7C9CFF;
+  --coat-halo-blur: 46;
+  --coat-halo-alpha: 0.34;
+  --coat-dust-alpha: 1;
+  --coat-spill: 0.26;
 }
 
-/* Edges darkened so the band has a horizon rather than a hard border. */
-.coat-vignette {
-  position: absolute;
-  inset: 0;
-  z-index: -1;
-  pointer-events: none;
-  background:
-    linear-gradient(180deg, rgba(3,5,10,.92) 0%, transparent 16%, transparent 84%,
-      rgba(3,5,10,.92) 100%),
-    radial-gradient(78% 66% at 62% 48%, transparent 46%, rgba(3,5,10,.72) 100%);
-}
-
-/* The runway is the TEXT COLUMN's natural height, not a hard --coat-run. Three blocks of
-   roughly a screen each is how long the section lasts, so adding or cutting a line changes
-   the pacing correctly instead of leaving a fixed height that no longer matches its
-   contents. Same reasoning as .scrolly-steps next door. */
-.coat-grid {
-  display: grid;
-  grid-template-columns: minmax(0, 0.95fr) minmax(0, 1.3fr);
-  gap: clamp(28px, 4vw, 56px);
-  align-items: start;
-}
-
-.coat-text { padding: 12vh 0 14vh; min-width: 0; }
+/* ---- the runway ----
+   Three stations with a travel between each. The height comes from the copy, so adding a
+   beat lengthens the journey correctly instead of leaving a fixed height that no longer
+   matches its contents. */
+.coat-text { position: relative; z-index: 1; }
 
 .coat-beat {
-  min-height: 84vh;
+  min-height: 104vh;
   display: flex;
   flex-direction: column;
   justify-content: center;
-  /* Dimmed rather than hidden: the reader can see what is coming and what has passed,
-     which is what makes a scrolling column read as one argument rather than three slides. */
-  opacity: .3;
-  transition: opacity 420ms ease;
+  /* Just under half the page, so the copy never reaches the middle where the figure
+     passes through on its way across. */
+  max-width: 42%;
+  opacity: .28;
+  transition: opacity 460ms ease;
 }
 .coat-beat.is-on { opacity: 1; }
+
+/* ALTERNATING SIDES, opposite the figure at every station. The figure travels
+   left -> right -> left, so the copy sits right -> left -> right and the two never share
+   a side of the page. */
+.coat-beat:nth-child(odd)  { margin-left: auto;  text-align: right; }
+.coat-beat:nth-child(even) { margin-right: auto; text-align: left; }
 
 .coat-beat .k {
   display: block;
@@ -115,65 +72,70 @@
   font-size: 10px;
   letter-spacing: .18em;
   text-transform: uppercase;
-  color: var(--coat-accent);
+  color: var(--accent-text);
   margin-bottom: 12px;
 }
 .coat-beat h2 {
   font-family: var(--font-display);
-  font-size: clamp(24px, 2.9vw, 40px);
-  line-height: 1.16;
+  font-size: clamp(24px, 3.1vw, 42px);
+  line-height: 1.14;
   letter-spacing: -.02em;
   text-wrap: balance;
   margin: 0;
-  max-width: 18ch;
-  /* STATED, NOT INHERITED — and this is not belt-and-braces, it is the fix for a real bug.
-     styles.css gives every h2 its own `color: var(--fg)`, which in the light theme is
-     near-black. Setting `color` on the section did nothing here, because an element's own
-     rule beats anything it would otherwise inherit: the headline rendered rgb(7,10,18) on
-     a rgb(5,7,14) band and was invisible. Anything on this stage that sets a colour must
-     take it from the local palette explicitly. */
-  color: var(--coat-ink);
+  /* Stated, not inherited: styles.css gives every h2 its own colour, and an element's own
+     rule beats anything it would otherwise inherit. */
+  color: var(--fg);
 }
 .coat-beat p {
   margin: 12px 0 0;
-  max-width: 44ch;
-  color: var(--coat-ink-2);
-  font-size: clamp(14px, 1.15vw, 16px);
+  max-width: 46ch;
+  color: var(--fg-muted);
+  font-size: clamp(14px, 1.15vw, 16.5px);
   line-height: 1.65;
 }
+.coat-beat:nth-child(odd) p { margin-left: auto; }
 
-/* ---- the pinned figure ---- */
+/* ---- the figure ----
+   Full width and pinned, so the canvas can carry the figure anywhere across the page. The
+   travel is drawn, not laid out: moving a canvas element would move its backing store and
+   force a repaint of the whole stage on every scroll frame. */
 .coat-stage {
   position: sticky;
   top: 0;
   height: 100vh;
+  /* PULLS THE COPY BACK OVER THE PINNED STAGE. The stage comes first in the DOM so it
+     paints behind, but without this the copy would begin one whole screen below it and the
+     two would never share the page. Negative margin equal to the height is how a sticky
+     backdrop is overlapped without taking either element out of flow — absolute positioning
+     would work too, but then the section would have no height of its own and the runway
+     would collapse. */
+  margin-bottom: -100vh;
   overflow: hidden;
-  isolation: isolate;
-  min-width: 0;
+  pointer-events: none;
+  z-index: 0;
 }
 .coat-canvas { display: block; width: 100%; height: 100%; background: transparent; }
 
-/* The pool of light behind him, breathing with the push-in so the stage appears to close
-   in with the camera rather than sitting still behind it. */
+/* A faint pool of light under the figure, following it across. Positioned by the script
+   through two custom properties rather than by CSS, so it cannot drift from the figure. */
 .coat-glow {
   position: absolute;
   inset: 0;
   z-index: -1;
   pointer-events: none;
-  background: radial-gradient(48% 40% at 50% 42%,
-    rgba(124,156,255,.22) 0%, rgba(90,120,220,.07) 45%, transparent 74%);
-  opacity: calc(0.45 + var(--coat-p, 0) * 0.55);
+  background: radial-gradient(38% 34% at calc(var(--coat-x, 0.5) * 100%) 46%,
+    color-mix(in srgb, var(--coat-aura) 16%, transparent) 0%, transparent 72%);
+  opacity: calc(0.35 + var(--coat-p, 0) * 0.4);
 }
 
 /* The one honest piece of chrome on a pinned section: without it a reader who cannot tell
-   the page is still moving assumes it has hung. Driven by --coat-p, the same measurement
-   that picks the frame, so the two can never disagree. */
+   the page is still moving assumes it has hung. */
 .coat-rail {
   position: absolute;
   left: 8%; right: 8%;
-  bottom: clamp(18px, 4vh, 40px);
+  bottom: clamp(16px, 3.4vh, 34px);
   height: 2px;
-  background: var(--coat-line);
+  background: var(--border);
   border-radius: 2px;
   overflow: hidden;
 }
@@ -181,30 +143,32 @@
   display: block;
   height: 100%;
   width: calc(var(--coat-p, 0) * 100%);
-  background: var(--coat-accent);
+  background: var(--coat-aura);
 }
 
-/* Touch and small screens: scrolly.js does not pin below 900px and neither does this. A
-   pinned column fights the address bar resizing as you scroll on touch, and a phone has too
-   little width for two columns to share. The figure sits above the copy, full width, and
-   the sequence still loads — thinned to a quarter in coat.js. */
+/* Touch and small screens: no travel, no pinning. A figure crossing a 390px page has
+   nowhere to go, and a pinned stage fights the address bar resizing as you scroll. The
+   figure sits above the copy and the beats stack full width. */
 @media (max-width: 900px) {
-  .coat-grid { grid-template-columns: 1fr; gap: 4px; }
-  .coat-stage { position: static; height: min(64vh, 460px); order: -1; }
-  .coat-text { padding: 4px 0 22px; }
-  .coat-beat { min-height: 0; opacity: 1; transition: none; }
-  .coat-beat + .coat-beat { margin-top: 26px; }
-  .coat-beat h2 { font-size: clamp(21px, 5.4vw, 30px); max-width: none; }
+  .coat-stage { position: static; height: min(62vh, 440px); margin-bottom: 18px; }
+  .coat-beat {
+    min-height: 0;
+    max-width: none;
+    margin: 0 0 26px !important;
+    text-align: left !important;
+    opacity: 1;
+    transition: none;
+  }
+  .coat-beat p { margin-left: 0 !important; }
   .coat-rail { display: none; }
 }
 
-/* Reduced motion: one frame, no pinning, every line readable at once. The content is the
-   point; the pinning and the turn are decoration. */
+/* Reduced motion: one frame, no travel, every line readable at once. */
 @media (prefers-reduced-motion: reduce) {
-  .coat-grid { grid-template-columns: 1fr; gap: 4px; }
-  .coat-stage { position: static; height: min(62vh, 440px); order: -1; }
-  .coat-text { padding: 4px 0 22px; }
-  .coat-beat { min-height: 0; opacity: 1; transition: none; }
-  .coat-beat + .coat-beat { margin-top: 26px; }
+  .coat-stage { position: static; height: min(60vh, 420px); margin-bottom: 18px; }
+  .coat-beat {
+    min-height: 0; max-width: none; opacity: 1; transition: none;
+    margin: 0 0 26px !important; text-align: left !important;
+  }
   .coat-rail { display: none; }
 }

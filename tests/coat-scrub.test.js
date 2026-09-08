@@ -210,7 +210,10 @@ ok(/var fits = cw \/ \(iw \* FIG_W\);\s*\n\s*if \(s > fits\) s = fits;/.test(JS_
    and leaves him small with air above and below — the opposite of what the column is for. */
 ok(/var s = \(ch \/ ih\) \* k;/.test(JS_CODE), 'the image is fitted to the stage height');
 /* He sits at 46.7% of the frame, so centring the image would leave him visibly off-centre. */
-ok(/var dx = \(0\.5 - FIG_CX\) \* w;/.test(JS_CODE), 'and offset to his real centre');
+/* He sits at 46.7% of the frame, so centring the IMAGE would leave him visibly off-centre
+   wherever the path puts him. The correction now rides alongside the travel term. */
+ok(/\(0\.5 - FIG_CX\) \* w \+ \(journey\.x - 0\.5\) \* cw/.test(JS_CODE),
+   'and offset to his real centre, on top of wherever the journey has carried him');
 
 /* ---- the copy is beside the figure, never over it ----
    The first version painted the headline across his coat and it was unreadable. Two
@@ -222,47 +225,63 @@ ok(/window\.innerHeight \/ 2/.test(JS_CODE), 'nearest the middle of the viewport
 ok(/classList\.toggle\("is-on"/.test(JS_CODE),
    'toggled as a class, so the fade lives in the stylesheet rather than in the scroll handler');
 eq(/coat-copy/.test(HTML), false, 'the overlay caption is gone from the markup');
-ok(/\.coat-grid \{/.test(CSS) && /grid-template-columns/.test(CSS), 'the section is two columns');
-/* It pins on the RIGHT because motion.css pins the very next section on the left. Two
-   consecutive sections with a frozen left edge read as one long stuck panel. */
-eq(HTML.indexOf('coat-text') < HTML.indexOf('coat-stage'), true,
-   'text first in the DOM, so the pinned figure sits on the right');
-ok(/\.coat-stage \{[^}]*position: sticky/.test(CSS), 'and the figure column is the pinned one');
-/* On a phone there is no scroll to drive them and no room for two columns. */
-ok(/@media \(max-width: 900px\)[\s\S]{0,400}grid-template-columns: 1fr/.test(CSS),
-   'which collapses to one column on a phone');
-ok(/@media \(max-width: 900px\)[\s\S]{0,400}opacity: 1/.test(CSS),
+
+/* ---- the journey ----
+   He forms on the left, crosses to the right while the body arrives, and crosses back
+   while the head does. The copy takes whichever side he is not on. */
+ok(/var STATIONS = \[/.test(JS), 'the path is declared as stations, not scattered offsets');
+ok(/\.coat-beat:nth-child\(odd\)\s*\{[^}]*margin-left: auto/.test(CSS),
+   'the copy alternates sides by odd/even');
+ok(/\.coat-beat:nth-child\(even\)\s*\{[^}]*margin-right: auto/.test(CSS),
+   'so adding a beat cannot land the words on top of him');
+/* Verified in a browser at 1440x900: the painted centre of mass tracked 0.28, 0.54, 0.74,
+   0.50, 0.27 across the scroll, and the copy sat at 56-89%, 10-43%, 56-89%. */
+ok(/max-width: 42%/.test(CSS), 'and never reaches the middle, where he passes through');
+/* Drawn, not laid out: translating the canvas element would move its backing store and
+   repaint the whole stage every scroll frame for an identical result. */
+ok(/\(journey\.x - 0\.5\) \* cw/.test(JS_CODE), 'the travel is drawn onto a canvas that never moves');
+ok(/function easeInOut/.test(JS_CODE),
+   'and eased in and out, or a crossing reads as a jump cut rather than travel');
+/* The stage paints behind, so it comes first and is pulled back over by a negative margin.
+   Absolute positioning would leave the section with no height and collapse the runway. */
+eq(HTML.indexOf('coat-stage') < HTML.indexOf('coat-text'), true, 'the stage comes first in the DOM');
+ok(/\.coat-stage \{[\s\S]*?position: sticky/.test(CSS), 'pinned while the copy scrolls past it');
+ok(/margin-bottom: -100vh;/.test(CSS), 'and pulled back over by a negative margin');
+/* On a phone a figure crossing a 390px page has nowhere to go. */
+ok(/@media \(max-width: 900px\)[\s\S]{0,500}position: static/.test(CSS),
+   'no pinning and no travel on a phone');
+ok(/@media \(max-width: 900px\)[\s\S]{0,500}opacity: 1/.test(CSS),
    'with every line readable at once rather than dimmed');
 
-/* ---- the dark stage ----
-   A cut-out on a pale ground sits ON the page; the same cut-out on a dark ground lifts OFF
-   it. The band is therefore dark in BOTH themes, which is the whole reason it carries its
-   own palette instead of following --bg and --fg: in the light theme those would put
-   near-black text on a near-black stage. */
-ok(/--coat-ink:\s*#/.test(CSS) && /--coat-ink-2:\s*#/.test(CSS) && /--coat-accent:\s*#/.test(CSS),
-   'the stage declares its own palette rather than following the page tokens');
-/* THE BUG THIS LOCKS DOWN. styles.css gives every h2 its own `color: var(--fg)`, which
-   beats anything inherited from the section. Setting colour on .coat alone left the
-   headline rendering rgb(7,10,18) on a rgb(5,7,14) band — invisible, and it shipped that
-   way in a screenshot before it was caught. Measured after the fix: 17.79:1. */
-ok(/\.coat-beat h2 \{[\s\S]*?color: var\(--coat-ink\);/.test(CSS),
-   'and the headline states its colour explicitly, since a bare h2 rule outranks inheritance');
-ok(/\.coat-beat \.k \{[\s\S]*?color: var\(--coat-accent\)/.test(CSS),
-   'as does the eyebrow');
-ok(/\.coat-beat p \{[\s\S]*?color: var\(--coat-ink-2\)/.test(CSS), 'and the body copy');
-/* Every colour on the stage comes from the local palette. A --fg or --bg reaching in here
-   is the exact failure above, waiting to happen again. */
-/* Comments stripped first — this file explains the bug in prose that names the very token
-   the rule forbids, and a test that reads prose cannot tell an explanation from a usage. */
-const stageBlock = CSS.slice(CSS.indexOf('.coat {'), CSS.indexOf('@media (max-width: 900px)'))
-  .replace(/\/\*[\s\S]*?\*\//g, '');
-eq(/var\(--fg\b|var\(--fg-muted\)|var\(--bg\b/.test(stageBlock), false,
-   'no page foreground or background token reaches into the dark band');
-/* Three stacked gradients, not one: a single radial reads as a spotlight sticker. */
-ok((CSS.match(/radial-gradient/g) || []).length >= 4,
-   'the lift is layered gradients rather than one flat glow');
-ok(/\.coat-vignette/.test(CSS) && /coat-vignette/.test(HTML),
-   'and the band has a horizon rather than a hard edge against the light page');
+/* ---- no band, no box ----
+   The section used to be a full-bleed near-black panel. It made the figure easy to light
+   and announced itself as a separate thing bolted onto the page, so it is gone: the figure
+   now stands on the site's own background in both themes. */
+ok(/\.coat \{[\s\S]{0,200}background: transparent;/.test(CSS), 'the section has no background of its own');
+eq(/coat-vignette/.test(HTML), false, 'and no vignette panel remains in the markup');
+eq(/--coat-ink:/.test(CSS), false, 'nor a private text palette — the copy follows the page');
+/* Which means the copy MUST take the page's own tokens now, or a light-theme reader gets
+   pale text on white. The h2 still states its colour, because styles.css gives every h2 its
+   own rule and an element's own rule beats anything inherited. */
+ok(/\.coat-beat h2 \{[\s\S]*?color: var\(--fg\);/.test(CSS), 'the headline states var(--fg)');
+ok(/\.coat-beat p \{[\s\S]*?color: var\(--fg-muted\)/.test(CSS), 'and the body copy var(--fg-muted)');
+
+/* ---- the rim is load-bearing on light ----
+   MEASURED, and this is the whole argument: a white lab coat on the light theme's white
+   page is 1.04:1. Not subtle — invisible. The blue rim is the only thing drawing the
+   silhouette, so it is tighter and stronger there, and it uses the site's own accent
+   (#2743C9, 7.24:1 on white) rather than the pale glow that suited black and measures
+   2.45:1 here. */
+ok(/--coat-aura: #2743C9;/.test(CSS), 'light theme uses the site accent for the rim');
+ok(/:root\[data-theme="dark"\] \.coat \{[\s\S]*?--coat-aura: #7C9CFF;/.test(CSS),
+   'dark theme keeps the pale glow that suits a black page');
+ok(/--coat-halo-alpha: 0\.55;/.test(CSS) && /--coat-halo-alpha: 0\.34;/.test(CSS),
+   'and the rim is stronger on light than on dark');
+/* Read from CSS, not hard-coded: these are design decisions, and a design decision inside
+   a script is one nobody can change without a deploy. */
+ok(/function readSkin/.test(JS_CODE), 'the script reads the palette from the stylesheet');
+ok(/attributeFilter: \["data-theme"\]/.test(JS_CODE),
+   'and re-reads it when the theme changes, since the page can switch while open');
 
 /* ================= the energy field ================= */
 
