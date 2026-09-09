@@ -212,6 +212,23 @@
        off a figure that stays. */
     [0.815, 0.850, 1.010, 1.020]
   ];
+  /* WHERE EACH BLOCK IS ON ITS WAY ROUND HIM: -1 approaching, 0 facing the reader, +1
+     leaving. He said the section did not feel like it was revolving, and he was right —
+     the copy was only fading, and a fade on its own is a slideshow. Turning each block on
+     its own vertical axis as it arrives and leaves is what makes the three stages read as
+     panels on a carousel going round the man in the middle, rather than captions being
+     swapped underneath him.
+     Same windows as the opacity, so a block is never turning while it is legible: it
+     arrives, squares up to the reader for the whole hold, and turns away again. */
+  function blockRevolve(p, i) {
+    var b = BLOCKS[i];
+    if (!b || p <= b[0]) return -1;
+    if (p < b[1]) return -1 + (p - b[0]) / (b[1] - b[0]);
+    if (p <= b[2]) return 0;
+    if (p < b[3]) return (p - b[2]) / (b[3] - b[2]);
+    return 1;
+  }
+
   function blockAlpha(p, i) {
     var b = BLOCKS[i];
     if (!b || p <= b[0] || p >= b[3]) return 0;
@@ -1248,9 +1265,26 @@
          position or none of it reverses. */
       if (beats.length) {
         for (var i = 0; i < beats.length; i++) {
-          if (flat()) { beats[i].style.opacity = ""; beats[i].style.pointerEvents = ""; continue; }
+          if (flat()) {
+            beats[i].style.opacity = "";
+            beats[i].style.transform = "";
+            beats[i].style.pointerEvents = "";
+            continue;
+          }
           var a = blockAlpha(prog, i);
           beats[i].style.opacity = a.toFixed(3);
+          /* THE REVOLVE. Each block swings in on its own axis, squares up while it is being
+             read, and turns away as it goes — so the three stages read as panels going round
+             the man rather than captions swapped under him. The sign flips with the side, or
+             the two columns would rotate the same way and it would read as a shear.
+             Written as a transform rather than a CSS animation for the same reason the
+             opacity is: everything here is a function of scroll position, so scrubbing back
+             up retraces it exactly instead of replaying on a clock. */
+          var rev = blockRevolve(prog, i);
+          var dir = beats[i].getAttribute("data-side") === "left" ? -1 : 1;
+          beats[i].style.transform =
+            "translateY(-50%) translate3d(" + (rev * 34 * dir).toFixed(1) + "px,0," +
+            (-Math.abs(rev) * 110).toFixed(0) + "px) rotateY(" + (rev * 32 * dir).toFixed(1) + "deg)";
           /* Invisible words must not be selectable, or dragging across the page picks up
              three paragraphs nobody can see. */
           beats[i].style.pointerEvents = a > 0.5 ? "auto" : "none";

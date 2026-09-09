@@ -110,6 +110,9 @@ const HTML = fs.readFileSync(path.join(__dirname, '../founder.html'), 'utf8');
    renderer is part of this section now: an assertion against founder.html alone would
    pass on a page whose copy never arrives. */
 const FJS = fs.readFileSync(path.join(__dirname, '../profile/founder.js'), 'utf8');
+/* The 3D renderer is a source under test too — it is where the model is lit, and the
+   lighting is what decides whether the falling figure is recognisably the same man. */
+const T3 = fs.readFileSync(path.join(__dirname, '../profile/coat-3d.js'), 'utf8');
 
 /* NO GSAP, NO LIBRARY. The reference implementation uses ScrollTrigger; this site has no
    build step and no node_modules, and seventy kilobytes to replace one division is the
@@ -244,6 +247,12 @@ ok(/\(0\.5 - FIG_CX\) \* w \+ \(here\.x - 0\.5\) \* cw/.test(JS_CODE),
  * at 0.53 and started the second crossing at 0.52, so for a hundredth of the section the
  * words were sliding out while he was setting off underneath them — invisible at a glance,
  * and exactly what he asked not to happen. */
+const TL2 = (() => {
+  const a = JS.indexOf('  /* ========================= THE TIMELINE');
+  const b = JS.indexOf('  /* ======================== THE ENERGY FIELD');
+  return new Function(JS.slice(a, b) + '\nreturn { BLOCKS, blockRevolve };')();
+})();
+
 const TL = (() => {
   const a = JS.indexOf('  /* ========================= THE TIMELINE');
   const b = JS.indexOf('  /* ======================== THE ENERGY FIELD');
@@ -469,8 +478,56 @@ ok(/var ARRIVE = PHASES\[0\]\.to;/.test(JS_CODE),
    the stylesheet has just made permanent and a phone shows three invisible paragraphs. */
 ok(/window\.matchMedia\("\(max-width: 900px\)"\)/.test(JS_CODE),
    'the script reads the same breakpoint the stylesheet does');
-ok(/if \(flat\(\)\) \{ beats\[i\]\.style\.opacity = ""/.test(JS_CODE),
-   'and clears its inline opacity there rather than fighting the stylesheet');
+ok(/beats\[i\]\.style\.opacity = "";\s*\n\s*beats\[i\]\.style\.transform = "";/.test(JS_CODE),
+   'and clears BOTH its inline opacity and its transform there, or a phone keeps the revolve');
+
+/* ---- THE COPY REVOLVES AROUND HIM ----
+   He said the section did not feel like it was turning, and he was right: the copy was
+   only fading, and a fade on its own is a slideshow. Each block now swings in on its own
+   vertical axis, squares up to the reader for the whole hold, and turns away as it goes,
+   so the three stages read as panels on a carousel going round the man in the middle. */
+ok(/function blockRevolve/.test(JS_CODE), 'each block has a place on the way round him');
+TL2.BLOCKS.forEach((b, k) => {
+  eq(TL2.blockRevolve(0, k), -1, 'block ' + (k + 1) + ' starts turned away');
+  eq(TL2.blockRevolve((b[1] + b[2]) / 2, k), 0, 'block ' + (k + 1) + ' squares up while it is read');
+  eq(TL2.blockRevolve(1.05, k), 1, 'block ' + (k + 1) + ' has turned away again by the end');
+});
+/* Flat for the WHOLE hold, not merely at its midpoint. A block still turning while
+   somebody is reading it is exactly the thing that reads as cheap. */
+let turningWhileRead = 0;
+TL2.BLOCKS.forEach((b, k) => {
+  for (let i = 0; i <= 200; i++) {
+    const p = b[1] + (b[2] - b[1]) * i / 200;
+    if (Math.abs(TL2.blockRevolve(p, k)) > 1e-9) turningWhileRead++;
+  }
+});
+eq(turningWhileRead, 0, 'and never turns at all while it is legible');
+/* Continuous, or the swing is a snap — the fluidity he asked for, asserted. */
+let revStep = 0;
+for (let k = 0; k < 3; k++) {
+  let prev = TL2.blockRevolve(0, k);
+  for (let i = 1; i <= 4000; i++) { const v = TL2.blockRevolve(i / 4000, k); revStep = Math.max(revStep, Math.abs(v - prev)); prev = v; }
+}
+ok(revStep < 0.02, 'and swings continuously rather than snapping into place');
+ok(/rotateY\(/.test(JS_CODE) && /translate3d\(/.test(JS_CODE), 'written as a real 3D transform');
+ok(/perspective: 1100px;/.test(CSS) && /perspective-origin: 50% 45%;/.test(CSS),
+   'seen through a perspective centred on the figure, or rotateY is only an orthographic squash');
+ok(/dir = beats\[i\]\.getAttribute\("data-side"\) === "left" \? -1 : 1/.test(JS_CODE),
+   'with the sign flipped per side, or both columns shear the same way');
+
+/* ---- THE FALLING FIGURE IS THE SAME MAN ----
+   He could see the model change when it started to fall, and that is not something to ask
+   a reader to accept. The first comparison that said otherwise was broken: it sampled a
+   fixed band of the figure's height against frame 419 while the model sat at yaw 0, so it
+   compared his chest against his shoulder and reported a difference that was really a
+   difference of pose.
+   Isolating the COAT instead — the brightest quarter of the figure's own pixels, which does
+   not care about pose or framing — gives [205,205,205] averaged over five renders. The
+   model measured [228,233,241]: too BRIGHT and cool, the opposite of the bad reading. */
+ok(/scene\.environmentIntensity = 0\.55;/.test(T3), 'the reflected room is turned down, where the blue was coming from');
+ok(/m\.color\.setRGB\(1\.10, 1\.0, 0\.87\)/.test(T3),
+   'and the last of the cast is corrected in the material, because it survived every lamp being turned off');
+eq(/api\.__tune/.test(T3), false, 'with the tuning hook taken back out once the numbers were settled');
 ok(/var here = flat\(\) \? \{ x: 0\.5, dip: 0 \} : st;/.test(JS_CODE),
    'with the figure centred, since a 390px page has nowhere to travel');
 ok(/@media \(max-width: 900px\)[\s\S]{0,700}position: static/.test(CSS),
@@ -595,7 +652,7 @@ ok(/var drew3d = three && three\.ready && three\.draw\(/.test(JS_CODE),
 ok(/if \(!drew3d\) \{/.test(JS_CODE), 'and the sprite draws when it is not there');
 ok(/<script type="module" src="profile\/coat-3d\.js/.test(HTML), 'the 3D renderer is a module');
 ok(/<script type="importmap">/.test(HTML), 'with an import map rather than a build step');
-const T3 = fs.readFileSync(path.join(__dirname, '../profile/coat-3d.js'), 'utf8');
+
 ok(/api\.ready = false;/.test(T3), 'a model that will not load leaves ready false');
 ok(/catch \(e\) \{ api\.ready = false; \}/.test(T3), 'and a renderer that will not start does too');
 

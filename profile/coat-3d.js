@@ -68,7 +68,7 @@ function start(canvas) {
   /* Filmic tone mapping, because the alternative is what he already hit once in Blender:
      a white coat rendering as grey mud. */
   renderer.toneMapping = THREE.ACESFilmicToneMapping;
-  renderer.toneMappingExposure = 1.28;
+  renderer.toneMappingExposure = 0.95;
 
   scene = new THREE.Scene();
   cam = new THREE.PerspectiveCamera(35, 1, 1, 4000);
@@ -81,6 +81,10 @@ function start(canvas) {
      to reflect it is 207, and the coat peaks at 248. */
   var pmrem = new THREE.PMREMGenerator(renderer);
   scene.environment = pmrem.fromScene(new RoomEnvironment(), 0.04).texture;
+  /* TURNED DOWN, because the room is where the blue was coming from. With the rim light at
+     zero the coat still read 26 points bluer in blue than in red — a reflected environment
+     is a light source like any other, and this one is a cool room. */
+  scene.environmentIntensity = 0.55;
 
   /* LIT TO MATCH THE RENDERS, AND THAT IS A MEASUREMENT RATHER THAN A TASTE.
      The model and the image sequence are the same man, and the page shows one turning into
@@ -91,13 +95,13 @@ function start(canvas) {
      [188,190,191]. The white coat was going blue-grey, because a rim light at 1.4 is a
      lot of blue to put on white fabric and the fill underneath it was too low to answer.
      So: more ambient, a brighter key, and the rim pulled right back to a suggestion. */
-  scene.add(new THREE.AmbientLight(0xffffff, 1.45));
-  var key = new THREE.DirectionalLight(0xffffff, 2.3);
+  scene.add(new THREE.AmbientLight(0xfff1e4, 1.05));
+  var key = new THREE.DirectionalLight(0xfff6ec, 1.9);
   key.position.set(2, 3, 4);
   scene.add(key);
   /* The blue rim from the section still carries down the page — it is the same aura that
      made a white coat readable on a white background — but as a rim now, not a wash. */
-  var rim = new THREE.DirectionalLight(0x9ab4ff, 0.5);
+  var rim = new THREE.DirectionalLight(0x9ab4ff, 0.14);
   rim.position.set(-3, 1.5, -2);
   scene.add(rim);
 
@@ -110,6 +114,27 @@ function start(canvas) {
        the origin its exporter happened to use swings it round a point off to one side — an
        orbit, not a tumble. The 2D rider had to solve the same problem with FIG_CX. */
     root.position.sub(box.getCenter(new THREE.Vector3()));
+
+    /* WHITE-BALANCED ONTO THE RENDERS, because he could see the difference and said so.
+       The page shows one turn into the other, so any mismatch reads as the man changing
+       costume mid-fall.
+
+       Measured properly this time. The first attempt compared a fixed band of the figure's
+       height against frame 419 and was nonsense: the model was at yaw 0 and the frame was
+       not, so it was comparing his chest against his shoulder. Isolating the COAT instead —
+       the brightest quarter of the figure's own pixels, which is robust to pose and framing —
+       gives a target of [205,205,205] averaged over five renders. The model came out
+       [228,233,241]: too bright, and cool, the opposite of what the bad measurement said.
+
+       Exposure and a quieter room fixed the brightness. What survived was a 21-point blue
+       cast that stayed put with every lamp turned off, which puts it in the texture rather
+       than the lighting — so it is corrected where it lives. material.color multiplies the
+       map, so this is a white balance on the fabric and nothing else. */
+    root.traverse(function (o) {
+      if (!o.isMesh || !o.material) return;
+      var mats = Array.isArray(o.material) ? o.material : [o.material];
+      mats.forEach(function (m) { if (m.color) m.color.setRGB(1.10, 1.0, 0.87); });
+    });
     pivot = new THREE.Group();
     pivot.add(root);
     scene.add(pivot);

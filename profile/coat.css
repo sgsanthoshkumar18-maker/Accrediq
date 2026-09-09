@@ -111,6 +111,14 @@
   inset: 0;
   z-index: 1;
   pointer-events: none;
+  /* THE DEPTH THE REVOLVE IS SEEN THROUGH. Without a perspective on the container, the
+     rotateY on each block is an orthographic squash — the same flat non-effect that made
+     the falling figure look like a cutout. The origin sits on the figure rather than in
+     the middle of the box, so the two columns turn about HIM and the carousel has a
+     centre worth going round. */
+  perspective: 1100px;
+  perspective-origin: 50% 45%;
+  transform-style: preserve-3d;
 }
 
 /* POSITIONED IN VIEWPORT UNITS, NOT INSIDE .wrap, because the figure is.
@@ -122,7 +130,10 @@
 .coat-beat {
   position: absolute;
   top: 50%;
+  /* The resting transform. coat.js overwrites this every scroll frame with the same
+     translate plus the revolve; this is what a reader sees before the script runs. */
   transform: translateY(-50%);
+  backface-visibility: hidden;
   /* Narrowed when he moved to the centre: he now has a column on BOTH sides of him
      rather than one, so each gets less. */
   width: min(24vw, 340px);
