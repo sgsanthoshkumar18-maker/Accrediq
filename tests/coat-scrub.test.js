@@ -590,8 +590,28 @@ ok(/riderLayer\(\);\s*\n\s*var three = window\.AQCoat3D;\s*\n\s*if \(!three \|\|
    Verified at 1440x900 at four positions — at the hero the layer does not exist at all, in
    the section it is on at z-index 0 behind the words, back at the hero it is hidden again,
    and past the runway it is on at z-index 90 in front of the page. */
-ok(/var vr = host\.getBoundingClientRect\(\);\s*\n\s*if \(vr\.bottom <= 0 \|\| vr\.top >= window\.innerHeight\) return false;/.test(JS_CODE),
-   'the section only draws the model while it is actually on screen');
+/* AND IT IS THE PIN THAT IS TESTED, NOT THE SECTION — the second version of this bug.
+   Testing the section is not enough: it is five screens tall, so it starts intersecting
+   long before the reader arrives, and progress is clamped to 0 up there. The moment one
+   pixel of a 5220px section appeared, the model was drawn at its opening frame in the
+   middle of the SCREEN, over the stat band above it. The pin is the one screen-tall box
+   the stage actually occupies, and its rect is sticky-aware. */
+ok(/var vr = \(pin \|\| host\)\.getBoundingClientRect\(\);/.test(JS_CODE),
+   'the model draws only while the PINNED box is on screen, not merely the section');
+ok(/!vr\.height\) return false;/.test(JS_CODE), 'and never against a box with no height');
+ok(/cx: vr\.left \+ vr\.width \* here\.x/.test(JS_CODE) && /cy: vr\.top \+ vr\.height \*/.test(JS_CODE),
+   'and is placed inside that box, so he enters with it rather than welded to the window');
+
+/* THE FACE THROUGH THE BACK OF THE HEAD, which is a shader-compilation trap rather than a
+   modelling one. Whether a material blends is compiled INTO its program, so flipping
+   `transparent` alone changes nothing that renders: the head finished fading in, was set
+   opaque, and carried on being drawn by the blending program it was given while it was
+   arriving. Turned away from the camera you then saw the eyes and mouth through the skull. */
+ok(/m\.needsUpdate = true;/.test(T3), 'the shader is recompiled when a material stops blending');
+ok(/if \(m\.transparent !== wantTransparent\)/.test(T3),
+   'and only when it actually changes, or every scroll frame recompiles a shader');
+ok(/m\.side = THREE\.FrontSide;/.test(T3),
+   'and the head is single-sided, because a closed solid has no inside worth drawing');
 ok(/if \(sr\.bottom <= 0 \|\| sr\.top >= window\.innerHeight\) riderHide\(\);/.test(JS_CODE),
    'and the layer is put away when neither the section nor the fall wants it');
 /* riderHide early-returns unless something claims the layer is live, and the fall used to

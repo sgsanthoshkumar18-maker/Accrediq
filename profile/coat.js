@@ -847,6 +847,10 @@
     var ctx = canvas.getContext("2d", { alpha: true });
     if (!ctx) return;
 
+    /* The pinned box itself. Everything the model does in this section is positioned
+       against this rather than against the window, because this is the box the image
+       sequence drew inside and the figure has to keep behaving as though it still does. */
+    var pin = host.querySelector(".coat-pin");
     var beats = [].slice.call(host.querySelectorAll("[data-beat]"));
     /* WHICH SIDE EACH BLOCK TAKES IS DECIDED HERE, NOT IN THE MARKUP OR BY nth-child.
        PHASES is the only thing that knows which side he is standing on while a given block
@@ -925,8 +929,8 @@
     function sectionModel(st, p, cw, ch, dpr) {
       if (flat() || reduce) return false;
 
-      /* ONLY WHILE THE SECTION IS ACTUALLY ON SCREEN, and forgetting this put a headless
-         coat in the middle of the hero.
+      /* ONLY WHILE THE PINNED STAGE IS ACTUALLY ON SCREEN, and getting this wrong twice
+         put a headless coat over the page above the section.
 
          The image sequence drew into the section's OWN canvas, so it went away when the
          section did — the containment was free and nobody had to think about it. The model
@@ -935,9 +939,22 @@
          every scroll position unless something says otherwise. measure() runs on every
          scroll and clamps progress to 0 above the section, so scrolling up to the top left
          the layer showing the section's first frame: the coat alone, no body, no head,
-         hanging over the name and the credentials. */
-      var vr = host.getBoundingClientRect();
-      if (vr.bottom <= 0 || vr.top >= window.innerHeight) return false;
+         hanging over the name and the credentials.
+
+         THE SECOND TIME WAS SUBTLER THAN THE FIRST. Testing the SECTION against the
+         viewport is not enough: the section is five screens tall, so it starts
+         intersecting long before the reader reaches it, and progress is clamped to 0 up
+         there — so the moment one pixel of a 5220px section appeared, the model was drawn
+         at its opening frame, in the middle of the SCREEN, on top of the stat band above.
+
+         What has to be tested, and tracked, is the PIN — the one screen-tall box the stage
+         actually occupies. Its rect is sticky-aware, so it reports where the figure really
+         is: scrolling up from below the section before the pin engages, held at the top
+         while it does, and scrolling away at the end. Positioning against it rather than
+         against the viewport is also what lets him enter from the bottom of the screen the
+         way the image sequence used to, because the sequence drew inside that same box. */
+      var vr = (pin || host).getBoundingClientRect();
+      if (vr.bottom <= 0 || vr.top >= window.innerHeight || !vr.height) return false;
 
       /* MOUNT FIRST, ASK AFTER. The renderer is created inside riderLayer(), so gating on
          ready before calling it is a deadlock: the model can never load because the canvas
@@ -960,8 +977,10 @@
       riderOn = true;
       var ok = three.draw({
         vw: vw, vh: vh,
-        cx: here.x * vw,
-        cy: vh * (0.5 + PAN_TO * ease(p) + here.dip),
+        /* Placed inside the pin's own box, so he travels with it instead of being welded
+           to the middle of the window. */
+        cx: vr.left + vr.width * here.x,
+        cy: vr.top + vr.height * (0.5 + PAN_TO * ease(p) + here.dip),
         h: h,
         /* One continuous turn across the section, which is what the 420 frames encoded and
            what the copy now revolves around. */
@@ -1380,7 +1399,7 @@
         paint(st);
         /* Nothing on this screen wants him: not the fall, and not the section, which is
            either off screen or drawing into its own canvas via the sprite fallback. */
-        var sr = host.getBoundingClientRect();
+        var sr = (pin || host).getBoundingClientRect();
         if (sr.bottom <= 0 || sr.top >= window.innerHeight) riderHide();
       }
     }

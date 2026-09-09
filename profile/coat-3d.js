@@ -85,6 +85,7 @@ function classify(root, base, H) {
    moment it is solid. A coat left permanently transparent sorts against itself and shows
    its own lining through its front. */
 function setGroup(list, a) {
+  var wantTransparent = a < 0.999;
   for (var i = 0; i < list.length; i++) {
     var o = list[i];
     o.visible = a > 0.001;
@@ -92,9 +93,24 @@ function setGroup(list, a) {
     for (var j = 0; j < mats.length; j++) {
       var m = mats[j];
       if (!m) continue;
-      if (a >= 0.999) { m.transparent = false; m.opacity = 1; }
-      else { m.transparent = true; m.opacity = a; }
-      m.depthWrite = a >= 0.999;
+      /* TOGGLING transparent NEEDS needsUpdate, AND WITHOUT IT YOU SEE HIS FACE THROUGH
+         THE BACK OF HIS HEAD. Whether a material blends is compiled INTO its shader
+         program, so flipping the flag alone changes nothing that renders: the head
+         finished fading in, was set opaque, and went on being drawn by the blending
+         program it had been given while it was arriving. Turned away from the camera you
+         then saw the eyes and mouth straight through the skull.
+
+         Only flagged when the value actually CHANGES. Recompiling a shader is expensive
+         and this runs on every scroll frame — setting needsUpdate unconditionally would
+         trade a rendering bug for a stutter. */
+      if (m.transparent !== wantTransparent) {
+        m.transparent = wantTransparent;
+        m.needsUpdate = true;
+      }
+      m.opacity = wantTransparent ? a : 1;
+      /* And depth is written only when solid: a half-faded head that writes depth hides
+         the shoulders behind it, which is the same artefact seen from the other side. */
+      m.depthWrite = !wantTransparent;
     }
   }
 }
@@ -149,6 +165,12 @@ function start(canvas) {
       o.material = Array.isArray(o.material)
         ? o.material.map(function (m) { return m.clone(); })
         : o.material.clone();
+      /* FRONT FACES ONLY. Exporters routinely mark a head double-sided, which means the
+         inside of the skull is drawn as well as the outside — and the inside of the face
+         is what you are looking at when the back of the head goes see-through. A closed
+         solid has no inside worth drawing, so culling it is both correct and cheaper. */
+      var mm = Array.isArray(o.material) ? o.material : [o.material];
+      mm.forEach(function (m) { m.side = THREE.FrontSide; });
     });
 
     classify(root, box.min.y, modelH);
