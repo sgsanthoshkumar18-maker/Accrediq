@@ -193,7 +193,16 @@
     el("fLinks").innerHTML =
       '<a class="btn btn-accent btn-sm" href="' + esc(F.linkedin) +
         '" target="_blank" rel="noopener noreferrer">LinkedIn profile \u2197</a>' +
-      '<a class="btn btn-ghost btn-sm" href="mailto:' + esc(F.email) + '">Email</a>';
+      /* A SUBJECT, BECAUSE THIS NOW LANDS IN A SHARED INBOX. Two buttons on this page write
+         to the same mailbox, and without a subject both arrive blank and indistinguishable —
+         so whoever is reading support cannot tell an enquiry from a hospital that wants to
+         talk. The other button says "our hospital"; this one says enquiry, and the pair sort
+         themselves.
+         encodeURIComponent, not esc(): esc escapes for HTML and would leave a raw em dash
+         and a space in a URL, where they are not valid. The result is already URL-safe, so
+         it needs no further escaping to sit in an attribute. */
+      '<a class="btn btn-ghost btn-sm" href="mailto:' + esc(F.email) +
+        "?subject=" + encodeURIComponent("AQcredix — enquiry") + '">Email</a>';
   }
 
   /* --------------------------------- counters ---------------------------------
