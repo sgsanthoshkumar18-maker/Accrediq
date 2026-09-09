@@ -911,6 +911,47 @@
       return riderEl;
     }
 
+    /* THE SECTION DRAWS THE MODEL TOO, WHICH IS WHAT ENDS THE SWAP.
+       It used to render the image sequence and hand over to the model only for the fall, so
+       the man visibly changed the moment he started falling. He could see it, and no amount
+       of colour matching fixes two figures lit by two different engines. Now one model does
+       the whole journey — the coat-alone/body/head assembly included, because the parts
+       export can perform it — and the frames are only the fallback for a browser that
+       cannot run any of this.
+
+       BEHIND THE COPY HERE, IN FRONT OF THE PAGE LATER. The same fixed layer serves both,
+       switched by z-index: in the section he belongs behind the words, and for the fall he
+       is meant to be over the whole site. */
+    function sectionModel(st, p, cw, ch, dpr) {
+      if (flat() || reduce) return false;
+      /* MOUNT FIRST, ASK AFTER. The renderer is created inside riderLayer(), so gating on
+         ready before calling it is a deadlock: the model can never load because the canvas
+         it loads into is never made. Build the layer, then report whether there was
+         anything to draw yet — the aq:coat3d event repaints once the model lands. */
+      riderLayer();
+      var three = window.AQCoat3D;
+      if (!three || !three.ready) return false;
+      var vw = cw / dpr, vh = ch / dpr;
+      var here = stateAt(p);
+      /* The same fit the sprite used: to the stage height, clamped by his measured width so
+         the copy columns either side of him stay clear. */
+      var h = Math.min(vh * zoomAt(p), (vw * FIG_MAX) / FIG_W);
+      riderEl.setAttribute("data-on", "1");
+      riderEl.setAttribute("data-front", "0");
+      if (gl) gl.style.display = "block";
+      var ok = three.draw({
+        vw: vw, vh: vh,
+        cx: here.x * vw,
+        cy: vh * (0.5 + PAN_TO * ease(p) + here.dip),
+        h: h,
+        /* One continuous turn across the section, which is what the 420 frames encoded and
+           what the copy now revolves around. */
+        rx: 0, ry: st.f * Math.PI * 2, rz: 0,
+        f: st.f
+      });
+      return ok;
+    }
+
     function riderHide() {
       if (!riderOn) return;
       riderOn = false;
@@ -1013,7 +1054,8 @@
       var three = window.AQCoat3D;
       var drew3d = three && three.ready && three.draw({
         vw: vw, vh: vh, cx: gx, cy: gy, h: place.h * 1.35,
-        rx: spin.rx, ry: spin.ry, rz: spin.rz
+        rx: spin.rx, ry: spin.ry, rz: spin.rz,
+        f: 1   // whole, always: he finished assembling a long way up the page
       });
       if (gl) gl.style.display = drew3d ? "block" : "none";
 
@@ -1031,6 +1073,7 @@
       }
 
       riderEl.setAttribute("data-on", "1");
+      riderEl.removeAttribute("data-front");   // over the whole site for the fall
       /* The blue head is his job now. The drawn line stays — it is the trail behind him. */
       ride.setAttribute("data-ridden", "1");
       riderOn = true;
@@ -1123,6 +1166,21 @@
       /* Composed once, then used by everything. While the head is arriving this is a
          canvas with the head at partial opacity; the rest of the time it is the frame
          itself and costs nothing. */
+      /* ONE MODEL FOR THE WHOLE JOURNEY. If it is running, it draws him and the canvas below
+         keeps only the atmosphere — the smoke he forms out of, the dust, the pool of light.
+         Those are cheap in 2D and a nuisance in WebGL, and they sit behind him either way. */
+      if (sectionModel(st, p, cw, ch, 1)) {
+        var fa2 = reduce ? 1 : figureAlpha(p);
+        var smk2 = reduce ? 0 : smokeAt(p);
+        drawSmoke(ctx, acx, acy, aR, ang, skin.rgb, false, smk2, p);
+        drawField(ctx, img, x0, y0, w, h, acx, acy, aR, ang, skin.rgb, lift * fa2, p, "back");
+        drawField(ctx, img, x0, y0, w, h, acx, acy, aR, ang, skin.rgb, lift, p, "front");
+        drawSmoke(ctx, acx, acy, aR, ang, skin.rgb, true, smk2, p);
+        drawn = i; drawnAt = p;
+        return;
+      }
+      if (riderEl) riderEl.removeAttribute("data-front");
+
       lastP = st.f;
       var shown = figureFor(img, w, h, st.f);
       var fa = reduce ? 1 : figureAlpha(p);

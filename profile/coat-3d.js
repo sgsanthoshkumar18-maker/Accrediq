@@ -1,60 +1,62 @@
-/* AQcredix — the founder figure as a real 3D object, for the fall down the timeline.
+/* AQcredix — the founder figure as ONE real 3D model, for the whole of his journey.
  *
- * WHY THIS EXISTS AT ALL, since the rest of the section is a pre-rendered image sequence.
- * A turntable render can only turn about ONE axis. It is a carousel: you can look at the
- * subject from any side, but you can never see the top of his head or the soles of his
- * shoes, because no such frame was ever rendered. So a frame sequence cannot tumble, and
- * every 2D trick that pretends otherwise — the horizontal squash this replaced — reads as a
- * flat cutout being squeezed, because a squash is precisely the transform a solid object
- * never performs.
+ * HE IS NOT SWAPPED ANY MORE, AND THAT IS THE POINT OF THIS FILE'S SECOND VERSION.
+ * The section used to be a 420-frame render and only the fall used the model, so the man
+ * visibly changed the moment he started falling. Two figures lit by two different engines
+ * cannot be reconciled by tuning: white-balancing got the coat from a colour delta of 51
+ * down to 9 and it was still a swap. The answer was to stop having two of him.
  *
- * Measured, to be sure rather than to be sorry: rotating the real model 90 degrees about its
- * pitch axis renders a 48x27 silhouette where the standing figure is 55x88 — he is lying
- * flat, seen from above. There is no frame in the 420 that contains that picture and there
- * never could be.
+ * WHAT MADE THAT POSSIBLE was finding the parts export. The merged model is a single mesh,
+ * which is why the frames had to stay at first: only they carried the coat-alone, then a
+ * body, then a head build-up that took three Blender passes. The parts export has nine
+ * separate meshes, and sorting them by how far up the figure they sit — and how wide they
+ * are — recovers exactly those three groups:
  *
- * THE COST TURNED OUT TO BE ALMOST NOTHING, WHICH IS WHY THIS IS WORTH IT. Rodin's export is
- * 18.57 MB, which would have settled the argument on its own. But the geometry is only
- * 19,389 vertices — the size is all texture. Resized to 1024 and re-encoded as WebP it comes
- * out at 876 KB, which is less than a tenth of the image sequence already on this page and
- * about forty of its frames. The model is CHEAPER than the fallback it improves on.
+ *   COAT  root000 (0.24-0.80 of his height, 0.49 wide) and root001 (0.03-0.45, 0.59 wide,
+ *         the flare that sweeps to the floor). The two widest things in the file.
+ *   BODY  root01 (0.00-0.78, 0.30 wide, which is a real shoulder-to-height ratio), with the
+ *         shoes, the tie and the cord, all of which are worn ON the body.
+ *   HEAD  root1, root2, root3 — hair, face and neck, everything above 0.72.
  *
- * IT MUST FAIL SILENTLY AND COMPLETELY. This is the one file on the site that depends on a
- * third-party CDN and on WebGL being available. If either is missing — a blocked CDN, an
- * old browser, a machine with no GPU — this module simply never sets `ready`, and coat.js
- * carries on with the 2D sprite it already had. Nothing here is allowed to throw into the
- * page: a portfolio that breaks because a graphics library did not load is worse than one
- * with a slightly flatter animation.
+ * So the model performs the assembly the renders used to, and then keeps going into what no
+ * render can do: turning on any axis, tumbling, falling. One figure, one lighting rig, and
+ * no seam anywhere on the page.
+ *
+ * AND IT IS SMALLER THAN WHAT IT REPLACES: 2.23 MB against 8.4 MB of WebP frames.
+ *
+ * IT MUST STILL FAIL SILENTLY. This is the only thing on the site needing WebGL and a
+ * third-party CDN. If either is missing, `ready` never goes true and coat.js falls back to
+ * the image sequence, which is still there and still works. Nothing here throws into the
+ * page.
  */
 import * as THREE from "three";
 import { GLTFLoader } from "three/addons/loaders/GLTFLoader.js";
 import { RoomEnvironment } from "three/addons/environments/RoomEnvironment.js";
 
-var MODEL = "profile/coat-model.glb";
+var MODEL = "profile/coat-parts.glb";
+
+/* Where each group starts existing, in sequence progress. These are the render's own
+   handover points, kept so everything already keyed to them — the flare of light at each
+   arrival, the head's fade — still lands on the same beat of the story. */
+var BODY_AT = 90 / 420, BODY_FADE = 0.05;
+var HEAD_AT = 180 / 420, HEAD_FADE = 0.075;
 
 var renderer = null, scene = null, cam = null, pivot = null, modelH = 1;
+var groups = { coat: [], body: [], head: [] };
 var lastW = 0, lastH = 0;
 
-/* The API coat.js drives. It owns the scroll maths and the path down the spine; this file
-   owns nothing but the picture. Kept deliberately thin: two files sharing a notion of where
-   he is would drift apart the first time either was edited. */
-var api = {
-  ready: false,
-  draw: function () {},
-  hide: function () {}
-};
+var api = { ready: false, draw: function () { return false; }, hide: function () {} };
 window.AQCoat3D = api;
 
 function size(w, h) {
   if (w === lastW && h === lastH) return;
   lastW = w; lastH = h;
   renderer.setSize(w, h, false);
-  /* A PERSPECTIVE CAMERA PLACED SO THAT ONE WORLD UNIT IS ONE CSS PIXEL at z = 0.
-     Orthographic would have been simpler and wrong: with no perspective, a tumbling object
-     has no near edge and no far edge, and it flattens into exactly the cutout this file
-     exists to stop. The camera sits 1000 units back and the field of view is solved from
-     the viewport height, so coat.js can keep working in screen coordinates and hand over a
-     position in pixels without knowing anything about 3D. */
+  /* A PERSPECTIVE CAMERA PLACED SO ONE WORLD UNIT IS ONE CSS PIXEL at z = 0. Orthographic
+     would be simpler and wrong: with no perspective a turning object has no near edge, and
+     it flattens back into the cutout this whole approach exists to avoid. The field of view
+     is solved from the viewport height, so coat.js keeps working in screen coordinates and
+     never has to know any 3D. */
   var dist = 1000;
   cam.fov = 2 * Math.atan(h / 2 / dist) * (180 / Math.PI);
   cam.aspect = w / h;
@@ -62,45 +64,70 @@ function size(w, h) {
   cam.updateProjectionMatrix();
 }
 
+/* Sorted by geometry, not by name, because the exporter's names carry no meaning —
+   root000, root01, root1. What IS meaningful is where a piece sits on the figure and how
+   wide it is: the coat is the widest thing on a person, the head is everything above the
+   collar, and what remains is the body. */
+function classify(root, base, H) {
+  root.traverse(function (o) {
+    if (!o.isMesh) return;
+    var b = new THREE.Box3().setFromObject(o);
+    var bottom = (b.min.y - base) / H;
+    var width = (b.max.x - b.min.x) / H;
+    if (bottom > 0.70) groups.head.push(o);
+    else if (width > 0.40) groups.coat.push(o);
+    else groups.body.push(o);
+  });
+}
+
+/* Fading a group means making its materials transparent, and transparency costs correct
+   depth sorting — so it is switched on only while a group is mid-fade and switched off the
+   moment it is solid. A coat left permanently transparent sorts against itself and shows
+   its own lining through its front. */
+function setGroup(list, a) {
+  for (var i = 0; i < list.length; i++) {
+    var o = list[i];
+    o.visible = a > 0.001;
+    var mats = Array.isArray(o.material) ? o.material : [o.material];
+    for (var j = 0; j < mats.length; j++) {
+      var m = mats[j];
+      if (!m) continue;
+      if (a >= 0.999) { m.transparent = false; m.opacity = 1; }
+      else { m.transparent = true; m.opacity = a; }
+      m.depthWrite = a >= 0.999;
+    }
+  }
+}
+
+function ramp(f, at, over) {
+  if (f <= at) return 0;
+  if (f >= at + over) return 1;
+  return (f - at) / over;
+}
+
 function start(canvas) {
   renderer = new THREE.WebGLRenderer({ canvas: canvas, alpha: true, antialias: true });
   renderer.setPixelRatio(Math.min(2, window.devicePixelRatio || 1));
-  /* Filmic tone mapping, because the alternative is what he already hit once in Blender:
-     a white coat rendering as grey mud. */
   renderer.toneMapping = THREE.ACESFilmicToneMapping;
   renderer.toneMappingExposure = 0.95;
 
   scene = new THREE.Scene();
   cam = new THREE.PerspectiveCamera(35, 1, 1, 4000);
 
-  /* AN ENVIRONMENT, NOT JUST LIGHTS, AND THIS IS THE WHOLE LIGHTING FIX.
-     A physically based material shows you what it REFLECTS. Given nothing to reflect it
-     renders dark however many lamps are pointed at it — which is exactly the "why is there
-     no colour in my 3D model" problem from the Blender pass. Measured here: with lights
-     alone the figure's median luminance was 61 and the white coat read as slate. With a room
-     to reflect it is 207, and the coat peaks at 248. */
+  /* AN ENVIRONMENT, NOT JUST LAMPS. A physically based material shows you what it REFLECTS,
+     so given nothing to reflect it renders as dark mud however many lights are aimed at
+     it — exactly the "why is there no colour in my 3D model" problem from the Blender pass.
+     Turned down to 0.55 because the room is also where a blue cast came from: with every
+     lamp at zero the coat still read 26 points bluer in blue than in red. */
   var pmrem = new THREE.PMREMGenerator(renderer);
   scene.environment = pmrem.fromScene(new RoomEnvironment(), 0.04).texture;
-  /* TURNED DOWN, because the room is where the blue was coming from. With the rim light at
-     zero the coat still read 26 points bluer in blue than in red — a reflected environment
-     is a light source like any other, and this one is a cool room. */
   scene.environmentIntensity = 0.55;
 
-  /* LIT TO MATCH THE RENDERS, AND THAT IS A MEASUREMENT RATHER THAN A TASTE.
-     The model and the image sequence are the same man, and the page shows one turning into
-     the other — so if they are not lit alike, the handover is a character change. Sampled
-     front-on against frame 419 in three bands of the figure own height, the first attempt
-     came out head [131,102,107] against [132,107,93] — the hair and skin already agreed,
-     confirming it is the same character — but the torso read [109,131,174] against
-     [188,190,191]. The white coat was going blue-grey, because a rim light at 1.4 is a
-     lot of blue to put on white fabric and the fill underneath it was too low to answer.
-     So: more ambient, a brighter key, and the rim pulled right back to a suggestion. */
   scene.add(new THREE.AmbientLight(0xfff1e4, 1.05));
   var key = new THREE.DirectionalLight(0xfff6ec, 1.9);
   key.position.set(2, 3, 4);
   scene.add(key);
-  /* The blue rim from the section still carries down the page — it is the same aura that
-     made a white coat readable on a white background — but as a rim now, not a wash. */
+  /* The site's own blue, as a rim rather than a wash. */
   var rim = new THREE.DirectionalLight(0x9ab4ff, 0.14);
   rim.position.set(-3, 1.5, -2);
   scene.add(rim);
@@ -108,66 +135,74 @@ function start(canvas) {
   new GLTFLoader().load(MODEL, function (gltf) {
     var root = gltf.scene;
     var box = new THREE.Box3().setFromObject(root);
-    var dim = box.getSize(new THREE.Vector3());
-    modelH = dim.y || 1;
-    /* Centred on its own bounding box before anything rotates it. Rotating a model about
-       the origin its exporter happened to use swings it round a point off to one side — an
-       orbit, not a tumble. The 2D rider had to solve the same problem with FIG_CX. */
+    modelH = box.getSize(new THREE.Vector3()).y || 1;
+
+    /* EVERY MESH GETS ITS OWN MATERIAL, AND WITHOUT THIS THE ASSEMBLY SILENTLY FAILS.
+       The optimiser runs a dedup pass that merges identical materials, so several of the
+       nine meshes come back sharing one instance — which is correct and efficient right up
+       to the moment something fades a group by writing opacity onto it. Fading the body to
+       zero was also fading the COAT to zero, because they were the same material object:
+       measured, the model drew nothing at all until the last group arrived, and then
+       everything appeared at once. Cloning is nine objects and costs nothing. */
+    root.traverse(function (o) {
+      if (!o.isMesh || !o.material) return;
+      o.material = Array.isArray(o.material)
+        ? o.material.map(function (m) { return m.clone(); })
+        : o.material.clone();
+    });
+
+    classify(root, box.min.y, modelH);
+    /* Centred on its own bounding box before anything rotates it. Rotating about whatever
+       origin the exporter happened to use swings him round a point off to one side — an
+       orbit, not a turn. */
     root.position.sub(box.getCenter(new THREE.Vector3()));
 
-    /* WHITE-BALANCED ONTO THE RENDERS, because he could see the difference and said so.
-       The page shows one turn into the other, so any mismatch reads as the man changing
-       costume mid-fall.
-
-       Measured properly this time. The first attempt compared a fixed band of the figure's
-       height against frame 419 and was nonsense: the model was at yaw 0 and the frame was
-       not, so it was comparing his chest against his shoulder. Isolating the COAT instead —
-       the brightest quarter of the figure's own pixels, which is robust to pose and framing —
-       gives a target of [205,205,205] averaged over five renders. The model came out
-       [228,233,241]: too bright, and cool, the opposite of what the bad measurement said.
-
-       Exposure and a quieter room fixed the brightness. What survived was a 21-point blue
-       cast that stayed put with every lamp turned off, which puts it in the texture rather
-       than the lighting — so it is corrected where it lives. material.color multiplies the
-       map, so this is a white balance on the fabric and nothing else. */
+    /* WHITE-BALANCED, and this is a measurement rather than a taste. Isolating the coat —
+       the brightest quarter of the figure's own pixels, which does not care about pose or
+       framing — the renders average [205,205,205]; untouched, the model came out cool.
+       material.color multiplies the map, so this corrects the fabric and nothing else. */
     root.traverse(function (o) {
       if (!o.isMesh || !o.material) return;
       var mats = Array.isArray(o.material) ? o.material : [o.material];
       mats.forEach(function (m) { if (m.color) m.color.setRGB(1.10, 1.0, 0.87); });
     });
+
     pivot = new THREE.Group();
     pivot.add(root);
     scene.add(pivot);
+    api.parts = { coat: groups.coat.length, body: groups.body.length, head: groups.head.length };
     api.ready = true;
-    /* Nothing repaints on its own here — the next scroll draws it. Firing a redraw is
-       coat.js's business, and it is listening. */
+    /* Nothing repaints on its own here — coat.js owns the scroll and is listening. */
     try { window.dispatchEvent(new Event("aq:coat3d")); } catch (e) {}
-  }, undefined, function () {
-    /* A model that will not load leaves ready false, and the sprite carries on. */
-    api.ready = false;
-  });
+  }, undefined, function () { api.ready = false; });
 }
 
 api.draw = function (s) {
   if (!api.ready || !pivot) return false;
   size(s.vw, s.vh);
+
+  /* THE ASSEMBLY, which is the whole reason the parts export was worth hunting for. The
+     coat is always present; the body arrives at frame 90 and the head at 180 — the same two
+     moments the renders handed over at, so the burst of light already keyed to each one
+     still lands on it. Omit f and he is simply whole, which is what the fall wants. */
+  var f = s.f == null ? 1 : s.f;
+  setGroup(groups.coat, 1);
+  setGroup(groups.body, ramp(f, BODY_AT, BODY_FADE));
+  setGroup(groups.head, ramp(f, HEAD_AT, HEAD_FADE));
+
   pivot.position.set(s.cx - s.vw / 2, s.vh / 2 - s.cy, 0);
   var k = s.h / modelH;
   pivot.scale.set(k, k, k);
-  pivot.rotation.set(s.rx, s.ry, s.rz);
+  pivot.rotation.set(s.rx || 0, s.ry || 0, s.rz || 0);
   renderer.render(scene, cam);
   return true;
 };
 
-api.hide = function () {
-  if (renderer && lastW) renderer.clear();
-};
+api.hide = function () { if (renderer && lastW) renderer.clear(); };
 
-/* coat.js creates the layer and hands the canvas over, so there is exactly one place that
-   decides whether the rider exists at all. */
+/* coat.js creates the layer and hands the canvas over, so exactly one place decides whether
+   any of this exists at all. */
 api.mount = function (canvas) {
   if (renderer) return;
   try { start(canvas); } catch (e) { api.ready = false; }
 };
-
-try { window.dispatchEvent(new Event("aq:coat3d-loaded")); } catch (e) {}

@@ -261,6 +261,11 @@
   display: none;
 }
 .coat-rider[data-on="1"] { display: block; }
+/* IN FRONT FOR THE FALL, BEHIND THE WORDS IN THE SECTION. The same fixed layer serves
+   both, because it is the same man: while he is standing in the section the copy belongs
+   over him, and once he comes loose and falls he belongs over the whole site. z-index 0
+   still clears the section canvas beneath him, which carries the smoke and the dust. */
+.coat-rider[data-front="0"] { z-index: 0; }
 /* BOTH CANVASES OCCUPY THE WHOLE LAYER, STACKED. The 2D one carries the pool of light
    under him (and the sprite, when there is no WebGL); the WebGL one carries the model over
    it. Left in flow they would sit one under the other and the glow would land a screen

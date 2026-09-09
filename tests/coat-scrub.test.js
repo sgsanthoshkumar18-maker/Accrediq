@@ -524,6 +524,60 @@ ok(/dir = beats\[i\]\.getAttribute\("data-side"\) === "left" \? -1 : 1/.test(JS_
    Isolating the COAT instead — the brightest quarter of the figure's own pixels, which does
    not care about pose or framing — gives [205,205,205] averaged over five renders. The
    model measured [228,233,241]: too BRIGHT and cool, the opposite of the bad reading. */
+/* ---- ONE MODEL FOR THE WHOLE JOURNEY ----
+   He could see the man change when the fall began, and he was right to refuse it. The
+   section rendered 420 frames and only the fall used the model, so two figures lit by two
+   different engines met in the middle of the page. White balancing got the coat from a
+   colour delta of 51 down to 9 and it was STILL a swap — the answer was to stop having two
+   of him, not to make the two match.
+
+   What made that possible was the parts export. The merged model is one mesh, which is why
+   the frames had to stay at first: only they carried the coat-alone, then a body, then a
+   head build-up that took three Blender passes. The parts export has nine meshes, and
+   sorting them by where they sit on the figure and how wide they are recovers exactly those
+   three groups — measured: coat 2, body 4, head 3. */
+ok(/var MODEL = "profile\/coat-parts\.glb";/.test(T3), 'the model is the parts export, not the merged one');
+ok(/function classify/.test(T3) && /groups\.head\.push/.test(T3) && /groups\.coat\.push/.test(T3),
+   'whose meshes are sorted into coat, body and head');
+/* By geometry, not by name: the exporter's names are root000, root01, root1 and mean
+   nothing. Where a piece sits and how wide it is mean everything — the coat is the widest
+   thing on a person, the head is everything above the collar. */
+ok(/bottom > 0\.70/.test(T3) && /width > 0\.40/.test(T3), 'sorted by geometry rather than by exporter names');
+ok(/setGroup\(groups\.body, ramp\(f, BODY_AT, BODY_FADE\)\)/.test(T3) &&
+   /setGroup\(groups\.head, ramp\(f, HEAD_AT, HEAD_FADE\)\)/.test(T3),
+   'so the model performs the assembly the renders used to');
+/* The same two moments the renders handed over at, so the burst of light already keyed to
+   each arrival still lands on it. */
+ok(/var BODY_AT = 90 \/ 420/.test(T3) && /var HEAD_AT = 180 \/ 420/.test(T3),
+   'at the render\'s own handover points, so the flare of light still lands on them');
+
+/* THE BUG THIS NEARLY SHIPPED WITH, and it is invisible in the source.
+   The optimiser runs a dedup pass that merges identical materials, so several of the nine
+   meshes came back sharing ONE material instance. Fading the body to zero therefore faded
+   the coat to zero as well, because they were the same object. Measured before the fix: the
+   model drew nothing at all — 0 pixels — at every stage until the last group arrived, and
+   then the whole figure appeared at once. After it: coat alone 2100 pixels with the top of
+   the silhouette at row 28, coat and body 1465 at row 26, the whole man 2209 at row 1,
+   the head lifting the top of the figure by twenty-five rows exactly as it should. */
+ok(/o\.material = Array\.isArray\(o\.material\)\s*\n\s*\? o\.material\.map\(function \(m\) \{ return m\.clone\(\); \}\)/.test(T3),
+   'every mesh gets its own material, or fading one group silently fades another');
+
+/* The section draws the model too — that is what ends the swap. The frames stay as the
+   fallback for a browser that cannot run any of this. */
+ok(/function sectionModel/.test(JS_CODE), 'the section asks the model first');
+ok(/if \(sectionModel\(st, p, cw, ch, 1\)\) \{/.test(JS_CODE), 'and draws it when there is one');
+ok(/f: st\.f/.test(JS_CODE), 'passing the sequence progress, so the assembly follows the scroll');
+ok(/f: 1   \/\/ whole, always/.test(JS_CODE),
+   'while the fall asks for the whole man, who finished assembling far up the page');
+/* Mounting has to happen before readiness is checked, or it is a deadlock: the renderer is
+   created inside riderLayer(), so gating on ready means the model can never load into a
+   canvas that is never made. That cost a silent blank section once already. */
+ok(/riderLayer\(\);\s*\n\s*var three = window\.AQCoat3D;\s*\n\s*if \(!three \|\| !three\.ready\) return false;/.test(JS_CODE),
+   'and mounts the renderer before asking whether it is ready, or nothing ever loads');
+/* Behind the copy in the section, in front of the whole site for the fall — one layer. */
+ok(/\.coat-rider\[data-front="0"\] \{ z-index: 0; \}/.test(CSS),
+   'the same layer sits behind the words in the section and over the page for the fall');
+
 ok(/scene\.environmentIntensity = 0\.55;/.test(T3), 'the reflected room is turned down, where the blue was coming from');
 ok(/m\.color\.setRGB\(1\.10, 1\.0, 0\.87\)/.test(T3),
    'and the last of the cast is corrected in the material, because it survived every lamp being turned off');
