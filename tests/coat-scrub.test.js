@@ -496,7 +496,7 @@ const RIDER = (() => {
                  'var PHASES = ' + JSON.stringify(TL.PHASES) + ';' +
                  'function easeInOut(t){return t<0.5?4*t*t*t:1-Math.pow(-2*t+2,3)/2;}';
   return new Function(consts + JS.slice(a, b) +
-    '\nreturn { ridePlace, rideHeight, READ_LINE, rideTumble, rideSwing, rideDepth, rideFrame, TURN_LO };')();
+    '\nreturn { ridePlace, rideHeight, READ_LINE, rideTumble, rideSwing, rideDepth, rideFrame, rideSpin, TURN_LO };')();
 })();
 
 /* THE READING LINE IS ONE NUMBER LIVING IN TWO FILES, and that is the thing most likely to
@@ -540,10 +540,71 @@ ok(shrinks, 'and shrinks monotonically rather than pulsing on the way down');
    never loses width without also changing what you can see of it. Three things replace it,
    and the frame sweep is the one that actually carries the third dimension. */
 eq(/c\.scale\(sx, 1\)/.test(JS_CODE), false, 'nothing squashes him horizontally any more');
-ok(/c\.rotate\(tumble\)/.test(JS_CODE), 'he rotates in the picture plane — head over heels, like a piece knocked over');
+ok(/c\.rotate\(rideTumble\(t, p\)\)/.test(JS_CODE),
+   'the sprite fallback rotates in the picture plane — head over heels, like a piece knocked over');
 ok(/c\.scale\(depth, depth\)/.test(JS_CODE), 'and reads nearer and further through the turn');
 ok(/F\.frameAt\(rideFrame\(t, p\), n\)/.test(JS_CODE),
-   'while the RENDERED turn carries the depth no transform can fake');
+   'sweeping the rendered turn, which is the most a flat sprite can do');
+
+/* ---- AND ABOVE IT, THE REAL THING ----
+   A turntable render turns about ONE axis. It is a carousel: you can walk around the
+   subject but you can never see the top of his head, because no such frame was ever
+   rendered. So the sprite above is the best a flat image can do, and it is still flat.
+   Measured on the actual model: 90 degrees of pitch renders a 48x27 silhouette where the
+   standing figure is 55x88 — he is lying flat, seen from above, and there is no frame in
+   the 420 that contains that picture.
+
+   Confirmed in the browser on the live page, WebGL canvas only, sampled down the ride:
+   12x21 upright at the top, 18x15 lying flat at 30%, 9x19 upright again at 60%, 18x16 flat
+   at 80%, 13x21 standing at the foot. The aspect ratio inverting and recovering IS the
+   tumble; a flat sprite cannot produce that sequence at any scale. */
+ok(/rideSpin\(t, p\)/.test(JS_CODE), 'the model is driven by a three-axis spin');
+ok(/rx: \(HANDOFF_TUMBLE \* t \+ TUMBLE_X \* p\)/.test(JS_CODE), 'with pitch dominant, the way a piece knocked over falls');
+/* Coprime turn counts, so no two attitudes on the way down are the same. */
+const TX = +/TUMBLE_X = (\d+)/.exec(JS)[1], TY = +/TUMBLE_Y = (\d+)/.exec(JS)[1], TZ = +/TUMBLE_Z = (\d+)/.exec(JS)[1];
+ok(TX > TY && TY >= TZ, 'pitch turns fastest, so it reads as falling rather than as spinning on the spot');
+/* The same end condition as everything else here: upright when it matters. */
+['rx', 'ry', 'rz'].forEach((ax) => {
+  const atHandover = RIDER.rideSpin(1, 0)[ax] / (Math.PI * 2);
+  const atFoot = RIDER.rideSpin(1, 1)[ax] / (Math.PI * 2);
+  eq(atHandover, Math.round(atHandover), ax + ' is a whole number of turns at the end of the handover');
+  eq(atFoot, Math.round(atFoot), ax + ' is a whole number of turns at the foot of the line');
+});
+eq([RIDER.rideSpin(0, 0).rx, RIDER.rideSpin(0, 0).ry, RIDER.rideSpin(0, 0).rz], [0, 0, 0],
+   'and every axis starts at rest, so the handover does not begin with a jolt');
+
+/* THE FALLBACK IS NOT A FORMALITY. This is the only thing on the site needing WebGL and a
+   third-party CDN, so a blocked script, an old browser or a machine with no GPU has to land
+   somewhere sensible — the flatter sprite, not a hole in the page. The module is loaded
+   separately and as a module precisely so that its failure is silent and isolated. */
+ok(/var drew3d = three && three\.ready && three\.draw\(/.test(JS_CODE),
+   'the model is asked, never assumed');
+ok(/if \(!drew3d\) \{/.test(JS_CODE), 'and the sprite draws when it is not there');
+ok(/<script type="module" src="profile\/coat-3d\.js/.test(HTML), 'the 3D renderer is a module');
+ok(/<script type="importmap">/.test(HTML), 'with an import map rather than a build step');
+const T3 = fs.readFileSync(path.join(__dirname, '../profile/coat-3d.js'), 'utf8');
+ok(/api\.ready = false;/.test(T3), 'a model that will not load leaves ready false');
+ok(/catch \(e\) \{ api\.ready = false; \}/.test(T3), 'and a renderer that will not start does too');
+
+/* THE LIGHTING FIX, WHICH HE HAS ALREADY BEEN BITTEN BY ONCE IN BLENDER.
+   A physically based material shows what it REFLECTS, so given nothing to reflect it
+   renders as dark mud however many lamps are aimed at it — which is exactly the "why is
+   there no colour in my 3D model" problem from the render pass. Measured here: lights
+   alone gave the figure a median luminance of 61 and the white coat read as slate; with a
+   room to reflect it is 207 and the coat peaks at 248. */
+ok(/RoomEnvironment/.test(T3), 'the model has an environment to reflect, not just lights');
+ok(/ACESFilmicToneMapping/.test(T3), 'and filmic tone mapping, so the white coat stays white');
+
+/* One world unit is one CSS pixel at the model's depth, so coat.js hands over a position in
+   screen coordinates and never has to know any 3D. Perspective, not orthographic: with no
+   perspective a tumbling object has no near edge and flattens back into the cutout this
+   whole change exists to stop. */
+ok(/PerspectiveCamera/.test(T3), 'a perspective camera, so the tumble has depth');
+ok(/cam\.fov = 2 \* Math\.atan\(h \/ 2 \/ dist\)/.test(T3),
+   'solved so that one world unit is one CSS pixel, and coat.js can stay in screen space');
+/* The model is centred on its own bounding box before anything rotates it — the same
+   problem FIG_CX solves for the sprite. Rotating about an exporter's origin is an orbit. */
+ok(/root\.position\.sub\(box\.getCenter/.test(T3), 'and centred on itself, so it tumbles rather than orbits');
 /* Rotated about the figure, not the frame: the renders put him at 46.7% of a square canvas,
    so turning about the canvas centre would swing him round a point off to his side. */
 ok(/c\.translate\(gx, gy\);[\s\S]{0,120}c\.rotate/.test(JS_CODE), 'about his own centre, so it is a tumble and not an orbit');

@@ -283,6 +283,25 @@
      he lands upright and on the line, and above all that the frame index never once leaves
      the range in which the complete figure exists. */
   function rideTumble(t, p) { return (HANDOFF_TUMBLE * t + TUMBLES * p) * Math.PI * 2; }
+
+  /* THE REAL TUMBLE, ON THREE AXES, for the 3D renderer. A turntable render turns about
+     ONE axis and can never do this: rotating the actual model 90 degrees in pitch gives a
+     48x27 silhouette where the standing figure is 55x88 — he is lying flat, seen from
+     above, and no frame in the 420 contains that picture. Pitch dominates, because that is
+     how a piece knocked off a board falls; the yaw and roll are slower and coprime with it,
+     so the tumble never repeats the same attitude twice on the way down.
+     Whole numbers again, for the reason they are whole everywhere else here: at the end of
+     the handover and at the foot of the line every axis is back at zero, so he leaves
+     upright and lands upright rather than embedded in the page at an angle. */
+  var TUMBLE_X = 3, TUMBLE_Y = 2, TUMBLE_Z = 1;
+  function rideSpin(t, p) {
+    var TAU = Math.PI * 2;
+    return {
+      rx: (HANDOFF_TUMBLE * t + TUMBLE_X * p) * TAU,
+      ry: (t + TUMBLE_Y * p) * TAU,
+      rz: (t + TUMBLE_Z * p) * TAU
+    };
+  }
   function rideSwing(t, p) { return Math.sin((t + SWINGS * p) * Math.PI * 2) * SWING_AMP; }
   function rideDepth(t, p) { return 1 + DEPTH * Math.sin((HANDOFF_TUMBLE * t + TUMBLES * p) * Math.PI); }
   function rideFrame(t, p) {
@@ -832,7 +851,7 @@
        was. Created here rather than in the markup because it only exists when the frames
        do — a page without renders should not carry an empty fixed layer. */
     var ride = document.getElementById("fExp") || document.querySelector(".fp-timeline");
-    var riderEl = null, riderCv = null, riderCtx = null, riderOn = false;
+    var riderEl = null, riderCv = null, riderCtx = null, riderOn = false, gl = null;
 
     function riderLayer() {
       if (riderEl) return riderEl;
@@ -841,8 +860,16 @@
       riderEl.setAttribute("aria-hidden", "true");
       riderCv = document.createElement("canvas");
       riderEl.appendChild(riderCv);
+      /* TWO CANVASES, STACKED. The 2D one keeps the pool of light — a glow is trivial in
+         2D and a nuisance in WebGL — and draws the sprite when there is no 3D. The WebGL
+         one sits over it and carries the model. When 3D is running the 2D canvas holds
+         only the glow, so the figure is never drawn twice. */
+      gl = document.createElement("canvas");
+      gl.className = "coat-rider-gl";
+      riderEl.appendChild(gl);
       document.body.appendChild(riderEl);
       riderCtx = riderCv.getContext("2d", { alpha: true });
+      if (window.AQCoat3D && window.AQCoat3D.mount) window.AQCoat3D.mount(gl);
       return riderEl;
     }
 
@@ -922,9 +949,7 @@
          swings are whole, the tumble is back to zero and the swing is back on the line at
          both t=1 and p=1 — so he leaves the handover upright and lands upright, standing
          exactly on the point where the line stops rather than frozen mid-topple beside it. */
-      var tumble = rideTumble(t, p);
       var swing = rideSwing(t, p) * vw;
-      var depth = rideDepth(t, p);
 
       var w = place.h;                       // the renders are square
       var gx = place.cx + swing * (t < 1 ? t : 1), gy = place.cy;
@@ -941,15 +966,31 @@
       c.arc(gx, gy, R, 0, Math.PI * 2);
       c.fill();
 
-      c.save();
-      c.translate(gx, gy);
-      c.rotate(tumble);
-      c.scale(depth, depth);
-      /* Rotated about the figure, not about the frame. The renders put him at 46.7% of a
-         square canvas, so turning about the canvas centre would swing him round a point off
-         to his side — an orbit, not a tumble. */
-      c.drawImage(img, -w * FIG_CX, -place.h / 2, w, place.h);
-      c.restore();
+      /* THE MODEL IF IT IS THERE, THE SPRITE IF IT IS NOT, and the fallback is not a
+         formality: this is the only thing on the site that needs WebGL and a third-party
+         CDN. A blocked script, an old browser or a machine with no GPU leaves AQCoat3D
+         unready, and what a reader gets is the flatter version rather than a hole in the
+         page. Both are driven from the same position, so neither can drift off the line. */
+      var spin = rideSpin(t, p);
+      var three = window.AQCoat3D;
+      var drew3d = three && three.ready && three.draw({
+        vw: vw, vh: vh, cx: gx, cy: gy, h: place.h * 1.35,
+        rx: spin.rx, ry: spin.ry, rz: spin.rz
+      });
+      if (gl) gl.style.display = drew3d ? "block" : "none";
+
+      if (!drew3d) {
+        c.save();
+        c.translate(gx, gy);
+        c.rotate(rideTumble(t, p));
+        var depth = rideDepth(t, p);
+        c.scale(depth, depth);
+        /* Rotated about the figure, not about the frame. The renders put him at 46.7% of a
+           square canvas, so turning about the canvas centre would swing him round a point
+           off to his side — an orbit, not a tumble. */
+        c.drawImage(img, -w * FIG_CX, -place.h / 2, w, place.h);
+        c.restore();
+      }
 
       riderEl.setAttribute("data-on", "1");
       /* The blue head is his job now. The drawn line stays — it is the trail behind him. */
@@ -1210,6 +1251,10 @@
       requestAnimationFrame(measure);
     }
 
+    /* The model arrives after the first paint, so the frame on screen at that moment was
+       drawn with the sprite. Without this the reader keeps the flat one until they next
+       move the page. */
+    window.addEventListener("aq:coat3d", function () { drawn = -1; onScroll(); });
     if (!reduce) window.addEventListener("scroll", onScroll, { passive: true });
     window.addEventListener("resize", function () { drawn = -1; onScroll(); }, { passive: true });
 

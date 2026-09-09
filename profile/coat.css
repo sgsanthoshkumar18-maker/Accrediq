@@ -248,7 +248,17 @@
   display: none;
 }
 .coat-rider[data-on="1"] { display: block; }
-.coat-rider canvas { display: block; width: 100%; height: 100%; }
+/* BOTH CANVASES OCCUPY THE WHOLE LAYER, STACKED. The 2D one carries the pool of light
+   under him (and the sprite, when there is no WebGL); the WebGL one carries the model over
+   it. Left in flow they would sit one under the other and the glow would land a screen
+   below the figure it belongs to. */
+.coat-rider canvas {
+  position: absolute;
+  inset: 0;
+  display: block;
+  width: 100%;
+  height: 100%;
+}
 
 /* HE REPLACES THE HEAD, NOT THE LINE. The glowing dot that rode the end of the spine is
    exactly the job he has taken over, so it goes; the drawn line stays, because that is now
