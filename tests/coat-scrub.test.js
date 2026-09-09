@@ -215,9 +215,15 @@ ok(/var fits = \(cw \* FIG_MAX\) \/ \(iw \* FIG_W\);\s*\n\s*if \(s > fits\) s = 
    wide and his shoulder finished eight thousandths of a page from the headline. Held under
    half the stage he cannot cross the middle, so there is always clear ground on the far
    side whichever station he is at — at every aspect ratio, not just the ones measured. */
-ok(/FIG_MAX = 0\.50;/.test(JS), 'and he is never drawn wider than half the stage');
-ok(parseFloat(/FIG_MAX = (0\.\d+);/.exec(JS)[1]) <= 0.5,
-   'which is what keeps him off the copy column on a tall narrow window');
+/* NARROWED WHEN HE MOVED TO THE MIDDLE, and the arithmetic is the reason. Standing centre
+   he has a column on BOTH sides rather than one, so half the stage is no longer his: at
+   0.40 he spans 30% to 70% of the width, and the copy at 3.5vw + 24vw reaches 27.5%. */
+const FMAX = parseFloat(/FIG_MAX = (0\.\d+);/.exec(JS)[1]);
+const COPYW = parseFloat(/width: min\((\d+)vw/.exec(CSS)[1]);
+const COPYX = parseFloat(/left: max\(20px, ([\d.]+)vw\)/.exec(CSS)[1]);
+ok(FMAX <= 0.42, 'he is never drawn wider than about two fifths of the stage');
+ok((COPYX + COPYW) / 100 < 0.5 - FMAX / 2,
+   'so the copy column stops before he starts — measured, a 36px gutter at 1440x900');
 /* Fitted to HEIGHT, never "contained": contain in a half-width column fits to the width
    and leaves him small with air above and below — the opposite of what the column is for. */
 ok(/var s = \(ch \/ ih\) \* k;/.test(JS_CODE), 'the image is fitted to the stage height');
@@ -246,15 +252,22 @@ const TL = (() => {
     '\nreturn { PHASES, BLOCKS, DIP, stateAt, blockAlpha, blockSide, isCrossing };')();
 })();
 
-/* ---- right, then left, then right ----
-   The direction is the request, so it is asserted as a direction and not as six numbers:
-   renaming the stations must not be able to quietly flip it. */
+/* ---- he stands in the middle and the page turns around him ----
+   Travelling across the page was solving the wrong problem: it kept a mostly-static picture
+   interesting by moving it. Standing him still puts the attention on the man turning, and
+   brings the stages to him instead. */
 const XS = TL.PHASES.map((p) => p.x);
-ok(XS[0] > 0.5, 'he forms on the RIGHT');
-ok(Math.min.apply(null, XS) < 0.5, 'crosses to the left');
-ok(XS[XS.length - 1] > 0.5, 'and ends back on the right');
-eq(XS[0], XS[XS.length - 1], 'the two right-hand stations are the same place, not nearly');
-eq(TL.PHASES.filter((p, i) => TL.isCrossing(i)).length, 2, 'exactly two crossings');
+eq(XS.filter((x) => x !== 0.5).length, 0, 'every station is dead centre');
+eq(TL.PHASES.filter((p, i) => TL.isCrossing(i)).length, 2,
+   'with two turns between the three stages, so the rhythm survived the change');
+/* The turns are flagged now, not derived from the x. Reading them off the geometry was neat
+   and self-checking right up until every station became the same place, at which point it
+   silently reported that nothing ever moves. */
+ok(/turn: true/.test(JS) && /function isCrossing\(i\) \{ return i > 0 && !!PHASES\[i\]\.turn; \}/.test(JS_CODE),
+   'and a turn says so rather than being inferred from a position that no longer varies');
+/* Still a settle through each turn: take it to zero and he rotates like a display model on
+   a motor rather than like someone shifting their weight. */
+ok(TL.DIP > 0 && TL.DIP < 0.06, 'he sinks and lifts a little through a turn, but no longer arcs across');
 
 /* Monotonic, and it reaches the final pose. A table that ends at f 0.98 leaves the last
    nine frames of the render unseen, which is a whole second of animation nobody paid for. */
@@ -332,7 +345,7 @@ ok(shortestHold > 0.12, 'and the shortest pause is still a real pause');
    side. nth-child counting would have put the closing paragraph on his shoulder, which is
    why the side is derived from the station table instead. */
 eq(TL.BLOCKS.map((_, k) => TL.blockSide(k)), ['left', 'right', 'left'],
-   'left, right, left — always opposite the figure');
+   'left, right, left — each stage arrives opposite the last, so the page reads as turning');
 ok(/beats\[bi\]\.setAttribute\("data-side", blockSide\(bi\)\)/.test(JS_CODE),
    'and stamped onto the markup from that table, not written by hand');
 ok(/\.coat-beat\[data-side="left"\]/.test(CSS) && /\.coat-beat\[data-side="right"\]/.test(CSS),
@@ -428,8 +441,8 @@ eq(/\.coat-pin \{[\s\S]*?height: 100vh;/.test(CSS) && /r\.height - window\.inner
    the full-bleed canvas: on a 2560px monitor the column's right edge is at about 76% of the
    glass and he stands at 72% of it, so the words landed on his shoulder on exactly the
    widest screens. Both now measure from the same edge. */
-ok(/\.coat-beat \{[\s\S]*?width: min\(34vw, 460px\);/.test(CSS), 'the copy is sized in viewport units');
-ok(/left: max\(28px, 6vw\)/.test(CSS) && /right: max\(28px, 6vw\)/.test(CSS),
+ok(/\.coat-beat \{[\s\S]*?width: min\(\d+vw, \d+px\);/.test(CSS), 'the copy is sized in viewport units');
+ok(/left: max\(20px, 3\.5vw\)/.test(CSS) && /right: max\(20px, 3\.5vw\)/.test(CSS),
    'and inset from the same edge the figure is placed against');
 eq(/coat-copy[\s\S]{0,120}class="wrap"/.test(HTML), false,
    'not nested in the centred column, which is a different coordinate system');
@@ -512,7 +525,7 @@ ok(/var read = vh \* 0\.45;/.test(FMOTION), 'and founder-motion.js fills the spi
    centre — and only then moves it. There is no crossfade to hide a mismatch behind. */
 const VW = 1440, VH = 900;
 const sec = RIDER.ridePlace(0, VW, VH, 713, 405);
-const h0 = Math.min(VH * 1.20, (VW * 0.50) / 0.62);
+const h0 = Math.min(VH * 1.20, (VW * FMAX) / 0.62);
 eq(Math.round(sec.h), Math.round(h0), 'at handover he is exactly the size the section had him');
 /* The last station is where the phase table leaves him, not a number typed twice. */
 const lastX = TL.PHASES[TL.PHASES.length - 1].x;

@@ -89,7 +89,11 @@
      middle of the stage, so at either station there is always half a page of clear ground
      on the far side for the words. It costs nothing on ordinary screens: at 1440x900 the
      deepest push-in draws him 0.465 wide and never reaches this at all. */
-  var FIG_MAX = 0.50;
+  /* Narrowed from 0.50 when he moved to the centre. Standing in the middle he has copy on
+     BOTH sides rather than one, so half the stage is no longer his to fill: at 0.40 he
+     spans 30% to 70% of the width and the columns either side of him stay clear. Measured
+     at 1440x900 there is a 36px gutter, and it only opens up on anything wider. */
+  var FIG_MAX = 0.40;
 
   /* Ease-out. A linear push-in reads as mechanical: it arrives at the close-up at the same
      speed it left the wide, and the shot never appears to settle. */
@@ -126,23 +130,37 @@
      releases and the page moves on to the next section. Against a 480vh travel that is
      about 82vh of scrolling for each of the first two pauses and 96vh for the closing one,
      which is where it was before for the first two — only the tail has been cut. */
-  var PHASES = [
-    /* ends at   x (0 left .. 1 right)   sequence progress   what happens */
-    { to: 0.10, x: 0.72, f: 0.06 },   // forms out of smoke on the RIGHT
-    { to: 0.27, x: 0.72, f: 0.14 },   // HOLD — the first stage, barely turning
-    { to: 0.45, x: 0.28, f: 0.30 },   // crossing left: the body arrives mid-flight
-    { to: 0.62, x: 0.28, f: 0.40 },   // HOLD — the second stage
-    { to: 0.80, x: 0.72, f: 0.52 },   // crossing back right: the head arrives mid-flight
-    { to: 1.01, x: 0.72, f: 1.00 }    // HOLD — the closing stage, completing the turn
-  ];
-  /* A crossing is any phase that ends somewhere other than where the one before it did.
-     Derived rather than flagged: a hand-written "moving: true" is one edit away from
-     disagreeing with the x it sits next to. */
-  function isCrossing(i) { return i > 0 && PHASES[i].x !== PHASES[i - 1].x; }
+  /* HE NO LONGER CROSSES THE PAGE. HE STANDS IN THE MIDDLE AND THE PAGE TURNS AROUND HIM.
+     Travelling was the right answer for a while, but it was solving the wrong problem: it
+     kept a mostly-static picture interesting by moving it. Standing him still and bringing
+     the stages to him puts the attention on the one thing that should hold it — the man
+     turning — and it is what every product page built this way does, for that reason.
 
-  /* How far he dips through a crossing, as a fraction of the stage height. Down and across
-     and back up, so it reads as a diagonal rather than a slide along a rail. */
-  var DIP = 0.11;
+     So the stations are all centre now, and what used to be a crossing is a TURN: he
+     rotates, the page is quiet, and then the next stage arrives from the opposite side to
+     the last. The rhythm is deliberately untouched — arrive, hold, turn, hold, turn, hold —
+     because the pacing is the part that took three rounds to get right. Only the reason for
+     the movement has changed. */
+  var PHASES = [
+    /* ends at   x (all centre)   sequence progress   turning?   what happens */
+    { to: 0.10, x: 0.5, f: 0.06, turn: false },   // forms out of smoke, centre stage
+    { to: 0.27, x: 0.5, f: 0.14, turn: false },   // HOLD — clinical practice
+    { to: 0.45, x: 0.5, f: 0.30, turn: true },    // TURN: the body arrives mid-rotation
+    { to: 0.62, x: 0.5, f: 0.40, turn: false },   // HOLD — research and peer review
+    { to: 0.80, x: 0.5, f: 0.52, turn: true },    // TURN: the head arrives mid-rotation
+    { to: 1.01, x: 0.5, f: 1.00, turn: false }    // HOLD — quality and accreditation
+  ];
+  /* Flagged now rather than derived. It used to be read off the x — a phase that ended
+     somewhere else was a crossing — which was self-checking and neat, and stopped meaning
+     anything the moment every station became the same place. */
+  function isCrossing(i) { return i > 0 && !!PHASES[i].turn; }
+
+  /* A SETTLE, NOT A DIP. It used to be the drop through the middle of a crossing, which is
+     what made the travel read as diagonal rather than as sliding along a rail. There is no
+     crossing to arc through any more, so it is now a small sink and lift through each turn —
+     just enough weight that the rotation is something he does rather than something done to
+     him. Take it to zero and he turns like a display model on a motor. */
+  var DIP = 0.035;
 
   /* Ease in and out. A crossing that starts and stops abruptly reads as a jump cut; one
      that accelerates away and decelerates in reads as travel. */
@@ -205,10 +223,13 @@
   /* Which side of the page each block takes: the side he is NOT on while it is up.
      Read from the table rather than written into the markup, so moving a station moves the
      words with it instead of leaving them stranded on top of him. */
-  function blockSide(i) {
-    var mid = (BLOCKS[i][1] + BLOCKS[i][2]) / 2;
-    return stateAt(mid).x > 0.5 ? "left" : "right";
-  }
+  /* WHICH SIDE EACH STAGE ARRIVES ON. It used to be read off the station table — the side
+     he was NOT standing on — which was the right answer while he crossed the page and is no
+     answer at all now he is always in the middle. Alternating is the honest replacement,
+     and it is a real property of the sequence rather than a fact about geometry that no
+     longer exists: each stage arrives opposite the last, so the page reads as turning
+     around him. */
+  function blockSide(i) { return i % 2 === 0 ? "left" : "right"; }
 
 
   /* ===================== THE RIDER: HE BECOMES THE TIMELINE =====================

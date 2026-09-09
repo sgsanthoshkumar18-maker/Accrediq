@@ -68,7 +68,7 @@ function start(canvas) {
   /* Filmic tone mapping, because the alternative is what he already hit once in Blender:
      a white coat rendering as grey mud. */
   renderer.toneMapping = THREE.ACESFilmicToneMapping;
-  renderer.toneMappingExposure = 1.15;
+  renderer.toneMappingExposure = 1.28;
 
   scene = new THREE.Scene();
   cam = new THREE.PerspectiveCamera(35, 1, 1, 4000);
@@ -82,14 +82,22 @@ function start(canvas) {
   var pmrem = new THREE.PMREMGenerator(renderer);
   scene.environment = pmrem.fromScene(new RoomEnvironment(), 0.04).texture;
 
-  scene.add(new THREE.AmbientLight(0xffffff, 0.5));
-  var key = new THREE.DirectionalLight(0xffffff, 2.0);
+  /* LIT TO MATCH THE RENDERS, AND THAT IS A MEASUREMENT RATHER THAN A TASTE.
+     The model and the image sequence are the same man, and the page shows one turning into
+     the other — so if they are not lit alike, the handover is a character change. Sampled
+     front-on against frame 419 in three bands of the figure own height, the first attempt
+     came out head [131,102,107] against [132,107,93] — the hair and skin already agreed,
+     confirming it is the same character — but the torso read [109,131,174] against
+     [188,190,191]. The white coat was going blue-grey, because a rim light at 1.4 is a
+     lot of blue to put on white fabric and the fill underneath it was too low to answer.
+     So: more ambient, a brighter key, and the rim pulled right back to a suggestion. */
+  scene.add(new THREE.AmbientLight(0xffffff, 1.45));
+  var key = new THREE.DirectionalLight(0xffffff, 2.3);
   key.position.set(2, 3, 4);
   scene.add(key);
-  /* The blue rim from the section carries on down the page: it is the same aura that made
-     the white coat readable against a white background, and it is what ties the falling
-     figure to the section he just came out of. */
-  var rim = new THREE.DirectionalLight(0x9ab4ff, 1.4);
+  /* The blue rim from the section still carries down the page — it is the same aura that
+     made a white coat readable on a white background — but as a rim now, not a wash. */
+  var rim = new THREE.DirectionalLight(0x9ab4ff, 0.5);
   rim.position.set(-3, 1.5, -2);
   scene.add(rim);
 

@@ -123,7 +123,9 @@
   position: absolute;
   top: 50%;
   transform: translateY(-50%);
-  width: min(34vw, 460px);
+  /* Narrowed when he moved to the centre: he now has a column on BOTH sides of him
+     rather than one, so each gets less. */
+  width: min(24vw, 340px);
   opacity: 0;
   pointer-events: none;
   will-change: opacity;
@@ -132,8 +134,8 @@
    chosen by nth-child: he ends the section back where he started, so the first and last
    blocks share a side, and counting elements would put the closing paragraph on top of
    him. */
-.coat-beat[data-side="left"]  { left: max(28px, 6vw);  text-align: left; }
-.coat-beat[data-side="right"] { right: max(28px, 6vw); text-align: right; }
+.coat-beat[data-side="left"]  { left: max(20px, 3.5vw);  text-align: left; }
+.coat-beat[data-side="right"] { right: max(20px, 3.5vw); text-align: right; }
 
 .coat-beat .k {
   display: block;
