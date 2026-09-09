@@ -208,9 +208,14 @@ api.draw = function (s) {
      moments the renders handed over at, so the burst of light already keyed to each one
      still lands on it. Omit f and he is simply whole, which is what the fall wants. */
   var f = s.f == null ? 1 : s.f;
-  setGroup(groups.coat, 1);
-  setGroup(groups.body, ramp(f, BODY_AT, BODY_FADE));
-  setGroup(groups.head, ramp(f, HEAD_AT, HEAD_FADE));
+  /* A FADE OVER THE WHOLE FIGURE, multiplied through the assembly rather than replacing
+     it. He arrives by fading up now — there is no smoke to uncover him — and because it is
+     a plain function of scroll position, scrolling back towards the top fades him out
+     again without anything having to run in reverse. */
+  var alpha = s.alpha == null ? 1 : (s.alpha < 0 ? 0 : s.alpha > 1 ? 1 : s.alpha);
+  setGroup(groups.coat, alpha);
+  setGroup(groups.body, ramp(f, BODY_AT, BODY_FADE) * alpha);
+  setGroup(groups.head, ramp(f, HEAD_AT, HEAD_FADE) * alpha);
 
   pivot.position.set(s.cx - s.vw / 2, s.vh / 2 - s.cy, 0);
   var k = s.h / modelH;

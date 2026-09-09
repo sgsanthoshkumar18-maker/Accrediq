@@ -524,69 +524,6 @@ ok(/dir = beats\[i\]\.getAttribute\("data-side"\) === "left" \? -1 : 1/.test(JS_
    Isolating the COAT instead — the brightest quarter of the figure's own pixels, which does
    not care about pose or framing — gives [205,205,205] averaged over five renders. The
    model measured [228,233,241]: too BRIGHT and cool, the opposite of the bad reading. */
-/* ---- THE GUST ----
-   The coat does not fade up any more. It is at full opacity from the first pixel of the
-   section, and a bank of smoke is blown across it and torn apart — which is what actually
-   reveals him. That is the difference between a reveal and a cross-fade, and it is why the
-   smoke is drawn OVER him.
-
-   IT IS A WIND, NOT A RING. What it replaces pushed every puff radially outward from his
-   middle, which is a shape, and a symmetrical one — it read as a smoke ring with a man in
-   the hole. A gust has a direction and no shape: the puffs each carry their own speed, so
-   the bank shears as it crosses rather than sliding over as one sheet.
-
-   Measured on the live page at 1440x900: 3373 covered pixels at alpha 183 at the top,
-   spreading to 3804 by 0.02 as it tears across, down to 27 alpha by 0.08, gone by 0.11 —
-   while the coat holds 695 pixels underneath and grows steadily to 946 as the push-in
-   carries on. Covered, uncovered, and then the other effects follow. */
-const GUST = (() => {
-  const a = JS.indexOf('  /* ===================== THE GUST');
-  const b = JS.indexOf('  function drawDust(');
-  if (a < 0 || b < a) throw new Error('gust block not found in coat.js');
-  const consts = 'var ARRIVE = ' + TL.PHASES[0].to + ';';
-  return new Function(consts + JS.slice(a, b) + '\nreturn { gustAt, GUSTS };')();
-})();
-eq(GUST.gustAt(0), 1, 'the smoke is at full strength at the very top');
-eq(GUST.gustAt(TL.PHASES[0].to), 0, 'and completely gone by the end of the arrival');
-eq(GUST.gustAt(0.5), 0, 'and stays gone');
-/* Monotonic and continuous: smoke that thickens again halfway through reads as a mistake. */
-let gustFalls = true, gustStep = 0, prevG = GUST.gustAt(0);
-for (let i = 1; i <= 4000; i++) {
-  const v = GUST.gustAt(i / 4000);
-  if (v > prevG + 1e-9) gustFalls = false;
-  gustStep = Math.max(gustStep, Math.abs(v - prevG));
-  prevG = v;
-}
-ok(gustFalls, 'it only ever thins, never thickens again');
-ok(gustStep < 0.01, 'and thins continuously rather than snapping away');
-/* Squared, not linear: a gust should be gone almost before the reader is sure it was
-   there. At the halfway point of the arrival it is already down to a quarter. */
-ok(GUST.gustAt(TL.PHASES[0].to / 2) < 0.3, 'and clears fast, the way a gust does');
-ok(GUST.GUSTS > 100, 'with enough puffs to be a bank rather than a handful of blobs');
-
-/* Each puff on its own wind speed — that spread IS the effect. Give them all the same and
-   it is a curtain being drawn rather than smoke being torn apart. */
-ok(/var speed = 0\.9 \+ Math\.abs\(nz\(k \+ 1\)\) \* 2\.4;/.test(JS_CODE),
-   'every puff carries its own speed, so the bank shears as it crosses');
-eq(/spread = 0\.20 \+ \(1 - strength\)/.test(JS_CODE), false,
-   'and nothing pushes the smoke out radially any more, which is what made it a ring');
-
-/* DRAWN OVER HIM, WHICH IS THE WHOLE POINT. Three sibling canvases with no z-index between
-   them, so DOM order is stacking order: glow under, model in the middle, gust on top.
-   Smoke behind the subject reveals nothing. */
-ok(/fxCv\.className = "coat-rider-fx";/.test(JS_CODE), 'the gust has its own layer');
-ok(JS_CODE.indexOf('gl.className = "coat-rider-gl"') < JS_CODE.indexOf('fxCv.className = "coat-rider-fx"'),
-   'appended after the model, so it paints over him');
-
-/* AND HE IS REVEALED AT A SIZE WORTH LOOKING AT. This was 0.22 — a speck at the back of the
-   stage — which was right when nothing else happened during the arrival. Measured against
-   the gust it gave 95 painted pixels at the moment the smoke was thickest: there was
-   nothing there to uncover. */
-const ZT = parseFloat(/ZOOM_TINY = (0\.\d+);/.exec(JS)[1]);
-const ZF = parseFloat(/ZOOM_FROM = (0\.\d+)/.exec(JS)[1]);
-ok(ZT > 0.6, 'the coat is revealed near its full size, not as a distant speck');
-ok(ZT < ZF, 'with a little left to settle, so the push-in still has somewhere to go');
-
 /* ---- ONE MODEL FOR THE WHOLE JOURNEY ----
    He could see the man change when the fall began, and he was right to refuse it. The
    section rendered 420 frames and only the fall used the model, so two figures lit by two
@@ -606,9 +543,9 @@ ok(/function classify/.test(T3) && /groups\.head\.push/.test(T3) && /groups\.coa
    nothing. Where a piece sits and how wide it is mean everything — the coat is the widest
    thing on a person, the head is everything above the collar. */
 ok(/bottom > 0\.70/.test(T3) && /width > 0\.40/.test(T3), 'sorted by geometry rather than by exporter names');
-ok(/setGroup\(groups\.body, ramp\(f, BODY_AT, BODY_FADE\)\)/.test(T3) &&
-   /setGroup\(groups\.head, ramp\(f, HEAD_AT, HEAD_FADE\)\)/.test(T3),
-   'so the model performs the assembly the renders used to');
+ok(/setGroup\(groups\.body, ramp\(f, BODY_AT, BODY_FADE\) \* alpha\)/.test(T3) &&
+   /setGroup\(groups\.head, ramp\(f, HEAD_AT, HEAD_FADE\) \* alpha\)/.test(T3),
+   'so the model performs the assembly the renders used to, scaled by the arrival fade');
 /* The same two moments the renders handed over at, so the burst of light already keyed to
    each arrival still lands on it. */
 ok(/var BODY_AT = 90 \/ 420/.test(T3) && /var HEAD_AT = 180 \/ 420/.test(T3),
@@ -975,47 +912,6 @@ eq(/--coat-ink:/.test(CSS), false, 'nor a private text palette — the copy foll
 ok(/\.coat-beat h2 \{[\s\S]*?color: var\(--fg\);/.test(CSS), 'the headline states var(--fg)');
 ok(/\.coat-beat p \{[\s\S]*?color: var\(--fg-muted\)/.test(CSS), 'and the body copy var(--fg-muted)');
 
-/* ---- THE GUST TAKES THE COLOUR OF THE PAGE ----
-   On the dark theme a pale gust stopped being smoke and became a lamp — a bright cloud
-   glowing in front of a black page, which is what he saw. The rule is not "make it dark";
-   it is that smoke conceals by being the SAME as whatever is behind it. Near-white smoke
-   hides a grey coat on a white page and dissolves into the background as it thins; on a
-   black page the coat is the bright thing, so the cloud has to be near-black to do the same
-   job in the other direction.
-
-   Measured live at 1440x900, sampling the painted gust in both themes: light 239 luma
-   against a page of 255, dark 11 against a page of 0. A shade off the ground either way —
-   enough body to read as a mass, not enough to punch a hole in the page. Coverage is
-   identical at 3108 pixels in both, so the reveal itself is untouched. */
-const SMOKE_LIGHT = /^\s*--coat-smoke: (#[0-9A-Fa-f]{6});/m.exec(CSS);
-ok(SMOKE_LIGHT, 'the light theme names a smoke colour');
-const SMOKE_DARK = /:root\[data-theme="dark"\] \.coat \{[\s\S]*?--coat-smoke: (#[0-9A-Fa-f]{6});/.exec(CSS);
-ok(SMOKE_DARK, 'and the dark theme names its own');
-const luma = (hex) => {
-  const v = parseInt(hex.slice(1), 16);
-  return 0.2126 * ((v >> 16) & 255) + 0.7152 * ((v >> 8) & 255) + 0.0722 * (v & 255);
-};
-ok(luma(SMOKE_LIGHT[1]) > 200, 'pale on the light theme, where the page is white');
-ok(luma(SMOKE_DARK[1]) < 40, 'and near-black on the dark one, where the page is black');
-/* A shade off the ground rather than exactly it: pure black would punch a flat hole in the
-   starfield instead of drifting over it. */
-ok(luma(SMOKE_DARK[1]) > 2, 'but not pure black, or it has no body against the starfield');
-
-/* Read from CSS like every other theme value, and re-read when the theme changes — so
-   switching themes with the section on screen changes the smoke with it. */
-ok(/skin\.smoke = toRgb\(\(cs\.getPropertyValue\("--coat-smoke"\)/.test(JS_CODE),
-   'the script reads it rather than carrying a colour of its own');
-ok(/var pale = moteSprite\(skin\.smoke\);/.test(JS_CODE), 'and the gust is drawn in it');
-eq(/moteSprite\("236,240,252"\)/.test(JS_CODE), false, 'with no literal left behind');
-
-/* THE SPRITE CACHE HAD TO GROW A KEY. It held one sprite and rebuilt whenever it was asked
-   for a different colour, which was free while everything used the aura — and stopped being
-   free the moment the gust took the page's colour instead, because during the arrival both
-   are drawn in the same frame. A one-slot cache would have rebuilt the gradient twice per
-   scroll frame for ever. */
-ok(/var moteCache = \{\};/.test(JS_CODE), 'the puff sprite is cached per colour');
-eq(/moteKey/.test(JS_CODE), false, 'not in a single slot that two colours would thrash');
-
 /* ---- the rim is load-bearing on light ----
    MEASURED, and this is the whole argument: a white lab coat on the light theme's white
    page is 1.04:1. Not subtle — invisible. The blue rim is the only thing drawing the
@@ -1083,14 +979,57 @@ ok(/moteSprite/.test(JS_CODE),
    read as a corrupted JPEG, not a formation. Nothing here may reintroduce one. */
 eq(/revealField|buildMask|createImageData/.test(JS_CODE), false,
    'no per-pixel threshold mask — that is what produced the blocky artefact');
-/* A GUST, and only a gust. The radial version is gone rather than kept alongside: a
-   visitor without WebGL should get a plainer version of this page, not an older one, and
-   leaving the ring in the fallback would have meant exactly that. */
-ok(/function gustAt/.test(JS_CODE), 'he is uncovered by a gust of smoke instead');
-eq(/function smokeAt/.test(JS_CODE), false, 'and the radial ring it replaced is gone, not merely unused');
-eq(/function drawSmoke/.test(JS_CODE), false, 'with nothing left drawing it');
-ok(/if \(!reduce\) drawGust\(ctx, acx, acy, aR, p\);/.test(JS_CODE),
-   'and the sprite fallback gets the same gust, over the figure rather than around it');
+/* ---- HE JUST FADES IN ----
+   There were two smoke effects here before this one: a radial puff that read as a ring with
+   a man standing in the hole, and then a gust built to replace it. The gust was a better
+   gust — but it was still an effect the rest of the site does not have, and on the dark
+   theme it read as a lamp rather than as weather. Both are gone. He fades up, and that is
+   the whole arrival.
+
+   THE REVERSE IS NOT IMPLEMENTED ANYWHERE, and that is the point of doing it this way.
+   Opacity is a function of scroll position and nothing else, so scrolling back towards the
+   top fades him out on exactly the curve he faded in on — it cannot behave otherwise.
+   Measured live at 1440x900, painted alpha at the same five positions going down and then
+   coming back up: 0, 116, 206, 246, 252 — and 252, 246, 206, 116, 0. The same numbers in
+   the same places. */
+eq(/function gustAt/.test(JS_CODE), false, 'no gust');
+eq(/function drawGust/.test(JS_CODE), false, 'nothing drawing one');
+eq(/function smokeAt/.test(JS_CODE), false, 'and no trace of the radial ring before it');
+eq(/function drawSmoke/.test(JS_CODE), false, 'either');
+eq(/coat-rider-fx/.test(JS_CODE), false, 'and the layer the smoke needed is gone with it');
+eq(/coat-smoke/.test(CSS), false, 'along with the theme colour it read');
+
+/* The arrival is now exactly one thing: how solid he is. */
+const FADE = (() => {
+  const m = /function figureAlpha\(p\) \{[\s\S]*?\n  \}/.exec(JS);
+  if (!m) throw new Error('figureAlpha not found');
+  return new Function('var ARRIVE = ' + TL.PHASES[0].to + ';' +
+    'function ease(t){return 1 - Math.pow(1 - t, 2.2);}' + m[0] + '\nreturn figureAlpha;')();
+})();
+eq(FADE(0), 0, 'invisible at the very top of the section');
+eq(FADE(TL.PHASES[0].to), 1, 'and fully solid by the end of the arrival');
+eq(FADE(0.9), 1, 'and stays solid');
+/* Monotonic and continuous, or a fade flickers. */
+let fadeRises = true, fadeStep = 0, prevFade = FADE(0);
+for (let i = 1; i <= 4000; i++) {
+  const v = FADE(i / 4000);
+  if (v < prevFade - 1e-9) fadeRises = false;
+  fadeStep = Math.max(fadeStep, Math.abs(v - prevFade));
+  prevFade = v;
+}
+ok(fadeRises, 'it only ever grows, never dips back');
+ok(fadeStep < 0.01, 'and grows continuously rather than stepping');
+/* Eased, not linear: a straight ramp hits full strength while the eye still reads it as
+   arriving, and then stops dead. */
+ok(FADE(TL.PHASES[0].to / 2) > 0.5, 'eased, so most of the fade is done early and it settles');
+
+/* The model is faded as a whole, multiplied THROUGH the assembly rather than replacing it —
+   so the coat can still arrive before the body and the head while all three fade up. */
+ok(/alpha: reduce \? 1 : figureAlpha\(p\)/.test(JS_CODE), 'the section passes the fade to the model');
+ok(/setGroup\(groups\.body, ramp\(f, BODY_AT, BODY_FADE\) \* alpha\)/.test(T3),
+   'and it multiplies the assembly rather than overriding it');
+/* The air around him arrives when he does, rather than hanging in an empty frame. */
+ok(/skin\.rgb, lift \* fa2, p, "back"/.test(JS_CODE), 'the dust fades in with him');
 ok(/function zoomAt/.test(JS_CODE), 'growing from a speck, in two zoom stages');
 ok(/ZOOM_TINY = 0\.\d+/.test(JS), 'with a declared starting size');
 /* Only opacity and scale are in play, both continuous, so there is nothing to pixelate. */

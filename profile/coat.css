@@ -29,13 +29,6 @@
   --coat-halo-alpha: 0.55;   /* the rim has to carry the silhouette on its own */
   --coat-dust-alpha: 0.42;   /* dust on white needs to be darker and sparser to read */
   --coat-spill: 0.10;        /* barely any: white fabric tints far too easily */
-
-  /* THE GUST TAKES THE COLOUR OF THE PAGE, NOT A COLOUR OF ITS OWN, and that is the whole
-     rule. Smoke hides him by being the same as whatever is behind him: on a white page
-     near-white smoke covers a grey coat and dissolves into the background as it thins.
-     Paint it white on the DARK theme and it stops being smoke — it becomes a lamp, which
-     is exactly what it looked like. */
-  --coat-smoke: #ECF0FC;
 }
 
 /* DARK THEME — the page is nearly black, the coat reads on its own, and the rim can go
@@ -46,11 +39,6 @@
   --coat-halo-alpha: 0.34;
   --coat-dust-alpha: 1;
   --coat-spill: 0.26;
-  /* Near-black, a shade off the page rather than pure, so it still has body against the
-     starfield instead of punching a flat hole in it. The coat is the bright thing here, so
-     dark cloud over it is what conceals — the same job the pale one does on white, done in
-     the other direction. */
-  --coat-smoke: #0A0E1A;
 }
 
 /* ---- the runway ----
