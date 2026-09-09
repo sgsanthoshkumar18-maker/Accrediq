@@ -14,7 +14,15 @@ window.FOUNDER = {
   pronouns: "He/Him",
   location: "Greater Chennai Area, Tamil Nadu, India",
   linkedin: "https://www.linkedin.com/in/dr-santhoshkumar-sg-pharm-d-rph-420333260",
-  email: "s.g.santhoshkumar18@gmail.com",
+  /* THE PUBLIC CONTACT, WHICH IS NOT HIS PERSONAL MAILBOX AND SHOULD NOT BE.
+     This drives the Email button in the hero. It was his own address, published on a page
+     that is indexed and scrapeable — which is a permanent spam liability the moment a
+     harvester finds it, and there is no taking an address back once it is out.
+     The shared support mailbox is also the honest answer to "who reads this": a founder
+     inbox that goes quiet when he is on a ward is worse for a hospital than a support one.
+     His personal address is still the OWNER identity in billing-config.js — that is sign-in,
+     not correspondence, and the two must not be confused. */
+  email: "support.aqcredix@gmail.com",
 
   roleLine: "Infectious Disease Clinical Pharmacologist · Fellow of ISQua · Founder & CEO, AQcredix",
   affiliation: "Department of Clinical Pharmacy, The Voluntary Health Services Multispecialty Hospital, Chennai",

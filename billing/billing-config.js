@@ -136,6 +136,9 @@ window.AQ_BILLING = {
   razorpayEnabled: true,
   razorpayKeyId: "rzp_live_TSMzIsNBM7wlQ6",
 
-  /* Support contact shown on the payment screen when something goes wrong. */
-  supportEmail: "s.g.santhoshkumar18@gmail.com"
+  /* Support contact shown on the payment screen when something goes wrong.
+     Deliberately NOT ownerEmails above. That list is who may sign in as the owner and
+     must stay his personal address; this is who a stranger writes to when their card is
+     declined. Same person today, different jobs, and only one of them belongs in public. */
+  supportEmail: "support.aqcredix@gmail.com"
 };
