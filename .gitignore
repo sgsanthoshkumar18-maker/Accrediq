@@ -15,3 +15,7 @@ videos/media/
 # it is pushed. Promote a sample by moving it to a real page name, never by
 # letting it reach production under its working name.
 _*.html
+
+# Local-only sample pages: dev comparisons, never part of the site.
+_smoke-sample.html
+_*.sample.html

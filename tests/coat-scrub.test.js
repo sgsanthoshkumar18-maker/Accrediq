@@ -524,6 +524,69 @@ ok(/dir = beats\[i\]\.getAttribute\("data-side"\) === "left" \? -1 : 1/.test(JS_
    Isolating the COAT instead — the brightest quarter of the figure's own pixels, which does
    not care about pose or framing — gives [205,205,205] averaged over five renders. The
    model measured [228,233,241]: too BRIGHT and cool, the opposite of the bad reading. */
+/* ---- THE GUST ----
+   The coat does not fade up any more. It is at full opacity from the first pixel of the
+   section, and a bank of smoke is blown across it and torn apart — which is what actually
+   reveals him. That is the difference between a reveal and a cross-fade, and it is why the
+   smoke is drawn OVER him.
+
+   IT IS A WIND, NOT A RING. What it replaces pushed every puff radially outward from his
+   middle, which is a shape, and a symmetrical one — it read as a smoke ring with a man in
+   the hole. A gust has a direction and no shape: the puffs each carry their own speed, so
+   the bank shears as it crosses rather than sliding over as one sheet.
+
+   Measured on the live page at 1440x900: 3373 covered pixels at alpha 183 at the top,
+   spreading to 3804 by 0.02 as it tears across, down to 27 alpha by 0.08, gone by 0.11 —
+   while the coat holds 695 pixels underneath and grows steadily to 946 as the push-in
+   carries on. Covered, uncovered, and then the other effects follow. */
+const GUST = (() => {
+  const a = JS.indexOf('  /* ===================== THE GUST');
+  const b = JS.indexOf('  function drawDust(');
+  if (a < 0 || b < a) throw new Error('gust block not found in coat.js');
+  const consts = 'var ARRIVE = ' + TL.PHASES[0].to + ';';
+  return new Function(consts + JS.slice(a, b) + '\nreturn { gustAt, GUSTS };')();
+})();
+eq(GUST.gustAt(0), 1, 'the smoke is at full strength at the very top');
+eq(GUST.gustAt(TL.PHASES[0].to), 0, 'and completely gone by the end of the arrival');
+eq(GUST.gustAt(0.5), 0, 'and stays gone');
+/* Monotonic and continuous: smoke that thickens again halfway through reads as a mistake. */
+let gustFalls = true, gustStep = 0, prevG = GUST.gustAt(0);
+for (let i = 1; i <= 4000; i++) {
+  const v = GUST.gustAt(i / 4000);
+  if (v > prevG + 1e-9) gustFalls = false;
+  gustStep = Math.max(gustStep, Math.abs(v - prevG));
+  prevG = v;
+}
+ok(gustFalls, 'it only ever thins, never thickens again');
+ok(gustStep < 0.01, 'and thins continuously rather than snapping away');
+/* Squared, not linear: a gust should be gone almost before the reader is sure it was
+   there. At the halfway point of the arrival it is already down to a quarter. */
+ok(GUST.gustAt(TL.PHASES[0].to / 2) < 0.3, 'and clears fast, the way a gust does');
+ok(GUST.GUSTS > 100, 'with enough puffs to be a bank rather than a handful of blobs');
+
+/* Each puff on its own wind speed — that spread IS the effect. Give them all the same and
+   it is a curtain being drawn rather than smoke being torn apart. */
+ok(/var speed = 0\.9 \+ Math\.abs\(nz\(k \+ 1\)\) \* 2\.4;/.test(JS_CODE),
+   'every puff carries its own speed, so the bank shears as it crosses');
+eq(/spread = 0\.20 \+ \(1 - strength\)/.test(JS_CODE), false,
+   'and nothing pushes the smoke out radially any more, which is what made it a ring');
+
+/* DRAWN OVER HIM, WHICH IS THE WHOLE POINT. Three sibling canvases with no z-index between
+   them, so DOM order is stacking order: glow under, model in the middle, gust on top.
+   Smoke behind the subject reveals nothing. */
+ok(/fxCv\.className = "coat-rider-fx";/.test(JS_CODE), 'the gust has its own layer');
+ok(JS_CODE.indexOf('gl.className = "coat-rider-gl"') < JS_CODE.indexOf('fxCv.className = "coat-rider-fx"'),
+   'appended after the model, so it paints over him');
+
+/* AND HE IS REVEALED AT A SIZE WORTH LOOKING AT. This was 0.22 — a speck at the back of the
+   stage — which was right when nothing else happened during the arrival. Measured against
+   the gust it gave 95 painted pixels at the moment the smoke was thickest: there was
+   nothing there to uncover. */
+const ZT = parseFloat(/ZOOM_TINY = (0\.\d+);/.exec(JS)[1]);
+const ZF = parseFloat(/ZOOM_FROM = (0\.\d+)/.exec(JS)[1]);
+ok(ZT > 0.6, 'the coat is revealed near its full size, not as a distant speck');
+ok(ZT < ZF, 'with a little left to settle, so the push-in still has somewhere to go');
+
 /* ---- ONE MODEL FOR THE WHOLE JOURNEY ----
    He could see the man change when the fall began, and he was right to refuse it. The
    section rendered 420 frames and only the fall used the model, so two figures lit by two
@@ -948,7 +1011,14 @@ ok(/moteSprite/.test(JS_CODE),
    read as a corrupted JPEG, not a formation. Nothing here may reintroduce one. */
 eq(/revealField|buildMask|createImageData/.test(JS_CODE), false,
    'no per-pixel threshold mask — that is what produced the blocky artefact');
-ok(/function smokeAt/.test(JS_CODE), 'he arrives out of a puff of smoke instead');
+/* A GUST, and only a gust. The radial version is gone rather than kept alongside: a
+   visitor without WebGL should get a plainer version of this page, not an older one, and
+   leaving the ring in the fallback would have meant exactly that. */
+ok(/function gustAt/.test(JS_CODE), 'he is uncovered by a gust of smoke instead');
+eq(/function smokeAt/.test(JS_CODE), false, 'and the radial ring it replaced is gone, not merely unused');
+eq(/function drawSmoke/.test(JS_CODE), false, 'with nothing left drawing it');
+ok(/if \(!reduce\) drawGust\(ctx, acx, acy, aR, p\);/.test(JS_CODE),
+   'and the sprite fallback gets the same gust, over the figure rather than around it');
 ok(/function zoomAt/.test(JS_CODE), 'growing from a speck, in two zoom stages');
 ok(/ZOOM_TINY = 0\.\d+/.test(JS), 'with a declared starting size');
 /* Only opacity and scale are in play, both continuous, so there is nothing to pixelate. */

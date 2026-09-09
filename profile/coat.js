@@ -597,6 +597,63 @@
     return moteCv;
   }
 
+  /* ===================== THE GUST =====================
+   *
+   * The coat does not fade up any more. It is there, at full opacity, from the very first
+   * pixel of the section — and a bank of smoke is blown across it and torn apart, which is
+   * what actually reveals him. That is the difference between a reveal and a cross-fade,
+   * and it is why this is drawn OVER him rather than behind.
+   *
+   * IT IS A WIND, NOT A RING. The version this replaces pushed every puff radially outward
+   * from his middle, which is a shape — and a symmetrical one, so it read as a smoke ring
+   * with a man in the hole. A gust has a direction and no shape at all: the puffs come in
+   * from one side, each at its own speed, so the bank SHEARS as it crosses instead of
+   * sliding over as one sheet. The spread of speeds is the whole effect; give them all the
+   * same one and it is a curtain.
+   *
+   * Measured on the sample page: 2432 covered pixels at the top, spreading to 3619 by 0.04
+   * as it tears across, down to 28 alpha by 0.08 and gone at 0.10 — while the coat holds a
+   * steady 753 pixels underneath the whole way, which is the proof it is being uncovered
+   * rather than faded in.
+   *
+   * Deterministic from scroll position like everything else here, so scrubbing back up
+   * blows the smoke back over him exactly as it left. */
+  var GUSTS = 170;
+
+  /* Thick immediately, then torn away fast. Squared rather than linear because a gust is
+     not a dissolve — it should be gone almost before the reader is sure it was there. */
+  function gustAt(p) {
+    if (p >= ARRIVE) return 0;
+    var t = 1 - p / ARRIVE;
+    return t * t;
+  }
+
+  function drawGust(ctx, cx, cy, R, p) {
+    var st = gustAt(p);
+    if (st <= 0) return;
+    var t = 1 - st;                       // 0 as it arrives, 1 as it clears
+    var pale = moteSprite("236,240,252");
+    ctx.save();
+    for (var i = 0; i < GUSTS; i++) {
+      var k = i * 7919 + 13;
+      /* Its own speed, which is what makes the bank shear apart rather than slide. */
+      var speed = 0.9 + Math.abs(nz(k + 1)) * 2.4;
+      var lane = nz(k + 2) * 1.05;
+      /* SPREAD ACROSS HIM AT THE TOP, not still arriving from the wings. The first version
+         started the bank at -0.55R and blew it in, which meant that at the very first frame
+         he was standing beside the smoke rather than inside it — 419 covered pixels where
+         it should have been thousands. A reveal has to begin with the subject hidden. */
+      var x = cx + (nz(k) * 0.78 + t * speed * 1.6) * R;
+      /* A little vertical churn, so it rolls as it goes instead of tracking straight. */
+      var y = cy + (lane + Math.sin(t * 3 + nz(k + 3) * 6) * 0.18) * R;
+      var size = (0.34 + Math.abs(nz(k + 4)) * 0.5 + t * 0.55) * R;
+      var a = st * (0.30 + Math.abs(nz(k + 5)) * 0.30) * (1 - t * 0.35);
+      ctx.globalAlpha = a < 0 ? 0 : a > 1 ? 1 : a;
+      ctx.drawImage(pale, x - size, y - size, size * 2, size * 2);
+    }
+    ctx.restore();
+  }
+
   function drawDust(ctx, cx, cy, R, ang, rgb, front, strength, p) {
     if (strength <= 0) return;
     var sp = moteSprite(rgb);
@@ -668,7 +725,14 @@
      have left the last of the smoke drifting off him halfway into the first hold — with a
      block of copy already up beside it. Tied to the table, the page cannot drift apart. */
   var ARRIVE = PHASES[0].to;
-  var ZOOM_TINY = 0.22; // how small it starts — a speck at the back of the stage
+  /* HE IS REVEALED, NOT ZOOMED IN FROM NOWHERE. This was 0.22 — a speck at the back of the
+     stage that grew towards the reader — which was the right idea when nothing else was
+     happening during the arrival. Now a gust of smoke is torn off him there, and a speck is
+     not something you can uncover: measured, the coat was 95 painted pixels at the moment
+     the smoke was thickest. Starting near the wide shot means the smoke clears to reveal a
+     coat at a size worth looking at, and the push-in carries on from there — his own order
+     of events, the gust first and the other effects following. */
+  var ZOOM_TINY = 0.80;
   var PUFFS = 44;
 
   /* Zoom in two stages. The first is the arrival, fast and eased, from a speck up to the
@@ -688,43 +752,6 @@
     return t <= 0.10 ? 0 : Math.min(1, (t - 0.10) / 0.62);
   }
 
-  /* How much smoke is left. Densest at the very start, gone shortly after he has arrived —
-     a little later than the figure finishes fading up, so the last wisps are still drifting
-     off him rather than stopping the instant he is solid. */
-  function smokeAt(p) {
-    var end = ARRIVE * 1.5;
-    if (p >= end) return 0;
-    var t = 1 - p / end;
-    return t * t;          // squared: thick at first, then thins away quickly
-  }
-
-  function drawSmoke(ctx, cx, cy, R, ang, rgb, front, strength, p) {
-    if (strength <= 0) return;
-    var sp = moteSprite(rgb);
-    ctx.save();
-    ctx.globalCompositeOperation = "lighter";
-    for (var i = 0; i < PUFFS; i++) {
-      var s = i * 5147 + 31;
-      /* Each puff starts near his middle and travels outward as the scroll advances, which
-         is what makes it read as a puff dispersing rather than a fog sitting still. */
-      var spread = 0.20 + (1 - strength) * (0.55 + Math.abs(nz(s + 3)) * 0.85);
-      var phi = (nz(s) * 0.5 + 0.5) * Math.PI * 2 + ang * 0.55;
-      var rad = spread * (0.5 + Math.abs(nz(s + 1)) * 1.1);
-      var z = Math.cos(phi) * rad;
-      if ((z >= 0) !== front) continue;
-
-      var x = cx + Math.sin(phi) * rad * R;
-      var y = cy + (nz(s + 2) * 0.85 + (1 - strength) * nz(s + 4) * 0.5) * R;
-      /* Puffs GROW as they fade. A cloud that shrinks reads as being sucked away; one that
-         expands while thinning is what dispersal actually looks like. */
-      var size = (0.26 + 0.40 * (1 - strength) + Math.abs(nz(s + 5)) * 0.22) * R;
-      var a = strength * (0.10 + Math.abs(nz(s + 6)) * 0.16);
-
-      ctx.globalAlpha = Math.min(1, a);
-      ctx.drawImage(sp, x - size, y - size, size * 2, size * 2);
-    }
-    ctx.restore();
-  }
 
   /* ---------------------- THE HEAD FADES IN ----------------------
    *
@@ -894,6 +921,7 @@
        do — a page without renders should not carry an empty fixed layer. */
     var ride = document.getElementById("fExp") || document.querySelector(".fp-timeline");
     var riderEl = null, riderCv = null, riderCtx = null, riderOn = false, gl = null;
+    var fxCv = null, fxCtx = null;
 
     function riderLayer() {
       if (riderEl) return riderEl;
@@ -909,6 +937,14 @@
       gl = document.createElement("canvas");
       gl.className = "coat-rider-gl";
       riderEl.appendChild(gl);
+      /* THREE LAYERS, IN THIS ORDER, AND THE ORDER IS THE POINT. The glow is under him, the
+         model is the middle, and the gust is OVER him — smoke that arrives behind the
+         subject reveals nothing. DOM order is the stacking order here, since all three are
+         absolutely positioned siblings with no z-index between them. */
+      fxCv = document.createElement("canvas");
+      fxCv.className = "coat-rider-fx";
+      riderEl.appendChild(fxCv);
+      fxCtx = fxCv.getContext("2d", { alpha: true });
       document.body.appendChild(riderEl);
       riderCtx = riderCv.getContext("2d", { alpha: true });
       if (window.AQCoat3D && window.AQCoat3D.mount) window.AQCoat3D.mount(gl);
@@ -987,6 +1023,22 @@
         rx: 0, ry: st.f * Math.PI * 2, rz: 0,
         f: st.f
       });
+
+      /* The gust, over the top of him. Sized and placed from the same box the model uses,
+         so the two cannot drift apart. */
+      if (ok && fxCtx) {
+        var dpr2 = Math.min(2, window.devicePixelRatio || 1);
+        var fw = Math.round(vw * dpr2), fh = Math.round(vh * dpr2);
+        if (fxCv.width !== fw || fxCv.height !== fh) { fxCv.width = fw; fxCv.height = fh; }
+        fxCtx.setTransform(dpr2, 0, 0, dpr2, 0, 0);
+        fxCtx.clearRect(0, 0, vw, vh);
+        if (!reduce) {
+          drawGust(fxCtx,
+            vr.left + vr.width * here.x,
+            vr.top + vr.height * (0.5 + PAN_TO * ease(p) + here.dip),
+            h * 0.42, p);
+        }
+      }
       return ok;
     }
 
@@ -997,6 +1049,7 @@
          it shows for one frame on the way back in — which is the headless coat again, just
          briefly enough to look like a glitch rather than a bug. */
       if (window.AQCoat3D && window.AQCoat3D.hide) window.AQCoat3D.hide();
+      if (fxCtx && fxCv.width) fxCtx.clearRect(0, 0, fxCv.width, fxCv.height);
       if (riderEl) riderEl.removeAttribute("data-on");
       if (ride) ride.removeAttribute("data-ridden");
       drawn = -1;              // the section owns the figure again, so let it repaint
@@ -1212,12 +1265,10 @@
          keeps only the atmosphere — the smoke he forms out of, the dust, the pool of light.
          Those are cheap in 2D and a nuisance in WebGL, and they sit behind him either way. */
       if (sectionModel(st, p, cw, ch, 1)) {
-        var fa2 = reduce ? 1 : figureAlpha(p);
-        var smk2 = reduce ? 0 : smokeAt(p);
-        drawSmoke(ctx, acx, acy, aR, ang, skin.rgb, false, smk2, p);
-        drawField(ctx, img, x0, y0, w, h, acx, acy, aR, ang, skin.rgb, lift * fa2, p, "back");
+        /* Only the atmosphere down here: the dust and the pool of light, which belong
+           behind him. The gust goes on its own layer OVER him — see sectionModel. */
+        drawField(ctx, img, x0, y0, w, h, acx, acy, aR, ang, skin.rgb, lift, p, "back");
         drawField(ctx, img, x0, y0, w, h, acx, acy, aR, ang, skin.rgb, lift, p, "front");
-        drawSmoke(ctx, acx, acy, aR, ang, skin.rgb, true, smk2, p);
         drawn = i; drawnAt = p;
         return;
       }
@@ -1226,13 +1277,12 @@
       lastP = st.f;
       var shown = figureFor(img, w, h, st.f);
       var fa = reduce ? 1 : figureAlpha(p);
-      var smk = reduce ? 0 : smokeAt(p);
+
 
       drawField(ctx, img, x0, y0, w, h, acx, acy, aR, ang, skin.rgb, lift, p, "back");
       /* Scaled by how solid he is: a halo at full strength around a coat that has not
          arrived yet would be a glow hanging in empty air. */
       drawField(ctx, shown, x0, y0, w, h, acx, acy, aR, ang, skin.rgb, lift * fa, p, "halo");
-      drawSmoke(ctx, acx, acy, aR, ang, skin.rgb, false, smk, p);
       /* The figure fades up through the smoke. globalAlpha rather than a mask: there is
          no threshold anywhere, so there is nothing to pixelate when it is scaled. */
       if (fa > 0) {
@@ -1243,7 +1293,10 @@
       }
       drawField(ctx, shown, x0, y0, w, h, acx, acy, aR, ang, skin.rgb, lift * fa, p, "spill");
       drawField(ctx, img, x0, y0, w, h, acx, acy, aR, ang, skin.rgb, lift, p, "front");
-      drawSmoke(ctx, acx, acy, aR, ang, skin.rgb, true, smk, p);
+      /* THE SAME GUST THE MODEL GETS, over the figure rather than around it. A visitor
+         without WebGL should not be the only one still watching the smoke RING that was
+         replaced — the fallback is a plainer version of the same page, not an older one. */
+      if (!reduce) drawGust(ctx, acx, acy, aR, p);
 
       drawn = i; drawnAt = p;
     }
