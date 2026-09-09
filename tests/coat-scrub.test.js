@@ -628,7 +628,38 @@ ok(/o\.material = Array\.isArray\(o\.material\)\s*\n\s*\? o\.material\.map\(func
 /* The section draws the model too — that is what ends the swap. The frames stay as the
    fallback for a browser that cannot run any of this. */
 ok(/function sectionModel/.test(JS_CODE), 'the section asks the model first');
-ok(/if \(sectionModel\(st, p, cw, ch, 1\)\) \{/.test(JS_CODE), 'and draws it when there is one');
+ok(/if \(sectionModel\(st, p\)\) \{/.test(JS_CODE), 'and draws it when there is one');
+
+/* ---- CSS PIXELS, NOT THE CANVAS'S OWN ----
+   He saw the model oversized, with his head cut off above the screen, and pushed left of
+   centre over the copy. One wrong unit caused both. sectionModel was handed the section
+   canvas's width and height, which are DEVICE pixels — already multiplied by the display's
+   pixel ratio — and used them as if they were CSS pixels. On a 2x screen that told the
+   renderer the window was 2880 wide when it was 1440: he was scaled to a viewport twice the
+   real one, and since the model is placed at cx minus half the viewport width, a centre of
+   720 against a claimed half-width of 1440 put him 720px to the left.
+
+   The function now takes no canvas dimensions at all, so there is nothing for that mistake
+   to reach for. Verified at 1440x900: centred to within the figure's own asymmetry as he
+   turns, head 45 to 279px clear of the top at every position, and no overlap with the copy
+   at any of them — 60px at the tightest. */
+ok(/var vw = window\.innerWidth, vh = window\.innerHeight;/.test(JS_CODE),
+   'the section works in CSS pixels, never the canvas backing store');
+eq(/function sectionModel\(st, p, cw, ch, dpr\)/.test(JS_CODE), false,
+   'and is not handed device pixels it could mistake for them');
+/* Fitted so he is WHOLE. The frames were fitted to the stage height and allowed to overflow
+   it — cropping the legs is a normal thing to do to a photograph, and PAN_TO existed to push
+   the crop away from the face. A model is a person, not a picture of one: the same overflow
+   just takes his head off. */
+const FITF = parseFloat(/vr\.height \* (0\.\d+), \(vr\.width \* FIG_MAX\)/.exec(JS)[1]);
+ok(FITF < 0.9, 'he is fitted inside the pinned box rather than allowed to overflow it');
+/* 0.86 and not 0.94 because a perspective camera magnifies what is nearest it: the scale
+   sets his BOUNDING BOX, but the coat flare and the near arm sit in front of the pivot and
+   project larger — measured, 882 painted pixels for an 838px box. At 0.94 that left his head
+   nine pixels from the top, which is the same complaint with a smaller number. */
+ok(FITF <= 0.88, 'with room for the parts that project larger than his bounding box');
+eq(/cy: vr\.top \+ vr\.height \* \(0\.5 \+ PAN_TO/.test(JS_CODE), false,
+   'and no downward pan, which only pushed his head towards the top edge');
 ok(/f: st\.f/.test(JS_CODE), 'passing the sequence progress, so the assembly follows the scroll');
 ok(/f: 1   \/\/ whole, always/.test(JS_CODE),
    'while the fall asks for the whole man, who finished assembling far up the page');

@@ -962,7 +962,11 @@
        BEHIND THE COPY HERE, IN FRONT OF THE PAGE LATER. The same fixed layer serves both,
        switched by z-index: in the section he belongs behind the words, and for the fall he
        is meant to be over the whole site. */
-    function sectionModel(st, p, cw, ch, dpr) {
+    /* Takes no canvas dimensions ON PURPOSE. It used to be handed the section canvas's
+       width and height, which are DEVICE pixels, and using them as CSS pixels is exactly
+       what put his head off the top of the screen and threw him left of centre on a 2x
+       display. There is nothing here for that mistake to reach for now. */
+    function sectionModel(st, p) {
       if (flat() || reduce) return false;
 
       /* ONLY WHILE THE PINNED STAGE IS ACTUALLY ON SCREEN, and getting this wrong twice
@@ -999,11 +1003,37 @@
       riderLayer();
       var three = window.AQCoat3D;
       if (!three || !three.ready) return false;
-      var vw = cw / dpr, vh = ch / dpr;
+
+      /* CSS PIXELS, NOT THE CANVAS'S OWN. This was reading the section canvas's width and
+         height, which are DEVICE pixels — already multiplied by the display's pixel ratio.
+         On a 2x screen that told the renderer the window was 2880 wide when it was 1440,
+         and it went wrong in both directions at once: he was scaled to a viewport twice the
+         real one, so his head was cut off above the top of the screen, and the model is
+         placed at cx minus half the viewport width, so a centre of 720 against a claimed
+         1440 half-width put him 720px to the LEFT of where he belonged, straight over the
+         copy. One wrong unit, two symptoms.
+
+         Everything here is now in CSS pixels, which is what the pin's own rect reports and
+         what coat-3d works in. The device ratio belongs to the renderer alone. */
+      var vw = window.innerWidth, vh = window.innerHeight;
+      if (!vw || !vh) return false;
       var here = stateAt(p);
-      /* The same fit the sprite used: to the stage height, clamped by his measured width so
-         the copy columns either side of him stay clear. */
-      var h = Math.min(vh * zoomAt(p), (vw * FIG_MAX) / FIG_W);
+
+      /* FITTED SO HE IS WHOLE, and that is a real change from the image sequence.
+         The frames were fitted to the stage HEIGHT and deliberately allowed to overflow it:
+         a push-in past 1.0 cropped his legs, which is a normal thing to do to a photograph
+         and the reason PAN_TO existed. The model is a person, not a picture of one — the
+         same overflow simply takes his head off the top, which he saw. So he is fitted to
+         94% of the pinned box, clamped by his width so the columns either side stay clear,
+         and the push-in scales within that rather than beyond it. */
+      /* 0.86 AND NOT 0.94, BECAUSE A PERSPECTIVE CAMERA MAGNIFIES WHAT IS NEAREST IT.
+         The scale sets his BOUNDING BOX to this height, but the coat flare and the near arm
+         sit in front of the pivot and project larger than the box says — measured, 882
+         painted pixels for an 838px box, five per cent over. At 0.94 that left his head
+         nine pixels from the top of the screen, which is the same complaint again with a
+         smaller number. This leaves real headroom at the deepest point of the push-in. */
+      var fit = Math.min(vr.height * 0.86, (vr.width * FIG_MAX) / FIG_W);
+      var h = fit * (zoomAt(p) / ZOOM_TO);
       riderEl.setAttribute("data-on", "1");
       riderEl.setAttribute("data-front", "0");
       if (gl) gl.style.display = "block";
@@ -1016,7 +1046,11 @@
         /* Placed inside the pin's own box, so he travels with it instead of being welded
            to the middle of the window. */
         cx: vr.left + vr.width * here.x,
-        cy: vr.top + vr.height * (0.5 + PAN_TO * ease(p) + here.dip),
+        /* Centred, plus the settle through a turn. PAN_TO is gone from this path: it
+           existed to push the frames DOWN so the push-in cropped the trousers rather than
+           the face, and a model that fits on screen has nothing to crop. Keeping it here
+           only moved his head towards the top edge. */
+        cy: vr.top + vr.height * (0.5 + here.dip),
         h: h,
         /* One continuous turn across the section, which is what the 420 frames encoded and
            what the copy now revolves around. */
@@ -1035,7 +1069,7 @@
         if (!reduce) {
           drawGust(fxCtx,
             vr.left + vr.width * here.x,
-            vr.top + vr.height * (0.5 + PAN_TO * ease(p) + here.dip),
+            vr.top + vr.height * (0.5 + here.dip),
             h * 0.42, p);
         }
       }
@@ -1264,7 +1298,7 @@
       /* ONE MODEL FOR THE WHOLE JOURNEY. If it is running, it draws him and the canvas below
          keeps only the atmosphere — the smoke he forms out of, the dust, the pool of light.
          Those are cheap in 2D and a nuisance in WebGL, and they sit behind him either way. */
-      if (sectionModel(st, p, cw, ch, 1)) {
+      if (sectionModel(st, p)) {
         /* Only the atmosphere down here: the dust and the pool of light, which belong
            behind him. The gust goes on its own layer OVER him — see sectionModel. */
         drawField(ctx, img, x0, y0, w, h, acx, acy, aR, ang, skin.rgb, lift, p, "back");
