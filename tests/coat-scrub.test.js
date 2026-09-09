@@ -496,7 +496,7 @@ const RIDER = (() => {
                  'var PHASES = ' + JSON.stringify(TL.PHASES) + ';' +
                  'function easeInOut(t){return t<0.5?4*t*t*t:1-Math.pow(-2*t+2,3)/2;}';
   return new Function(consts + JS.slice(a, b) +
-    '\nreturn { ridePlace, rideHeight, READ_LINE, RIDE_EDGE };')();
+    '\nreturn { ridePlace, rideHeight, READ_LINE, rideTumble, rideSwing, rideDepth, rideFrame, TURN_LO };')();
 })();
 
 /* THE READING LINE IS ONE NUMBER LIVING IN TWO FILES, and that is the thing most likely to
@@ -533,16 +533,70 @@ for (let i = 1; i <= 100; i++) {
 }
 ok(shrinks, 'and shrinks monotonically rather than pulsing on the way down');
 
-/* THE SPIN IS A TURNTABLE OF ONE FRAME, AND THE MEASUREMENT IS WHY.
-   The 420 renders are one 360-degree turn shared across three build stages — frame 1 and
-   frame 420 differ by 11 on a per-pixel silhouette compare where the midpoint differs by
-   34, so the sequence closes. But the complete figure only exists from frame 181, leaving
-   205 degrees: looping that jumps 155 degrees a turn, and stepping outside it puts the
-   empty coat back on screen halfway down the timeline. So he spins about his own axis with
-   a horizontal squash instead, which turns without limit and without a seam. */
-ok(/Math\.cos\(theta\)/.test(JS_CODE), 'he spins by cosine, not by walking the frame sequence');
-ok(/F\.frameAt\(1, n\)/.test(JS_CODE), 'on the single frame the section itself ends on, so the handover matches');
-ok(RIDER.RIDE_EDGE > 0, 'with a sliver left at edge-on, so he never blinks out entirely');
+/* ---- HE TUMBLES; HE DOES NOT FLIP ----
+   The first version turned him with a horizontal squash — the standard two-dimensional
+   coin flip — and it read as exactly what it was: a flat cutout being squeezed. A squash is
+   the one transform that tells the eye there is no depth, because a solid object turning
+   never loses width without also changing what you can see of it. Three things replace it,
+   and the frame sweep is the one that actually carries the third dimension. */
+eq(/c\.scale\(sx, 1\)/.test(JS_CODE), false, 'nothing squashes him horizontally any more');
+ok(/c\.rotate\(tumble\)/.test(JS_CODE), 'he rotates in the picture plane — head over heels, like a piece knocked over');
+ok(/c\.scale\(depth, depth\)/.test(JS_CODE), 'and reads nearer and further through the turn');
+ok(/F\.frameAt\(rideFrame\(t, p\), n\)/.test(JS_CODE),
+   'while the RENDERED turn carries the depth no transform can fake');
+/* Rotated about the figure, not the frame: the renders put him at 46.7% of a square canvas,
+   so turning about the canvas centre would swing him round a point off to his side. */
+ok(/c\.translate\(gx, gy\);[\s\S]{0,120}c\.rotate/.test(JS_CODE), 'about his own centre, so it is a tumble and not an orbit');
+
+/* THE SAFETY PROPERTY, AND THE ONLY REASON THE SWEEP IS A SWEEP.
+   The complete figure exists only from frame 181 of 420. If the frame index ever dips below
+   that while he is riding, the EMPTY COAT reappears halfway down the timeline — a bug that
+   would look like a rendering fault rather than a maths one. Checked across the whole
+   two-dimensional space of handover and ride progress, not just at the ends. */
+let below = 0, above = 0;
+for (let i = 0; i <= 120; i++) for (let j = 0; j <= 120; j++) {
+  const f = RIDER.rideFrame(i / 120, j / 120);
+  if (f < RIDER.TURN_LO - 1e-9) below++;
+  if (f > 1 + 1e-9) above++;
+}
+eq([below, above], [0, 0], 'the frame sweep never leaves the range where the whole man exists');
+eq(+RIDER.rideFrame(0, 0).toFixed(6), 1,
+   'and starts on the exact frame the section ends on, so the handover stays invisible');
+/* It must actually sweep, or the "rendered turn" is a still image with a rotation on it. */
+let lo = 1, hi = 0;
+for (let j = 0; j <= 400; j++) { const f = RIDER.rideFrame(1, j / 400); if (f < lo) lo = f; if (f > hi) hi = f; }
+ok(hi - lo > 0.5, 'and sweeps most of that range, so the geometry visibly turns as he falls');
+
+/* ---- HE LANDS UPRIGHT, AND ON THE LINE ----
+   Every constant is a whole number for one reason: at the end of the handover and at the
+   foot of the line the tumble is back to zero and the swing is back on centre. He leaves
+   the handover standing and lands standing, exactly on the point where the line stops —
+   rather than frozen mid-topple beside it, which is what any fractional count would give. */
+const turnsAtHandover = RIDER.rideTumble(1, 0) / (Math.PI * 2);
+const turnsAtFoot = RIDER.rideTumble(1, 1) / (Math.PI * 2);
+eq(turnsAtHandover, Math.round(turnsAtHandover), 'a whole number of turns by the end of the handover');
+eq(turnsAtFoot, Math.round(turnsAtFoot), 'and a whole number by the foot of the line');
+ok(turnsAtFoot - turnsAtHandover >= 2, 'with real tumbling in between, not a token half-turn');
+ok(Math.abs(RIDER.rideSwing(1, 1)) < 1e-9, 'and he lands ON the line, not beside it');
+ok(Math.abs(RIDER.rideSwing(0, 0)) < 1e-9, 'having started on it too, so the handover does not jog sideways');
+
+/* ---- AND HE FALLS DIAGONALLY, NOT STRAIGHT DOWN ----
+   A rigid vertical slide was the other half of what made it look like a sprite on rails.
+   He swings across the line on the way down, so the fall reads as diagonal — but the swing
+   is a fraction of the viewport, not of the timeline, so it cannot grow into a lurch on a
+   wide monitor. */
+let swung = 0;
+for (let j = 0; j <= 400; j++) swung = Math.max(swung, Math.abs(RIDER.rideSwing(1, j / 400)));
+ok(swung > 0.03, 'he crosses the line rather than sliding down it');
+ok(swung < 0.12, 'by enough to read as a fall, not so much that he leaves the column');
+/* Both directions: a swing that only ever goes one way is a drift, not a fall. */
+let left = false, right = false;
+for (let j = 0; j <= 400; j++) { const v = RIDER.rideSwing(1, j / 400); if (v < -0.02) left = true; if (v > 0.02) right = true; }
+ok(left && right, 'and crosses to BOTH sides of it on the way down');
+/* Depth stays positive, or a negative scale would mirror him mid-fall. */
+let minDepth = 9;
+for (let i = 0; i <= 60; i++) for (let j = 0; j <= 60; j++) minDepth = Math.min(minDepth, RIDER.rideDepth(i / 60, j / 60));
+ok(minDepth > 0.5, 'and never turns inside out through the depth change');
 
 /* IN FRONT OF THE PAGE, BUT NOT IN THE WAY. Above the sticky header so he genuinely passes
    in front of the site; below the search overlay and the modals so he can never sit on top

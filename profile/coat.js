@@ -238,8 +238,57 @@
    * scroll it unwinds exactly like everything else here.
    */
   var RIDE_MIN = 96, RIDE_MAX = 150;   // how tall he is once he is riding, in CSS pixels
-  var RIDE_EDGE = 0.07;                // the sliver left at edge-on, so he never fully vanishes
-  var HANDOFF_TURN = 0.35;             // turns spent shrinking into place, before the ride
+
+  /* HE TUMBLES; HE DOES NOT FLIP. The first version turned him with a horizontal squash —
+     the standard two-dimensional coin flip — and it read exactly as what it was: a flat
+     cutout being squeezed. A squash is the one transform that tells the eye there is no
+     depth, because a solid object turning never loses width without also changing what you
+     can see of it.
+
+     Three things replace it, and they are all needed together:
+
+       1. TUMBLE — the sprite rotates in the picture plane, head over heels, the way a chess
+          piece knocked off a board actually falls. This is what makes it read as a falling
+          OBJECT rather than a sliding image.
+       2. A REAL TURN — the frame index moves through the rendered sequence while he falls,
+          so the geometry the viewer sees genuinely changes: shoulders come round, the coat
+          swings, the face leaves and returns. No transform can fake that, and it is the
+          part that actually carries the three dimensions.
+       3. DEPTH — he grows and shrinks slightly through the tumble, as something turning
+          towards and away from you does.
+
+     AND HE DOES NOT FALL STRAIGHT DOWN. A rigid vertical slide is the other half of what
+     made it look like a sprite on rails, so he swings across the line as he descends and
+     the fall reads as diagonal. */
+  var TUMBLES = 3;         // head-over-heels turns across the ride. Whole, so he lands upright.
+  var HANDOFF_TUMBLE = 1;  // and one more while he shrinks into place. Whole, for the same reason.
+  var SWINGS = 2;          // crossings of the line on the way down. Whole, so he lands ON it.
+  var SWING_AMP = 0.055;   // how far he swings either side, as a fraction of the viewport width
+  var SPINS = 2;           // how many times the rendered turn sweeps out and back
+  var DEPTH = 0.16;        // how much nearer and further he reads through a tumble
+
+  /* THE RENDERED TURN ONLY EXISTS FROM FRAME 181, and that bound is the whole reason this
+     is a sweep rather than a loop. The 420 renders are one 360-degree turn shared across
+     three build stages — measured, frame 1 against frame 420 differs by 11 on a per-pixel
+     silhouette compare where the midpoint differs by 34, so the sequence closes — but the
+     complete figure covers only the last 205 degrees of it. Looping that range jumps 155
+     degrees a turn; stepping below it puts the empty coat back on screen halfway down the
+     timeline. So the frame index sweeps up and down inside the safe range on a cosine,
+     which reverses smoothly and never leaves it. */
+  var TURN_LO = 181 / 420;
+
+  /* The three curves, as pure functions of the two progresses — how far through the
+     handover (t) and how far down the line (p). Out here rather than inline in the draw so
+     the end conditions can be exercised directly: that he leaves the handover upright, that
+     he lands upright and on the line, and above all that the frame index never once leaves
+     the range in which the complete figure exists. */
+  function rideTumble(t, p) { return (HANDOFF_TUMBLE * t + TUMBLES * p) * Math.PI * 2; }
+  function rideSwing(t, p) { return Math.sin((t + SWINGS * p) * Math.PI * 2) * SWING_AMP; }
+  function rideDepth(t, p) { return 1 + DEPTH * Math.sin((HANDOFF_TUMBLE * t + TUMBLES * p) * Math.PI); }
+  function rideFrame(t, p) {
+    var osc = 0.5 + 0.5 * Math.cos((t * 0.35 + p * SPINS) * Math.PI * 2);
+    return TURN_LO + (1 - TURN_LO) * osc;
+  }
 
   /* The reading line founder-motion.js measures the spine against. Duplicated deliberately
      and named, rather than read from the other file: they are one number in two places and
@@ -854,7 +903,10 @@
       var spineY = cy === null ? (tTop - y) : cy;
       var place = ridePlace(t, vw, vh, spineX, spineY);
 
-      var img = imgs[F.nearestLoaded(F.frameAt(1, n), ready)];
+      /* A cosine sweep inside the safe range. At the handover instant (t=0, p=0) it sits at
+         exactly 1 — the frame the section itself ends on — so the fixed layer picks up the
+         very picture the sticky one put down, and the handover stays invisible. */
+      var img = imgs[F.nearestLoaded(F.frameAt(rideFrame(t, p), n), ready)];
       if (!img) { riderHide(); return false; }
 
       riderLayer();
@@ -866,15 +918,16 @@
       c.setTransform(dpr, 0, 0, dpr, 0, 0);
       c.clearRect(0, 0, vw, vh);
 
-      /* Turns: enough that he is visibly spinning without becoming a blur, scaled to how
-         long the timeline actually is so the speed does not change when an entry is added. */
-      var turns = Math.max(2, Math.round(tH / 700));
-      var theta = (HANDOFF_TURN * t + turns * p) * Math.PI * 2;
-      var sx = Math.cos(theta);
-      if (Math.abs(sx) < RIDE_EDGE) sx = sx < 0 ? -RIDE_EDGE : RIDE_EDGE;
+      /* EVERY WHOLE-NUMBER CONSTANT EARNS ITS KEEP AT THE ENDS. Because the turns and the
+         swings are whole, the tumble is back to zero and the swing is back on the line at
+         both t=1 and p=1 — so he leaves the handover upright and lands upright, standing
+         exactly on the point where the line stops rather than frozen mid-topple beside it. */
+      var tumble = rideTumble(t, p);
+      var swing = rideSwing(t, p) * vw;
+      var depth = rideDepth(t, p);
 
       var w = place.h;                       // the renders are square
-      var gx = place.cx, gy = place.cy;
+      var gx = place.cx + swing * (t < 1 ? t : 1), gy = place.cy;
 
       /* A pool of light under him, so a small figure still reads as lit rather than pasted
          on. Same aura the section uses, from the same CSS variables. */
@@ -890,7 +943,11 @@
 
       c.save();
       c.translate(gx, gy);
-      c.scale(sx, 1);
+      c.rotate(tumble);
+      c.scale(depth, depth);
+      /* Rotated about the figure, not about the frame. The renders put him at 46.7% of a
+         square canvas, so turning about the canvas centre would swing him round a point off
+         to his side — an orbit, not a tumble. */
       c.drawImage(img, -w * FIG_CX, -place.h / 2, w, place.h);
       c.restore();
 
