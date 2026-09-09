@@ -574,6 +574,39 @@ ok(/f: 1   \/\/ whole, always/.test(JS_CODE),
    canvas that is never made. That cost a silent blank section once already. */
 ok(/riderLayer\(\);\s*\n\s*var three = window\.AQCoat3D;\s*\n\s*if \(!three \|\| !three\.ready\) return false;/.test(JS_CODE),
    'and mounts the renderer before asking whether it is ready, or nothing ever loads');
+/* ---- AND IT HAS TO GO AWAY WHEN THE SECTION DOES ----
+   This shipped broken and he caught it: a headless coat hanging over the hero, on top of
+   his own name and credentials.
+
+   The cause is the thing that makes the fall possible in the first place. The image
+   sequence drew into the section's OWN canvas, so it went away when the section scrolled
+   past — containment was free and nobody had to think about it. The model draws into a
+   fixed, full-viewport layer, which is what lets him come out in front of the page later,
+   and that same property means he is on screen at EVERY scroll position unless something
+   says otherwise. measure() runs on every scroll and clamps progress to 0 above the
+   section, so scrolling to the top left the layer painting the section's first frame: the
+   coat alone, no body, no head.
+
+   Verified at 1440x900 at four positions — at the hero the layer does not exist at all, in
+   the section it is on at z-index 0 behind the words, back at the hero it is hidden again,
+   and past the runway it is on at z-index 90 in front of the page. */
+ok(/var vr = host\.getBoundingClientRect\(\);\s*\n\s*if \(vr\.bottom <= 0 \|\| vr\.top >= window\.innerHeight\) return false;/.test(JS_CODE),
+   'the section only draws the model while it is actually on screen');
+ok(/if \(sr\.bottom <= 0 \|\| sr\.top >= window\.innerHeight\) riderHide\(\);/.test(JS_CODE),
+   'and the layer is put away when neither the section nor the fall wants it');
+/* riderHide early-returns unless something claims the layer is live, and the fall used to
+   be the only thing setting that — so the section could turn it on and nothing could ever
+   turn it off. */
+ok(/riderOn = true;/.test(JS_CODE), 'whoever shows the layer also marks it live, so it can be hidden again');
+/* Emptied, not merely hidden: a display:none canvas still holds its last frame and shows it
+   for one frame on the way back in, which is the same headless coat just briefly enough to
+   look like a glitch. */
+ok(/window\.AQCoat3D\.hide\(\)/.test(JS_CODE), 'and the canvas is emptied, not just hidden');
+ok(/renderer\.setClearColor\(0x000000, 0\);\s*\n\s*renderer\.clear\(true, true, true\);/.test(T3),
+   'with the clear alpha set, or clearing an alpha canvas leaves the old frame in the buffer');
+/* A happy consequence: the model is not fetched until the section is actually approached. */
+ok(/riderLayer\(\);/.test(JS_CODE), 'and the renderer mounts on first approach rather than at page load');
+
 /* Behind the copy in the section, in front of the whole site for the fall — one layer. */
 ok(/\.coat-rider\[data-front="0"\] \{ z-index: 0; \}/.test(CSS),
    'the same layer sits behind the words in the section and over the page for the fall');

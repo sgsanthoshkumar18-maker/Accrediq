@@ -198,7 +198,14 @@ api.draw = function (s) {
   return true;
 };
 
-api.hide = function () { if (renderer && lastW) renderer.clear(); };
+api.hide = function () {
+  /* setClearAlpha(0) then clear(), rather than clear() alone: the renderer is created with
+     alpha:true and clearing without setting the alpha leaves the previous frame sitting in
+     the buffer, which is exactly the stale-frame flash this is called to prevent. */
+  if (!renderer || !lastW) return;
+  renderer.setClearColor(0x000000, 0);
+  renderer.clear(true, true, true);
+};
 
 /* coat.js creates the layer and hands the canvas over, so exactly one place decides whether
    any of this exists at all. */

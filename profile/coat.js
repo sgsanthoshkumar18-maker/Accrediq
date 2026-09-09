@@ -924,6 +924,21 @@
        is meant to be over the whole site. */
     function sectionModel(st, p, cw, ch, dpr) {
       if (flat() || reduce) return false;
+
+      /* ONLY WHILE THE SECTION IS ACTUALLY ON SCREEN, and forgetting this put a headless
+         coat in the middle of the hero.
+
+         The image sequence drew into the section's OWN canvas, so it went away when the
+         section did — the containment was free and nobody had to think about it. The model
+         draws into a fixed, full-viewport layer instead, which is what lets him come out in
+         front of the page for the fall, and that same property means he is on screen at
+         every scroll position unless something says otherwise. measure() runs on every
+         scroll and clamps progress to 0 above the section, so scrolling up to the top left
+         the layer showing the section's first frame: the coat alone, no body, no head,
+         hanging over the name and the credentials. */
+      var vr = host.getBoundingClientRect();
+      if (vr.bottom <= 0 || vr.top >= window.innerHeight) return false;
+
       /* MOUNT FIRST, ASK AFTER. The renderer is created inside riderLayer(), so gating on
          ready before calling it is a deadlock: the model can never load because the canvas
          it loads into is never made. Build the layer, then report whether there was
@@ -939,6 +954,10 @@
       riderEl.setAttribute("data-on", "1");
       riderEl.setAttribute("data-front", "0");
       if (gl) gl.style.display = "block";
+      /* riderHide() early-returns unless something claims the layer is live, and the fall
+         was the only thing setting that. Without this the section could turn the layer on
+         and nothing could ever turn it off. */
+      riderOn = true;
       var ok = three.draw({
         vw: vw, vh: vh,
         cx: here.x * vw,
@@ -955,6 +974,10 @@
     function riderHide() {
       if (!riderOn) return;
       riderOn = false;
+      /* Emptied, not merely hidden. A display:none canvas still holds its last frame, and
+         it shows for one frame on the way back in — which is the headless coat again, just
+         briefly enough to look like a glitch rather than a bug. */
+      if (window.AQCoat3D && window.AQCoat3D.hide) window.AQCoat3D.hide();
       if (riderEl) riderEl.removeAttribute("data-on");
       if (ride) ride.removeAttribute("data-ridden");
       drawn = -1;              // the section owns the figure again, so let it repaint
@@ -1355,6 +1378,10 @@
         if (drawn !== -2 && size()) { ctx.clearRect(0, 0, canvas.width, canvas.height); drawn = -2; }
       } else {
         paint(st);
+        /* Nothing on this screen wants him: not the fall, and not the section, which is
+           either off screen or drawing into its own canvas via the sprite fallback. */
+        var sr = host.getBoundingClientRect();
+        if (sr.bottom <= 0 || sr.top >= window.innerHeight) riderHide();
       }
     }
 
