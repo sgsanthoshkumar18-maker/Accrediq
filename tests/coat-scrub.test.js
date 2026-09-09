@@ -975,6 +975,47 @@ eq(/--coat-ink:/.test(CSS), false, 'nor a private text palette — the copy foll
 ok(/\.coat-beat h2 \{[\s\S]*?color: var\(--fg\);/.test(CSS), 'the headline states var(--fg)');
 ok(/\.coat-beat p \{[\s\S]*?color: var\(--fg-muted\)/.test(CSS), 'and the body copy var(--fg-muted)');
 
+/* ---- THE GUST TAKES THE COLOUR OF THE PAGE ----
+   On the dark theme a pale gust stopped being smoke and became a lamp — a bright cloud
+   glowing in front of a black page, which is what he saw. The rule is not "make it dark";
+   it is that smoke conceals by being the SAME as whatever is behind it. Near-white smoke
+   hides a grey coat on a white page and dissolves into the background as it thins; on a
+   black page the coat is the bright thing, so the cloud has to be near-black to do the same
+   job in the other direction.
+
+   Measured live at 1440x900, sampling the painted gust in both themes: light 239 luma
+   against a page of 255, dark 11 against a page of 0. A shade off the ground either way —
+   enough body to read as a mass, not enough to punch a hole in the page. Coverage is
+   identical at 3108 pixels in both, so the reveal itself is untouched. */
+const SMOKE_LIGHT = /^\s*--coat-smoke: (#[0-9A-Fa-f]{6});/m.exec(CSS);
+ok(SMOKE_LIGHT, 'the light theme names a smoke colour');
+const SMOKE_DARK = /:root\[data-theme="dark"\] \.coat \{[\s\S]*?--coat-smoke: (#[0-9A-Fa-f]{6});/.exec(CSS);
+ok(SMOKE_DARK, 'and the dark theme names its own');
+const luma = (hex) => {
+  const v = parseInt(hex.slice(1), 16);
+  return 0.2126 * ((v >> 16) & 255) + 0.7152 * ((v >> 8) & 255) + 0.0722 * (v & 255);
+};
+ok(luma(SMOKE_LIGHT[1]) > 200, 'pale on the light theme, where the page is white');
+ok(luma(SMOKE_DARK[1]) < 40, 'and near-black on the dark one, where the page is black');
+/* A shade off the ground rather than exactly it: pure black would punch a flat hole in the
+   starfield instead of drifting over it. */
+ok(luma(SMOKE_DARK[1]) > 2, 'but not pure black, or it has no body against the starfield');
+
+/* Read from CSS like every other theme value, and re-read when the theme changes — so
+   switching themes with the section on screen changes the smoke with it. */
+ok(/skin\.smoke = toRgb\(\(cs\.getPropertyValue\("--coat-smoke"\)/.test(JS_CODE),
+   'the script reads it rather than carrying a colour of its own');
+ok(/var pale = moteSprite\(skin\.smoke\);/.test(JS_CODE), 'and the gust is drawn in it');
+eq(/moteSprite\("236,240,252"\)/.test(JS_CODE), false, 'with no literal left behind');
+
+/* THE SPRITE CACHE HAD TO GROW A KEY. It held one sprite and rebuilt whenever it was asked
+   for a different colour, which was free while everything used the aura — and stopped being
+   free the moment the gust took the page's colour instead, because during the arrival both
+   are drawn in the same frame. A one-slot cache would have rebuilt the gradient twice per
+   scroll frame for ever. */
+ok(/var moteCache = \{\};/.test(JS_CODE), 'the puff sprite is cached per colour');
+eq(/moteKey/.test(JS_CODE), false, 'not in a single slot that two colours would thrash');
+
 /* ---- the rim is load-bearing on light ----
    MEASURED, and this is the whole argument: a white lab coat on the light theme's white
    page is 1.04:1. Not subtle — invisible. The blue rim is the only thing drawing the

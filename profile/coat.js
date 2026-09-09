@@ -578,11 +578,16 @@
    */
   var MOTES = 160;
 
-  var moteCv = null, moteKey = "";
+  /* KEYED BY COLOUR, NOT A SINGLE SLOT. It used to hold one sprite and rebuild whenever it
+     was asked for a different colour — which was free while everything used the aura, and
+     stopped being free the moment the gust took the page's colour instead: during the
+     arrival both are drawn in the same frame, so a one-slot cache would rebuild the
+     gradient twice per scroll frame, for ever. */
+  var moteCache = {};
   function moteSprite(rgb) {
-    if (moteCv && moteKey === rgb) return moteCv;
+    if (moteCache[rgb]) return moteCache[rgb];
     var S = 32;
-    moteCv = document.createElement("canvas");
+    var moteCv = document.createElement("canvas");
     moteCv.width = moteCv.height = S;
     var c = moteCv.getContext("2d");
     var g = c.createRadialGradient(S / 2, S / 2, 0, S / 2, S / 2, S / 2);
@@ -593,7 +598,7 @@
     g.addColorStop(1, "rgba(" + rgb + ",0)");
     c.fillStyle = g;
     c.fillRect(0, 0, S, S);
-    moteKey = rgb;
+    moteCache[rgb] = moteCv;
     return moteCv;
   }
 
@@ -632,7 +637,9 @@
     var st = gustAt(p);
     if (st <= 0) return;
     var t = 1 - st;                       // 0 as it arrives, 1 as it clears
-    var pale = moteSprite("236,240,252");
+    /* Whatever colour the page says. Re-read on every theme change, so switching themes
+       with the section on screen changes the smoke with it. */
+    var pale = moteSprite(skin.smoke);
     ctx.save();
     for (var i = 0; i < GUSTS; i++) {
       var k = i * 7919 + 13;
@@ -839,7 +846,8 @@
      thing drawing the silhouette, so it has to be tighter and stronger there than on dark.
      Those four numbers are design decisions and they live in the stylesheet; a design
      decision inside a script is one nobody can change without a deploy. */
-  var skin = { rgb: "39,67,201", blur: 22, halo: 0.55, dust: 0.42, spill: 0.10 };
+  var skin = { rgb: "39,67,201", blur: 22, halo: 0.55, dust: 0.42, spill: 0.10,
+               smoke: "236,240,252" };
   function readSkin(host) {
     var cs = getComputedStyle(host);
     function n(name, dflt) {
@@ -847,6 +855,7 @@
       return isFinite(v) ? v : dflt;
     }
     skin.rgb = toRgb((cs.getPropertyValue("--coat-aura") || "").trim() || "#2743C9");
+    skin.smoke = toRgb((cs.getPropertyValue("--coat-smoke") || "").trim() || "#ECF0FC");
     skin.blur = n("--coat-halo-blur", 22);
     skin.halo = n("--coat-halo-alpha", 0.55);
     skin.dust = n("--coat-dust-alpha", 0.42);
