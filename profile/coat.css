@@ -227,6 +227,43 @@
   background: var(--coat-aura);
 }
 
+/* ---- the rider ----
+   THE ONE THING ON THIS SITE THAT IS DELIBERATELY IN FRONT OF EVERYTHING. When the coat
+   section lets go, the figure shrinks, drops to the middle and takes over the glowing head
+   that rides down the experience timeline. A fixed layer is the only way to do that: the
+   sticky stage is trapped inside its own section, and the timeline is two sections further
+   down the page.
+
+   Z-INDEX 90 IS A CHOSEN NUMBER, not a big one. Above the sticky site header at 60, so he
+   genuinely passes in front of the site the way he was asked to. Below the search overlay
+   at 200 and the modals at 300, so he can never land on top of something a reader is
+   trying to use. And pointer-events are off, so the timeline underneath stays exactly as
+   clickable as it was — a full-screen fixed layer that swallowed clicks would break every
+   card he passes. */
+.coat-rider {
+  position: fixed;
+  inset: 0;
+  z-index: 90;
+  pointer-events: none;
+  display: none;
+}
+.coat-rider[data-on="1"] { display: block; }
+.coat-rider canvas { display: block; width: 100%; height: 100%; }
+
+/* HE REPLACES THE HEAD, NOT THE LINE. The glowing dot that rode the end of the spine is
+   exactly the job he has taken over, so it goes; the drawn line stays, because that is now
+   the trail he leaves behind him as he falls. Hidden by opacity rather than display so the
+   line keeps its own geometry — the head is positioned from the spine bottom, and removing
+   it from layout would move nothing but is one less thing to reason about. */
+.fp-timeline[data-ridden="1"] .fp-spine::after { opacity: 0; }
+
+/* Unpinned layouts get none of it: on a phone the coat section does not pin at all, so
+   there is no moment of letting go for him to be handed over at. The blue head keeps its
+   job there. */
+@media (max-width: 900px), (prefers-reduced-motion: reduce) {
+  .coat-rider { display: none !important; }
+}
+
 /* THE LENS BELOW TELLS THE SAME THREE STAGES, AND ONE OF THEM HAS TO GO.
    Both are rendered from the same array in founder-data.js, and both were on the page at
    once — the figure crossed straight down into a card repeating what he had just said.

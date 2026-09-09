@@ -472,6 +472,110 @@ ok(/@media \(prefers-reduced-motion: reduce\)[\s\S]{0,900}opacity: 1/.test(CSS),
 ok(/@media \(min-width: 901px\) and \(max-aspect-ratio: 1\/1\)/.test(CSS),
    'a tall narrow window pulls the copy in rather than letting them touch');
 
+
+/* ===================== THE RIDER =====================
+   When the section lets go he shrinks, drops to the middle, comes to the FRONT of the whole
+   site and takes over the glowing head that rides down the experience timeline.
+
+   Verified in a browser at 1440x900 against founder-motion.js's own head position: he sits
+   within 7px horizontally of it for the entire ride, holds the reading line while the page
+   scrolls past exactly as the head does, and stops at the foot of the line (delta -7,-7 at
+   p=1) then scrolls away locked to it. The handover moves his painted box by at most 10px
+   across 10px of scroll — which is the shrink, not a jump. */
+
+const RIDER = (() => {
+  const a = JS.indexOf('  /* ===================== THE RIDER');
+  const b = JS.indexOf('  /* ======================== THE ENERGY FIELD');
+  if (a < 0 || b < a) throw new Error('rider block not found in coat.js');
+  /* ridePlace leans on the section's own constants, so they come along. */
+  const consts = 'var ZOOM_TO = ' + /ZOOM_TO = ([\d.]+)/.exec(JS)[1] + ';' +
+                 'var PAN_TO = ' + /PAN_TO = ([\d.]+)/.exec(JS)[1] + ';' +
+                 'var FIG_W = ' + /FIG_W = ([\d.]+)/.exec(JS)[1] + ';' +
+                 'var FIG_CX = ' + /FIG_CX = ([\d.]+)/.exec(JS)[1] + ';' +
+                 'var FIG_MAX = ' + /FIG_MAX = ([\d.]+)/.exec(JS)[1] + ';' +
+                 'var PHASES = ' + JSON.stringify(TL.PHASES) + ';' +
+                 'function easeInOut(t){return t<0.5?4*t*t*t:1-Math.pow(-2*t+2,3)/2;}';
+  return new Function(consts + JS.slice(a, b) +
+    '\nreturn { ridePlace, rideHeight, READ_LINE, RIDE_EDGE };')();
+})();
+
+/* THE READING LINE IS ONE NUMBER LIVING IN TWO FILES, and that is the thing most likely to
+   break here. founder-motion.js fills the spine against a line 45% down the viewport; the
+   rider reproduces that path from the same figure. Change one and he drifts off the line he
+   is supposed to be replacing — silently, because both still look plausible alone. */
+const FMOTION = fs.readFileSync(path.join(__dirname, '../profile/founder-motion.js'), 'utf8');
+eq(RIDER.READ_LINE, 0.45, 'the rider measures against the reading line');
+ok(/var read = vh \* 0\.45;/.test(FMOTION), 'and founder-motion.js fills the spine against the same one');
+
+/* t = 0 MUST REPRODUCE THE SECTION EXACTLY, or the handover is a jump. The fixed layer
+   starts by painting the identical picture the sticky one was painting — same scale, same
+   centre — and only then moves it. There is no crossfade to hide a mismatch behind. */
+const VW = 1440, VH = 900;
+const sec = RIDER.ridePlace(0, VW, VH, 713, 405);
+const h0 = Math.min(VH * 1.20, (VW * 0.50) / 0.62);
+eq(Math.round(sec.h), Math.round(h0), 'at handover he is exactly the size the section had him');
+/* The last station is where the phase table leaves him, not a number typed twice. */
+const lastX = TL.PHASES[TL.PHASES.length - 1].x;
+const expectX = (VW - h0) / 2 + (0.5 - 0.467) * h0 + (lastX - 0.5) * VW + h0 * 0.467;
+eq(Math.round(sec.cx), Math.round(expectX), 'and standing exactly where the last station left him');
+
+/* t = 1 is the spine head, wherever that has been measured to be. */
+const rid = RIDER.ridePlace(1, VW, VH, 713, 405);
+eq([Math.round(rid.cx), Math.round(rid.cy)], [713, 405], 'and at the end of the handover he IS the head');
+eq(Math.round(rid.h), Math.round(RIDER.rideHeight(VH)), 'shrunk to the riding size');
+ok(RIDER.rideHeight(VH) < VH * 0.2, 'which is a token on the line, not a man standing on it');
+/* Monotonic: he shrinks the whole way in, never swelling back out mid-fall. */
+let shrinks = true, prevH = RIDER.ridePlace(0, VW, VH, 713, 405).h;
+for (let i = 1; i <= 100; i++) {
+  const hh = RIDER.ridePlace(i / 100, VW, VH, 713, 405).h;
+  if (hh > prevH + 0.001) shrinks = false;
+  prevH = hh;
+}
+ok(shrinks, 'and shrinks monotonically rather than pulsing on the way down');
+
+/* THE SPIN IS A TURNTABLE OF ONE FRAME, AND THE MEASUREMENT IS WHY.
+   The 420 renders are one 360-degree turn shared across three build stages — frame 1 and
+   frame 420 differ by 11 on a per-pixel silhouette compare where the midpoint differs by
+   34, so the sequence closes. But the complete figure only exists from frame 181, leaving
+   205 degrees: looping that jumps 155 degrees a turn, and stepping outside it puts the
+   empty coat back on screen halfway down the timeline. So he spins about his own axis with
+   a horizontal squash instead, which turns without limit and without a seam. */
+ok(/Math\.cos\(theta\)/.test(JS_CODE), 'he spins by cosine, not by walking the frame sequence');
+ok(/F\.frameAt\(1, n\)/.test(JS_CODE), 'on the single frame the section itself ends on, so the handover matches');
+ok(RIDER.RIDE_EDGE > 0, 'with a sliver left at edge-on, so he never blinks out entirely');
+
+/* IN FRONT OF THE PAGE, BUT NOT IN THE WAY. Above the sticky header so he genuinely passes
+   in front of the site; below the search overlay and the modals so he can never sit on top
+   of something a reader is trying to use; and never taking a click, or a full-screen fixed
+   layer would swallow every card he passes over. */
+const riderZ = +/\.coat-rider \{[\s\S]*?z-index: (\d+);/.exec(CSS)[1];
+ok(riderZ > 60, 'the rider is above the sticky site header');
+ok(riderZ < 200, 'and below the search overlay and the modals');
+ok(/\.coat-rider \{[\s\S]*?position: fixed;/.test(CSS), 'fixed, so it escapes its own section');
+ok(/\.coat-rider \{[\s\S]*?pointer-events: none;/.test(CSS), 'and never swallows a click');
+ok(/\.coat-rider \{[\s\S]*?display: none;/.test(CSS) && /\.coat-rider\[data-on="1"\] \{ display: block; \}/.test(CSS),
+   'hidden until he is actually riding, so it is not a permanent sheet over the page');
+
+/* He replaces the HEAD, not the line: the drawn line becomes the trail behind him. */
+ok(/\.fp-timeline\[data-ridden="1"\] \.fp-spine::after \{ opacity: 0; \}/.test(CSS),
+   'the blue head goes while he is doing its job');
+eq(/\[data-ridden="1"\] \.fp-spine \{/.test(CSS), false, 'but the line itself stays, as his trail');
+ok(/ride\.setAttribute\("data-ridden", "1"\)/.test(JS_CODE) && /ride\.removeAttribute\("data-ridden"\)/.test(JS_CODE),
+   'and comes back the moment he is not');
+
+/* ONE OF THEM DRAWS HIM, NEVER BOTH. At the handover they occupy the same pixels, so
+   leaving the section painting would show two men for the screen it takes to scroll away. */
+ok(/if \(riderUpdate\(\)\) \{/.test(JS_CODE), 'the rider is asked first');
+ok(/ctx\.clearRect\(0, 0, canvas\.width, canvas\.height\); drawn = -2;/.test(JS_CODE),
+   'and the section canvas is cleared while he has him');
+/* Verified in the browser: sectionInk was false at every scroll position the rider was on. */
+
+/* Unpinned layouts get none of it — there is no moment of letting go to hand over at. */
+ok(/if \(flat\(\) \|\| reduce \|\| !ride\) \{ riderHide\(\); return false; \}/.test(JS_CODE),
+   'no rider on a phone or under reduced motion');
+ok(/@media \(max-width: 900px\), \(prefers-reduced-motion: reduce\) \{\s*\.coat-rider \{ display: none !important; \}/.test(CSS),
+   'and the stylesheet agrees, so the blue head keeps its job there');
+
 /* ---- no band, no box ----
    The section used to be a full-bleed near-black panel. It made the figure easy to light
    and announced itself as a separate thing bolted onto the page, so it is gone: the figure

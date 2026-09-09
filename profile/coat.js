@@ -210,6 +210,68 @@
     return stateAt(mid).x > 0.5 ? "left" : "right";
   }
 
+
+  /* ===================== THE RIDER: HE BECOMES THE TIMELINE =====================
+   *
+   * When the section lets go, he does not simply scroll away. He shrinks, drops to the
+   * middle of the page, comes to the FRONT of the whole site, and takes over the job the
+   * glowing blue head was doing on the experience timeline: riding down the spine as you
+   * read, spinning, and stopping exactly where the line stops.
+   *
+   * HE RIDES THE REAL LINE'S PATH, NOT A COPY OF IT. founder-motion.js fills the spine from
+   * one measurement — a reading line 45% down the viewport — so the head sits at
+   * timelineTop + p * timelineHeight, which in viewport terms means it PARKS at 45% of the
+   * screen for the whole of the timeline and clamps at either end. That is the path
+   * reproduced here from the same numbers, so the two cannot drift apart: change the 0.45
+   * in founder-motion.js and both move together. He replaces the head; the drawn line stays
+   * as the trail he leaves behind him.
+   *
+   * THE SPIN IS A TURNTABLE OF ONE FRAME, NOT THE RENDERED SEQUENCE, and that is measured
+   * rather than chosen. The 420 renders are ONE 360-degree turn shared across three build
+   * stages: frame 1 and frame 420 differ by 11 on a per-pixel silhouette compare where the
+   * midpoint differs by 34, so the sequence closes the loop. But the complete figure only
+   * exists from frame 181, which leaves 205 degrees — looping that range would jump 155
+   * degrees every turn, and stepping outside it would show the empty coat again halfway
+   * down the timeline. So the rider takes the frame the section itself ends on and spins it
+   * about its own vertical axis with a horizontal squash, the standard way a coin is turned
+   * in two dimensions. Unlimited turns, no seam, and because it is a pure function of
+   * scroll it unwinds exactly like everything else here.
+   */
+  var RIDE_MIN = 96, RIDE_MAX = 150;   // how tall he is once he is riding, in CSS pixels
+  var RIDE_EDGE = 0.07;                // the sliver left at edge-on, so he never fully vanishes
+  var HANDOFF_TURN = 0.35;             // turns spent shrinking into place, before the ride
+
+  /* The reading line founder-motion.js measures the spine against. Duplicated deliberately
+     and named, rather than read from the other file: they are one number in two places and
+     this comment is the link between them. */
+  var READ_LINE = 0.45;
+
+  function rideHeight(vh) {
+    return Math.max(RIDE_MIN, Math.min(RIDE_MAX, vh * 0.16));
+  }
+
+  /* Where he is drawn, at any point between letting go of the section (t = 0) and riding
+     the spine (t = 1). t = 0 REPRODUCES THE SECTION'S OWN GEOMETRY EXACTLY — same scale,
+     same centre — which is what makes the handover invisible: there is no crossfade, the
+     fixed layer simply starts painting the identical picture the sticky one was painting,
+     and then moves it. Everything is in CSS pixels. */
+  function ridePlace(t, vw, vh, spineX, spineY) {
+    /* The section at the foot of its runway: fitted to the stage height, pushed all the way
+       in, clamped by his measured width, and standing at the last station. */
+    var h0 = Math.min(vh * ZOOM_TO, (vw * FIG_MAX) / FIG_W);
+    var x0 = (vw - h0) / 2 + (0.5 - FIG_CX) * h0 + (PHASES[PHASES.length - 1].x - 0.5) * vw;
+    var cx0 = x0 + h0 * FIG_CX;
+    var cy0 = (vh - h0) / 2 + vh * PAN_TO + h0 / 2;
+
+    var h1 = rideHeight(vh);
+    var e = easeInOut(t < 0 ? 0 : t > 1 ? 1 : t);
+    return {
+      h: h0 + (h1 - h0) * e,
+      cx: cx0 + (spineX - cx0) * e,
+      cy: cy0 + (spineY - cy0) * e
+    };
+  }
+
   /* ======================== THE ENERGY FIELD ========================
    *
    * WHY THE FIRST VERSION LOOKED CHEAP, since it is the whole reason this one is different.
@@ -712,6 +774,133 @@
     var imgs = new Array(n), ready = new Array(n), got = 0;
     var want = 0, drawn = -1, drawnAt = -1, prog = 0, ticking = false, revealed = false;
 
+
+    /* ---- the rider layer ----
+       A fixed, full-viewport canvas ABOVE the page. z-index sits over the sticky header so
+       he genuinely passes in front of the site, and under the search overlay and modals so
+       he can never end up on top of something a reader is trying to use. It never takes a
+       click: pointer-events are off, so the timeline underneath stays as interactive as it
+       was. Created here rather than in the markup because it only exists when the frames
+       do — a page without renders should not carry an empty fixed layer. */
+    var ride = document.getElementById("fExp") || document.querySelector(".fp-timeline");
+    var riderEl = null, riderCv = null, riderCtx = null, riderOn = false;
+
+    function riderLayer() {
+      if (riderEl) return riderEl;
+      riderEl = document.createElement("div");
+      riderEl.className = "coat-rider";
+      riderEl.setAttribute("aria-hidden", "true");
+      riderCv = document.createElement("canvas");
+      riderEl.appendChild(riderCv);
+      document.body.appendChild(riderEl);
+      riderCtx = riderCv.getContext("2d", { alpha: true });
+      return riderEl;
+    }
+
+    function riderHide() {
+      if (!riderOn) return;
+      riderOn = false;
+      if (riderEl) riderEl.removeAttribute("data-on");
+      if (ride) ride.removeAttribute("data-ridden");
+      drawn = -1;              // the section owns the figure again, so let it repaint
+    }
+
+    /* Returns true while the rider is the one drawing him, so measure() knows to leave the
+       section's canvas empty rather than painting a second copy of the same man. */
+    function riderUpdate() {
+      if (flat() || reduce || !ride) { riderHide(); return false; }
+
+      var vh = window.innerHeight, vw = window.innerWidth;
+      var y = window.pageYOffset || document.documentElement.scrollTop || 0;
+      var cr = host.getBoundingClientRect();
+      var tr = ride.getBoundingClientRect();
+      if (!vh || !vw || !cr.height || !tr.height) { riderHide(); return false; }
+
+      var coatTop = cr.top + y;
+      /* The scroll position at which the pinned layer lets go — the section's own progress
+         1, and the moment he stops belonging to it. */
+      var release = coatTop + cr.height - vh;
+      if (y < release) { riderHide(); return false; }
+
+      var tTop = tr.top + y, tH = tr.height;
+      var read = vh * READ_LINE;
+      /* p = 0 when the reading line first touches the top of the timeline, 1 at its foot.
+         Exactly founder-motion.js's measurement, rearranged into document coordinates. */
+      var rideStart = tTop - read;
+      var rideEnd = rideStart + tH;
+
+      var t, p, cy;
+      if (y < rideStart) {
+        /* Handing over: shrinking and falling towards the head of the spine. */
+        t = rideStart > release ? (y - release) / (rideStart - release) : 1;
+        p = 0;
+        cy = null;             // ridePlace interpolates towards the spine head for us
+      } else if (y < rideEnd) {
+        t = 1;
+        p = (y - rideStart) / tH;
+        cy = read;             // riding: he holds the reading line while the page moves
+      } else {
+        t = 1;
+        p = 1;
+        cy = (tTop + tH) - y;  // stopped where the line stops, scrolling away with it
+      }
+
+      /* Off the top of the screen: nothing to draw, and the layer goes away so it cannot
+         sit over the rest of the page as an invisible sheet. */
+      var hNow = rideHeight(vh);
+      if (cy !== null && cy < -hNow) { riderHide(); return false; }
+
+      var spineX = tr.left + tr.width / 2;
+      var spineY = cy === null ? (tTop - y) : cy;
+      var place = ridePlace(t, vw, vh, spineX, spineY);
+
+      var img = imgs[F.nearestLoaded(F.frameAt(1, n), ready)];
+      if (!img) { riderHide(); return false; }
+
+      riderLayer();
+      var dpr = Math.min(2, window.devicePixelRatio || 1);
+      var cw = Math.round(vw * dpr), chh = Math.round(vh * dpr);
+      if (riderCv.width !== cw || riderCv.height !== chh) { riderCv.width = cw; riderCv.height = chh; }
+
+      var c = riderCtx;
+      c.setTransform(dpr, 0, 0, dpr, 0, 0);
+      c.clearRect(0, 0, vw, vh);
+
+      /* Turns: enough that he is visibly spinning without becoming a blur, scaled to how
+         long the timeline actually is so the speed does not change when an entry is added. */
+      var turns = Math.max(2, Math.round(tH / 700));
+      var theta = (HANDOFF_TURN * t + turns * p) * Math.PI * 2;
+      var sx = Math.cos(theta);
+      if (Math.abs(sx) < RIDE_EDGE) sx = sx < 0 ? -RIDE_EDGE : RIDE_EDGE;
+
+      var w = place.h;                       // the renders are square
+      var gx = place.cx, gy = place.cy;
+
+      /* A pool of light under him, so a small figure still reads as lit rather than pasted
+         on. Same aura the section uses, from the same CSS variables. */
+      var R = place.h * 0.62;
+      var g = c.createRadialGradient(gx, gy, 0, gx, gy, R);
+      g.addColorStop(0, "rgba(" + skin.rgb + "," + (0.42 * skin.halo).toFixed(3) + ")");
+      g.addColorStop(0.55, "rgba(" + skin.rgb + "," + (0.16 * skin.halo).toFixed(3) + ")");
+      g.addColorStop(1, "rgba(" + skin.rgb + ",0)");
+      c.fillStyle = g;
+      c.beginPath();
+      c.arc(gx, gy, R, 0, Math.PI * 2);
+      c.fill();
+
+      c.save();
+      c.translate(gx, gy);
+      c.scale(sx, 1);
+      c.drawImage(img, -w * FIG_CX, -place.h / 2, w, place.h);
+      c.restore();
+
+      riderEl.setAttribute("data-on", "1");
+      /* The blue head is his job now. The drawn line stays — it is the trail behind him. */
+      ride.setAttribute("data-ridden", "1");
+      riderOn = true;
+      return true;
+    }
+
     function size() {
       var r = stage.getBoundingClientRect();
       if (!r.width || !r.height) return false;
@@ -948,7 +1137,14 @@
           beats[i].style.pointerEvents = a > 0.5 ? "auto" : "none";
         }
       }
-      paint(st);
+      /* ONE OF THEM DRAWS HIM, NEVER BOTH. Once the rider has him, the section canvas is
+         cleared: at the handover they occupy the same pixels, so painting both would show
+         two men for the screen it takes the section to scroll away. */
+      if (riderUpdate()) {
+        if (drawn !== -2 && size()) { ctx.clearRect(0, 0, canvas.width, canvas.height); drawn = -2; }
+      } else {
+        paint(st);
+      }
     }
 
     function onScroll() {
