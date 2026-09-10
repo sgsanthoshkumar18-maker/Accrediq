@@ -213,13 +213,32 @@
 .qd-foot{margin:8px 0 0;font-size:11.5px;line-height:1.55;color:var(--fg-faint);}
 .qd-unset{font-size:12px;color:var(--fg-faint);font-style:italic;}
 
-/* What the page will become, shown on the empty state. */
+/* THE FIVE BOARDS ON THE EMPTY STATE, AND THEY ARE CHOICES NOW.
+   These used to be five description panels with one button underneath them, which meant
+   they described the thing you could not pick and the button picked for you. Each is a
+   real button, so it has to look like one: it takes a pointer, it lifts on hover, and it
+   shows a focus ring, because a card that acts on click and gives nothing back reads as
+   decoration and gets ignored. */
 .qd-secs{display:grid;grid-template-columns:repeat(auto-fit,minmax(190px,1fr));gap:10px;
   margin:16px 0;}
-.qd-sec{padding:11px 13px;border:1px solid var(--border);border-radius:var(--r-md);
-  background:var(--bg-elevated);}
+.qd-sec{display:flex;flex-direction:column;gap:3px;width:100%;
+  padding:12px 13px 11px;border:1px solid var(--border);border-radius:var(--r-md);
+  background:var(--bg-elevated);text-align:left;font:inherit;color:inherit;
+  cursor:pointer;transition:border-color 140ms ease,transform 140ms ease,box-shadow 140ms ease;}
+.qd-sec:hover{border-color:var(--accent-solid);transform:translateY(-1px);
+  box-shadow:var(--shadow-1);}
+.qd-sec:focus-visible{outline:2px solid var(--accent-solid);outline-offset:2px;}
 .qd-sec b{display:block;font-family:var(--font-display);font-size:14px;margin-bottom:3px;}
 .qd-sec span{font-size:12px;line-height:1.5;color:var(--fg-muted);}
+/* The first thing that board will ask, so the choice is between actions rather than
+   between topics. Pushed to the bottom so the cards line their prompts up however
+   different the descriptions above them run. */
+.qd-sec-go{margin-top:auto;padding-top:8px;font-family:var(--font-mono);font-size:11px;
+  letter-spacing:.04em;color:var(--accent-text);}
+@media (prefers-reduced-motion: reduce){
+  .qd-sec{transition:none;}
+  .qd-sec:hover{transform:none;}
+}
 
 /* ---- every KPI, with its own line ----
    A card per KPI rather than a row per KPI: the sparkline needs its own width, and a

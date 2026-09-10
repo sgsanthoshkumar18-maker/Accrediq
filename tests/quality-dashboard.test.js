@@ -291,5 +291,115 @@ eq(/crash_cart_settings\s+add column if not exists alert_frequency/.test(SQL), t
 eq(/notify_prefs add column if not exists crashcart_frequency/.test(SQL), false,
    'and is not duplicated onto per-user preferences');
 
+
+/* ================= CHOOSING WHICH BOARD TO BUILD =================
+   The first screen listed the five boards and then put ONE button under them: "Add the
+   first department". So whatever a hospital came here to do, the only door led into KPI —
+   the heaviest of the five, needing departments, KRAs, targets and a monthly figure before
+   it draws anything. A quality manager who wanted to record last week's committee meeting
+   had to build a KPI framework first, or guess that the tabs behind the intro let them out.
+
+   Nothing required that order. The boards share no data: committees read meetings,
+   incidents read incidents, readiness reads the element register. KPI was first because it
+   was written first, and a default became a prerequisite by accident. */
+const intro = (function () {
+  const secs = SRC.match(/var SECTIONS = \[[\s\S]*?\n  \];/)[0];
+  const starts = SRC.match(/var STARTS = \{[\s\S]*?\n  \};/)[0];
+  const fn = SRC.match(/function setupIntro\(\) \{[\s\S]*?\n  \}/)[0];
+  const escFn = 'function esc(v){return String(v==null?"":v).replace(/[&<>"]/g,function(c){' +
+    'return {"&":"&amp;","<":"&lt;",">":"&gt;",\'"\':"&quot;"}[c];});}';
+  return new Function(secs + '\n' + starts + '\n' + escFn + '\n' + fn +
+    '\nreturn { html: setupIntro(), SECTIONS: SECTIONS, STARTS: STARTS };')();
+})();
+
+/* Every board is a door, and each door is a real button rather than a description. */
+intro.SECTIONS.forEach(function (sec) {
+  eq(intro.html.indexOf('data-start="' + sec[0] + '"') > -1, true,
+     sec[1] + ' can be chosen from the first screen');
+});
+eq((intro.html.match(/data-start=/g) || []).length, intro.SECTIONS.length,
+   'all five, and nothing that is not a board');
+eq(/<button type="button" class="qd-sec"/.test(intro.html), true,
+   'as buttons, so they are reachable by keyboard and announced as controls');
+
+/* THE ASSERTION THAT WOULD HAVE CAUGHT THE ORIGINAL. One button, hard-wired to one board. */
+eq(/qdStart/.test(intro.html), false, 'no single hard-wired start button');
+eq(/Add the first department/.test(intro.html), false,
+   'and the first screen no longer tells a hospital which board to build');
+eq(/Name your departments/.test(intro.html), false,
+   'nor walks them through KPI as though it were step one of five');
+
+/* Each door says what it will ask, so the choice is between actions and not topics. */
+intro.SECTIONS.forEach(function (sec) {
+  eq(typeof intro.STARTS[sec[0]] === 'string' && intro.STARTS[sec[0]].length > 3, true,
+     sec[1] + ' names its own first question');
+});
+eq(intro.STARTS.committee, 'Record a meeting', 'committee asks about a meeting, not a department');
+
+/* ---- picking a board opens THAT board, and asks only its questions ---- */
+const startFn = SRC.match(/function startSection\(sec\) \{[\s\S]*?\n  \}/)[0];
+eq(/viewState\.section = sec;/.test(startFn), true, 'the chosen board becomes the open one');
+eq(/viewState\.started = true;/.test(startFn), true, 'and the choice is recorded');
+eq(startFn.indexOf('saveView()') < startFn.indexOf('location.href'), true,
+   'saved BEFORE any navigation, so the two boards that leave this page come back to the ' +
+   'one the hospital picked');
+eq(/if \(sec === "committee"\)/.test(startFn) && /meetingForm\(\)/.test(startFn), true,
+   'committee opens the meeting form');
+eq(/if \(sec === "kpi"\) \{ deptForm\(\); return; \}/.test(startFn), true,
+   'and KPI still opens the department form — it is one of five now, not the gate');
+/* A meeting belongs to a committee and committees are made on the calendar, so choosing
+   committee with none set up has to go there rather than open an empty dropdown. */
+eq(/if \(!cmtes\.length\) \{ location\.href = "calendar\.html#committees"; return; \}/.test(startFn), true,
+   'and a hospital with no committees yet is sent where committees are made');
+
+/* ---- a chosen board stays open even before it holds anything ---- */
+eq(/if \(!viewState\.started && !depts\.length/.test(SRC), true,
+   'the chooser closes when a board is CHOSEN, not when data first appears');
+/* Those are different moments, and using the second for the first was the bug: pick
+   Committee, open the meeting form, change your mind, and the page threw you back to the
+   chooser as though you had never decided anything. */
+eq(/started: raw\.started === true/.test(SRC), true,
+   'and the choice survives a reload');
+/* The saved view is rebuilt field by field, so anything not named there is dropped — which
+   is deliberate, and means a new field has to be added in two places or it silently does
+   not persist. */
+eq(/section: "kpi", started: false/.test(SRC), true, 'with a default that matches');
+
+/* ---- every empty board explains itself, not just KPI ---- */
+const nudge = (function () {
+  const fn = SRC.match(/function emptyNudge\(sec\) \{[\s\S]*?\n  \}\n/)[0];
+  return function (state) {
+    return new Function('depts', 'cmtes', 'meetings', 'incidents', 'codes', 'owners', 'findings',
+      fn + '\nreturn emptyNudge;')(
+      state.depts || [], state.cmtes || [], state.meetings || [], state.incidents || [],
+      state.codes || [], state.owners || [], state.findings || []);
+  };
+})();
+const bare = nudge({});
+['kpi', 'committee', 'incident', 'code', 'nabh'].forEach(function (sec) {
+  eq(bare(sec).length > 40, true, sec + ' tells an empty board what it needs');
+});
+/* Only KPI had one of these, because only KPI could be reached from the old first screen —
+   the other four were never seen empty by anybody who had not already filled something in.
+   Now that any of the five can be the first thing a hospital opens, an empty grid of tiles
+   would read as broken rather than as not started. */
+eq(/No committees yet/.test(bare('committee')), true,
+   'committee with nothing set up points at the calendar, where committees are made');
+eq(/calendar\.html#committees/.test(bare('committee')), true, 'and links there');
+eq(/No meetings recorded yet/.test(nudge({ cmtes: [{ id: 'c1' }] })('committee')), true,
+   'and once committees exist it asks for a meeting instead');
+eq(nudge({ meetings: [{ id: 'm1' }], cmtes: [{ id: 'c1' }] })('committee'), '',
+   'and says nothing once the board has something to draw');
+/* Each one points at where that record is actually made, which is not always this page. */
+eq(/incidents\.html/.test(bare('incident')), true, 'incidents point at the incident page');
+eq(/readiness\.html/.test(bare('nabh')), true, 'readiness points at the tracker');
+
+/* ---- the cards have to behave like the controls they now are ---- */
+eq(/\.qd-sec\{[^}]*cursor:pointer/.test(CSS), true, 'a chooser card takes a pointer');
+eq(/\.qd-sec:focus-visible\{[^}]*outline/.test(CSS), true, 'and shows a focus ring');
+eq(/\.qd-sec:hover\{/.test(CSS), true, 'and answers a hover, or it reads as decoration');
+eq(/@media \(prefers-reduced-motion: reduce\)\{[\s\S]*?\.qd-sec\{transition:none/.test(CSS), true,
+   'without moving for anyone who has asked it not to');
+
 console.log(pass + ' passed, ' + fail + ' failed');
 process.exit(fail ? 1 : 0);

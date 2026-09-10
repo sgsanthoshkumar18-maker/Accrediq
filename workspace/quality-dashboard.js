@@ -376,32 +376,49 @@
 
   /* ================================ the setup wizard ================================ */
 
+  /* THE FIRST SCREEN OFFERS A CHOICE, AND IT USED TO GIVE AN INSTRUCTION.
+     It listed the five boards and then put one button under them: "Add the first
+     department". So whatever a hospital actually came here to do, the only door led into
+     KPI — the heaviest of the five, the one that needs departments, KRAs, targets and a
+     monthly figure before it draws anything. A quality manager who wanted to record last
+     week's committee meeting had to set up a KPI framework first, or guess that the tabs
+     behind the intro would let them out.
+
+     Nothing required that order. The five boards share no data: committees read meetings,
+     incidents read incidents, readiness reads the element register. KPI was first because
+     it was written first.
+
+     Now each board is its own door. Pick one and you get that board and its questions —
+     the others stay empty until you want them, and none of them is a prerequisite for
+     any other. */
+  var STARTS = {
+    kpi:       "Name a department",
+    committee: "Record a meeting",
+    incident:  "Report an incident",
+    code:      "Record a code alert",
+    nabh:      "Open the readiness tracker"
+  };
+
   function setupIntro() {
     return '<div class="qd-intro">' +
       "<h2>Build your hospital&rsquo;s own dashboard</h2>" +
       "<p>The general dashboard shows one shape for every hospital. Yours is not that shape " +
-      "&mdash; your departments, your KRAs, your targets. Enter them once and every chart on " +
-      "this page is drawn from your own numbers.</p>" +
-      /* WHAT THE PAGE BECOMES, BEFORE ANY OF IT EXISTS. Somebody looking at an empty page
-         is deciding whether the afternoon of typing is worth it, and five section names is
-         a far better answer to that than a promise about charts. */
+      "&mdash; your departments, your committees, your incidents. Enter them once and every " +
+      "chart on this page is drawn from your own numbers.</p>" +
+      "<p><b>Start with whichever board you need.</b> They do not depend on each other and " +
+      "there is no order to follow &mdash; build one today and the rest whenever you come to " +
+      "them.</p>" +
       '<div class="qd-secs">' + SECTIONS.map(function (s) {
-        return '<div class="qd-sec"><b>' + esc(s[1]) + "</b><span>" + esc(s[2]) + "</span></div>";
+        return '<button type="button" class="qd-sec" data-start="' + s[0] + '">' +
+          "<b>" + esc(s[1]) + "</b><span>" + esc(s[2]) + "</span>" +
+          '<span class="qd-sec-go">' + esc(STARTS[s[0]] || "Start") + " &rarr;</span></button>";
       }).join("") + "</div>" +
       "<p>Four of the five read what your workspace already holds &mdash; your committees, " +
-      "your incidents, your element register &mdash; so they start filling in on their own. " +
-      "The KPI section is the one that needs you.</p>" +
-      '<ol class="qd-steps">' +
-        "<li><b>Name your departments.</b> As many as you have, called what you call them.</li>" +
-        "<li><b>For each one, what it is measured on.</b> KRAs and KPIs with a target, how " +
-          "many committees and SOPs it should have and how many it has, and its training " +
-          "record. Anything else the director has set it, add as your own.</li>" +
-        "<li><b>Each month, update what has been achieved.</b> That is what builds the trend " +
-          "&mdash; one figure per measure, not a re-entry of everything.</li>" +
-      "</ol>" +
+      "your incidents, your element register &mdash; so they fill in on their own as you " +
+      "work. The KPI board is the one that needs typing, which is a reason to leave it " +
+      "until you want it rather than a reason to do it first.</p>" +
       '<p class="tr-hint">Everything saves as you type it. You can stop halfway and come ' +
-        "back to exactly where you were.</p>" +
-      '<button class="btn btn-accent" id="qdStart">Add the first department</button></div>';
+        "back to exactly where you were.</p></div>";
   }
 
   function deptForm(d) {
@@ -1164,7 +1181,7 @@
      migration nobody could test against a browser they cannot see. */
   var VIEW_KEY = "aq-qd-view-v2";
   var viewState = (function () {
-    var d = { order: {}, hidden: [], types: {}, chapter: null, section: "kpi" };
+    var d = { order: {}, hidden: [], types: {}, chapter: null, section: "kpi", started: false };
     try {
       var raw = JSON.parse(localStorage.getItem(VIEW_KEY) || "{}");
       return {
@@ -1172,7 +1189,13 @@
         hidden: Array.isArray(raw.hidden) ? raw.hidden : [],
         types: raw.types && typeof raw.types === "object" ? raw.types : {},
         chapter: raw.chapter || null,
-        section: isSection(raw.section) ? raw.section : "kpi"
+        section: isSection(raw.section) ? raw.section : "kpi",
+        /* REBUILT FIELD BY FIELD, WHICH MEANS ANYTHING NOT NAMED HERE IS DROPPED ON RELOAD.
+           That is deliberate — it is what stops a stale or hand-edited key surviving — but
+           it also means a new field has to be added in two places or it silently does not
+           persist. `started` is the record that a hospital has chosen a board, so losing it
+           on refresh would put them back on the chooser after they had already decided. */
+        started: raw.started === true
       };
     } catch (e) { return d; }
   })();
@@ -2193,6 +2216,49 @@
       '<button type="button" class="btn btn-accent qd-bar-b" id="qdAddFinding2">Record a finding</button>';
   }
 
+  /* WHAT AN EMPTY BOARD SAYS. Only KPI had one of these, because only KPI could be
+     reached from the old first screen — the other four were never seen empty by anybody
+     who had not already filled something in. Now that any of the five can be the first
+     thing a hospital opens, all five have to explain themselves rather than showing a
+     grid of empty tiles, which reads as broken rather than as not started. */
+  function emptyNudge(sec) {
+    function say(t) { return '<div class="qd-nudge">' + t + "</div>"; }
+    if (sec === "kpi" && !depts.length) {
+      return say("<b>No departments yet.</b> Add one and every chart on this board is drawn " +
+        "from its KPIs, targets and monthly figures.");
+    }
+    if (sec === "committee") {
+      /* A meeting belongs to a committee, and committees are created on the calendar —
+         so the honest first step here depends on whether any exist yet. */
+      if (!cmtes.length) {
+        return say("<b>No committees yet.</b> They are set up on the " +
+          '<a href="calendar.html#committees">calendar</a>, and once one exists you can ' +
+          "record its meetings here &mdash; who attended, whether it was quorate, and what " +
+          "came of it.");
+      }
+      if (!meetings.length) {
+        return say("<b>No meetings recorded yet.</b> Record one and this board shows " +
+          "attendance, quorum and whether decisions were closed out.");
+      }
+      return "";
+    }
+    if (sec === "incident" && !incidents.length) {
+      return say("<b>Nothing reported yet.</b> Incidents are reported on the " +
+        '<a href="incidents.html">incident page</a>, and this board sorts them into ' +
+        "structure, process and outcome as they arrive.");
+    }
+    if (sec === "code" && !codes.length) {
+      return say("<b>No code alerts recorded yet.</b> Record one and this board shows who " +
+        "turned up, how long they took, and how the team performed.");
+    }
+    if (sec === "nabh" && !owners.length && !findings.length) {
+      return say("<b>Nothing assessed yet.</b> Assign a champion to a chapter in the " +
+        '<a href="readiness.html">readiness tracker</a>, and this board follows each ' +
+        "chapter and the findings raised against it.");
+    }
+    return "";
+  }
+
   function sectionTabs(sec) {
     return '<div class="qd-tabs" role="tablist" aria-label="Dashboard sections">' +
       SECTIONS.map(function (s) {
@@ -2203,8 +2269,13 @@
   }
 
   function overview() {
-    if (!depts.length && !meetings.length && !incidents.length && !codes.length &&
-        !owners.length && !findings.length) {
+    /* THE CHOOSER GOES AWAY WHEN A BOARD IS CHOSEN, not when data first appears.
+       Those are different moments, and using the second for the first was the bug: pick
+       Committee, open the meeting form, change your mind, and the page threw you back to
+       the chooser as though you had never decided anything. `started` records the
+       decision, so a chosen board stays open and empty, telling you what it needs. */
+    if (!viewState.started && !depts.length && !meetings.length && !incidents.length &&
+        !codes.length && !owners.length && !findings.length) {
       return setupIntro();
     }
 
@@ -2227,13 +2298,7 @@
           '" id="qdEdit">' + (editing ? "Done" : "Edit layout") + "</button>" +
         (editing ? '<button type="button" class="btn btn-ghost qd-bar-b" id="qdResetView">Reset</button>' : "") +
       "</div>" +
-      /* The KPI section is the only one that needs its own tables set up before it can show
-         anything. Saying so here, rather than leaving five empty tiles, is the difference
-         between "not started" and "broken". */
-      (sec === "kpi" && !depts.length
-        ? '<div class="qd-nudge"><b>No departments yet.</b> Add one and every chart in this ' +
-          "section is drawn from its KPIs, targets and monthly figures.</div>"
-        : "");
+      emptyNudge(sec);
 
     var grid = tileOrder().map(function (id) {
       var t = TILES.filter(function (x) { return x.id === id; })[0];
@@ -2516,12 +2581,41 @@
         "creates each table only if it is not already there.</p></div>";
   }
 
+  /* Open a board and ask its first question. Deliberately the SAME entry points the
+     board's own toolbar uses, so there is one way into each and it cannot drift. */
+  function startSection(sec) {
+    if (!isSection(sec)) return;
+    viewState.section = sec;
+    viewState.started = true;
+    saveView();
+    render();
+    if (sec === "kpi") { deptForm(); return; }
+    if (sec === "committee") {
+      /* Committees are created on the calendar, not here. Sending someone to an empty
+         dropdown and letting them work out why would be the worse of the two. */
+      if (!cmtes.length) { location.href = "calendar.html#committees"; return; }
+      meetingForm();
+      return;
+    }
+    if (sec === "code") { codeForm(); return; }
+    if (sec === "incident") { location.href = "incidents.html"; return; }
+    location.href = "readiness.html";
+  }
+
   function wire() {
     document.getElementById("qdPanel").addEventListener("click", function (e) {
       var open = e.target.closest("[data-open]");
       if (open) { openDept = open.getAttribute("data-open"); render(); window.scrollTo(0, 0); return; }
       if (e.target.id === "qdBack") { openDept = null; render(); return; }
-      if (e.target.id === "qdStart") { deptForm(); return; }
+      /* PICKING A BOARD FROM THE FIRST SCREEN. It opens that board and asks that board's
+         own first question — nothing else's. The section is recorded before anything else
+         happens, so the two entries that leave this page for another one still come back
+         to the board the hospital chose. */
+      var pick = e.target.closest("[data-start]");
+      if (pick) {
+        startSection(pick.getAttribute("data-start"));
+        return;
+      }
       var mm = e.target.closest("[data-metrics]");
       if (mm) {
         var dm = depts.filter(function (x) { return x.id === mm.getAttribute("data-metrics"); })[0];
