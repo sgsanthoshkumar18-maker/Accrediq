@@ -6,6 +6,10 @@
   "functions": {
     "api/*.js": {
       "maxDuration": 15
+    },
+    "api/audit-blank-pdf.js": {
+      "maxDuration": 20,
+      "includeFiles": "{nabh-data.js,audit/scope-data.js}"
     }
   },
   "redirects": [

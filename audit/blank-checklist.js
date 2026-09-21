@@ -196,13 +196,18 @@
     page.innerHTML = renderChecklist(dept, groups);
     document.title = "Blank checklist — " + dept.name;
 
+    /* The primary action is a real PDF download served by the /api/audit-blank-pdf
+     * function; a browser print dialog is not a file download and the user
+     * asked for an offline PDF they can save and email around. Fall back to
+     * window.print() only if the API is unreachable (offline preview, dev). */
     var pb = document.getElementById("bcPrint");
-    if (pb) pb.addEventListener("click", function () { window.print(); });
-
-    /* If ?print=1, kick off the browser print dialog once the page has laid out. */
-    if (qs("print") === "1") {
-      requestAnimationFrame(function () { setTimeout(function () { window.print(); }, 200); });
+    if (pb) {
+      pb.addEventListener("click", function () {
+        window.location.href = "/api/audit-blank-pdf?dept=" + encodeURIComponent(deptKey);
+      });
     }
+    var pp = document.getElementById("bcPrintPage");
+    if (pp) pp.addEventListener("click", function () { window.print(); });
   }
 
   if (document.readyState === "loading") {

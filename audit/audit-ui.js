@@ -34,10 +34,10 @@
         return '<div class="aud-dept" data-dept="' + key + '" role="button" tabindex="0">' +
           "<span class=\"n\">" + esc(d.name) + "</span>" +
           '<span class="m">' + d.codes.length + " elements in scope</span>" +
-          '<a class="aud-dept-blank" href="../audit/blank-checklist.html?dept=' + key +
-            '" target="_blank" rel="noopener" ' +
-            'title="Open a blank checklist for this department, ready to print or save as PDF">' +
-            "Download blank checklist ↓" +
+          '<a class="aud-dept-blank" href="/api/audit-blank-pdf?dept=' + key +
+            '" download ' +
+            'title="Download a blank checklist PDF for this department, ready to print offline">' +
+            "Download blank checklist PDF ↓" +
           "</a>" +
         "</div>";
       }).join("") + "</div>";
