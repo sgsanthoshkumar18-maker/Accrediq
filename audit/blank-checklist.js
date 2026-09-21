@@ -94,6 +94,66 @@
       "</section>";
   }
 
+  var HOSPITAL_STORAGE_KEY = "aq-blank-checklist-hospital";
+  function loadHospital() {
+    try { return localStorage.getItem(HOSPITAL_STORAGE_KEY) || ""; } catch (e) { return ""; }
+  }
+  function saveHospital(name) {
+    try { localStorage.setItem(HOSPITAL_STORAGE_KEY, name || ""); } catch (e) {}
+  }
+
+  /* Prompt the auditor for the hospital name. Returns a Promise that resolves to
+   * the trimmed name (may be empty if they skipped). A one-shot modal is used
+   * instead of window.prompt() because the native prompt includes "This page
+   * says:" and the site URL, which reads amateurish for a document that goes
+   * back to a hospital board. */
+  function askHospitalName(initial) {
+    return new Promise(function (resolve) {
+      var overlay = document.createElement("div");
+      overlay.className = "bc-modal-overlay no-print";
+      overlay.innerHTML =
+        '<div class="bc-modal" role="dialog" aria-modal="true" aria-labelledby="bcModalTitle">' +
+          '<h3 id="bcModalTitle">Prepare checklist</h3>' +
+          '<p>Enter the hospital or facility name. It will appear as the header on every page of the printed checklist so the document belongs to your records.</p>' +
+          '<label for="bcHospitalInput">Hospital / facility name</label>' +
+          '<input id="bcHospitalInput" type="text" autocomplete="organization" placeholder="e.g. Voluntary Health Services" value="' + esc(initial || "") + '" />' +
+          '<div class="bc-modal-actions">' +
+            '<button type="button" class="bc-btn bc-ghost" id="bcModalSkip">Skip &mdash; leave blank</button>' +
+            '<button type="button" class="bc-btn bc-primary" id="bcModalOk">Download PDF</button>' +
+          "</div>" +
+        "</div>";
+      document.body.appendChild(overlay);
+      var input = overlay.querySelector("#bcHospitalInput");
+      var ok = overlay.querySelector("#bcModalOk");
+      var skip = overlay.querySelector("#bcModalSkip");
+      setTimeout(function () { input.focus(); input.select(); }, 30);
+      function close(val) { overlay.remove(); resolve(val); }
+      ok.addEventListener("click", function () { close(String(input.value || "").trim()); });
+      skip.addEventListener("click", function () { close(""); });
+      input.addEventListener("keydown", function (e) {
+        if (e.key === "Enter") { e.preventDefault(); ok.click(); }
+        if (e.key === "Escape") { e.preventDefault(); skip.click(); }
+      });
+      overlay.addEventListener("click", function (e) {
+        if (e.target === overlay) skip.click();
+      });
+    });
+  }
+
+  function applyHospitalName(name) {
+    var box = document.querySelector(".bc-hospital-line");
+    if (!box) return;
+    if (name) {
+      box.innerHTML =
+        '<label>Hospital / facility</label>' +
+        '<div class="bc-hospital-name">' + esc(name) + '</div>';
+      box.classList.add("bc-hospital-filled");
+    } else {
+      box.innerHTML = '<label>Hospital / facility</label>';
+      box.classList.remove("bc-hospital-filled");
+    }
+  }
+
   function renderChecklist(dept, groups) {
     var quickHtml = "";
     if (dept.quickList && dept.quickList.length) {
@@ -170,7 +230,10 @@
       '<section class="bc-sign">' +
         '<div class="bc-sign-box"><label>Auditor’s signature &amp; date</label></div>' +
         '<div class="bc-sign-box"><label>Auditee acknowledgement (signature &amp; date)</label></div>' +
-      "</section>"
+      "</section>" +
+      /* Small trailing credit line: this checklist is the hospital’s own record;
+       * AQcredix is credited but the header identifies the hospital. */
+      '<div class="bc-credit">Internal audit checklist prepared using AQcredix — aqcredix.com</div>'
     );
   }
 
@@ -231,15 +294,16 @@
     }
 
     var busy = false;
-    function downloadPdf() {
-      if (busy) return; busy = true;
+    function renderAndSave() {
       var btn = document.getElementById("bcPrint");
       var origLabel = btn ? btn.textContent : null;
       if (btn) { btn.textContent = "Preparing PDF…"; btn.disabled = true; }
       var page = document.getElementById("bcPage");
-      loadLib().then(function (html2pdf) {
+      return loadLib().then(function (html2pdf) {
         var deptName = (dept && dept.name) || "Checklist";
-        var fileName = "AQcredix-Blank-" + slug(deptName) + ".pdf";
+        var hospital = loadHospital();
+        var hSlug = hospital ? slug(hospital) + "-" : "";
+        var fileName = "Audit-Checklist-" + hSlug + slug(deptName) + ".pdf";
         /* html2canvas needs allowTaint/useCORS off for local paint; scale 2 for
          * a crisp raster. jsPDF page break rule uses .bc-std and .bc-elt from
          * the print stylesheet so standards and elements never split. */
@@ -253,13 +317,20 @@
         }).from(page).save();
       }).then(function () {
         if (btn) { btn.textContent = origLabel || "Download PDF"; btn.disabled = false; }
-        busy = false;
       }).catch(function (e) {
         console.error(e);
         alert("Could not generate the PDF. Try clicking again, or use Print this page as a fallback.");
         if (btn) { btn.textContent = origLabel || "Download PDF"; btn.disabled = false; }
-        busy = false;
       });
+    }
+
+    function downloadPdf() {
+      if (busy) return; busy = true;
+      askHospitalName(loadHospital()).then(function (name) {
+        saveHospital(name);
+        applyHospitalName(name);
+        return renderAndSave();
+      }).then(function () { busy = false; }, function () { busy = false; });
     }
 
     var pb = document.getElementById("bcPrint");
@@ -267,8 +338,9 @@
     var pp = document.getElementById("bcPrintPage");
     if (pp) pp.addEventListener("click", function () { window.print(); });
 
-    /* If ?auto=1, trigger the download automatically after layout settles so the
-     * picker's link works as one-click download-and-save. */
+    /* If ?auto=1, offer the download automatically after layout settles so the
+     * picker's link works as one-click download-and-save. The prompt still
+     * appears — the auditor confirms the hospital name and hits Download. */
     if (qs("auto") === "1") {
       requestAnimationFrame(function () { setTimeout(downloadPdf, 400); });
     }

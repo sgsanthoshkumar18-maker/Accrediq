@@ -221,6 +221,75 @@ body {
   color: #0B4F6C;
 }
 
+/* -------------------- Hospital name (filled) -------------------- */
+
+.bc-hospital-name {
+  font-size: 15px;
+  font-weight: 700;
+  color: #0B4F6C;
+  margin-top: 2px;
+  line-height: 1.2;
+  word-break: break-word;
+}
+.bc-hospital-line.bc-hospital-filled {
+  background: #EEF7F5;
+  border-color: #20A39E;
+}
+
+/* -------------------- Trailing credit -------------------- */
+
+.bc-credit {
+  margin-top: 18px;
+  padding-top: 8px;
+  border-top: 1px solid #E1E7EE;
+  font-size: 9px;
+  color: #7A8A95;
+  text-align: right;
+  font-style: italic;
+  letter-spacing: .02em;
+}
+
+/* -------------------- Hospital-name modal (screen only) -------------------- */
+
+.bc-modal-overlay {
+  position: fixed; inset: 0; z-index: 1000;
+  background: rgba(11,79,108,.45);
+  display: flex; align-items: center; justify-content: center;
+  padding: 20px;
+  animation: bcFade .18s ease-out;
+}
+@keyframes bcFade { from { opacity: 0; } to { opacity: 1; } }
+.bc-modal {
+  background: #FFFFFF;
+  border-radius: 10px;
+  box-shadow: 0 12px 40px rgba(11,79,108,.28);
+  max-width: 480px; width: 100%;
+  padding: 22px 22px 18px;
+  animation: bcPop .18s ease-out;
+}
+@keyframes bcPop { from { transform: translateY(6px) scale(.98); opacity: 0; } to { transform: none; opacity: 1; } }
+.bc-modal h3 {
+  margin: 0 0 6px; font-size: 17px; color: #0B4F6C;
+}
+.bc-modal p {
+  margin: 0 0 14px; font-size: 13px; color: #556E7B; line-height: 1.4;
+}
+.bc-modal label {
+  display: block; font-size: 11px; font-weight: 700; text-transform: uppercase;
+  letter-spacing: .06em; color: #0B4F6C; margin-bottom: 4px;
+}
+.bc-modal input[type="text"] {
+  width: 100%; padding: 10px 12px; font-size: 14px; color: #111;
+  border: 1.5px solid #C7D5DD; border-radius: 6px; background: #FFFFFF;
+  font-family: inherit;
+}
+.bc-modal input[type="text"]:focus {
+  outline: none; border-color: #20A39E; box-shadow: 0 0 0 3px rgba(32,163,158,.15);
+}
+.bc-modal-actions {
+  display: flex; gap: 8px; justify-content: flex-end; margin-top: 16px;
+}
+
 /* -------------------- Print -------------------- */
 
 @media print {
