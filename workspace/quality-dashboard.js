@@ -2198,8 +2198,16 @@
      would be wrong for whatever is on screen. */
   function sectionActions(sec) {
     if (sec === "kpi") {
+      /* The reset button is only offered once there is something to reset. An empty
+       * board doesn't need a "delete everything" affordance next to a "start here"
+       * one. */
       return '<button type="button" class="btn btn-ghost qd-bar-b" id="qdAddDept2">Add a department</button>' +
-        '<button type="button" class="btn btn-accent qd-bar-b" id="qdAddMonth2">This month&rsquo;s figures</button>';
+        '<button type="button" class="btn btn-accent qd-bar-b" id="qdAddMonth2">This month&rsquo;s figures</button>' +
+        (depts.length
+          ? '<button type="button" class="btn btn-ghost qd-bar-b qd-danger" id="qdResetKpi" ' +
+            'title="Delete every department, KPI and reading in the KPI section and start fresh">' +
+            'Reset KPI dashboard</button>'
+          : "");
     }
     if (sec === "committee") {
       return '<a class="btn btn-ghost qd-bar-b" href="calendar.html#committees">Schedule committees</a>' +
@@ -2524,6 +2532,54 @@
     catch (e) { return []; }
   }
 
+  /* RESET THE KPI SECTION FROM SCRATCH.
+   *
+   * The hospital sets up trial departments while learning the tool, and eventually
+   * wants to clear that practice data and start again with the real numbers. Only
+   * the three KPI-owned tables are wiped (departments, metrics, readings); the
+   * other four sections (committees, incidents, code alerts, element register)
+   * are shared with other pages and would be somebody else's data to erase.
+   *
+   * A double confirmation is used because the action is not undoable — the first
+   * click states scope, the second click states the row counts about to disappear.
+   * Cancelling at either step is a full no-op. */
+  async function resetKpiDashboard() {
+    var counts = depts.length + metrics.length + readings.length;
+    if (!counts) { W.toast("Nothing to reset yet."); return; }
+    var msg1 = "Reset the KPI dashboard?\n\n" +
+      "This deletes every department, KPI target and monthly figure you have entered on this page.\n\n" +
+      "Committees, incidents, code alerts, and the element register are NOT touched.\n\n" +
+      "This cannot be undone.";
+    if (!window.confirm(msg1)) return;
+    var msg2 = "About to delete:\n" +
+      "  • " + depts.length + " department" + (depts.length === 1 ? "" : "s") + "\n" +
+      "  • " + metrics.length + " KPI target" + (metrics.length === 1 ? "" : "s") + "\n" +
+      "  • " + readings.length + " monthly reading" + (readings.length === 1 ? "" : "s") + "\n\n" +
+      "Type OK to confirm.";
+    if (!window.confirm(msg2)) return;
+
+    try {
+      /* Delete readings first, then metrics, then departments — the same order
+       * their foreign keys point in, so nothing ever refers to a row that has
+       * been removed while the wipe is in progress. */
+      var wipe = async function (store, rows) {
+        for (var i = 0; i < rows.length; i++) {
+          try { await S.adapter.remove(store, rows[i].id); } catch (e) { /* ignore per-row */ }
+        }
+      };
+      await wipe(READINGS, readings.slice());
+      await wipe(METRICS, metrics.slice());
+      await wipe(DEPTS, depts.slice());
+      depts = []; metrics = []; readings = [];
+      openDept = null;
+      W.toast("KPI dashboard reset. Start fresh from Add a department.");
+      await refresh();
+      render();
+    } catch (err) {
+      W.toast("Could not reset: " + ((err && err.message) || err), "bad");
+    }
+  }
+
   async function refreshOthers() {
     var got = await Promise.all([
       soft(CMTES), soft(MEETINGS), soft(INCIDENTS), soft(CODES), soft(OWNERS)
@@ -2639,6 +2695,7 @@
         obligForm(thisMonth()); return;
       }
       if (e.target.id === "qdAddDept2") { deptForm(); return; }
+      if (e.target.id === "qdResetKpi") { resetKpiDashboard(); return; }
 
       /* ---- the four other sections' entry points ---- */
       if (e.target.id === "qdAddMeeting") {

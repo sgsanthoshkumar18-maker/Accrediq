@@ -297,11 +297,19 @@ window.AQCharts = (function () {
       a0 = a1;
     });
 
+    /* The centre labels must stay inside the ring hole (diameter = 2 * ring, minus
+     * a small padding), because a word like "departments" is wider than the hole
+     * and used to spill out past the donut. `textLength` + `lengthAdjust` scales
+     * the glyphs and their spacing until the label fits, so any label works.  */
+    var midMaxW = Math.max(2 * ring - 10, 20);
     var mid = o.centre == null ? "" :
-      '<text class="aqc-pie-mid" x="' + C + '" y="' + (C - 2) + '" text-anchor="middle">' +
+      '<text class="aqc-pie-mid" x="' + C + '" y="' + (C - 2) +
+        '" text-anchor="middle" textLength="' + Math.min(midMaxW, 8 + String(o.centre).length * 14) +
+        '" lengthAdjust="spacingAndGlyphs">' +
         esc(o.centre) + "</text>" +
       (o.centreSub ? '<text class="aqc-pie-sub" x="' + C + '" y="' + (C + 16) +
-        '" text-anchor="middle">' + esc(o.centreSub) + "</text>" : "");
+        '" text-anchor="middle" textLength="' + midMaxW +
+        '" lengthAdjust="spacingAndGlyphs">' + esc(o.centreSub) + "</text>" : "");
 
     var key = clean.map(function (r) {
       return '<li data-slice="' + esc(r.label) + '"><i style="background:' + (r.tone || "var(--accent-bright)") + '"></i>' +
