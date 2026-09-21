@@ -26,21 +26,44 @@
 
     function grid(list) {
       return '<div class="aud-grid">' + list.map(function (d) {
-        return '<button type="button" class="aud-dept" data-dept="' + esc(d.key) + '">' +
+        var key = esc(d.key);
+        /* The card is the primary control (starts an audit); the small footer link
+         * is a secondary action (opens the blank printable in a new tab). Rendered
+         * as a div with role=button so the download can be a real <a> alongside it
+         * -- an <a> inside a <button> would be invalid HTML. */
+        return '<div class="aud-dept" data-dept="' + key + '" role="button" tabindex="0">' +
           "<span class=\"n\">" + esc(d.name) + "</span>" +
-          '<span class="m">' + d.codes.length + " elements in scope</span></button>";
+          '<span class="m">' + d.codes.length + " elements in scope</span>" +
+          '<a class="aud-dept-blank" href="../audit/blank-checklist.html?dept=' + key +
+            '" target="_blank" rel="noopener" ' +
+            'title="Open a blank checklist for this department, ready to print or save as PDF">' +
+            "Download blank checklist ↓" +
+          "</a>" +
+        "</div>";
       }).join("") + "</div>";
     }
 
     host.innerHTML =
       "<h2>Start an audit</h2>" +
       '<p class="aud-sub">Scope for each area is taken from the NABH 5th Edition assessor ' +
-      "checklist, so you only see the elements an assessor would actually check there.</p>" +
+      "checklist, so you only see the elements an assessor would actually check there. " +
+      'Each card also links to a blank printable checklist for pen-and-paper use.</p>' +
       '<h3 class="aud-gh">Clinical areas</h3>' + grid(groups.clinical) +
       '<h3 class="aud-gh">Non-clinical areas</h3>' + grid(groups.nonclinical);
 
     host.querySelectorAll(".aud-dept").forEach(function (b) {
-      b.addEventListener("click", function () { start(b.getAttribute("data-dept")); });
+      /* Click anywhere on the card starts the audit, EXCEPT the download link,
+       * which handles itself. Keyboard: Enter / Space also start the audit. */
+      b.addEventListener("click", function (e) {
+        if (e.target.closest(".aud-dept-blank")) return;
+        start(b.getAttribute("data-dept"));
+      });
+      b.addEventListener("keydown", function (e) {
+        if (e.key !== "Enter" && e.key !== " ") return;
+        if (e.target.closest(".aud-dept-blank")) return;
+        e.preventDefault();
+        start(b.getAttribute("data-dept"));
+      });
     });
   }
 

@@ -1,0 +1,237 @@
+/* AQcredix — printable blank audit checklist.
+ *
+ * Standalone page, isolated from the site's theme system so that Save-as-PDF from any
+ * browser produces the same output. The screen view mirrors the print view closely
+ * (WYSIWYG), and every element deliberately uses print-safe colours that survive both
+ * an ink-jet and the projector in the audit room. */
+
+* { box-sizing: border-box; }
+html, body { margin: 0; padding: 0; }
+body {
+  font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Helvetica, Arial, sans-serif;
+  color: #111;
+  background: #F5F7FA;
+  -webkit-font-smoothing: antialiased;
+}
+
+/* -------------------- Top bar (screen only) -------------------- */
+
+.bc-topbar {
+  position: sticky; top: 0; z-index: 10;
+  display: flex; justify-content: space-between; align-items: center; gap: 16px;
+  background: #FFFFFF;
+  border-bottom: 1px solid #E1E7EE;
+  padding: 12px 20px;
+  box-shadow: 0 1px 3px rgba(11,79,108,.06);
+}
+.bc-brand { display: flex; align-items: center; gap: 10px; }
+.bc-logo { width: 34px; height: 34px; flex: none; }
+.bc-brand-text strong { font-size: 15px; color: #0B4F6C; }
+.bc-sub { font-size: 12px; color: #556E7B; }
+.bc-actions { display: flex; gap: 8px; }
+.bc-btn {
+  display: inline-flex; align-items: center; gap: 6px;
+  padding: 8px 16px; border-radius: 8px; font-size: 14px; font-weight: 600;
+  text-decoration: none; cursor: pointer; border: 1px solid transparent;
+  transition: transform .1s, box-shadow .1s;
+}
+.bc-btn:active { transform: translateY(1px); }
+.bc-primary { background: #0B4F6C; color: #FFFFFF; border-color: #0B4F6C; }
+.bc-primary:hover { background: #093F58; }
+.bc-ghost { background: transparent; color: #0B4F6C; border-color: #C7D5DD; }
+.bc-ghost:hover { background: #EEF3F5; }
+
+/* -------------------- Sheet -------------------- */
+
+.bc-page {
+  max-width: 210mm;
+  margin: 24px auto;
+  padding: 20mm 18mm;
+  background: #FFFFFF;
+  color: #111;
+  box-shadow: 0 4px 24px rgba(11,79,108,.08);
+  border-radius: 4px;
+}
+.bc-loading { color: #556E7B; padding: 40px 0; text-align: center; }
+
+/* -------------------- Header (both screen + print) -------------------- */
+
+.bc-sheet-head {
+  display: flex; justify-content: space-between; align-items: flex-start;
+  gap: 20px; padding-bottom: 12px; border-bottom: 2px solid #0B4F6C;
+  margin-bottom: 14px;
+}
+.bc-sheet-head-l h1 {
+  margin: 0 0 2px; font-size: 20px; color: #0B4F6C; line-height: 1.2;
+}
+.bc-sheet-head-l .bc-dept-name { font-size: 15px; color: #222; }
+.bc-sheet-head-l .bc-scope-note { font-size: 11px; color: #556E7B; margin-top: 4px; }
+.bc-sheet-head-r {
+  text-align: right; font-size: 11px; color: #556E7B;
+  min-width: 180px;
+}
+.bc-sheet-head-r .bc-hospital-line {
+  border: 1px solid #C7D5DD; border-radius: 4px; padding: 6px 8px;
+  min-height: 40px; text-align: left;
+}
+.bc-sheet-head-r .bc-hospital-line label { display: block; font-size: 10px; color: #556E7B; }
+
+/* -------------------- Meta grid (auditor / dates / signature) -------------------- */
+
+.bc-meta {
+  display: grid; grid-template-columns: 1fr 1fr; gap: 0;
+  border: 1px solid #20A39E; border-radius: 4px; overflow: hidden;
+  margin-bottom: 14px;
+}
+.bc-meta-cell {
+  padding: 10px 12px; border-right: 1px solid #E1E7EE; border-bottom: 1px solid #E1E7EE;
+  min-height: 46px;
+}
+.bc-meta-cell:nth-child(2n) { border-right: none; }
+.bc-meta-cell:nth-last-child(-n+2) { border-bottom: none; }
+.bc-meta-cell.bc-meta-full { grid-column: 1 / -1; border-right: none; min-height: 60px; }
+.bc-meta label {
+  display: block; font-size: 10px; font-weight: 700;
+  text-transform: uppercase; letter-spacing: .06em; color: #0B4F6C;
+  margin-bottom: 4px;
+}
+.bc-meta .bc-meta-hint {
+  font-size: 10px; color: #556E7B; font-style: italic; margin-top: 4px;
+}
+
+/* -------------------- Scoring key -------------------- */
+
+.bc-scoring {
+  padding: 10px 12px; background: #EEF7F5; border-left: 3px solid #20A39E;
+  border-radius: 4px; margin-bottom: 14px; font-size: 12px;
+}
+.bc-scoring h3 { margin: 0 0 6px; font-size: 12px; color: #0B4F6C; text-transform: uppercase; letter-spacing: .06em; }
+.bc-key-row { display: flex; gap: 14px; flex-wrap: wrap; margin-bottom: 4px; }
+.bc-key-chip {
+  display: inline-flex; align-items: center; gap: 6px; font-size: 12px;
+}
+.bc-key-box {
+  display: inline-flex; align-items: center; justify-content: center;
+  width: 24px; height: 20px; border: 1.5px solid; border-radius: 3px;
+  font-weight: 700; font-size: 11px;
+}
+.bc-key-c  { color: #1B7F3A; border-color: #1B7F3A; }
+.bc-key-pc { color: #B37700; border-color: #B37700; }
+.bc-key-nc { color: #B02A2A; border-color: #B02A2A; }
+.bc-key-na { color: #555555; border-color: #555555; }
+.bc-scoring .bc-tier-note { font-size: 11px; color: #556E7B; margin-top: 4px; }
+.bc-scoring .bc-disclaim { font-size: 10px; color: #556E7B; font-style: italic; margin-top: 6px; }
+
+/* -------------------- Element rows -------------------- */
+
+.bc-std {
+  margin-top: 14px; break-inside: avoid; page-break-inside: avoid;
+}
+.bc-std-head {
+  background: #0B4F6C; color: #FFFFFF; padding: 6px 10px;
+  border-radius: 3px 3px 0 0; font-size: 12px; font-weight: 700;
+}
+.bc-std-text {
+  padding: 6px 10px; background: #F5F9FB;
+  border: 1px solid #C7D5DD; border-top: none;
+  font-size: 11px; font-style: italic; color: #222;
+}
+
+.bc-elt {
+  break-inside: avoid; page-break-inside: avoid;
+  margin-top: 6px;
+}
+.bc-elt-row {
+  display: grid;
+  grid-template-columns: 60px 34px 1fr 26px 26px 26px 26px;
+  border: 1px solid #C7D5DD; border-radius: 3px 3px 0 0;
+  overflow: hidden;
+  font-size: 11px;
+}
+.bc-elt-cell {
+  padding: 6px 6px; border-right: 1px solid #E1E7EE;
+  display: flex; align-items: flex-start;
+}
+.bc-elt-cell:last-child { border-right: none; }
+.bc-elt-code { color: #0B4F6C; font-weight: 700; font-size: 11px; }
+.bc-elt-tier { color: #20A39E; font-weight: 700; justify-content: center; align-items: center; font-size: 10px; }
+.bc-elt-text { color: #111; line-height: 1.35; align-items: center; }
+.bc-score {
+  justify-content: center; align-items: center; font-weight: 700; font-size: 11px;
+  border-left: 1.5px solid;
+}
+.bc-score.bc-score-c  { color: #1B7F3A; border-left-color: #1B7F3A; }
+.bc-score.bc-score-pc { color: #B37700; border-left-color: #B37700; }
+.bc-score.bc-score-nc { color: #B02A2A; border-left-color: #B02A2A; }
+.bc-score.bc-score-na { color: #555555; border-left-color: #555555; }
+
+.bc-elt-comment {
+  border: 1px solid #C7D5DD; border-top: none; border-radius: 0 0 3px 3px;
+  background: #FBFDFC; padding: 6px 8px; min-height: 46px;
+  font-size: 10px; color: #556E7B; font-style: italic;
+  background-image: repeating-linear-gradient(to bottom, transparent 0, transparent 15px, #E1E7EE 15px, #E1E7EE 16px);
+  background-position: 0 22px;
+  background-size: 100% 16px;
+  background-repeat: repeat-y;
+}
+
+/* -------------------- Sections after the elements -------------------- */
+
+.bc-section { margin-top: 18px; break-inside: avoid; page-break-inside: avoid; }
+.bc-section h2 {
+  margin: 0 0 4px; font-size: 13px; color: #0B4F6C;
+  text-transform: uppercase; letter-spacing: .06em;
+  border-bottom: 1.5px solid #20A39E; padding-bottom: 3px; display: inline-block;
+}
+.bc-quick-list { padding: 8px 0 0; margin: 0; list-style: none; }
+.bc-quick-list li {
+  display: flex; align-items: flex-start; gap: 8px;
+  font-size: 12px; padding: 3px 0;
+}
+.bc-quick-list li::before {
+  content: ""; display: inline-block; width: 10px; height: 10px; flex: none;
+  margin-top: 3px;
+  border: 1px solid #20A39E; border-radius: 2px;
+}
+.bc-kpi-list { padding: 8px 0 0; margin: 0; list-style: none; }
+.bc-kpi-list li {
+  font-size: 12px; padding: 3px 0 3px 14px; position: relative;
+}
+.bc-kpi-list li::before {
+  content: "▸"; color: #20A39E; position: absolute; left: 0;
+}
+
+.bc-findings {
+  margin-top: 8px; padding: 10px; min-height: 110px;
+  border: 1px solid #C7D5DD; border-radius: 3px; background: #FBFDFC;
+  background-image: repeating-linear-gradient(to bottom, transparent 0, transparent 15px, #E1E7EE 15px, #E1E7EE 16px);
+  background-position: 0 26px;
+  background-size: 100% 16px;
+  background-repeat: repeat-y;
+  font-size: 11px; color: #556E7B; font-style: italic;
+}
+.bc-sign {
+  display: grid; grid-template-columns: 1fr 1fr; gap: 14px; margin-top: 14px;
+}
+.bc-sign-box {
+  border: 1px solid #20A39E; border-radius: 3px; padding: 10px 12px; min-height: 64px;
+}
+.bc-sign-box label {
+  font-size: 10px; font-weight: 700; text-transform: uppercase; letter-spacing: .06em;
+  color: #0B4F6C;
+}
+
+/* -------------------- Print -------------------- */
+
+@media print {
+  html, body { background: #FFFFFF; }
+  .no-print { display: none !important; }
+  .bc-page {
+    max-width: none; margin: 0; padding: 8mm 10mm;
+    box-shadow: none; border-radius: 0;
+  }
+  .bc-std, .bc-elt, .bc-section, .bc-sign { break-inside: avoid; page-break-inside: avoid; }
+  /* Keep colour on print for projector-style output. */
+  * { -webkit-print-color-adjust: exact; print-color-adjust: exact; color-adjust: exact; }
+  @page { size: A4 portrait; margin: 8mm; }
+}
