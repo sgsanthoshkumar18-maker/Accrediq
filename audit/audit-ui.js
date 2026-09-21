@@ -34,9 +34,9 @@
         return '<div class="aud-dept" data-dept="' + key + '" role="button" tabindex="0">' +
           "<span class=\"n\">" + esc(d.name) + "</span>" +
           '<span class="m">' + d.codes.length + " elements in scope</span>" +
-          '<a class="aud-dept-blank" href="/api/audit-blank-pdf?dept=' + key +
-            '" download ' +
-            'title="Download a blank checklist PDF for this department, ready to print offline">' +
+          '<a class="aud-dept-blank" href="../audit/blank-checklist.html?dept=' + key +
+            '&amp;auto=1" target="_blank" rel="noopener" ' +
+            'title="Open a blank checklist for this department; a PDF will be prepared for download">' +
             "Download blank checklist PDF ↓" +
           "</a>" +
         "</div>";

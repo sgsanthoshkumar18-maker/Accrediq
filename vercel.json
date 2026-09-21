@@ -5,8 +5,7 @@
   "outputDirectory": ".",
   "functions": {
     "api/*.js": {
-      "maxDuration": 20,
-      "includeFiles": "{nabh-data.js,audit/scope-data.js}"
+      "maxDuration": 15
     }
   },
   "redirects": [

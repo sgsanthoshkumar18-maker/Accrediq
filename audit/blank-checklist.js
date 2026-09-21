@@ -196,18 +196,82 @@
     page.innerHTML = renderChecklist(dept, groups);
     document.title = "Blank checklist — " + dept.name;
 
-    /* The primary action is a real PDF download served by the /api/audit-blank-pdf
-     * function; a browser print dialog is not a file download and the user
-     * asked for an offline PDF they can save and email around. Fall back to
-     * window.print() only if the API is unreachable (offline preview, dev). */
-    var pb = document.getElementById("bcPrint");
-    if (pb) {
-      pb.addEventListener("click", function () {
-        window.location.href = "/api/audit-blank-pdf?dept=" + encodeURIComponent(deptKey);
+    /* Client-side PDF export.
+     *
+     * The site's Hobby plan on Vercel is capped at 12 serverless functions and it is
+     * already at that limit, so PDF generation happens in the browser instead. html2pdf
+     * (html2canvas + jsPDF) rasterises the sheet exactly as it appears here, so the PDF
+     * matches the preview one-for-one. The library is ~800 KB compressed and only
+     * loaded when the user clicks Download PDF, or once on auto-open (?auto=1). */
+    var LIB_SRCS = [
+      "https://cdnjs.cloudflare.com/ajax/libs/html2pdf.js/0.10.2/html2pdf.bundle.min.js",
+      "https://cdn.jsdelivr.net/npm/html2pdf.js@0.10.2/dist/html2pdf.bundle.min.js"
+    ];
+    var libPromise = null;
+    function loadLib() {
+      if (libPromise) return libPromise;
+      libPromise = new Promise(function (resolve, reject) {
+        var tried = 0;
+        function next() {
+          if (tried >= LIB_SRCS.length) { reject(new Error("Could not load PDF library")); return; }
+          var s = document.createElement("script");
+          s.src = LIB_SRCS[tried++];
+          s.onload = function () { resolve(window.html2pdf); };
+          s.onerror = function () { s.remove(); next(); };
+          document.head.appendChild(s);
+        }
+        next();
+      });
+      return libPromise;
+    }
+
+    function slug(s) {
+      return String(s || "checklist").replace(/[^A-Za-z0-9._-]+/g, "-")
+        .replace(/^-+|-+$/g, "").slice(0, 60) || "checklist";
+    }
+
+    var busy = false;
+    function downloadPdf() {
+      if (busy) return; busy = true;
+      var btn = document.getElementById("bcPrint");
+      var origLabel = btn ? btn.textContent : null;
+      if (btn) { btn.textContent = "Preparing PDF…"; btn.disabled = true; }
+      var page = document.getElementById("bcPage");
+      loadLib().then(function (html2pdf) {
+        var deptName = (dept && dept.name) || "Checklist";
+        var fileName = "AQcredix-Blank-" + slug(deptName) + ".pdf";
+        /* html2canvas needs allowTaint/useCORS off for local paint; scale 2 for
+         * a crisp raster. jsPDF page break rule uses .bc-std and .bc-elt from
+         * the print stylesheet so standards and elements never split. */
+        return html2pdf().set({
+          margin:      [8, 10, 8, 10],
+          filename:    fileName,
+          image:       { type: "jpeg", quality: 0.95 },
+          html2canvas: { scale: 1.5, useCORS: true, logging: false, backgroundColor: "#FFFFFF" },
+          jsPDF:       { unit: "mm", format: "a4", orientation: "portrait" },
+          pagebreak:   { mode: ["css", "legacy"], avoid: [".bc-std", ".bc-elt", ".bc-section", ".bc-sign"] }
+        }).from(page).save();
+      }).then(function () {
+        if (btn) { btn.textContent = origLabel || "Download PDF"; btn.disabled = false; }
+        busy = false;
+      }).catch(function (e) {
+        console.error(e);
+        alert("Could not generate the PDF. Try clicking again, or use Print this page as a fallback.");
+        if (btn) { btn.textContent = origLabel || "Download PDF"; btn.disabled = false; }
+        busy = false;
       });
     }
+
+    var pb = document.getElementById("bcPrint");
+    if (pb) pb.addEventListener("click", downloadPdf);
     var pp = document.getElementById("bcPrintPage");
     if (pp) pp.addEventListener("click", function () { window.print(); });
+
+    /* If ?auto=1, trigger the download automatically after layout settles so the
+     * picker's link works as one-click download-and-save. */
+    if (qs("auto") === "1") {
+      requestAnimationFrame(function () { setTimeout(downloadPdf, 400); });
+    }
   }
 
   if (document.readyState === "loading") {
