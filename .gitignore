@@ -19,3 +19,6 @@ _*.html
 # Local-only sample pages: dev comparisons, never part of the site.
 _smoke-sample.html
 _*.sample.html
+
+# Local Node dependencies (pdfkit etc. used for offline tooling only).
+node_modules/
