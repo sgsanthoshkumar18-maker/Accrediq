@@ -1,14 +1,13 @@
-<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 512 512" role="img" aria-label="AQcredix">
-  <!-- Solid tile so the icon reads on Google's rounded-square favicon slot instead
-       of appearing as a floating mark on a transparent chip. -->
-  <rect width="512" height="512" rx="112" ry="112" fill="#0B4F6C"/>
-  <!-- Outer ring, drawn white for contrast on the deep-teal tile. -->
-  <circle cx="256" cy="256" r="184" fill="none" stroke="#FFFFFF" stroke-width="26" opacity="0.35"/>
-  <!-- Accent arc, teal — the mark's identifying stroke. -->
-  <path d="M256 72 a184 184 0 1 1 -130.1 53.9" fill="none" stroke="#20A39E" stroke-width="30" stroke-linecap="round"/>
-  <!-- Filled "A" glyph, centred and sized against a 512-viewport. Vector paths
-       ported from the site's inline hero-logo (viewBox 0 0 40 40, scaled 12.8x). -->
-  <g transform="translate(0 0) scale(12.8)" fill="#FFFFFF" fill-rule="evenodd">
-    <path d="M19.15 14.05H20.85L25.61 25.015H26.97V25.95H22.21V25.015H23.315L22 22H18L16.685 25.015H17.79V25.95H13.03V25.015H14.39ZM20 16.26L22.027 20.935H17.973Z"/>
-  </g>
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 40 40" width="512" height="512" fill="none" role="img" aria-label="AQcredix">
+  <title>AQcredix</title>
+  <desc>The AQcredix mark: a light track ring, the brand-blue arc that rides it, and
+  the A. No background tile, so the mark sits on whatever the tab, the search result
+  or the home screen puts behind it. On the site the arc rotates (hero-logo-arc,
+  lens-rotate.js); a favicon cannot animate, so it is drawn in its rest position.
+  Colours are literals, not CSS custom properties, because this file is loaded as an
+  image where the site stylesheet does not apply. 4C6FFF is the accent; D8E0E6 is the
+  track.</desc>
+  <circle cx="20" cy="20" r="16" fill="none" stroke="#D8E0E6" stroke-width="3.4"/>
+  <path d="M20 4a16 16 0 1 1-11.31 4.69" fill="none" stroke="#4C6FFF" stroke-width="3.4" stroke-linecap="round"/>
+  <path d="M19.15 14.05H20.85L25.61 25.015H26.97V25.95H22.21V25.015H23.315L22 22H18L16.685 25.015H17.79V25.95H13.03V25.015H14.39ZM20 16.26L22.027 20.935H17.973Z" fill="#4C6FFF" fill-rule="evenodd"/>
 </svg>
