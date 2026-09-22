@@ -28,17 +28,17 @@
       Object.keys(D.chapters).forEach(function (code) {
         var ch = D.chapters[code];
         out.push({ t: code + " — " + ch.name, s: "Chapter", k: code + " " + ch.name,
-                   u: b + "standards.html?chapter=" + code });
+                   u: b + "standards?chapter=" + code });
         (ch.standards || []).forEach(function (std) {
           out.push({ t: std.code + " — " + std.text, s: "Standard", k: std.code + " " + std.text,
-                     u: b + "standards.html?chapter=" + code + "#" + std.code });
+                     u: b + "standards?chapter=" + code + "#" + std.code });
           (std.elements || []).forEach(function (e) {
             var c = std.code + "." + e.letter;
             out.push({
               t: c + " — " + e.text,
               s: e.sop ? "Element · SOP required" : "Element",
               k: c + " " + e.text + (e.sop ? " sop" : ""),
-              u: b + "standards.html?chapter=" + code + "#" + c
+              u: b + "standards?chapter=" + code + "#" + c
             });
           });
         });
@@ -47,23 +47,23 @@
 
     (window.DEPARTMENT_DATA || []).forEach(function (d) {
       out.push({ t: d.name, s: "Department", k: d.name + " " + (d.short || ""),
-                 u: b + "department.html?d=" + encodeURIComponent(d.slug || d.name) });
+                 u: b + "department?d=" + encodeURIComponent(d.slug || d.name) });
     });
 
     (window.COMMITTEE_DATA || []).forEach(function (c) {
       out.push({ t: c.name, s: "Committee · " + (c.frequency || ""),
                  k: c.name + " " + (c.short || ""),
-                 u: b + "committee.html?c=" + encodeURIComponent(c.slug) });
+                 u: b + "committee?c=" + encodeURIComponent(c.slug) });
     });
 
     [
-      ["Readiness", "workspace/workspace.html"], ["Internal Audit", "workspace/audit.html"],
-      ["Calendar — committees and recurring tasks", "workspace/calendar.html"],
-      ["Incidents", "workspace/incidents.html"], ["NC & CAPA", "workspace/capa.html"],
-      ["Documents", "workspace/documents.html"], ["Team", "workspace/team.html"],
-      ["Standards browser", "standards.html"], ["Departments", "departments.html"],
-      ["KPI library", "kpi.html"], ["Committees", "committees.html"],
-      ["ICD-11 search", "icd.html"], ["My progress", "profile.html"]
+      ["Readiness", "workspace/workspace"], ["Internal Audit", "workspace/audit"],
+      ["Calendar — committees and recurring tasks", "workspace/calendar"],
+      ["Incidents", "workspace/incidents"], ["NC & CAPA", "workspace/capa"],
+      ["Documents", "workspace/documents"], ["Team", "workspace/team"],
+      ["Standards browser", "standards"], ["Departments", "departments"],
+      ["KPI library", "kpi"], ["Committees", "committees"],
+      ["ICD-11 search", "icd"], ["My progress", "profile"]
     ].forEach(function (p) {
       out.push({ t: p[0], s: "Page", k: p[0], u: b + p[1] });
     });

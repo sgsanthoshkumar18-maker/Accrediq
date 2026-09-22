@@ -32,8 +32,18 @@
         { key: "committees", href: "tools/committees", label: "Committees" },
         { key: "sop", href: "sop", label: "SOP Generator" },
         { key: "surveyor", href: "surveyor", label: "Mock Surveyor" },
-        { key: "internalaudit", href: "workspace/audit", label: "Internal Audit" },
-        { key: "incidents", href: "workspace/incidents", label: "Incident Reporting" },
+        /* INTERNAL AUDIT AND INCIDENT REPORTING ARE NOT LISTED HERE.
+           They were the only two entries in this menu that linked into
+           workspace/, and the workspace already carries both in its own nav.
+           Offering the same destination from two places made the hospital
+           choose between identical doors, and put records-keeping tools in a
+           menu that otherwise holds reference material.
+
+           The distinction this menu keeps: Tools is what a standard MEANS —
+           what a committee is for, what a code colour signals, how a KPI is
+           defined. The workspace is the hospital's own records. tools/
+           committees and tools/code-alerts stay for that reason; they explain
+           the subject rather than storing anyone's data. */
         { key: "know", href: "know", label: "Gap Analysis" },
         { key: "icd", href: "icd", label: "ICD-11 Codes" },
       ]
