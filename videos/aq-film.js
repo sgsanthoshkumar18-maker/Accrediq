@@ -52,7 +52,11 @@
    * appeared — which is exactly how an earlier attempt at an end card managed to cover
    * the film before it had played a single frame. */
   function filmSrc() {
-    return base() + "videos/aqcredix-film.html?r=" + Date.now();
+    /* Extension-less, because vercel.json sets "cleanUrls": true and the .html
+       form 308s to this one. Worth naming the destination outright here rather
+       than anywhere else on the site: the bundle is ~2.4 MB, and a redirect on
+       an iframe that size is a visible pause before the first frame. */
+    return base() + "videos/aqcredix-film?r=" + Date.now();
   }
 
   /* ---------------------------------------------------------------- *
