@@ -1,0 +1,148 @@
+/* AQcredix — high-end antimicrobial tracker. Two tools on one page: monthly
+ * usage tracking, and defined daily dose (DDD) calculation, with a chart per
+ * drug that grows every time a month is added. */
+
+.amsp-head { display:flex; align-items:flex-start; justify-content:space-between;
+  gap:20px; flex-wrap:wrap; margin-bottom:22px; }
+.amsp-head h1 { margin:0 0 4px; font-size:28px; letter-spacing:-.02em; }
+.amsp-head .lead { margin:0; color:var(--fg-muted); font-size:15px; max-width:60ch; }
+
+/* -------------------------------- top tabs -------------------------------- */
+.amsp-tabs { display:inline-flex; gap:4px; padding:4px; background:var(--bg-elevated);
+  border:1px solid var(--border); border-radius:999px; margin-bottom:22px; }
+.amsp-tab { padding:8px 18px; font-size:13.5px; font-weight:600; letter-spacing:.01em;
+  border:none; background:transparent; color:var(--fg-muted); cursor:pointer;
+  border-radius:999px; transition:background .15s,color .15s; }
+.amsp-tab:hover { color:var(--fg); }
+.amsp-tab.active { background:var(--accent-solid); color:var(--on-accent); }
+.amsp-tab .amsp-tab-sub { display:block; font-weight:500; font-size:11.5px; opacity:.85; margin-top:1px; }
+
+/* -------------------------------- drug picker -------------------------------- */
+.amsp-groups { display:grid; gap:18px; }
+.amsp-group-h { font-size:11px; text-transform:uppercase; letter-spacing:.08em;
+  color:var(--fg-muted); margin:0 0 8px; font-weight:700; }
+.amsp-grid { display:grid; grid-template-columns:repeat(auto-fill, minmax(220px, 1fr));
+  gap:10px; }
+.amsp-drug-card { text-align:left; padding:14px 15px; background:var(--bg-elevated);
+  border:1px solid var(--border); border-radius:12px; cursor:pointer; color:inherit;
+  font:inherit; display:flex; flex-direction:column; gap:6px;
+  transition:border-color .15s, transform .15s, box-shadow .15s; }
+.amsp-drug-card:hover { border-color:var(--brand-2); transform:translateY(-1px);
+  box-shadow:var(--shadow-1); }
+.amsp-drug-card .n { font-weight:600; font-size:15px; color:var(--fg); }
+.amsp-drug-card .m { font-size:12px; color:var(--fg-muted); }
+.amsp-drug-card .tag { display:inline-block; margin-top:2px; padding:2px 8px;
+  border-radius:20px; font-size:10.5px; font-weight:700; letter-spacing:.03em;
+  background:var(--border-soft); color:var(--fg-muted); text-transform:uppercase; }
+.amsp-drug-card.abx .tag { background:rgba(76,111,255,.14); color:var(--brand-2); }
+.amsp-drug-card.afg .tag { background:rgba(217,70,239,.14); color:#c026d3; }
+.amsp-drug-card .who { font-size:11.5px; color:var(--fg-muted); font-family:var(--font-mono); }
+
+/* --------------------------- drug detail view --------------------------- */
+.amsp-detail { display:flex; flex-direction:column; gap:20px; }
+.amsp-detail-h { display:flex; align-items:center; gap:16px; flex-wrap:wrap;
+  padding:18px 20px; background:var(--bg-elevated); border:1px solid var(--border);
+  border-radius:14px; }
+.amsp-detail-h .back { background:transparent; border:1px solid var(--border);
+  border-radius:8px; padding:6px 10px; color:var(--fg-muted); cursor:pointer;
+  font:inherit; font-size:13px; }
+.amsp-detail-h .back:hover { color:var(--fg); border-color:var(--brand-2); }
+.amsp-detail-h h2 { margin:0; font-size:22px; }
+.amsp-detail-h .tag { padding:3px 10px; border-radius:20px; font-size:11px;
+  font-weight:700; text-transform:uppercase; }
+.amsp-detail-h .abx { background:rgba(76,111,255,.14); color:var(--brand-2); }
+.amsp-detail-h .afg { background:rgba(217,70,239,.14); color:#c026d3; }
+.amsp-detail-h .who-badge { margin-left:auto; padding:10px 14px; background:var(--border-soft);
+  border-radius:10px; font-size:13px; color:var(--fg); }
+.amsp-detail-h .who-badge b { color:var(--brand-2); }
+
+/* --------------------------- form panel --------------------------- */
+.amsp-panel { background:var(--bg-elevated); border:1px solid var(--border);
+  border-radius:14px; padding:22px 22px 24px; }
+.amsp-panel > h3 { margin:0 0 4px; font-size:17px; }
+.amsp-panel .amsp-panel-sub { margin:0 0 18px; color:var(--fg-muted); font-size:13px; }
+
+.amsp-form-grid { display:grid; grid-template-columns:repeat(2, minmax(0, 1fr));
+  gap:14px 18px; }
+@media (max-width:600px) { .amsp-form-grid { grid-template-columns:1fr; } }
+.amsp-field { display:flex; flex-direction:column; gap:5px; }
+.amsp-field.full { grid-column:1/-1; }
+.amsp-field label { font-size:12px; font-weight:700; color:var(--fg-muted);
+  letter-spacing:.02em; text-transform:uppercase; }
+.amsp-field input, .amsp-field select, .amsp-field textarea {
+  padding:9px 11px; font:14px/1.3 var(--font-body); color:var(--fg);
+  background:var(--bg); border:1px solid var(--border); border-radius:8px; }
+.amsp-field input:focus, .amsp-field select:focus, .amsp-field textarea:focus {
+  outline:none; border-color:var(--brand-2); box-shadow:0 0 0 3px var(--border-soft); }
+.amsp-field .hint { font-size:11.5px; color:var(--fg-faint); }
+
+/* --------------------------- combinations rows --------------------------- */
+.amsp-combos { display:flex; flex-direction:column; gap:8px; }
+.amsp-combo-row { display:grid; grid-template-columns:1fr 130px 40px; gap:8px; align-items:center; }
+.amsp-combo-row select, .amsp-combo-row input { padding:8px 10px; font-size:13.5px;
+  background:var(--bg); color:var(--fg); border:1px solid var(--border); border-radius:8px; }
+.amsp-combo-x { background:transparent; border:1px solid var(--border); border-radius:8px;
+  width:36px; height:36px; cursor:pointer; color:var(--fg-muted);
+  display:flex; align-items:center; justify-content:center; font-size:16px; }
+.amsp-combo-x:hover { color:var(--nc); border-color:var(--nc); }
+.amsp-combo-add { align-self:flex-start; padding:6px 12px; font-size:12.5px;
+  background:transparent; color:var(--brand-2); border:1px dashed var(--brand-2);
+  border-radius:20px; cursor:pointer; }
+.amsp-combo-add:hover { background:var(--border-soft); }
+
+/* --------------------------- doses list (DDD) --------------------------- */
+.amsp-doses { display:flex; flex-direction:column; gap:10px; }
+.amsp-dose-row { display:grid; grid-template-columns:1fr 1fr 1fr 40px; gap:8px;
+  align-items:center; padding:10px; background:var(--bg); border:1px solid var(--border);
+  border-radius:10px; }
+.amsp-dose-row .lg { font-family:var(--font-mono); font-size:13px; color:var(--fg-muted); }
+.amsp-dose-row input { padding:7px 9px; font-size:13.5px; background:var(--bg-elevated);
+  color:var(--fg); border:1px solid var(--border); border-radius:6px; }
+.amsp-dose-row .amsp-combo-x { justify-self:end; }
+
+/* --------------------------- computed readout --------------------------- */
+.amsp-computed { display:grid; grid-template-columns:repeat(3, 1fr); gap:12px;
+  margin-top:16px; padding:16px; background:var(--border-soft); border-radius:12px; }
+@media (max-width:600px) { .amsp-computed { grid-template-columns:1fr; } }
+.amsp-computed .k { display:block; font-size:11px; text-transform:uppercase;
+  letter-spacing:.06em; color:var(--fg-muted); font-weight:700; margin-bottom:4px; }
+.amsp-computed .v { display:block; font-size:20px; font-weight:700; color:var(--fg);
+  font-variant-numeric:tabular-nums; }
+.amsp-computed .v small { font-size:12px; color:var(--fg-muted); font-weight:500; margin-left:4px; }
+
+/* --------------------------- actions --------------------------- */
+.amsp-actions { display:flex; align-items:center; gap:10px; margin-top:20px;
+  padding-top:20px; border-top:1px solid var(--border); flex-wrap:wrap; }
+.amsp-actions .amsp-sp { flex:1; }
+
+/* --------------------------- history / graph --------------------------- */
+.amsp-history { margin-top:24px; }
+.amsp-history h3 { margin:0 0 4px; font-size:17px; }
+.amsp-history .amsp-history-sub { margin:0 0 14px; color:var(--fg-muted); font-size:13px; }
+.amsp-empty { padding:22px; background:var(--border-soft); border-radius:12px;
+  color:var(--fg-muted); text-align:center; font-size:13.5px; }
+.amsp-chart-card { padding:22px; background:var(--bg-elevated); border:1px solid var(--border);
+  border-radius:14px; }
+
+.amsp-chart { width:100%; height:220px; }
+.amsp-chart .axis { stroke:var(--border); stroke-width:1; }
+.amsp-chart .grid { stroke:var(--border-soft); stroke-width:1; stroke-dasharray:3 3; }
+.amsp-chart .lbl { fill:var(--fg-muted); font:11px var(--font-body); font-weight:500; }
+.amsp-chart .lbl-x { text-anchor:middle; }
+.amsp-chart .lbl-y { text-anchor:end; }
+.amsp-chart .series { fill:none; stroke-width:2.5; stroke-linecap:round; stroke-linejoin:round; }
+.amsp-chart .dot { stroke-width:2; fill:var(--bg-elevated); }
+.amsp-chart-legend { display:flex; flex-wrap:wrap; gap:12px 20px; margin-top:14px;
+  padding-top:12px; border-top:1px solid var(--border); font-size:12.5px; }
+.amsp-chart-legend .lg-item { display:inline-flex; align-items:center; gap:6px; color:var(--fg-muted); }
+.amsp-chart-legend .lg-dot { width:10px; height:10px; border-radius:50%; }
+
+.amsp-months-table { width:100%; border-collapse:collapse; margin-top:16px; font-size:13px; }
+.amsp-months-table th, .amsp-months-table td { padding:9px 10px; text-align:left;
+  border-bottom:1px solid var(--border); }
+.amsp-months-table th { font-weight:700; font-size:11px; text-transform:uppercase;
+  letter-spacing:.05em; color:var(--fg-muted); }
+.amsp-months-table td.num { font-variant-numeric:tabular-nums; }
+.amsp-months-table .amsp-row-del { background:transparent; border:none; color:var(--fg-faint);
+  cursor:pointer; font-size:16px; }
+.amsp-months-table .amsp-row-del:hover { color:var(--nc); }

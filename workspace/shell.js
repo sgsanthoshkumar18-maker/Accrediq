@@ -31,6 +31,8 @@
       desc: "Induction, fire safety, BLS and competency — who has it and when it lapses" },
     { key: "crashcart", href: "crashcart.html", label: "Short Expiry",
       desc: "Crash cart medicines and their expiry dates" },
+    { key: "amsp", href: "amsp.html", label: "High-end Antimicrobials",
+      desc: "Track monthly high-end antimicrobial usage and defined daily dose (DDD)" },
     /* Their OWN dashboard, not the general one. Sits in the workspace rather than beside the
        public dashboard because it is built from data only this hospital has. */
     { key: "qualitydashboard", href: "quality-dashboard.html", label: "My Dashboard",

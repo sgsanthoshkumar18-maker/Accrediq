@@ -1,0 +1,73 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<script>(function(){try{var DEF="neon";if(localStorage.getItem("aq-palette-v")!=="2"){localStorage.removeItem("aq-palette");localStorage.setItem("aq-palette-v","2");}var p=new URLSearchParams(location.search);var own=localStorage.getItem("aq-is-owner")==="1";if(p.has("dark")){localStorage.setItem("aq-theme",p.get("dark")==="0"?"light":"dark");}if(own&&p.has("neon")){localStorage.setItem("aq-palette",p.get("neon")==="0"?"default":"neon");}var t=null;try{t=sessionStorage.getItem("aq-theme-s");}catch(e2){}if(!t){t=localStorage.getItem("aq-theme");}if(!t){t="light";}var q=localStorage.getItem("aq-palette")||DEF;if(q!=="default"){q="neon";}if(t==="dark"){document.documentElement.setAttribute("data-theme","dark");}if(q==="neon"&&t==="dark"){document.documentElement.setAttribute("data-palette","neon");}}catch(e){}})();</script>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>High-end Antimicrobials — AQcredix Workspace</title>
+<meta name="robots" content="noindex">
+<link rel="icon" href="data:image/svg+xml,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 40 40'><circle cx='20' cy='20' r='16' fill='none' stroke='%23D8E0E6' stroke-width='3.4'/><path d='M20 4a16 16 0 1 1-11.31 4.69' fill='none' stroke='%234C6FFF' stroke-width='3.4' stroke-linecap='round'/></svg>">
+<link rel="stylesheet" href="../styles.css?v=20260922a">
+<link rel="stylesheet" href="workspace.css?v=20260922a">
+<link rel="stylesheet" href="auth-gate.css?v=20260922a">
+<link rel="stylesheet" href="amsp.css?v=20260922a">
+<link rel="stylesheet" href="../billing/billing.css?v=20260922a">
+<link rel="stylesheet" href="../motion/motion.css?v=20260922a">
+<link rel="stylesheet" href="../search/command.css?v=20260922a">
+<script defer src="/_vercel/insights/script.js"></script>
+</head>
+<body data-page="workspace" data-base="../" data-bg="vortex">
+<div id="site-header"></div>
+<div class="ws-nav" id="wsNav"></div>
+
+<main id="aq-main">
+  <div id="wsGate"></div>
+  <div id="wsBody" style="display:none">
+
+    <section class="section wrap">
+      <div class="amsp-head">
+        <div>
+          <span class="eyebrow">AMSP · Antimicrobial Stewardship</span>
+          <h1>High-end antimicrobials — track and calculate</h1>
+          <p class="lead">Monthly usage of restricted antibiotics and antifungals, and the WHO Defined Daily Dose per 1000 patient days. Your numbers are stored on your account only.</p>
+        </div>
+      </div>
+
+      <div class="amsp-tabs" role="tablist" aria-label="Tools">
+        <button type="button" class="amsp-tab active" data-tool="usage" role="tab" aria-selected="true">
+          Track monthly usage
+          <span class="amsp-tab-sub">Vials, combinations, culture, justification</span>
+        </button>
+        <button type="button" class="amsp-tab" data-tool="ddd" role="tab" aria-selected="false">
+          Calculate DDD
+          <span class="amsp-tab-sub">Daily Defined Dose · per 1000 patient days</span>
+        </button>
+      </div>
+
+      <div id="amspHost"></div>
+
+    </section>
+
+  </div>
+</main>
+
+<div id="site-footer"></div>
+<script src="config.js?v=20260922a"></script>
+<script src="../theme/scene-palette.js?v=20260922a"></script>
+<script src="../app.js?v=20260922a"></script>
+<script src="../aq-scroll-lock.js?v=20260922a"></script>
+<script src="../support.js?v=20260922a"></script>
+<script src="auth-gate.js?v=20260922a"></script>
+<script src="store.js?v=20260922a"></script>
+<script src="../billing/billing-config.js?v=20260922a"></script>
+<script src="../billing/billing.js?v=20260922a"></script>
+<script src="../billing/paywall.js?v=20260922a"></script>
+<script src="pin.js?v=20260922a"></script>
+<script src="shell.js?v=20260922a"></script>
+<script src="amsp-drugs.js?v=20260922a"></script>
+<script src="amsp.js?v=20260922a"></script>
+<script src="../motion/motion.js?v=20260922a"></script>
+<script src="../motion/bg.js?v=20260922a" defer></script>
+<script src="../search/command.js?v=20260922a"></script>
+</body>
+</html>
