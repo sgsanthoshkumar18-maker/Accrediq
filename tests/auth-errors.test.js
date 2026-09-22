@@ -120,7 +120,13 @@ ok(/\.ws-auth-msg\{[\s\S]{0,240}max-width:\s*100%/.test(css),
      'rather than shimmering for ever with no explanation');
 
   // Every workspace page must carry the placeholder, or some pages still blank.
-  const pages = fs.readdirSync(path.join(ROOT, 'workspace')).filter(f => f.endsWith('.html'));
+  /* bundles-print.html is a PRINT DOCUMENT that happens to live in workspace/
+     because that is where its bundle data file is. It deliberately ships with no
+     header, nav, auth shell or motion layer — it exists to be put on a clipboard.
+     Same reasoning as blank-checklist.html in motion.test.js. */
+  const NOT_A_PAGE = new Set(['bundles-print.html']);
+  const pages = fs.readdirSync(path.join(ROOT, 'workspace'))
+    .filter(f => f.endsWith('.html') && !NOT_A_PAGE.has(f));
   const noSkel = pages.filter(f => !/wsSkel/.test(R('workspace/' + f)));
   eq(noSkel.join(', '), '', 'every workspace page has a loading placeholder (' + pages.length + ')');
 }

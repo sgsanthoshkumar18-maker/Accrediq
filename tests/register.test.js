@@ -123,7 +123,13 @@ ok(/workspace(?:\.html)?\?stay=1/.test(read('workspace/shell.js')),
 
 // The control is on every workspace page, and states are distinguishable.
 {
-  const pages = fs.readdirSync(path.join(ROOT, 'workspace')).filter(f => f.endsWith('.html'));
+  /* bundles-print.html is a PRINT DOCUMENT that happens to live in workspace/
+     because that is where its bundle data file is. It deliberately ships with no
+     header, nav, auth shell or motion layer — it exists to be put on a clipboard.
+     Same reasoning as blank-checklist.html in motion.test.js. */
+  const NOT_A_PAGE = new Set(['bundles-print.html']);
+  const pages = fs.readdirSync(path.join(ROOT, 'workspace'))
+    .filter(f => f.endsWith('.html') && !NOT_A_PAGE.has(f));
   let missing = 0;
   pages.forEach(f => {
     const h = read('workspace/' + f);

@@ -96,7 +96,7 @@ function walk(dir, out) {
      the header, footer, background canvas or motion layer — its stylesheet is a print
      contract, and scroll-reveal animations on a page destined for a printer would only
      risk hiding rows that never get scrolled into view. */
-  const skipFile = new Set(['aqcredix-film.html', 'blank-checklist.html']);
+  const skipFile = new Set(['aqcredix-film.html', 'blank-checklist.html', 'bundles-print.html']);
   for (const n of fs.readdirSync(dir)) {
     if (skip.has(n)) continue;
     const full = path.join(dir, n);

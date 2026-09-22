@@ -599,6 +599,51 @@ create table if not exists public.document_versions (
   created_at   timestamptz not null default now()
 );
 
+-- ---------- care bundle compliance (IPC.6, IPC.7, COP.8, COP.9) ----------
+--
+-- One row per patient, per bundle, per shift. A ward nurse records it at the
+-- bedside; the governance roles read it back as a monthly compliance figure.
+--
+-- WHY compliant IS STORED RATHER THAN DERIVED. Bundle scoring is all-or-none:
+-- the bundle passes only when every APPLICABLE element passed, and elements
+-- marked not-applicable leave the denominator. Recomputing that later means
+-- re-reading the element list as it stood on the day, and bundles change as
+-- guidance changes. Freezing the verdict at the moment of the audit keeps a
+-- historical compliance figure meaning what it meant when it was recorded.
+--
+-- shift_date IS NOT THE CALENDAR DATE. A night shift runs across midnight, so
+-- an audit at 02:00 belongs to the shift that began the previous evening and
+-- is filed under that date. Without this, every night shift would be split in
+-- half and "were all three shifts covered on the 14th" would have no answer.
+create table if not exists public.bundle_audits (
+  id            text primary key,
+  org_id        uuid references public.orgs(id) on delete cascade,
+  bundle        text not null,            -- clabsi | cauti | vap | ssi
+  ward          text not null,
+  department    text,
+  patient_ref   text,                     -- bed number or UHID, as the ward records it
+  recorded_at   timestamptz not null default now(),
+  shift         text not null,            -- morning | afternoon | night
+  shift_date    date not null,            -- the date the SHIFT belongs to, not the clock date
+  elements      jsonb not null default '{}'::jsonb,   -- { elementId: "yes" | "no" | "na" }
+  compliant     boolean not null,         -- all-or-none verdict, frozen at time of audit
+  applicable    integer,                  -- elements counted (total minus not-applicable)
+  passed        integer,                  -- elements marked yes
+  auditor_name  text,
+  auditor_email text,
+  notes         text,
+  created_by    uuid,
+  created_at    timestamptz not null default now()
+);
+create index if not exists bnd_org_idx   on public.bundle_audits(org_id);
+create index if not exists bnd_date_idx  on public.bundle_audits(org_id, shift_date);
+create index if not exists bnd_ward_idx  on public.bundle_audits(org_id, ward);
+-- One audit per patient, per bundle, per shift. A second entry for the same
+-- line on the same shift is a correction, not a new data point, and counting
+-- it twice would inflate the denominator.
+create unique index if not exists bnd_once_idx
+  on public.bundle_audits(org_id, bundle, ward, patient_ref, shift_date, shift);
+
 -- =====================================================================
 -- Helper functions
 -- =====================================================================
@@ -789,7 +834,7 @@ begin
                         'assets','asset_schedules','asset_events',
                         'checklists','checklist_items','rounds',
                         'notifications','onboarding','attachments',
-                        'gate_passes','apex_manual','trials'] loop
+                        'gate_passes','apex_manual','trials','bundle_audits'] loop
     execute format('alter table public.%I enable row level security', t);
   end loop;
 end $$;
@@ -941,6 +986,34 @@ create policy checklist_items_write on public.checklist_items
     select 1 from public.checklists c
     where c.id = checklist_items.checklist_id and public.dept_visible(c.department)));
 
+-- ---------- care bundle audits ----------
+--
+-- READ is department-scoped like everything else, so a ward sees its own
+-- audits and the governance roles — is_admin() covers owner, admin, director
+-- and quality_manager — see every ward. That split is the whole access model
+-- the hospital asked for: fifteen people record, two people report.
+--
+-- The export button in bundles.js checks the same is_admin() predicate, but
+-- that check is a COURTESY so the button is not offered to someone it would
+-- fail for. The enforcement is here. A client-side role check is a check
+-- anybody removes with developer tools; this one runs in the database.
+drop policy if exists bundle_audits_read on public.bundle_audits;
+create policy bundle_audits_read on public.bundle_audits
+  for select using (
+    org_id = public.my_org()
+    and (public.is_admin() or public.dept_visible(department)));
+
+-- Any editor may record an audit — nurses are editors, and recording at the
+-- bedside is the point. Only their own department, unless they are governance.
+drop policy if exists bundle_audits_write on public.bundle_audits;
+create policy bundle_audits_write on public.bundle_audits
+  for all using (
+    org_id = public.my_org() and public.can_edit()
+    and (public.is_admin() or public.dept_visible(department)))
+  with check (
+    org_id = public.my_org() and public.can_edit()
+    and (public.is_admin() or public.dept_visible(department)));
+
 drop policy if exists rounds_read on public.rounds;
 create policy rounds_read on public.rounds
   for select using (org_id = public.my_org() and exists (
@@ -1031,7 +1104,7 @@ begin
                         'assets','asset_schedules','asset_events',
                         'checklists','checklist_items','rounds',
                         'notifications','onboarding','attachments',
-                        'gate_passes','apex_manual','trials'] loop
+                        'gate_passes','apex_manual','trials','bundle_audits'] loop
     execute format('drop trigger if exists set_org_%I on public.%I', t, t);
     execute format(
       'create trigger set_org_%I before insert on public.%I

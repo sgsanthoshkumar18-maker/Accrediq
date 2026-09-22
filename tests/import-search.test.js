@@ -137,7 +137,13 @@ ok(/aq:ready/.test(wq), 'it mounts after the gate, when there is an org to read'
 }
 
 {
-  const pages = fs.readdirSync(path.join(ROOT, 'workspace')).filter(f => f.endsWith('.html'));
+  /* bundles-print.html is a PRINT DOCUMENT that happens to live in workspace/
+     because that is where its bundle data file is. It deliberately ships with no
+     header, nav, auth shell or motion layer — it exists to be put on a clipboard.
+     Same reasoning as blank-checklist.html in motion.test.js. */
+  const NOT_A_PAGE = new Set(['bundles-print.html']);
+  const pages = fs.readdirSync(path.join(ROOT, 'workspace'))
+    .filter(f => f.endsWith('.html') && !NOT_A_PAGE.has(f));
   let missing = 0;
   pages.forEach(f => { if (!/wsearch\.js/.test(read('workspace/' + f))) missing++; });
   eq(missing, 0, 'every workspace page loads search (' + pages.length + ' pages)');
