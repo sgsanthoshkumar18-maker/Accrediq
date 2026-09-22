@@ -18,7 +18,25 @@
 
   var W = window.AQWorkspace, S = window.AQStore;
   var DRUGS = window.AMSP_DRUGS || [];
+  var WHO = window.AMSP_WHO || { verified: "", indexUrl: "", atcLink: function () { return ""; } };
   var esc;
+
+  /* Render a short human date for the WHO verified badge. Formatting matches
+   * the site's other date pills (Indian English day-month-year). */
+  function fmtVerifiedDate(iso) {
+    var d = new Date(iso);
+    if (isNaN(d.getTime())) return iso;
+    var months = ["Jan","Feb","Mar","Apr","May","Jun","Jul","Aug","Sep","Oct","Nov","Dec"];
+    return d.getDate() + " " + months[d.getMonth()] + " " + d.getFullYear();
+  }
+
+  /* The annual-update reminder shows only in the WHO release window (Jan 1 –
+   * Feb 28), when a hospital's quality manager is most likely to notice a
+   * refresh has arrived and check that the tracker's values still match. */
+  function inWhoUpdateWindow() {
+    var m = new Date().getMonth();
+    return m === 0 || m === 1;
+  }
 
   /* Storage lives in localStorage rather than the shared IndexedDB / Supabase
    * schema. AMSP tracking data is per-user and does not need to sync across
@@ -114,6 +132,50 @@
 
   function h(container, html) { container.innerHTML = html; }
 
+  /* A small standalone reminder that renders above the DDD calculator during
+   * the WHO release window. Kept separate from the tracker-level pill so it
+   * can appear on the drug page without adding a second header row. */
+  function whoAnnualReminder() {
+    return '<div class="amsp-who-annual" role="note">' +
+      '<b>WHO annual update window is open.</b> ' +
+      'The ATC/DDD Index refreshes each January. If your value here disagrees with the current WHO page, use the link above to check the drug’s official DDD and let the maintainer know so the catalogue is refreshed.' +
+    '</div>';
+  }
+
+  /* Per-drug WHO deep link — jumps straight to the ATC code's page on the
+   * WHO Collaborating Centre index instead of forcing the auditor to search. */
+  function whoDetailBadge(d) {
+    var href = d.atc ? WHO.atcLink(d.atc) : (WHO.indexUrl || "");
+    var atc = d.atc ? '<span class="amsp-who-atc">ATC ' + esc(d.atc) + '</span>' : "";
+    return '<a class="who-badge who-badge-link" href="' + esc(href) + '" target="_blank" rel="noopener" ' +
+      'title="Open this drug’s page on the WHO ATC/DDD Index in a new tab">' +
+      'WHO DDD: <b>' + fmt(d.whoDdd, 3) + " " + esc(d.unit) + '</b>' + atc +
+      '<span class="amsp-who-arrow" aria-hidden="true">↗</span>' +
+    '</a>';
+  }
+
+  /* A small "verified" pill that anchors this catalogue to the official WHO
+   * ATC/DDD Index and shows when the values were last checked. Between Jan 1
+   * and Feb 28 the pill grows into a full reminder that WHO's annual update
+   * window is open — most auditors do not follow the WHO Drug Information
+   * bulletin themselves, so a nudge in the tool is the reliable path. */
+  function whoBadge() {
+    var verified = WHO.verified ? fmtVerifiedDate(WHO.verified) : "";
+    var indexUrl = WHO.indexUrl || "https://atcddd.fhi.no/atc_ddd_index/";
+    var pill =
+      '<a class="amsp-who-pill" href="' + esc(indexUrl) + '" target="_blank" rel="noopener">' +
+        '<span class="amsp-who-dot" aria-hidden="true"></span>' +
+        'WHO ATC/DDD Index' +
+        (verified ? '<span class="amsp-who-when">verified ' + esc(verified) + '</span>' : "") +
+        '<span class="amsp-who-arrow" aria-hidden="true">↗</span>' +
+      '</a>';
+    if (!inWhoUpdateWindow()) return '<div class="amsp-who-row">' + pill + '</div>';
+    /* January or February — the WHO annual release window. */
+    return '<div class="amsp-who-row amsp-who-row-alert">' + pill +
+      '<span class="amsp-who-note">WHO usually publishes its annual DDD update in January. If your team already reviewed this year’s bulletin, verify each drug against the index and update <code>workspace/amsp-drugs.js</code>.</span>' +
+    '</div>';
+  }
+
   function tabsBar() {
     document.querySelectorAll(".amsp-tab").forEach(function (b) {
       var tool = b.getAttribute("data-tool");
@@ -143,7 +205,8 @@
     }
 
     h(host,
-      '<p class="amsp-panel-sub" style="margin:0 0 18px;color:var(--fg-muted)">' + esc(toolCopy) + '</p>' +
+      '<p class="amsp-panel-sub" style="margin:0 0 12px;color:var(--fg-muted)">' + esc(toolCopy) + '</p>' +
+      whoBadge() +
       '<div class="amsp-groups">' +
         '<div><h2 class="amsp-group-h">Antibacterials</h2>' + grid(byGroup.antibiotic, "abx") + '</div>' +
         '<div><h2 class="amsp-group-h">Antifungals</h2>'  + grid(byGroup.antifungal, "afg") + '</div>' +
@@ -190,7 +253,7 @@
           '<h2>' + esc(d.name) + '</h2>' +
           '<span class="tag ' + (d.group === "antibiotic" ? "abx" : "afg") + '">' +
             (d.group === "antibiotic" ? "Antibiotic" : "Antifungal") + '</span>' +
-          '<span class="who-badge">WHO DDD: <b>' + fmt(d.whoDdd, 3) + " " + esc(d.unit) + '</b></span>' +
+          whoDetailBadge(d) +
         '</div>' +
 
         /* form */
@@ -326,8 +389,10 @@
           '<h2>' + esc(d.name) + '</h2>' +
           '<span class="tag ' + (d.group === "antibiotic" ? "abx" : "afg") + '">' +
             (d.group === "antibiotic" ? "Antibiotic" : "Antifungal") + '</span>' +
-          '<span class="who-badge">WHO DDD: <b>' + fmt(d.whoDdd, 3) + " " + esc(d.unit) + '</b></span>' +
+          whoDetailBadge(d) +
         '</div>' +
+
+        (inWhoUpdateWindow() ? whoAnnualReminder() : "") +
 
         '<div class="amsp-panel">' +
           '<h3>' + (editing ? "Edit month" : "Calculate DDD for a month") + '</h3>' +
