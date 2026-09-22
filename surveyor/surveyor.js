@@ -326,7 +326,7 @@
           <p>${esc(r.text)}</p>
         </div>`).join("")}
         <p class="sv-sub">Showing the ${top.length} closest matches from the NABH 6th Edition. Read the full chapter for context before acting on any single element.</p>
-      </div>` : `<p class="sv-sub">No element matched those words. Try different terms, or browse the <a href="standards.html">Standards Explorer</a>.</p>`;
+      </div>` : `<p class="sv-sub">No element matched those words. Try different terms, or browse the <a href="standards">Standards Explorer</a>.</p>`;
   }
 
   // ---------- boot ----------

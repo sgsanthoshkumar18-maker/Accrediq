@@ -178,7 +178,7 @@ setTimeout(function () {
 
   ok(/W\.gate\(\)/.test(dash), 'the page is gated');
   ok(/renderNav\("dashboard"\)/.test(dash), 'and is in the workspace nav');
-  ok(/dashboard\.html/.test(read('workspace/shell.js')), 'with a nav entry');
+  ok(/dashboard(?:\.html)?"/.test(read('workspace/shell.js')), 'with a nav entry');
 
   // Classes must exist — the failure that made the calendar modals dead buttons.
   {

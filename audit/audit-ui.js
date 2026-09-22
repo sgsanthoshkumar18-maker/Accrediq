@@ -664,7 +664,7 @@
       if (!W.user || !(W.user.name || W.user.email)) {
         el("audNotice").innerHTML =
           '<div class="ws-notice">Your account has no display name yet, so audits would be ' +
-          'signed with your email address. Set a name in <a href="team.html">Team</a> first.</div>';
+          'signed with your email address. Set a name in <a href="team">Team</a> first.</div>';
       }
     } catch (e) { if (window.console) console.error(e); }
 

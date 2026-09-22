@@ -1,0 +1,14 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 512 512" role="img" aria-label="AQcredix">
+  <!-- Solid tile so the icon reads on Google's rounded-square favicon slot instead
+       of appearing as a floating mark on a transparent chip. -->
+  <rect width="512" height="512" rx="112" ry="112" fill="#0B4F6C"/>
+  <!-- Outer ring, drawn white for contrast on the deep-teal tile. -->
+  <circle cx="256" cy="256" r="184" fill="none" stroke="#FFFFFF" stroke-width="26" opacity="0.35"/>
+  <!-- Accent arc, teal — the mark's identifying stroke. -->
+  <path d="M256 72 a184 184 0 1 1 -130.1 53.9" fill="none" stroke="#20A39E" stroke-width="30" stroke-linecap="round"/>
+  <!-- Filled "A" glyph, centred and sized against a 512-viewport. Vector paths
+       ported from the site's inline hero-logo (viewBox 0 0 40 40, scaled 12.8x). -->
+  <g transform="translate(0 0) scale(12.8)" fill="#FFFFFF" fill-rule="evenodd">
+    <path d="M19.15 14.05H20.85L25.61 25.015H26.97V25.95H22.21V25.015H23.315L22 22H18L16.685 25.015H17.79V25.95H13.03V25.015H14.39ZM20 16.26L22.027 20.935H17.973Z"/>
+  </g>
+</svg>

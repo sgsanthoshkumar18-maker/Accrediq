@@ -79,7 +79,7 @@ ok(/kindFilter/.test(reg), 'and by cycle type');
 // The page is gated and registered like every other workspace page.
 ok(/W\.gate\(\)/.test(reg), 'the page is gated');
 ok(/renderNav\("register"\)/.test(reg), 'and appears in the workspace nav');
-ok(/register\.html/.test(read('workspace/shell.js')), 'with a nav entry pointing to it');
+ok(/register(?:\.html)?"/.test(read('workspace/shell.js')), 'with a nav entry pointing to it');
 eq((html.match(/<body/g) || []).length, 1, 'the page has one body tag');
 
 // Classes must exist, the failure that made the calendar modals dead buttons.
@@ -118,7 +118,7 @@ ok(/workspace\\\.html\$\/\.test\(location\.pathname\)/.test(pin),
 /* And there must be an escape hatch, or a pinned page makes the landing page unreachable
    because clicking Readiness bounces straight back. */
 ok(/get\("stay"\)/.test(pin), 'an explicit ?stay=1 defeats the redirect');
-ok(/workspace\.html\?stay=1/.test(read('workspace/shell.js')),
+ok(/workspace(?:\.html)?\?stay=1/.test(read('workspace/shell.js')),
    'and the Readiness nav link carries it');
 
 // The control is on every workspace page, and states are distinguishable.

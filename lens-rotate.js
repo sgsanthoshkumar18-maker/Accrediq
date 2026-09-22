@@ -126,7 +126,7 @@
     if (topic) topic.textContent = r.topic;
 
     var link = document.getElementById("lensLink");
-    if (link) link.href = "standards.html?chapter=" + encodeURIComponent(e.chapter) +
+    if (link) link.href = "standards?chapter=" + encodeURIComponent(e.chapter) +
                           "#" + encodeURIComponent(r.code);
 
     /* The card is rendered after the motion layer scanned the page, so the reveal and

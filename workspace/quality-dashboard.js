@@ -2210,16 +2210,16 @@
           : "");
     }
     if (sec === "committee") {
-      return '<a class="btn btn-ghost qd-bar-b" href="calendar.html#committees">Schedule committees</a>' +
+      return '<a class="btn btn-ghost qd-bar-b" href="calendar#committees">Schedule committees</a>' +
         '<button type="button" class="btn btn-accent qd-bar-b" id="qdAddMeeting">Record a meeting</button>';
     }
     if (sec === "incident") {
-      return '<a class="btn btn-accent qd-bar-b" href="incidents.html">Report an incident</a>';
+      return '<a class="btn btn-accent qd-bar-b" href="incidents">Report an incident</a>';
     }
     if (sec === "code") {
       return '<button type="button" class="btn btn-accent qd-bar-b" id="qdAddCode">Record a code alert</button>';
     }
-    return '<a class="btn btn-ghost qd-bar-b" href="readiness.html">Open the readiness tracker</a>' +
+    return '<a class="btn btn-ghost qd-bar-b" href="readiness">Open the readiness tracker</a>' +
       '<button type="button" class="btn btn-ghost qd-bar-b" id="qdAddMonth2">Evidence figures</button>' +
       '<button type="button" class="btn btn-accent qd-bar-b" id="qdAddFinding2">Record a finding</button>';
   }
@@ -2240,7 +2240,7 @@
          so the honest first step here depends on whether any exist yet. */
       if (!cmtes.length) {
         return say("<b>No committees yet.</b> They are set up on the " +
-          '<a href="calendar.html#committees">calendar</a>, and once one exists you can ' +
+          '<a href="calendar#committees">calendar</a>, and once one exists you can ' +
           "record its meetings here &mdash; who attended, whether it was quorate, and what " +
           "came of it.");
       }
@@ -2252,7 +2252,7 @@
     }
     if (sec === "incident" && !incidents.length) {
       return say("<b>Nothing reported yet.</b> Incidents are reported on the " +
-        '<a href="incidents.html">incident page</a>, and this board sorts them into ' +
+        '<a href="incidents">incident page</a>, and this board sorts them into ' +
         "structure, process and outcome as they arrive.");
     }
     if (sec === "code" && !codes.length) {
@@ -2261,7 +2261,7 @@
     }
     if (sec === "nabh" && !owners.length && !findings.length) {
       return say("<b>Nothing assessed yet.</b> Assign a champion to a chapter in the " +
-        '<a href="readiness.html">readiness tracker</a>, and this board follows each ' +
+        '<a href="readiness">readiness tracker</a>, and this board follows each ' +
         "chapter and the findings raised against it.");
     }
     return "";
@@ -2649,13 +2649,13 @@
     if (sec === "committee") {
       /* Committees are created on the calendar, not here. Sending someone to an empty
          dropdown and letting them work out why would be the worse of the two. */
-      if (!cmtes.length) { location.href = "calendar.html#committees"; return; }
+      if (!cmtes.length) { location.href = "calendar#committees"; return; }
       meetingForm();
       return;
     }
     if (sec === "code") { codeForm(); return; }
-    if (sec === "incident") { location.href = "incidents.html"; return; }
-    location.href = "readiness.html";
+    if (sec === "incident") { location.href = "incidents"; return; }
+    location.href = "readiness";
   }
 
   function wire() {

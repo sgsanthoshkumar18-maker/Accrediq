@@ -73,7 +73,7 @@
       out.push({ kind: "Task", name: t.title, meta: K.label(t.frequency),
                  el: t.element_code, due: d.preferred,
                  st: K.status(t.last_done_on, t.frequency, null, d.preferred),
-                 href: "calendar.html" });
+                 href: "calendar" });
     });
 
     data.schedules.filter(function (sc) { return sc.active !== false; }).forEach(function (sc) {
@@ -86,7 +86,7 @@
                  meta: (sc.kind || "").replace(/_/g, " ") + " · " + K.label(sc.frequency),
                  el: a.element_code, due: d.preferred,
                  st: K.status(last, sc.frequency, null, d.preferred),
-                 href: "register.html" });
+                 href: "register" });
     });
 
     data.lists.filter(function (l) {
@@ -97,7 +97,7 @@
       out.push({ kind: "Round", name: l.name, meta: K.label(l.frequency),
                  el: l.element_code, due: d.preferred,
                  st: K.status(last, l.frequency, null, d.preferred),
-                 href: "rounds.html" });
+                 href: "rounds" });
     });
 
     /* Committees are hospital-wide, not departmental, so they appear only in the
@@ -110,7 +110,7 @@
         out.push({ kind: "Committee", name: c.name, meta: K.label(c.frequency),
                    el: null, due: d.preferred,
                    st: K.status(last, c.frequency, null, d.preferred),
-                   href: "calendar.html" });
+                   href: "calendar" });
       });
     }
 
@@ -193,8 +193,8 @@
         (dept ? "Nothing tracked for " + esc(dept) + " yet" : "Nothing tracked yet") + "</h3>" +
         "<p>Add this department's recurring obligations, equipment and rounds, and they " +
         "will all appear here — sorted by how late they are.</p>" +
-        '<a class="btn btn-accent" href="calendar.html">Compliance calendar</a> ' +
-        '<a class="btn btn-ghost" href="register.html">Equipment register</a></div>';
+        '<a class="btn btn-accent" href="calendar">Compliance calendar</a> ' +
+        '<a class="btn btn-ghost" href="register">Equipment register</a></div>';
       return;
     }
 
@@ -218,7 +218,7 @@
             '<div class="cal-meta">' + esc(c.status || "open") +
               (c.owner ? " · " + esc(c.owner) : "") +
               (c.element_code ? " · " + esc(c.element_code) : "") + "</div></div>" +
-            '<div class="cal-row-side"><a class="btn btn-ghost btn-sm" href="capa.html">Open</a></div>' +
+            '<div class="cal-row-side"><a class="btn btn-ghost btn-sm" href="capa">Open</a></div>' +
           "</div>";
         }).join("") + "</div>";
     }
@@ -232,7 +232,7 @@
             '<div class="cal-meta">' + esc(i.occurred_on || "") +
               (i.severity ? " · " + esc(i.severity) : "") +
               (i.status ? " · " + esc(i.status) : "") + "</div></div>" +
-            '<div class="cal-row-side"><a class="btn btn-ghost btn-sm" href="incidents.html">Open</a></div>' +
+            '<div class="cal-row-side"><a class="btn btn-ghost btn-sm" href="incidents">Open</a></div>' +
           "</div>";
         }).join("") + "</div>";
     }

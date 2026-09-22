@@ -242,7 +242,7 @@
     page.innerHTML =
       '<div style="padding:40px 20px;color:#B02A2A;font-size:14px">' +
         "<strong>Cannot render checklist:</strong> " + esc(msg) +
-        '<p style="margin-top:14px;color:#556E7B"><a href="../workspace/audit.html">Back to audits</a></p>' +
+        '<p style="margin-top:14px;color:#556E7B"><a href="../workspace/audit">Back to audits</a></p>' +
       "</div>";
     document.title = "Blank checklist — error";
   }

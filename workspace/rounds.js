@@ -241,7 +241,7 @@
                for, so say so on the row rather than leaving it to be noticed. */
             (r.passed === false
               ? (r.capa_id
-                  ? '<div class="cal-next"><a href="capa.html">Finding raised →</a></div>'
+                  ? '<div class="cal-next"><a href="capa">Finding raised →</a></div>'
                   : '<div class="cal-next rd-flag">No action recorded against this round</div>')
               : "") +
           "</div>" +

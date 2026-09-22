@@ -91,7 +91,12 @@ function walk(dir, out) {
      document shown inside an iframe, with its own reset and no site header or footer for
      the motion layer to act on. Linking our stylesheet into it would reach across the
      boundary the iframe exists to draw. */
-  const skipFile = new Set(['aqcredix-film.html']);
+  /* audit/blank-checklist.html is a PRINT document, not a site page. It is opened to be
+     turned into a PDF and carried into a ward on paper, so it deliberately ships without
+     the header, footer, background canvas or motion layer — its stylesheet is a print
+     contract, and scroll-reveal animations on a page destined for a printer would only
+     risk hiding rows that never get scrolled into view. */
+  const skipFile = new Set(['aqcredix-film.html', 'blank-checklist.html']);
   for (const n of fs.readdirSync(dir)) {
     if (skip.has(n)) continue;
     const full = path.join(dir, n);

@@ -158,7 +158,7 @@
   function committeesBlock() {
     if (!committees.length) {
       return '<p class="apex-note">No committees entered yet — add them on the ' +
-        '<a href="calendar.html">calendar</a> and they will appear here.</p>';
+        '<a href="calendar">calendar</a> and they will appear here.</p>';
     }
     return '<div class="apex-committees">' + committees.map(function (c) {
       return '<div class="apex-c"><b>' + esc2(c.name) + "</b>" +

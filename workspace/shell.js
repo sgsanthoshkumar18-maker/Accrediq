@@ -8,52 +8,52 @@
   var CFG = window.AQ_CONFIG || {};
 
   var PAGES = [
-    { key: "start", href: "start.html", label: "Start",
+    { key: "start", href: "start", label: "Start",
       desc: "Choose where to go" },
-    { key: "dashboard", href: "dashboard.html", label: "My department",
+    { key: "dashboard", href: "dashboard", label: "My department",
       desc: "Everything one department is answerable for, in one place" },
     /* ?stay=1 so this link is reachable when the user has pinned another page. Without
        it the pin redirect fires the moment they click Readiness and throws them straight
        back to the pinned page, making the landing page impossible to open. */
-    { key: "readiness", href: "workspace.html?stay=1", label: "Readiness",
+    { key: "readiness", href: "workspace?stay=1", label: "Readiness",
       desc: "Element-by-element accreditation status" },
-    { key: "evidence", href: "evidence.html", label: "Evidence",
+    { key: "evidence", href: "evidence", label: "Evidence",
       desc: "Everything you hold against one element, for the moment an assessor asks" },
-    { key: "audits", href: "audit.html", label: "Internal Audit",
+    { key: "audits", href: "audit", label: "Internal Audit",
       desc: "Department-level audits against the assessor checklist" },
-    { key: "incidents", href: "incidents.html", label: "Incidents",
+    { key: "incidents", href: "incidents", label: "Incidents",
       desc: "Report, analyse and close patient-safety events" },
-    { key: "calendar", href: "calendar.html", label: "Calendar",
+    { key: "calendar", href: "calendar", label: "Calendar",
       desc: "Committee meetings and recurring NABH obligations" },
-    { key: "register", href: "register.html", label: "Register",
+    { key: "register", href: "register", label: "Register",
       desc: "Equipment, licences, contracts and staff registrations with their renewal cycles" },
-    { key: "training", href: "training.html", label: "Training",
+    { key: "training", href: "training", label: "Training",
       desc: "Induction, fire safety, BLS and competency — who has it and when it lapses" },
-    { key: "crashcart", href: "crashcart.html", label: "Short Expiry",
+    { key: "crashcart", href: "crashcart", label: "Short Expiry",
       desc: "Crash cart medicines and their expiry dates" },
-    { key: "amsp", href: "amsp.html", label: "High-end Antimicrobials",
+    { key: "amsp", href: "amsp", label: "High-end Antimicrobials",
       desc: "Track monthly high-end antimicrobial usage and defined daily dose (DDD)" },
     /* Their OWN dashboard, not the general one. Sits in the workspace rather than beside the
        public dashboard because it is built from data only this hospital has. */
-    { key: "qualitydashboard", href: "quality-dashboard.html", label: "My Dashboard",
+    { key: "qualitydashboard", href: "quality-dashboard", label: "My Dashboard",
       desc: "Your own departments, KRAs and targets — charted from your own figures" },
-    { key: "rounds", href: "rounds.html", label: "Rounds",
+    { key: "rounds", href: "rounds", label: "Rounds",
       desc: "Recurring checks that produce a score, trended against your target" },
-    { key: "capa", href: "capa.html", label: "NC & CAPA",
+    { key: "capa", href: "capa", label: "NC & CAPA",
       desc: "Findings, corrective actions, verification" },
-        { key: "library", href: "library.html", label: "Forms & Registers",
+        { key: "library", href: "library", label: "Forms & Registers",
       desc: "Every checklist, form and register a department must maintain" },
-    { key: "apex", href: "apex.html", label: "Apex Manual",
+    { key: "apex", href: "apex", label: "Apex Manual",
       desc: "Build and download your hospital's quality manual" },
-    { key: "gatepass", href: "gatepass.html", label: "Gate Pass",
+    { key: "gatepass", href: "gatepass", label: "Gate Pass",
       desc: "Material movement — returnable and non-returnable, tracked to closure" },
-    { key: "accreditation", href: "accreditation.html", label: "Accreditation",
+    { key: "accreditation", href: "accreditation", label: "Accreditation",
       desc: "Where you are in the three-year cycle and what falls due next" },
-    { key: "documents", href: "documents.html", label: "Documents",
+    { key: "documents", href: "documents", label: "Documents",
       desc: "Controlled document register" },
-    { key: "access", href: "access.html", label: "Access", ownerOnly: true,
+    { key: "access", href: "access", label: "Access", ownerOnly: true,
       desc: "Subscriptions and payment approvals" },
-    { key: "import", href: "import.html", label: "Bulk Import",
+    { key: "import", href: "import", label: "Bulk Import",
       desc: "Bring in existing spreadsheets — equipment, obligations, committees, team" },
     /* "Team" is NOT in this row any more. It is administration — who has a seat, what
        they may open — not one of the jobs somebody comes here to do, and sitting among
@@ -220,7 +220,7 @@
       var railFoot =
         '<div class="ws-rail-foot">' + modeChip +
           (W.user && W.canOpen("team")
-            ? '<a href="team.html" class="ws-team-link' +
+            ? '<a href="team" class="ws-team-link' +
               (activeKey === "team" ? " active" : "") + '">Team</a>' : "") +
           (W.user ? '<span class="ws-who">' + esc(W.user.name || W.user.email) + "</span>" +
                     '<button type="button" class="ws-signout" id="wsSignOutRail">Sign out</button>' : "") +
@@ -245,7 +245,7 @@
                Start does. Two identical controls a few centimetres apart make a reader
                stop and work out whether they do different things. */
             (W.user && W.canOpen("team") && !document.getElementById("wsTeamBtn")
-              ? '<a href="team.html" class="ws-team-link' +
+              ? '<a href="team" class="ws-team-link' +
                 (activeKey === "team" ? " active" : "") + '">Team</a>' : "") +
             (W.user ? '<span class="ws-who">' + esc(W.user.name || W.user.email) + "</span>" +
                       '<button type="button" class="ws-signout" id="wsSignOut">Sign out</button>' : "") +
@@ -399,7 +399,7 @@
           '<p>This copy of AQcredix has no backend configured. Until it is, the Workspace ' +
           "cannot issue real accounts, so it stays locked rather than accept a typed name as " +
           "a substitute for one.</p>" +
-          '<a class="btn btn-accent" href="../index.html">Back to Home</a></div>';
+          '<a class="btn btn-accent" href="../index">Back to Home</a></div>';
         return false;
       }
 

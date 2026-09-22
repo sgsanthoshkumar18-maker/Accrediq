@@ -143,9 +143,9 @@ check('page is free to read and wired into nav, footer and sitemap', () => {
   const page = read('value.html');
   assert.ok(/data-access="free"/.test(page), 'value.html should be readable without a plan');
   const app = read('app.js');
-  assert.ok(/href: "value\.html"/.test(app), 'value.html missing from the nav');
-  assert.ok(/\$\{base\}value\.html/.test(app), 'value.html missing from the footer');
-  assert.ok(read('sitemap.xml').includes('/value.html'), 'value.html missing from the sitemap');
+  assert.ok(/href: "value(?:\.html)?"/.test(app), 'value.html missing from the nav');
+  assert.ok(/\$\{base\}value(?:\.html)?["'?#]/.test(app), 'value.html missing from the footer');
+  assert.ok(read('sitemap.xml').includes('/value'), 'value.html missing from the sitemap');
 });
 
 if (failures) { console.log('\n' + failures + ' failing'); process.exit(1); }

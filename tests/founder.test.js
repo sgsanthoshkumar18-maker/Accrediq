@@ -171,7 +171,7 @@ ok(/fp-initials/.test(js) && /fp-initials/.test(css), 'the fallback is the initi
 
 ok(/fp-namelink/.test(read('about.html')), 'his name links from the about page');
 ok(/fp-namelink/.test(read('contact.html')), 'and from contact');
-ok(/founder\.html/.test(read('about.html')), 'to the portfolio page');
+ok(/founder(?:\.html)?["'?#]/.test(read('about.html')), 'to the portfolio page');
 ok(/\.fp-namelink/.test(read('styles.css')), 'and the link has its own styling');
 
 /* ------------------------------ palette + mobile ------------------------------ */

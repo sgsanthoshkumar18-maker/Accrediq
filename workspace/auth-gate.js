@@ -265,8 +265,21 @@ function friendlyAuthError(err) {
               try {
                 if (f.resend) await S.adapter.resendConfirmation(e);
                 else await S.adapter.resetPassword(e);
-                msg.textContent = "Sent. Check the inbox for " + e +
-                  " (including the spam folder).";
+                /* Supabase's /auth/v1/recover returns 200 whether or not the
+                 * mail actually went out (deliberate — it stops attackers from
+                 * probing which addresses have accounts). If the project's
+                 * SMTP is misconfigured or the site origin is not in the
+                 * Allowed Redirect URLs, the endpoint still returns success
+                 * and this used to say "Sent" for a mail nobody ever received.
+                 * Honest wording instead: tell the user the request was
+                 * queued, tell them how long to wait, and give them a real
+                 * fallback (support@) if it does not arrive. */
+                msg.innerHTML =
+                  "Request sent for <b>" + e + "</b>. Reset emails from Supabase " +
+                  "usually arrive within 2–5 minutes — check your inbox and the spam folder. " +
+                  'If nothing arrives after ten minutes, write to <a href="mailto:support.aqcredix@gmail.com?subject=Password%20reset%20not%20received&amp;body=' +
+                  encodeURIComponent("Hi, my reset email for " + e + " did not arrive. Please help.") +
+                  '">support.aqcredix@gmail.com</a> and we will reset it manually.';
               } catch (e2) {
                 msg.textContent = friendlyAuthError(e2).text;
               }

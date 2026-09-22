@@ -37,9 +37,24 @@ http.createServer((req, res) => {
 
   /* Resolve, then confirm the result is still inside the repository. Without this a
      request for /../../ walks out of the project and serves anything on the disk. */
-  const full = path.resolve(ROOT, "." + p);
+  let full = path.resolve(ROOT, "." + p);
   if (full !== ROOT && !full.startsWith(ROOT + path.sep)) {
     res.writeHead(403); return res.end("forbidden");
+  }
+
+  /* CLEAN URLS, THE SAME WAY VERCEL DOES THEM.
+     vercel.json sets "cleanUrls": true, so in production /standards serves
+     standards.html and every internal link on the site is now written without the
+     extension. This server knew nothing about that, so the moment the links were
+     rewritten every page 404'd locally and the site could only be previewed by
+     deploying it — which is exactly the feedback loop a local server exists to
+     avoid. Extension-less paths therefore fall back to "<path>.html", and then to
+     "<path>/index.html" for directory-style URLs, matching production. */
+  if (!path.extname(full)) {
+    const asHtml = full + ".html";
+    const asIndex = path.join(full, "index.html");
+    if (fs.existsSync(asHtml)) full = asHtml;
+    else if (fs.existsSync(asIndex)) full = asIndex;
   }
 
   fs.readFile(full, (err, buf) => {

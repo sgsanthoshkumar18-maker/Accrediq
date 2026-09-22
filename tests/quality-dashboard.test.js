@@ -82,7 +82,7 @@ eq(/try \{ await refresh\(\); \} catch/.test(SRC), true,
 /* --------------------------------------------------------- the general dashboard is intact */
 {
   const general = fs.readFileSync(path.join(__dirname, '../dashboard.html'), 'utf8');
-  eq(/quality-dashboard\.html/.test(general), true,
+  eq(/quality-dashboard(?:\.html)?["'?#]/.test(general), true,
      'the general dashboard offers the custom one');
   eq(/id="qdPanel"/.test(general), false,
      'but is not itself replaced by it — a half-finished setup must never leave a hospital ' +
@@ -200,7 +200,7 @@ eq(/S\.readiness\(elementMap\)/.test(SRC), true,
    'and scores it with the same weighted maths, so the two pages cannot disagree');
 /* The incident report itself belongs to the incidents page — sign-off chain, one-hour
    window, the lot. A second short form here would create incidents that skip all of it. */
-eq(/href="incidents\.html"/.test(SRC), true, 'reporting an incident links out rather than duplicating the form');
+eq(/href="incidents(?:\.html)?"/.test(SRC), true, 'reporting an incident links out rather than duplicating the form');
 eq(/id="qdIncidentForm"/.test(SRC) && /Object\.keys\(cur\)\.forEach/.test(SRC), true,
    'and classifying one PATCHES the existing row rather than replacing its payload');
 
@@ -349,7 +349,7 @@ eq(/if \(sec === "kpi"\) \{ deptForm\(\); return; \}/.test(startFn), true,
    'and KPI still opens the department form — it is one of five now, not the gate');
 /* A meeting belongs to a committee and committees are made on the calendar, so choosing
    committee with none set up has to go there rather than open an empty dropdown. */
-eq(/if \(!cmtes\.length\) \{ location\.href = "calendar\.html#committees"; return; \}/.test(startFn), true,
+eq(/if \(!cmtes\.length\) \{ location\.href = "calendar(?:\.html)?#committees"; return; \}/.test(startFn), true,
    'and a hospital with no committees yet is sent where committees are made');
 
 /* ---- a chosen board stays open even before it holds anything ---- */
@@ -385,14 +385,14 @@ const bare = nudge({});
    would read as broken rather than as not started. */
 eq(/No committees yet/.test(bare('committee')), true,
    'committee with nothing set up points at the calendar, where committees are made');
-eq(/calendar\.html#committees/.test(bare('committee')), true, 'and links there');
+eq(/calendar(?:\.html)?#committees/.test(bare('committee')), true, 'and links there');
 eq(/No meetings recorded yet/.test(nudge({ cmtes: [{ id: 'c1' }] })('committee')), true,
    'and once committees exist it asks for a meeting instead');
 eq(nudge({ meetings: [{ id: 'm1' }], cmtes: [{ id: 'c1' }] })('committee'), '',
    'and says nothing once the board has something to draw');
 /* Each one points at where that record is actually made, which is not always this page. */
-eq(/incidents\.html/.test(bare('incident')), true, 'incidents point at the incident page');
-eq(/readiness\.html/.test(bare('nabh')), true, 'readiness points at the tracker');
+eq(/incidents(?:\.html)?["'?#]/.test(bare('incident')), true, 'incidents point at the incident page');
+eq(/readiness(?:\.html)?["'?#]/.test(bare('nabh')), true, 'readiness points at the tracker');
 
 /* ---- the cards have to behave like the controls they now are ---- */
 eq(/\.qd-sec\{[^}]*cursor:pointer/.test(CSS), true, 'a chooser card takes a pointer');

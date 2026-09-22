@@ -122,7 +122,7 @@ check('the dashboard loads the analytics module', () => {
   const hasEntryPoint = /deptEditMode|editPicking/.test(html);
   assert.ok(!hasEntryPoint || /AQDeptAnalytics\.canEdit\(\)/.test(html),
     'an edit entry point is present but is not gated on canEdit()');
-  assert.ok(/quality-dashboard\.html/.test(html),
+  assert.ok(/quality-dashboard(?:\.html)?["'?#]/.test(html),
     'the dashboard must point a hospital at the one place its own figures can be set');
   /* Same rule, conditional on the button existing at all: if it ever comes back it must ship
      hidden and be revealed only for permitted roles, never rendered and then removed. */

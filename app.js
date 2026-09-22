@@ -5,15 +5,15 @@
   // resolved against each page's data-base attribute at render time, so this file works
   // unmodified whether the page lives at the site root or inside /tools/ or /tools/committees/.
   const NAV = [
-    { key: "standards", href: "standards.html", label: "Standards" },
+    { key: "standards", href: "standards", label: "Standards" },
     {
       key: "deptgroup", label: "Departments", dropdown: [
-        { key: "departments", href: "departments.html", label: "Administrative Departments" },
-        { key: "clinicalareas", href: "clinical-areas.html", label: "Clinical Areas" },
-        { key: "nonclinicalareas", href: "nonclinical-areas.html", label: "Non-Clinical Areas" },
+        { key: "departments", href: "departments", label: "Administrative Departments" },
+        { key: "clinicalareas", href: "clinical-areas", label: "Clinical Areas" },
+        { key: "nonclinicalareas", href: "nonclinical-areas", label: "Non-Clinical Areas" },
         /* Free page, sits with the departments rather than under Plans: a department head
            sent this link is answering "what do I get", not "what does it cost". */
-        { key: "value", href: "value.html", label: "What Your Department Gets" },
+        { key: "value", href: "value", label: "What Your Department Gets" },
       ]
     },
     /* "Enter your hospital" is NOT in this list any more, though it was, and the label is
@@ -25,22 +25,22 @@
        remains in the mobile nav and the footer, so it is reachable from every page. */
     {
       key: "toolsgroup", label: "Tools", dropdown: [
-        { key: "todaysquiz", href: "quiz.html", label: "Today's Quiz" },
-        { key: "qualitytools", href: "tools/quality-tools.html", label: "Quality Tools" },
-        { key: "kpilibrary", href: "tools/kpi-library.html", label: "KPI Library" },
-        { key: "codealerts", href: "tools/code-alerts.html", label: "Code Alerts" },
-        { key: "committees", href: "tools/committees.html", label: "Committees" },
-        { key: "sop", href: "sop.html", label: "SOP Generator" },
-        { key: "surveyor", href: "surveyor.html", label: "Mock Surveyor" },
-        { key: "internalaudit", href: "workspace/audit.html", label: "Internal Audit" },
-        { key: "incidents", href: "workspace/incidents.html", label: "Incident Reporting" },
-        { key: "know", href: "know.html", label: "Gap Analysis" },
-        { key: "icd", href: "icd.html", label: "ICD-11 Codes" },
+        { key: "todaysquiz", href: "quiz", label: "Today's Quiz" },
+        { key: "qualitytools", href: "tools/quality-tools", label: "Quality Tools" },
+        { key: "kpilibrary", href: "tools/kpi-library", label: "KPI Library" },
+        { key: "codealerts", href: "tools/code-alerts", label: "Code Alerts" },
+        { key: "committees", href: "tools/committees", label: "Committees" },
+        { key: "sop", href: "sop", label: "SOP Generator" },
+        { key: "surveyor", href: "surveyor", label: "Mock Surveyor" },
+        { key: "internalaudit", href: "workspace/audit", label: "Internal Audit" },
+        { key: "incidents", href: "workspace/incidents", label: "Incident Reporting" },
+        { key: "know", href: "know", label: "Gap Analysis" },
+        { key: "icd", href: "icd", label: "ICD-11 Codes" },
       ]
     },
-    { key: "videos", href: "videos.html", label: "Videos" },
-    { key: "learn", href: "learn.html", label: "Learn" },
-    { key: "about", href: "about.html", label: "About" }
+    { key: "videos", href: "videos", label: "Videos" },
+    { key: "learn", href: "learn", label: "Learn" },
+    { key: "about", href: "about", label: "About" }
   ];
 
   // Extra keys that belong to a group for top-level highlighting but have no nav entry
@@ -113,7 +113,7 @@
              neon instead of staying a pale grey that vanishes on white.
              aria-hidden because the link's own text already says AQcredix; announcing the
              mark as well would read the brand twice to a screen reader. -->
-        <a href="${base}index.html" class="brand brand-mark">
+        <a href="${base}index" class="brand brand-mark">
           <svg class="brand-mk" width="38" height="38" viewBox="0 0 40 40" fill="none" aria-hidden="true">
             <!-- currentColor, not a border token. --border-strong resolves to the accent
                  blue in the dark theme, which made the ring the same colour as the arc and
@@ -126,7 +126,7 @@
           </svg>
           <span class="brand-stack"><span class="brand-word">AQcredix</span><span class="full-name"><i>Accreditation &amp; Quality</i><i>Implementation Guidance Platform</i></span></span>
         </a>
-        <nav class="main-nav" id="mainNav">${links}<a href="${base}workspace/start.html" class="nav-workspace-menu">Enter your hospital</a><a href="${base}dashboard.html" class="nav-mobile-only">Quality Dashboard</a></nav>
+        <nav class="main-nav" id="mainNav">${links}<a href="${base}workspace/start" class="nav-workspace-menu">Enter your hospital</a><a href="${base}dashboard" class="nav-mobile-only">Quality Dashboard</a></nav>
         <div class="nav-actions">
           <button type="button" class="aq-search-btn" id="aqSearchBtn" aria-label="Search the site">
             <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="11" cy="11" r="7"/><path d="M21 21l-4.3-4.3" stroke-linecap="round"/></svg>
@@ -135,9 +135,9 @@
           <!-- Secondary to the dashboard, not equal to it: two filled buttons side by side
                argue with each other and neither reads as the main action. Hidden on narrow
                screens by nav-wide-only, where the mobile nav carries it instead. -->
-          <a class="btn btn-ghost btn-sm nav-wide-only" href="${base}workspace/start.html">Enter your hospital</a>
-          <a class="btn btn-primary btn-sm" href="${base}dashboard.html">Quality Dashboard</a>
-          <a class="profile-btn" id="profileBtn" href="${base}profile.html" aria-label="My progress and subscription" title="My progress">
+          <a class="btn btn-ghost btn-sm nav-wide-only" href="${base}workspace/start">Enter your hospital</a>
+          <a class="btn btn-primary btn-sm" href="${base}dashboard">Quality Dashboard</a>
+          <a class="profile-btn" id="profileBtn" href="${base}profile" aria-label="My progress and subscription" title="My progress">
             <svg width="17" height="17" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="8" r="3.6"/><path d="M4.8 20a7.2 7.2 0 0 1 14.4 0"/></svg>
           </a>
           <!-- A flag, not a question mark: this is for reporting something wrong, and the
@@ -174,45 +174,45 @@
             <span>Audits, evidence, committees, registers and the short expiry calendar &mdash;
               everything your team files against NABH, in one place.</span>
           </div>
-          <a class="btn btn-accent footer-cta-btn" href="${base}workspace/start.html">Enter your hospital &rarr;</a>
+          <a class="btn btn-accent footer-cta-btn" href="${base}workspace/start">Enter your hospital &rarr;</a>
         </div>
         <div class="footer-grid">
           <div class="footer-brand">
-            <a href="${base}index.html" class="brand">${shieldMark}<span class="brand-stack">AQcredix<span class="full-name"><i>Accreditation &amp; Quality</i><i>Implementation Guidance Platform</i></span></span></a>
+            <a href="${base}index" class="brand">${shieldMark}<span class="brand-stack">AQcredix<span class="full-name"><i>Accreditation &amp; Quality</i><i>Implementation Guidance Platform</i></span></span></a>
             <p>NABH accreditation, actually understood — every standard explained the way an assessor reads it.</p>
           </div>
           <div class="footer-col"><h4>Learn</h4>
-            <a href="${base}plans.html">Plans &amp; pricing</a><a href="${base}index.html#aqFilmHome" id="aqFilmBtn">Wanna know about AQcredix?</a><a href="${base}value.html">What your department gets</a><a href="${base}standards.html">Standards</a>
-            <a href="${base}departments.html">Departments</a>
-            <a href="${base}clinical-areas.html">Clinical Areas</a>
-            <a href="${base}nonclinical-areas.html">Non-Clinical Areas</a>
-            <a href="${base}dashboard.html">Quality Dashboard</a>
-            <a href="${base}tools/kpi-library.html">KPI Library</a>
+            <a href="${base}plans">Plans &amp; pricing</a><a href="${base}index#aqFilmHome" id="aqFilmBtn">Wanna know about AQcredix?</a><a href="${base}value">What your department gets</a><a href="${base}standards">Standards</a>
+            <a href="${base}departments">Departments</a>
+            <a href="${base}clinical-areas">Clinical Areas</a>
+            <a href="${base}nonclinical-areas">Non-Clinical Areas</a>
+            <a href="${base}dashboard">Quality Dashboard</a>
+            <a href="${base}tools/kpi-library">KPI Library</a>
           </div>
           <div class="footer-col"><h4>Practice</h4>
-            <a href="${base}quiz.html">Today's Quiz</a>
-            <a href="${base}tools/quality-tools.html">Quality Tools</a>
-            <a href="${base}tools/committees.html">Committees</a>
-            <a href="${base}sop.html">SOP Generator</a>
-            <a href="${base}surveyor.html">Mock Surveyor</a>
-            <a href="${base}know.html">Gap Analysis</a>
-            <a href="${base}icd.html">ICD-11 Codes</a>
-            <a href="${base}tools/code-alerts.html">Code Alerts</a>
-            <a href="${base}videos.html">Assessor Videos</a>
-            <a href="${base}learn.html">Learn &amp; Test</a>
+            <a href="${base}quiz">Today's Quiz</a>
+            <a href="${base}tools/quality-tools">Quality Tools</a>
+            <a href="${base}tools/committees">Committees</a>
+            <a href="${base}sop">SOP Generator</a>
+            <a href="${base}surveyor">Mock Surveyor</a>
+            <a href="${base}know">Gap Analysis</a>
+            <a href="${base}icd">ICD-11 Codes</a>
+            <a href="${base}tools/code-alerts">Code Alerts</a>
+            <a href="${base}videos">Assessor Videos</a>
+            <a href="${base}learn">Learn &amp; Test</a>
           </div>
           <div class="footer-col"><h4>AQcredix</h4>
-            <a href="${base}about.html">About &amp; vision</a>
-            <a href="${base}about.html#roadmap">Roadmap</a>
-            <a href="${base}contact.html">Contact</a>
-            <a href="${base}privacy.html">Privacy Policy</a>
-            <a href="${base}terms.html">Terms of Service</a>
-            <a href="${base}refunds.html">Refunds &amp; Cancellation</a>
+            <a href="${base}about">About &amp; vision</a>
+            <a href="${base}about#roadmap">Roadmap</a>
+            <a href="${base}contact">Contact</a>
+            <a href="${base}privacy">Privacy Policy</a>
+            <a href="${base}terms">Terms of Service</a>
+            <a href="${base}refunds">Refunds &amp; Cancellation</a>
           </div>
         </div>
         <div class="footer-bottom">
           <span>© 2026 AQcredix. All rights reserved. Accreditation &amp; Quality Implementation Guidance Platform. An independent healthcare education forum. Not affiliated with NABH, QCI, JCI or any accreditation body. Explanatory content on this site is original work; the published standards remain the property of their respective bodies.</span>
-          <span><a href="${base}contact.html" style="color:inherit;text-decoration:underline;">Found an error on this page? Tell us.</a></span>
+          <span><a href="${base}contact" style="color:inherit;text-decoration:underline;">Found an error on this page? Tell us.</a></span>
         </div>
       </div>
     </footer>`;

@@ -76,7 +76,7 @@ ok(/if \(returnable && !val\("gExp"\)\)/.test(gp),
 
 ok(/W\.gate\(\)/.test(gp), 'the page is gated');
 ok(/renderNav\("gatepass"\)/.test(gp), 'and appears in the workspace nav');
-ok(/gatepass\.html/.test(read('workspace/shell.js')), 'with a nav entry');
+ok(/gatepass(?:\.html)?"/.test(read('workspace/shell.js')), 'with a nav entry');
 
 /* Classes used must be defined — the failure that made the calendar modals dead buttons. */
 {
@@ -127,7 +127,7 @@ detailed.forEach(i => {
 const lib = read('workspace/library.js');
 ok(/W\.gate\(\)/.test(lib), 'the library page is gated');
 ok(/renderNav\("library"\)/.test(lib), 'and in the nav');
-ok(/library\.html/.test(read('workspace/shell.js')), 'with a nav entry');
+ok(/library(?:\.html)?"/.test(read('workspace/shell.js')), 'with a nav entry');
 ok(/generateAsync/.test(lib), 'downloads use the same JSZip pattern as the data export');
 ok(/t="inlineStr"/.test(lib), 'values are written as inline strings, not left for Excel to reinterpret');
 {
@@ -175,7 +175,7 @@ ok(/scheduleSave/.test(apex) && /setTimeout\(save, 900\)/.test(apex),
 
 ok(/W\.gate\(\)/.test(apex), 'the page is gated');
 ok(/renderNav\("apex"\)/.test(apex), 'and in the nav');
-ok(/apex\.html/.test(read('workspace/shell.js')), 'with a nav entry');
+ok(/apex(?:\.html)?"/.test(read('workspace/shell.js')), 'with a nav entry');
 
 /* The download can never be older than what is on screen: it is built from `answers`
    in memory, not re-fetched, so there is no window where a save is pending and the

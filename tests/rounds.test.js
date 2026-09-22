@@ -126,7 +126,7 @@ ok(/below target/.test(rd), 'and says plainly when it is below target');
 
 ok(/W\.gate\(\)/.test(rd), 'the page is gated');
 ok(/renderNav\("rounds"\)/.test(rd), 'and is in the workspace nav');
-ok(/rounds\.html/.test(read('workspace/shell.js')), 'with a nav entry');
+ok(/rounds(?:\.html)?"/.test(read('workspace/shell.js')), 'with a nav entry');
 
 // Classes must exist — the failure that made the calendar modals dead buttons.
 {

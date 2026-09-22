@@ -288,23 +288,23 @@
      
      `goal` is a soft target used only to draw a progress bar; it is not a limit. */
   API.FEATURES = [
-    { key: "quiz_completed",    label: "Daily quizzes attempted",   href: "quiz.html",
+    { key: "quiz_completed",    label: "Daily quizzes attempted",   href: "quiz",
       group: "Learning", goal: 30, verb: "quiz" },
-    { key: "certificate_earned", label: "Certificates earned",      href: "quiz.html",
+    { key: "certificate_earned", label: "Certificates earned",      href: "quiz",
       group: "Learning", goal: 10, verb: "certificate", distinctBy: "serial" },
-    { key: "video_watched",     label: "Learning videos watched",   href: "videos.html",
+    { key: "video_watched",     label: "Learning videos watched",   href: "videos",
       group: "Learning", goal: 12, verb: "video", distinctBy: "id" },
-    { key: "gap_saved",         label: "Gap analyses saved",        href: "workspace/workspace.html",
+    { key: "gap_saved",         label: "Gap analyses saved",        href: "workspace/workspace",
       group: "Readiness", goal: 10, verb: "gap analysis", distinctBy: "day" },
-    { key: "mock_audit",        label: "Mock surveys completed",    href: "surveyor.html",
+    { key: "mock_audit",        label: "Mock surveys completed",    href: "surveyor",
       group: "Readiness", goal: 10, verb: "mock survey" },
-    { key: "audit_completed",   label: "Internal audits finished",  href: "workspace/audit.html",
+    { key: "audit_completed",   label: "Internal audits finished",  href: "workspace/audit",
       group: "Readiness", goal: 12, verb: "internal audit" },
-    { key: "sop_generated",     label: "SOPs generated",            href: "sop.html",
+    { key: "sop_generated",     label: "SOPs generated",            href: "sop",
       group: "Documents", goal: 25, verb: "SOP" },
-    { key: "incident_reported", label: "Incidents reported",        href: "workspace/incidents.html",
+    { key: "incident_reported", label: "Incidents reported",        href: "workspace/incidents",
       group: "Documents", goal: 20, verb: "incident report" },
-    { key: "capa_created",      label: "CAPAs raised",              href: "workspace/capa.html",
+    { key: "capa_created",      label: "CAPAs raised",              href: "workspace/capa",
       group: "Documents", goal: 20, verb: "CAPA" }
   ];
 

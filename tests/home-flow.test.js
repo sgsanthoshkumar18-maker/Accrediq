@@ -140,7 +140,7 @@ ok(/committee calendars/.test(home), 'naming what that means concretely');
   eq((priv.match(/<body/g) || []).length, 1, 'privacy.html too');
 
   // The footer already links to both; before this they were 404s.
-  ok(/privacy\.html/.test(read('app.js')) && /terms\.html/.test(read('app.js')),
+  ok(/privacy(?:\.html)?["'?#]/.test(read('app.js')) && /terms(?:\.html)?["'?#]/.test(read('app.js')),
      'both are linked from the site footer');
 
   /* The claims must match what the software actually does, or the policy is a liability

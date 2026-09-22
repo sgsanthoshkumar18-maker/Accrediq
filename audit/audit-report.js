@@ -306,7 +306,7 @@ window.AQAuditReport = (function () {
 
     h += '<div class="aud-card"><h3>Next steps</h3><ol class="aud-next">' +
       "<li>Every non-conformity and partial compliance above has been written into " +
-      '<a href="capa.html">NC &amp; CAPA</a> with source “internal audit”. ' +
+      '<a href="capa">NC &amp; CAPA</a> with source “internal audit”. ' +
       "Root cause and verification are recorded there, not here.</li>" +
       "<li>Suggested re-audit date: <b>" + next.toISOString().slice(0, 10) + "</b> (" +
       days + " days), set by the worst severity present.</li>" +

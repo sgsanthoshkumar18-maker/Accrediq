@@ -149,7 +149,7 @@ function render(digest, name, carts) {
           "#B3261E") : ""}
       ${cartSection}
       <tr><td style="padding:20px 0 0;">
-        <a href="${SITE}/workspace/dashboard.html" style="display:inline-block;background:#4C6FFF;
+        <a href="${SITE}/workspace/dashboard" style="display:inline-block;background:#4C6FFF;
           color:#fff;text-decoration:none;padding:12px 22px;border-radius:99px;font-weight:600;
           font-size:14px;">Open my department</a></td></tr>
       <tr><td style="padding-top:18px;font-size:11px;color:#8B99A4;">

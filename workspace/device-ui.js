@@ -46,7 +46,7 @@
         '<p class="dev-note">If your hospital needs more people to have access, each person ' +
           "should have their own account rather than sharing one — that is also what " +
           "makes the record of who did what stand up to an assessor. Add colleagues from " +
-          '<a href="team.html">Team</a>.</p>' +
+          '<a href="team">Team</a>.</p>' +
       "</div></section>";
 
     host.querySelectorAll("[data-revoke]").forEach(function (b) {

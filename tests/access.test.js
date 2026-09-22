@@ -213,7 +213,11 @@ eq(/localStorage.setItem\("aq-palette", "default"\)/.test(gate), false,
   /* The annual saving is computed from the config, never typed — a hardcoded figure goes
      stale the moment a price changes and then quietly misleads. */
   eq(/rupees\(saved\)/.test(plans), true, 'the annual saving is computed, not hardcoded');
-  eq(/plans\.html/.test(R('app.js')), true, 'and the site links to it');
+  /* Clean URLs are on (vercel.json), so internal links dropped the .html
+   * suffix — the footer link is now `${base}plans` rather than plans.html.
+   * Match the bare path so the test keeps guarding "the site links to the
+   * pricing page" without pinning the now-removed extension. */
+  eq(/\bplans(?:["'?#]|$)/m.test(R('app.js')), true, 'and the site links to it');
 }
 
 /* ==================== SUBSCRIPTION DATES MUST BE EXACT ====================

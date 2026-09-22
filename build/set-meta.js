@@ -92,14 +92,21 @@ function walk(dir, out = []) {
   return out;
 }
 
-/* "index.html" -> "/", "tools/index.html" -> "/tools/", everything else -> "/that.html".
+/* "index.html" -> "/", "tools/index.html" -> "/tools/", everything else -> "/that".
    Trailing-slash form for directory indexes matters: /tools/ and /tools/index.html are two
-   URLs for one page, and the canonical has to name one of them. */
+   URLs for one page, and the canonical has to name one of them.
+
+   THE .html SUFFIX IS DROPPED because vercel.json sets "cleanUrls": true, which serves
+   every page at its extension-less path and 308-redirects the .html form to it. A
+   canonical pointing at /standards.html would therefore name a URL that immediately
+   redirects — Google follows it, but consolidating signals through a redirect is slower
+   and noisier than naming the destination outright. Keep this in step with cleanUrls:
+   if that flag is ever turned off, the suffix has to come back here too. */
 function urlFor(rel) {
   const posix = rel.split(path.sep).join("/");
   if (posix === "index.html") return SITE + "/";
   if (posix.endsWith("/index.html")) return SITE + "/" + posix.slice(0, -"index.html".length);
-  return SITE + "/" + posix;
+  return SITE + "/" + posix.replace(/\.html$/, "");
 }
 
 /* Attribute values go inside double quotes, so double quotes and angle brackets have to

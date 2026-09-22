@@ -119,7 +119,7 @@ ok(/cmteNames/.test(cal), 'known committees are suggested but not forced');
 
 ok(/W\.gate\(\)/.test(cal), 'the page is gated like every other workspace page');
 ok(/renderNav\("calendar"\)/.test(cal), 'it registers in the workspace nav');
-ok(/calendar\.html/.test(read('workspace/shell.js')), 'and the nav links to it');
+ok(/calendar(?:\.html)?"/.test(read('workspace/shell.js')), 'and the nav links to it');
 ok(/schedule\.js/.test(html) && /calendar\.js/.test(html), 'the page loads both scripts');
 eq((html.match(/<body/g) || []).length, 1, 'the page has exactly one body tag');
 eq((html.match(/<\/head>/g) || []).length, 1, 'and one head');

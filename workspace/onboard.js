@@ -22,7 +22,7 @@
       title: "Add your departments and people",
       body: "Invite the department heads who will use this. Each signs in as themselves, " +
             "so every record carries who did it — which is what an assessor asks.",
-      href: "team.html", cta: "Open Team",
+      href: "team", cta: "Open Team",
       done: function (c) { return c.members > 1; },
       detail: function (c) { return c.members + " on the team"; } },
 
@@ -30,7 +30,7 @@
       title: "Enter your committees",
       body: "Name, how often each must meet, and when each last met. Every future date is " +
             "worked out from there.",
-      href: "calendar.html", cta: "Open Calendar",
+      href: "calendar", cta: "Open Calendar",
       done: function (c) { return c.committees > 0; },
       detail: function (c) { return c.committees + " committees"; } },
 
@@ -38,7 +38,7 @@
       title: "Add your recurring obligations",
       body: "Drills, audits, training, surveillance — anything on a cycle an assessor " +
             "will ask about.",
-      href: "calendar.html", cta: "Open Calendar",
+      href: "calendar", cta: "Open Calendar",
       done: function (c) { return c.tasks > 0; },
       detail: function (c) { return c.tasks + " obligations"; } },
 
@@ -47,7 +47,7 @@
       body: "Equipment, licences and AMCs with their calibration and maintenance cycles. " +
             "Start with the items an assessor always asks about — defibrillators, " +
             "autoclaves, the fire NOC.",
-      href: "register.html", cta: "Open Register",
+      href: "register", cta: "Open Register",
       done: function (c) { return c.assets > 0; },
       detail: function (c) { return c.assets + " items · " + c.schedules + " cycles"; } },
 
@@ -55,7 +55,7 @@
       title: "Set up your rounds",
       body: "Hand hygiene, cleaning, record review — any recurring check that produces " +
             "a score. Write the questions once.",
-      href: "rounds.html", cta: "Open Rounds",
+      href: "rounds", cta: "Open Rounds",
       done: function (c) { return c.lists > 0; },
       detail: function (c) { return c.lists + " checklists"; } },
 
@@ -63,7 +63,7 @@
       title: "Find your department's forms and registers",
       body: "114 checklists, forms and registers, each tagged to the department that keeps " +
             "it — with what it must contain and a blank template to download.",
-      href: "library.html", cta: "Open the library",
+      href: "library", cta: "Open the library",
       /* Not a data check: nothing is created here, it is a reference shelf. Marked done
          once the hospital has something of its own on the register, since that is the
          point at which the library stops being the first thing they need. */
@@ -74,7 +74,7 @@
       title: "Score your readiness",
       body: "Work through the elements chapter by chapter. You do not have to finish it " +
             "today — the score updates as you go.",
-      href: "workspace.html?stay=1", cta: "Open Readiness",
+      href: "workspace?stay=1", cta: "Open Readiness",
       done: function (c) { return c.elements > 0; },
       detail: function (c) { return c.elements + " elements assessed"; } }
   ];

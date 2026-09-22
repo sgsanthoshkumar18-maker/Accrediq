@@ -96,7 +96,7 @@ ok(iui.indexOf('previewHtml') < iui.indexOf('async function commit'),
    'the preview is defined before the commit path');
 ok(/Will be skipped/.test(iui), 'the preview says how many rows will be dropped');
 ok(/renderNav\("import"\)/.test(iui), 'the page is in the nav');
-ok(/import\.html/.test(read('workspace/shell.js')), 'with a nav entry');
+ok(/import(?:\.html)?"/.test(read('workspace/shell.js')), 'with a nav entry');
 ok(/xlsx/.test(read('workspace/import.html')), 'the spreadsheet reader is loaded');
 
 /* Writing an empty schedule would put an item on the calendar with no due date, which
@@ -159,7 +159,7 @@ ok(/capa_id\s+text/.test(read('workspace/schema.sql')), 'the column exists');
 /* ============================== onboarding ============================== */
 
 const ob = read('workspace/onboard.js');
-ok(/library\.html/.test(ob), 'onboarding points at the document library');
+ok(/library(?:\.html)?["'?#]/.test(ob), 'onboarding points at the document library');
 ok(/key: "library"/.test(ob), 'as its own step');
 
 /* ============================== mobile ============================== */
