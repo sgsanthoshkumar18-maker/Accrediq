@@ -43,6 +43,10 @@
       desc: "Recurring checks that produce a score, trended against your target" },
     { key: "capa", href: "capa", label: "NC & CAPA",
       desc: "Findings, corrective actions, verification" },
+    /* The same analyser as the public tools page, reached from inside the hospital,
+       because the incident being analysed is one of theirs. */
+    { key: "rca", href: "rca", label: "5 Why Analyser",
+      desc: "Work an incident down to its root cause and export the worksheet" },
         { key: "library", href: "library", label: "Forms & Registers",
       desc: "Every checklist, form and register a department must maintain" },
     { key: "apex", href: "apex", label: "Apex Manual",
@@ -72,7 +76,7 @@
   var GROUPS = [
     ["Daily",     ["start", "dashboard", "qualitydashboard", "readiness"]],
     ["Prove it",  ["evidence", "audits", "rounds", "accreditation"]],
-    ["Incidents", ["incidents", "capa"]],
+    ["Incidents", ["incidents", "capa", "rca"]],
     ["Running",   ["calendar", "register", "training", "crashcart", "gatepass"]],
     ["Records",   ["library", "apex", "documents"]],
     ["Admin",     ["access", "import"]]
@@ -93,6 +97,7 @@
     accreditation:    'M12 2l2.6 5.3 5.9.9-4.3 4.1 1 5.8-5.2-2.7-5.2 2.7 1-5.8L3.5 8.2l5.9-.9zM8 20l4 2 4-2',
     incidents:        'M12 3l9.5 17H2.5zM12 9v5M12 17.5v.5',
     capa:             'M4 20V6a2 2 0 0 1 2-2h6l2 3h4a2 2 0 0 1 2 2v6a2 2 0 0 1-2 2h-6l-2-3H6',
+    rca:              'M12 3v4M12 11v4M12 19v2M9 7h6M9 15h6M7 5v4M17 5v4',
     calendar:         'M4 6h16v14H4zM4 10h16M8 3v4M16 3v4M9 14h2M14 14h2',
     register:         'M5 4h11l3 3v13H5zM8 9h8M8 13h8M8 17h5',
     training:         'M12 4L2 9l10 5 10-5zM6 11.5V16c0 1.5 2.7 3 6 3s6-1.5 6-3v-4.5',
