@@ -96,7 +96,13 @@ function walk(dir, out) {
      the header, footer, background canvas or motion layer — its stylesheet is a print
      contract, and scroll-reveal animations on a page destined for a printer would only
      risk hiding rows that never get scrolled into view. */
-  const skipFile = new Set(['aqcredix-film.html', 'blank-checklist.html', 'bundles-print.html']);
+  /* reset-password.html is a STANDALONE AUTH PAGE. Somebody arrives on it from
+     an email link, locked out of their account, usually on a phone. It carries
+     no header, footer or nav on purpose — there is nothing to navigate to until
+     the password is set — so there is no site chrome for the motion layer to
+     act on, and loading it would pull the whole site onto a page with one form. */
+  const skipFile = new Set(['aqcredix-film.html', 'blank-checklist.html',
+    'bundles-print.html', 'reset-password.html']);
   for (const n of fs.readdirSync(dir)) {
     if (skip.has(n)) continue;
     const full = path.join(dir, n);

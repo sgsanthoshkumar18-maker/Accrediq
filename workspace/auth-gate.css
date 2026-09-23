@@ -44,3 +44,19 @@
   color:var(--accent-text);font:inherit;text-decoration:underline;cursor:pointer;
 }
 .aq-gate-link:disabled{opacity:.55;cursor:default;}
+
+/* Password field with a show/hide eye.
+   The input keeps its own full-width layout; the wrapper only provides the
+   positioning context so the button can sit inside the field's right edge
+   without the input having to know it is there. Right padding is reserved on
+   the input so a long password never slides under the icon. */
+.ag-pw{position:relative;display:block;}
+.ag-pw input{width:100%;padding-right:42px;box-sizing:border-box;}
+.ag-eye{
+  position:absolute;right:3px;top:50%;transform:translateY(-50%);
+  width:34px;height:34px;display:flex;align-items:center;justify-content:center;
+  background:transparent;border:none;cursor:pointer;color:var(--fg-faint);
+  border-radius:7px;padding:0;
+}
+.ag-eye:hover{color:var(--fg);background:var(--border-soft);}
+.ag-eye:focus-visible{outline:2px solid var(--brand-2);outline-offset:-2px;}

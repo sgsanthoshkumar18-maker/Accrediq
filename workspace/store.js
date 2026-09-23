@@ -191,10 +191,57 @@
          the address exists, so an attacker cannot use them to discover who has an
          account. That means a "sent" message is not proof the address is registered. */
       async resetPassword(email) {
-        return await req("/auth/v1/recover?redirect_to=" + encodeURIComponent(siteOrigin()), {
+        /* LANDS ON THE RESET PAGE, NOT THE HOMEPAGE.
+           This used to send redirect_to=siteOrigin(). Supabase appends the recovery
+           token to whatever URL it is given as a fragment (#access_token=...&
+           type=recovery), and the homepage reads no such thing — so the link
+           "worked", opened the site, and silently did nothing. Every reset since
+           the feature shipped dead-ended there.
+           NOTE FOR SETUP: this URL must also be listed under Authentication ->
+           URL Configuration -> Redirect URLs in the Supabase dashboard, or
+           Supabase refuses the redirect and falls back to the site root. */
+        return await req("/auth/v1/recover?redirect_to=" + encodeURIComponent(siteOrigin() + "reset-password"), {
           method: "POST", headers: { apikey: key, "Content-Type": "application/json" },
           body: JSON.stringify({ email: email })
         });
+      },
+
+      /* Set a new password using the one-time token from a recovery link.
+         Deliberately does NOT use headers(): the recovery token arrives in the
+         URL and is not the stored session, and a signed-out visitor has no
+         stored session to borrow. Passing it explicitly is what lets somebody
+         locked out of their account set a new password. */
+      async setPasswordWithToken(accessToken, newPassword) {
+        var r = await fetch(url + "/auth/v1/user", {
+          method: "PUT",
+          headers: {
+            apikey: key,
+            "Content-Type": "application/json",
+            "Authorization": "Bearer " + accessToken
+          },
+          body: JSON.stringify({ password: newPassword })
+        });
+        if (!r.ok) {
+          var t = await r.text();
+          var msg = t;
+          try { msg = (JSON.parse(t).msg || JSON.parse(t).error_description || t); } catch (e) {}
+          throw new Error(msg || r.statusText);
+        }
+        return await r.json();
+      },
+
+      /* Recovery links in the PKCE flow arrive as ?code=... instead of a
+         fragment token, and the code has to be traded for a session before the
+         password can be set. Supabase has shipped both shapes depending on
+         project age and client, so the reset page handles either. */
+      async exchangeCodeForSession(code) {
+        var r = await fetch(url + "/auth/v1/token?grant_type=pkce", {
+          method: "POST",
+          headers: { apikey: key, "Content-Type": "application/json" },
+          body: JSON.stringify({ auth_code: code })
+        });
+        if (!r.ok) throw new Error((await r.text()) || r.statusText);
+        return await r.json();
       },
       async resendConfirmation(email) {
         return await req("/auth/v1/resend?redirect_to=" + encodeURIComponent(siteOrigin()), {
