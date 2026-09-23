@@ -2610,3 +2610,286 @@ alter table public.notify_prefs add column if not exists digest_hour smallint no
 alter table public.crash_cart_settings
   add column if not exists alert_frequency text not null default 'weekly';
   -- off | daily | weekly | monthly
+
+-- ============================================================================
+-- GROUP QUIZ — a live, hosted quiz that a room full of people join on their
+-- phones.
+--
+-- WHY THESE TABLES ARE NOT LIKE THE OTHERS. Every other table here is scoped to
+-- a hospital by org_id and stamped by the set_org_id trigger. These three are
+-- deliberately outside that. A quiz session belongs to the person hosting it,
+-- and the people answering are anonymous — a room of nurses at a training
+-- session, not members of the workspace. There is no org to stamp, so these
+-- tables are absent from both loops above and carry their own policies, the
+-- way class_interest does.
+--
+-- WHERE THE CORRECT ANSWERS LIVE, AND WHY IT MATTERS. answer_key is a column on
+-- the session row, and no client may select from quiz_sessions except the host
+-- of that row. Participants never read the table at all: they reach the quiz
+-- only through the security-definer functions below, which return the question
+-- text and the options and nothing else. This is the whole security design. Put
+-- the answers anywhere a participant can select from and the quiz is decided by
+-- who opens developer tools, which on a phone is about four taps.
+--
+-- WHY TIMING IS MEASURED ON THE SERVER. The tie-break is how fast somebody
+-- answered, so the clock is worth cheating. The server records when the
+-- question was published and when the answer arrived, and subtracts. A
+-- participant's device never reports its own timing, so a slow phone, a lagging
+-- clock or a patched client cannot change a placing.
+--
+-- NO REALTIME SUBSCRIPTION, DELIBERATELY. Devices poll for the phase and count
+-- their own timer down from question_started_at, corrected against the server
+-- clock the same call returns. A countdown does not need a socket — it needs
+-- one trustworthy start time, which is exactly what it gets.
+-- ============================================================================
+
+create table if not exists public.quiz_sessions (
+  id                  uuid primary key default gen_random_uuid(),
+  code                text not null unique,      -- what people type to join
+  title               text not null,
+  hospital            text,                      -- printed on the certificates
+  host_id             uuid not null references auth.users(id) on delete cascade,
+  questions           jsonb not null default '[]'::jsonb,  -- [{q, options}] — no answers
+  answer_key          jsonb not null default '[]'::jsonb,  -- never leaves the server
+  seconds_per_q       smallint not null default 20,
+  phase               text not null default 'lobby',       -- lobby|question|reveal|leaderboard|final
+  current_q           smallint not null default -1,
+  question_started_at timestamptz,
+  created_at          timestamptz not null default now(),
+  closed_at           timestamptz
+);
+
+create index if not exists quiz_sess_code_idx on public.quiz_sessions(code);
+create index if not exists quiz_sess_host_idx on public.quiz_sessions(host_id, created_at desc);
+
+create table if not exists public.quiz_players (
+  id         uuid primary key default gen_random_uuid(),
+  session_id uuid not null references public.quiz_sessions(id) on delete cascade,
+  name       text not null,
+  joined_at  timestamptz not null default now()
+);
+
+create index if not exists quiz_play_sess_idx on public.quiz_players(session_id);
+
+-- One answer per player per question. The unique index is the enforcement, not a
+-- check in the client: without it a participant could submit the same question
+-- repeatedly and keep the best time.
+create table if not exists public.quiz_answers (
+  id          uuid primary key default gen_random_uuid(),
+  session_id  uuid not null references public.quiz_sessions(id) on delete cascade,
+  player_id   uuid not null references public.quiz_players(id) on delete cascade,
+  q_index     smallint not null,
+  choice      smallint not null,
+  correct     boolean not null,
+  ms          integer not null,          -- server-measured, from question_started_at
+  answered_at timestamptz not null default now()
+);
+
+create unique index if not exists quiz_ans_once_idx
+  on public.quiz_answers(player_id, q_index);
+create index if not exists quiz_ans_sess_idx on public.quiz_answers(session_id);
+
+alter table public.quiz_sessions enable row level security;
+alter table public.quiz_players  enable row level security;
+alter table public.quiz_answers  enable row level security;
+
+-- ---------- Host policies ----------
+-- The host is signed in and owns the row. Everything the host does — creating the
+-- quiz, advancing it, reading the answers back — goes through these.
+drop policy if exists quiz_sess_host_all on public.quiz_sessions;
+create policy quiz_sess_host_all on public.quiz_sessions
+  for all to authenticated
+  using (host_id = auth.uid())
+  with check (host_id = auth.uid());
+
+drop policy if exists quiz_play_host_read on public.quiz_players;
+create policy quiz_play_host_read on public.quiz_players
+  for select to authenticated
+  using (exists (select 1 from public.quiz_sessions s
+                  where s.id = session_id and s.host_id = auth.uid()));
+
+drop policy if exists quiz_ans_host_read on public.quiz_answers;
+create policy quiz_ans_host_read on public.quiz_answers
+  for select to authenticated
+  using (exists (select 1 from public.quiz_sessions s
+                  where s.id = session_id and s.host_id = auth.uid()));
+
+-- ---------- Participants ----------
+-- No policy grants anon anything on any of the three tables, so anon can neither
+-- read nor write them directly. Participation happens entirely through the
+-- functions below, which run as their owner and decide exactly what to expose.
+
+-- ============================================================================
+-- aq_quiz_join — take a seat.
+--
+-- Returns the player's id, which their browser keeps for the rest of the quiz.
+-- That id is a bearer token: whoever holds it can answer as that player. For a
+-- training quiz in one room that is the right trade — a uuid is unguessable,
+-- and the alternative is making a ward full of nurses create accounts.
+-- ============================================================================
+create or replace function public.aq_quiz_join(p_code text, p_name text)
+returns uuid
+language plpgsql security definer set search_path = public as $fn$
+declare s public.quiz_sessions%rowtype; new_id uuid; clean text;
+begin
+  select * into s from public.quiz_sessions
+   where code = upper(trim(p_code)) and closed_at is null;
+  if not found then
+    raise exception 'No live quiz with that code' using errcode = 'P0002';
+  end if;
+  if s.phase = 'final' then
+    raise exception 'That quiz has finished' using errcode = 'P0002';
+  end if;
+
+  clean := nullif(trim(p_name), '');
+  if clean is null then
+    raise exception 'A name is needed' using errcode = 'P0001';
+  end if;
+  clean := left(clean, 40);
+
+  insert into public.quiz_players (session_id, name)
+  values (s.id, clean)
+  returning id into new_id;
+
+  return new_id;
+end $fn$;
+
+-- ============================================================================
+-- aq_quiz_state — what a participant's screen should show right now.
+--
+-- The one call the player's browser polls. It returns the current question
+-- without its answer, the server's own clock so the device can correct for a
+-- phone that is a few seconds out, and whether this player has already
+-- answered. During 'reveal' it also returns the correct index, because by then
+-- the host has put it on the projector anyway.
+-- ============================================================================
+create or replace function public.aq_quiz_state(p_code text, p_player uuid default null)
+returns json
+language plpgsql security definer set search_path = public as $fn$
+declare s public.quiz_sessions%rowtype; q jsonb; mine record; n_players int;
+begin
+  select * into s from public.quiz_sessions
+   where code = upper(trim(p_code)) and closed_at is null;
+  if not found then return json_build_object('ok', false, 'reason', 'not_found'); end if;
+
+  select count(*) into n_players from public.quiz_players where session_id = s.id;
+
+  if s.current_q >= 0 and s.phase in ('question','reveal') then
+    q := s.questions -> s.current_q;
+  end if;
+
+  if p_player is not null and s.current_q >= 0 then
+    select choice, correct into mine from public.quiz_answers
+     where player_id = p_player and q_index = s.current_q;
+  end if;
+
+  return json_build_object(
+    'ok', true,
+    'title', s.title,
+    'phase', s.phase,
+    'currentQ', s.current_q,
+    'total', jsonb_array_length(s.questions),
+    'secondsPerQ', s.seconds_per_q,
+    'startedAt', s.question_started_at,
+    'serverNow', now(),
+    'players', n_players,
+    -- The question, stripped to what a participant may see.
+    'question', case when q is null then null else json_build_object(
+        'q', q ->> 'q',
+        'options', q -> 'options') end,
+    -- Revealed only once the host has moved to the reveal phase.
+    'answer', case when s.phase = 'reveal' and s.current_q >= 0
+                   then (s.answer_key -> s.current_q) else null end,
+    'myChoice', case when mine is null then null else mine.choice end,
+    'myCorrect', case when mine is null then null else mine.correct end
+  );
+end $fn$;
+
+-- ============================================================================
+-- aq_quiz_answer — record one answer and grade it here, on the server.
+--
+-- Refuses an answer that arrives outside the question's window, so a device
+-- that was asleep cannot post a late answer against an earlier question and a
+-- fast one cannot answer before the question is published. The elapsed time is
+-- computed here too; see the note at the top about why.
+-- ============================================================================
+create or replace function public.aq_quiz_answer(p_player uuid, p_q int, p_choice int)
+returns json
+language plpgsql security definer set search_path = public as $fn$
+declare s public.quiz_sessions%rowtype; p public.quiz_players%rowtype;
+        key int; took int; ok boolean;
+begin
+  select * into p from public.quiz_players where id = p_player;
+  if not found then return json_build_object('ok', false, 'reason', 'unknown_player'); end if;
+
+  select * into s from public.quiz_sessions where id = p.session_id and closed_at is null;
+  if not found then return json_build_object('ok', false, 'reason', 'not_found'); end if;
+
+  if s.phase <> 'question' or s.current_q <> p_q then
+    return json_build_object('ok', false, 'reason', 'closed');
+  end if;
+
+  took := greatest(0, (extract(epoch from (now() - s.question_started_at)) * 1000)::int);
+  -- A second of grace: a phone on hospital wifi can easily take that long to be
+  -- heard, and losing a correct answer to the network is the kind of unfairness
+  -- people remember longer than the quiz.
+  if took > (s.seconds_per_q * 1000) + 1000 then
+    return json_build_object('ok', false, 'reason', 'too_late');
+  end if;
+
+  key := (s.answer_key ->> p_q)::int;
+  ok  := (key = p_choice);
+
+  insert into public.quiz_answers (session_id, player_id, q_index, choice, correct, ms)
+  values (s.id, p.id, p_q, p_choice, ok, took)
+  on conflict (player_id, q_index) do nothing;
+
+  -- Deliberately does not say whether it was right. The host controls when the
+  -- answer is shown, and returning it here would let a participant see it on
+  -- their own phone before the reveal.
+  return json_build_object('ok', true, 'recorded', true);
+end $fn$;
+
+-- ============================================================================
+-- aq_quiz_leaderboard — most correct first, then quickest.
+--
+-- Time only separates people who are already level on correct answers, which is
+-- what was asked for: speed should never beat knowing the answer. Players who
+-- have answered nothing still appear, on nought, so somebody who joined and
+-- never pressed anything can see why they are not on the board.
+-- ============================================================================
+create or replace function public.aq_quiz_leaderboard(p_code text, p_limit int default 8)
+returns json
+language plpgsql security definer set search_path = public as $fn$
+declare s public.quiz_sessions%rowtype; out_json json;
+begin
+  select * into s from public.quiz_sessions
+   where code = upper(trim(p_code)) and closed_at is null;
+  if not found then return json_build_object('ok', false, 'reason', 'not_found'); end if;
+
+  select json_agg(row_to_json(t)) into out_json from (
+    select pl.id,
+           pl.name,
+           coalesce(sum(case when a.correct then 1 else 0 end), 0)::int as score,
+           coalesce(sum(case when a.correct then a.ms else 0 end), 0)::int as ms
+      from public.quiz_players pl
+      left join public.quiz_answers a on a.player_id = pl.id
+     where pl.session_id = s.id
+     group by pl.id, pl.name
+     order by score desc, ms asc, pl.joined_at asc
+     limit greatest(1, least(coalesce(p_limit, 8), 100))
+  ) t;
+
+  return json_build_object('ok', true, 'rows', coalesce(out_json, '[]'::json),
+                           'phase', s.phase, 'title', s.title,
+                           'hospital', s.hospital,
+                           'total', jsonb_array_length(s.questions));
+end $fn$;
+
+-- Participants are anonymous, so these four must be callable by anon. Each one
+-- decides for itself what it will hand back; none of them exposes answer_key
+-- except during the reveal the host triggers.
+grant execute on function public.aq_quiz_join(text, text)       to anon, authenticated;
+grant execute on function public.aq_quiz_state(text, uuid)      to anon, authenticated;
+grant execute on function public.aq_quiz_answer(uuid, int, int) to anon, authenticated;
+grant execute on function public.aq_quiz_leaderboard(text, int) to anon, authenticated;

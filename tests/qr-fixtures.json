@@ -1,0 +1,72 @@
+[
+ {
+  "text": "https://aqcredix.com/quiz/join?c=4K7P2M",
+  "ecl": "M",
+  "version": 3,
+  "size": 29,
+  "hex": "fe1013fc14afd06e94c2bb749375dbab9f2ec128ed07faaaafe0018d00aa69d895a78d327ae8398fe28fb22436a7f5ca9807263fb11d7e903daa72d15e5862e07361c29866b80c82aabe2cf8004d4c5ff8b16b704d1d19baa94f9dd360c5eea62d7304f1fc2fe9fca98"
+ },
+ {
+  "text": "https://aqcredix.com/quiz/join?c=ZZ99QQ",
+  "ecl": "L",
+  "version": 3,
+  "size": 29,
+  "hex": "fec61bfc1017106ea7acbb75a595dbaf112ec1264d07faaaafe00a2e00f28764ed0e1ebc51e0816d4b3f3c1fed0f16463b491c6da9feef3db3921f11bdd14a6e4ba1e67be87252ba45a3cffe0047747ff9f2eb5040251aba0acfa5d6d8266ea5234b05651fafeeb2910"
+ },
+ {
+  "text": "A",
+  "ecl": "L",
+  "version": 1,
+  "size": 21,
+  "hex": "fe5bfc13906eb6bb74a5dba2aec10507faafe01b00eff6258411979a22b1844368aa804aabfaddf05fb8bad76dd311aeb22305046feeab8"
+ },
+ {
+  "text": "A",
+  "ecl": "H",
+  "version": 1,
+  "size": 21,
+  "hex": "feabfc14506e94bb75d5dbaa2ec14107faafe00f001229d92e31b6d1070ad8d7bc0a8067e3f854d047f8ba13fdd6a3ee8823049d4fe02f0"
+ },
+ {
+  "text": "12345",
+  "ecl": "M",
+  "version": 1,
+  "size": 21,
+  "hex": "febbfc13506e98bb7555dbacaec16907faafe017008bd7cf04c90aecf8584dade0e5804713fab090432abab3cdd3c3ee9cf104cd8feaf48"
+ },
+ {
+  "text": "Ward 3 — CLABSI bundle quiz",
+  "ecl": "M",
+  "version": 3,
+  "size": 29,
+  "hex": "feb6e3fc12f8d06e8892bb75b045dbab022ec1544d07faaaafe01bbf008bd46fc884f50d769432234b949e2c307d4c541800fe9a5d1c260abe617edc5c06e634074db639da32f4c80e70fdfd00543c7bfbdd6a3049bd1dba845fddd3766fae9522ef04008e7fef52ef0"
+ },
+ {
+  "text": "日本語テスト",
+  "ecl": "L",
+  "version": 2,
+  "size": 25,
+  "hex": "fec53fc101d06ea76bb75a25dbaf62ec125907faaafe00ae00f286ce80604c36a0f177a3ddb975097867aa218aae6312d89c2bb0fc0056467f866b5041117ba3df85d4745eea71050540a8feca8f8"
+ },
+ {
+  "text": "xxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxx",
+  "ecl": "Q",
+  "version": 5,
+  "size": 37,
+  "hex": "febe1653fc147362906eacf4cabb7526c555dba9e8d52ec1245a9907faaaaaafe01a6fa2006b6a9512fee334d49359e9eca82f29bf0aab29e0a354742e85c355354c1faaa2ec94e8eab25ad09b5740265b595347c8e48a2e31820aab32690e4574f2658575375a6acaa2fd3d38aeb2f3e9553b418bec15e36f91a8ae2ed1a4fa9b2b71ba55fc0046d55477fb1eb2eaf0434d2912bae4c1cfc5d15b8d876eafc8e96b0570699e2fe34c55a58"
+ },
+ {
+  "text": "yyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyy",
+  "ecl": "M",
+  "version": 7,
+  "size": 45,
+  "hex": "fece0c2acbfc10edab76906ea60cb114bb7493bdaab5dba440faabaec14674776107faaaaaaaafe00f97177500a3061faaa12a660c5eaaa9f98cd6a4424a8ae98a7757afe4ea92aa292878b5eaaa9e686d0a4424a9931aa7757a0349a92aa291a7a35eaaa9ece610a4424a0232aa7757a5fdaafaaaf9447e746aac5d6af5ea442ab71b7b17751a1f82efaaaf924cb6f6aa29d5db4d0440ab69270a777d82fd202aab412cbb0f6aa29cdf4b50440ab68ab4a777dacfb262aab4106a91f6aa29c2f4150440aaf0a04a777da9a21efaabf9006e9c6aac5ffa442a446ab049fb17751aba5ddfaaaf95d02baaaaddeea0544442ab047f37776a8fecc2aaab108"
+ },
+ {
+  "text": "zzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzz",
+  "ecl": "M",
+  "version": 10,
+  "size": 57,
+  "hex": "fefd30b333333fc10e49777774906eb939513111cbb74358b64666a5dba1540feb3312ec1406c713777107faaaaaaaaaaafe002a69c7777500a3691e3ecccc128af26e966666a5fafee8544444452111265a77775791b68999ccccc4932f36cfa6666a5f8efe9d64444452311d63f77775780b6c0e6ccccc4922c1ae966666a5f2e789544444452595ed9bf777579072c180ccccc49262988976666a5c2dd9555c444452da5e29b477757947fc180c4ccc4946e988966666a5c3fa174f84447f2d17629477777195ae6986acccda9646668b16666c5f3ff574fc4443f26b6129df7777d952649ea4cccdc154a42b096666993cce56a4c4440d0092a2c5f7777d84e46827ccccdc1c4a4a69d666699f7ce765cc4440d2592b91ff7777d9420ef624cccdc14094ae89666699d4cc6444c4440d3d17b81dc7777d946c6ae27cccdc144dcbe8a666699e98ff845c4440d3f24311db7777d903d66e7ecccdf90059aeb1666645ffaf195ac4442b304671947777519ba50ebbeccccf95d1aadfd6666dd2eb6d853444433704611b5b777598feb2e630cccd108"
+ }
+]
