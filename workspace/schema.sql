@@ -2766,13 +2766,22 @@ end $fn$;
 create or replace function public.aq_quiz_state(p_code text, p_player uuid default null)
 returns json
 language plpgsql security definer set search_path = public as $fn$
-declare s public.quiz_sessions%rowtype; q jsonb; mine record; n_players int;
+declare s public.quiz_sessions%rowtype; q jsonb; mine record;
+        n_players int; n_answered int := 0;
 begin
   select * into s from public.quiz_sessions
    where code = upper(trim(p_code)) and closed_at is null;
   if not found then return json_build_object('ok', false, 'reason', 'not_found'); end if;
 
   select count(*) into n_players from public.quiz_players where session_id = s.id;
+
+  -- How many have answered the question now open. The host puts this on the
+  -- projector so the room can see the count climbing, which is most of what
+  -- makes people answer quickly. It is a count, never a list of who.
+  if s.current_q >= 0 then
+    select count(*) into n_answered from public.quiz_answers
+     where session_id = s.id and q_index = s.current_q;
+  end if;
 
   if s.current_q >= 0 and s.phase in ('question','reveal') then
     q := s.questions -> s.current_q;
@@ -2793,6 +2802,7 @@ begin
     'startedAt', s.question_started_at,
     'serverNow', now(),
     'players', n_players,
+    'answered', n_answered,
     -- The question, stripped to what a participant may see.
     'question', case when q is null then null else json_build_object(
         'q', q ->> 'q',

@@ -64,8 +64,14 @@ window.AQCert = (function () {
    * regenerates the identical serial. That makes a certificate checkable against a
    * re-run rather than being a random string. It is a checksum, not a security token —
    * see the note rendered on the certificate itself. */
-  function serialFor(name, dateISO) {
-    var basis = (name || "").trim().toUpperCase().replace(/\s+/g, " ") + "|" + dateISO;
+  function serialFor(name, dateISO, extra) {
+    /* `extra` distinguishes certificates that would otherwise share a serial.
+       Name plus date is enough for the daily quiz, where a person can earn one
+       certificate a day. It is not enough for group quizzes: a hospital may run
+       three in an afternoon, and two people in a room of sixty can share a
+       name. The join code goes in, so each quiz issues its own series. */
+    var basis = (name || "").trim().toUpperCase().replace(/\s+/g, " ") + "|" + dateISO +
+                (extra ? "|" + extra : "");
     var h = 0x811c9dc5;
     for (var i = 0; i < basis.length; i++) {
       h ^= basis.charCodeAt(i);
@@ -79,6 +85,15 @@ window.AQCert = (function () {
       v = Math.floor(v / alphabet.length) + 7;
     }
     return "AQX-" + dateISO.replace(/-/g, "") + "-" + out;
+  }
+
+  /* 1st, 2nd, 3rd, 4th — and 11th/12th/13th, which is the case that catches
+     every naive implementation. */
+  function ordinal(n) {
+    n = Number(n) || 0;
+    var tens = n % 100;
+    if (tens >= 11 && tens <= 13) return n + "th";
+    return n + (["th", "st", "nd", "rd"][n % 10] || "th");
   }
 
   function fmtDate(d) {
@@ -352,7 +367,7 @@ window.AQCert = (function () {
     var issued = new Date(opts.dateISO + "T00:00:00");
     var expires = new Date(issued.getTime());
     expires.setFullYear(expires.getFullYear() + 1);
-    var serial = serialFor(opts.name, opts.dateISO);
+    var serial = serialFor(opts.name, opts.dateISO, opts.serialSalt || opts.code || "");
 
     ctx.fillStyle = PAPER;
     ctx.fillRect(0, 0, W, H);
@@ -384,12 +399,36 @@ window.AQCert = (function () {
     ctx.font = "400 19px Helvetica, Arial, sans-serif";
     tracked(ctx, TAGLINE, cx, 404, 4, "center");
 
-    drawDividerDiamond(ctx, cx, 452, 340);
+    /* A group quiz is run BY a hospital, and the certificate is handed over in
+       that hospital's own training session. Both names belong on it, so the
+       hospital sits under the AQcredix masthead rather than being mentioned
+       somewhere in the body — jointly awarded, and it reads that way.
+
+       Everything below the masthead shifts down to make room. The coordinates
+       here were all absolute, which is fine for one fixed layout and breaks the
+       moment a second one appears: the first attempt at this drew the hospital
+       straight through the divider. */
+    var shift = 0;
+    if (opts.hospital) {
+      shift = 92;
+      ctx.fillStyle = INK_SOFT;
+      ctx.font = "400 21px Helvetica, Arial, sans-serif";
+      tracked(ctx, "IN ASSOCIATION WITH", cx, 432, 3, "center");
+      ctx.fillStyle = INK;
+      ctx.font = "500 40px Georgia, 'Times New Roman', serif";
+      var hosp = String(opts.hospital).trim();
+      if (ctx.measureText(hosp).width > W - 620) {
+        ctx.font = "500 30px Georgia, 'Times New Roman', serif";
+      }
+      ctx.fillText(hosp, cx, 482);
+    }
+
+    drawDividerDiamond(ctx, cx, 452 + shift, 340);
 
     /* --- award --- */
     ctx.fillStyle = INK_SOFT;
     ctx.font = "400 23px Helvetica, Arial, sans-serif";
-    tracked(ctx, "THIS IS TO CERTIFY THAT", cx, 528, 4, "center");
+    tracked(ctx, "THIS IS TO CERTIFY THAT", cx, 528 + shift, 4, "center");
 
     ctx.fillStyle = INK;
     ctx.font = "500 102px Georgia, 'Times New Roman', serif";
@@ -397,7 +436,7 @@ window.AQCert = (function () {
     if (ctx.measureText(nm).width > W - 620) {
       ctx.font = "500 72px Georgia, 'Times New Roman', serif";
     }
-    ctx.fillText(nm, cx, 646);
+    ctx.fillText(nm, cx, 646 + shift);
 
     /* Tapered underline: solid at the centre, vanishing at both ends. Reads as engraved
        rather than as a plain box rule. */
@@ -407,25 +446,44 @@ window.AQCert = (function () {
     g.addColorStop(0.5, ACCENT);
     g.addColorStop(1, "rgba(76, 111, 255,0)");
     ctx.fillStyle = g;
-    ctx.fillRect(cx - uw, 678, uw * 2, 4);
+    ctx.fillRect(cx - uw, 678 + shift, uw * 2, 4);
 
+    /* The daily quiz certifies a perfect score in a department. A group quiz
+       certifies a placing in a named quiz, which is a different sentence and a
+       different metric strip — a group winner may well have dropped a question
+       and still come first. */
+    var isGroup = !!opts.rank;
     ctx.fillStyle = INK_SOFT;
     ctx.font = "400 28px Helvetica, Arial, sans-serif";
     var endY = wrapCentered(ctx,
-      "has completed Today’s Quiz for Quality Managers, a scenario-based assessment of " +
-      "NABH standards, achieving a perfect score in",
-      cx, 762, W - 620, 44);
+      isGroup
+        ? "placed " + ordinal(opts.rank) +
+          (opts.field ? " of " + opts.field + " participants" : "") +
+          " in a live scenario-based quiz on NABH standards, held as"
+        : "has completed Today’s Quiz for Quality Managers, a scenario-based assessment of " +
+          "NABH standards, achieving a perfect score in",
+      cx, 762 + shift, W - 620, 44);
 
     ctx.fillStyle = ACCENT_DEEP;
     ctx.font = "500 48px Georgia, 'Times New Roman', serif";
-    ctx.fillText(opts.department, cx, endY + 62);
+    var headline = isGroup ? (opts.title || "Group Quiz") : opts.department;
+    if (ctx.measureText(headline).width > W - 620) {
+      ctx.font = "500 36px Georgia, 'Times New Roman', serif";
+    }
+    ctx.fillText(headline, cx, endY + 62);
 
     /* --- metric strip --- */
-    drawMetrics(ctx, cx, endY + 200, [
-      { label: "SCORE", value: opts.score + " / " + opts.total },
-      { label: "ASSESSMENT", value: "Scenario-based" },
-      { label: "AWARDED", value: fmtDate(issued) }
-    ]);
+    drawMetrics(ctx, cx, endY + 200, isGroup
+      ? [
+          { label: "PLACING", value: ordinal(opts.rank) },
+          { label: "SCORE", value: opts.score + " / " + opts.total },
+          { label: "AWARDED", value: fmtDate(issued) }
+        ]
+      : [
+          { label: "SCORE", value: opts.score + " / " + opts.total },
+          { label: "ASSESSMENT", value: "Scenario-based" },
+          { label: "AWARDED", value: fmtDate(issued) }
+        ]);
 
     /* --- footer --- */
     var fy = H - 430;
@@ -462,7 +520,10 @@ window.AQCert = (function () {
     ctx.fillStyle = FAINT;
     ctx.font = "400 20px Helvetica, Arial, sans-serif";
     ctx.fillText(
-      "Self-administered assessment completed on aqcredix. Recognises participation and performance; " +
+      (opts.rank
+        ? "Live group quiz hosted on aqcredix and conducted by the awarding organisation. "
+        : "Self-administered assessment completed on aqcredix. ") +
+      "Recognises participation and performance; " +
       "not an invigilated examination or a licensing credential.",
       cx, H - 118);
 

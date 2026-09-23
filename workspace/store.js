@@ -83,6 +83,13 @@
     /* No server, so no server opinion to report. Returning null rather than throwing
        keeps the diagnostics panel from erroring out in local mode. */
     async rpc() { return null; },
+    /* A live quiz is many devices reading one shared state, which a database in
+       one browser cannot be. These throw rather than returning empty, so the
+       group quiz says plainly that it needs an account instead of presenting a
+       lobby nobody can ever join. */
+    async select() { throw new Error("A group quiz needs the online workspace"); },
+    async patch()  { throw new Error("A group quiz needs the online workspace"); },
+    async insert() { throw new Error("A group quiz needs the online workspace"); },
     /* No accounts in local mode, so nothing to recover. Present so callers need not
        branch on which adapter is active. */
     async resetPassword() { return null; },
@@ -267,6 +274,32 @@
       async remove(store, id) {
         await req("/rest/v1/" + store + "?id=eq." + encodeURIComponent(id),
           { method: "DELETE", headers: headers() });
+      },
+      /* Filtered read and partial write.
+         list() fetches a whole table and put() upserts a whole row, which is
+         right for the workspace registers and wrong for a live quiz: the host
+         polls one session row several times a second and changes two fields at
+         a time. `query` is a PostgREST filter string, e.g.
+         "session_id=eq.<uuid>&order=joined_at.asc". */
+      async select(store, query) {
+        return await req("/rest/v1/" + store + "?select=*" + (query ? "&" + query : ""),
+          { headers: headers() }) || [];
+      },
+      async patch(store, id, fields) {
+        var h = headers(); h["Prefer"] = "return=representation";
+        var out = await req("/rest/v1/" + store + "?id=eq." + encodeURIComponent(id),
+          { method: "PATCH", headers: h, body: JSON.stringify(fields) });
+        return (out && out[0]) || null;
+      },
+      /* Plain insert, no upsert and no updated_at. put() stamps updated_at,
+         which every workspace table has and the quiz tables deliberately do
+         not — their timestamps are the ones the server sets. */
+      async insert(store, row) {
+        var h = headers(); h["Prefer"] = "return=representation";
+        var out = await req("/rest/v1/" + store, {
+          method: "POST", headers: h, body: JSON.stringify(row)
+        });
+        return (out && out[0]) || null;
       },
       /* Call a Postgres function as the signed-in user. Used for aq_whoami(), which is
          the only way to learn what the database believes about the current session —
