@@ -62,6 +62,13 @@
     return "M" + pts.join(" L");
   }
 
+  /* Some cards (the one on the home page) sit a soft gradient wash under the
+     line. That is the same path closed down to the baseline. */
+  function areaPath(values) {
+    var line = sparkPath(values);
+    return line ? line + " L320,60 L0,60 Z" : "";
+  }
+
   /* The final tone of the sparkline and the status badge is a function of two
    * things: is the last value on the right side of the target, and is the
    * trend heading toward the target or away from it? */
@@ -98,7 +105,15 @@
     var deltaEl = $(".kpi-metric .delta", card);
     var benchEl = $(".kpi-metric .kpi-bench", card);
     var sparkPath_ = sparkPath(state.values);
-    var sparkPathEl = $(".kpi-spark path", card);
+    /* A card may hold two paths: the line, which carries a stroke, and an
+       optional gradient wash beneath it, which does not. Taking simply the
+       first would have redrawn the wash and left the line showing the old
+       figures. */
+    var sparkPathEl = null, sparkFillEl = null;
+    card.querySelectorAll(".kpi-spark path").forEach(function (pEl) {
+      if (pEl.getAttribute("stroke")) { if (!sparkPathEl) sparkPathEl = pEl; }
+      else if (!sparkFillEl) sparkFillEl = pEl;
+    });
     var sparkDotEl = $(".kpi-spark circle", card);
     var footBadges = card.querySelectorAll(".kpi-foot .badge");
 
@@ -128,6 +143,9 @@
       sparkPathEl.setAttribute("d", sparkPath_);
       sparkPathEl.setAttribute("stroke", lineTone);
     }
+    if (sparkFillEl && state.values && state.values.length > 1) {
+      sparkFillEl.setAttribute("d", areaPath(state.values));
+    }
     if (sparkDotEl && state.values && state.values.length) {
       /* Match the endpoint of the recomputed path. */
       var pts = sparkPath_.split(" ");
@@ -140,7 +158,11 @@
       /* The first badge is the status one; the second is the chapter code
        * chip we do not touch. */
       var badge = footBadges[0];
-      badge.textContent = s.label;
+      /* The badge may carry a tick glyph before its text. Replace the words,
+         keep the glyph — textContent would have swallowed it. */
+      var ico = badge.querySelector("svg");
+      if (ico) { badge.innerHTML = ""; badge.appendChild(ico); badge.appendChild(document.createTextNode(" " + s.label)); }
+      else badge.textContent = s.label;
       badge.className = "badge " + (s.band === "warn" ? "badge-soon" : "badge-ok");
     }
 
