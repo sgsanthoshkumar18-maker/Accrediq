@@ -1,0 +1,55 @@
+/* AQcredix — multi-select delete.
+   Theme tokens only, so this follows light / dark / neon like everything else. */
+
+.aqbulk-cell { width:34px; padding-right:0 !important; text-align:center; vertical-align:middle; }
+.aqbulk-box {
+  width:16px; height:16px; cursor:pointer; accent-color:var(--brand-2);
+  margin:0; vertical-align:middle;
+}
+tr.aqbulk-on > td { background:var(--border-soft); }
+
+/* Card grids have no cell to put a checkbox in, so it floats in the corner.
+   The card keeps its own padding; only the checkbox is positioned. */
+.aqbulk-host { position:relative; }
+.aqbulk-float {
+  position:absolute; top:10px; left:10px; z-index:2;
+  display:flex; align-items:center; justify-content:center;
+  width:26px; height:26px; border-radius:7px;
+  background:var(--bg-elevated); border:1px solid var(--border);
+}
+.aqbulk-host.aqbulk-on { outline:2px solid var(--brand-2); outline-offset:-2px; }
+
+/* The action bar. Fixed to the bottom so it stays reachable on a long list —
+   the row you tick first is usually far from the row you tick last. It is
+   absent entirely until something is selected, rather than sitting there
+   greyed out taking up room. */
+.aqbulk-bar {
+  position:fixed; left:50%; bottom:20px; transform:translate(-50%, 140%);
+  z-index:900; display:flex; align-items:center; gap:10px;
+  padding:10px 12px 10px 18px; border-radius:999px;
+  background:var(--bg-elevated); border:1px solid var(--border);
+  box-shadow:var(--shadow-2);
+  opacity:0; pointer-events:none;
+  transition:transform .18s ease-out, opacity .18s ease-out;
+  max-width:calc(100vw - 32px);
+}
+.aqbulk-bar.on { transform:translate(-50%, 0); opacity:1; pointer-events:auto; }
+.aqbulk-count { font:600 13.5px/1 var(--font-body); color:var(--fg); white-space:nowrap; }
+.aqbulk-sp { width:4px; }
+.aqbulk-bar button {
+  font:600 13px/1 var(--font-body); cursor:pointer; border-radius:999px;
+  padding:8px 15px; white-space:nowrap;
+}
+.aqbulk-clear { background:transparent; border:1px solid var(--border); color:var(--fg-muted); }
+.aqbulk-clear:hover { color:var(--fg); border-color:var(--fg-muted); }
+.aqbulk-del { background:var(--nc); border:1px solid var(--nc); color:#fff; }
+.aqbulk-del:hover { filter:brightness(1.08); }
+.aqbulk-del:disabled { opacity:.6; cursor:not-allowed; }
+
+@media (max-width:560px) {
+  .aqbulk-bar { left:12px; right:12px; transform:translate(0, 140%); padding-left:14px; }
+  .aqbulk-bar.on { transform:translate(0, 0); }
+  .aqbulk-count { font-size:12.5px; }
+}
+
+@media print { .aqbulk-bar, .aqbulk-cell, .aqbulk-float { display:none !important; } }

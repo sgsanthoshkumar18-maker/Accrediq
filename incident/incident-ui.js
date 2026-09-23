@@ -122,6 +122,22 @@
         refresh();
       });
     });
+
+    /* Rows carry no data-id — the id lives on the Delete button — which the
+       component already reads. Nothing about the markup had to change. */
+    if (window.AQBulk) {
+      var table = host.querySelector(".inc-table");
+      if (table) {
+        window.AQBulk.attach({
+          root: table, rows: "tbody tr", label: "incident record",
+          onDelete: async function (ids) {
+            for (var i = 0; i < ids.length; i++) await I.remove(ids[i]);
+            W.toast(ids.length + " incident record" + (ids.length === 1 ? "" : "s") + " deleted");
+            refresh();
+          }
+        });
+      }
+    }
   }
 
   function renderFilters() {

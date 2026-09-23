@@ -149,6 +149,26 @@
         renderRecords();
       });
     });
+
+    /* Tick several rows and clear them in one pass. The per-row Delete above
+       stays: removing one record should not cost two clicks. This is for the
+       other case — a pilot run of ten audits that all need to go, where ten
+       confirmations get answered without being read. */
+    if (window.AQBulk) {
+      var table = host.querySelector(".aud-records");
+      if (table) {
+        window.AQBulk.attach({
+          root: table,
+          rows: "tbody tr",
+          label: "audit record",
+          onDelete: async function (ids) {
+            for (var i = 0; i < ids.length; i++) await A.remove(ids[i]);
+            W.toast(ids.length + " audit record" + (ids.length === 1 ? "" : "s") + " deleted");
+            renderRecords();
+          }
+        });
+      }
+    }
   }
 
   /* ------------------------------ checklist ----------------------------- */

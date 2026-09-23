@@ -94,6 +94,24 @@
         });
       });
     });
+
+    /* Clearing a register usually means clearing a batch of it — superseded
+       versions, a pilot import. One confirmation for the batch, alongside the
+       per-row Remove which stays for the single case. */
+    if (window.AQBulk) {
+      var table = host.querySelector("table");
+      if (table) {
+        window.AQBulk.attach({
+          root: table, rows: "tbody tr[data-id]", label: "document",
+          onDelete: async function (ids) {
+            for (var i = 0; i < ids.length; i++) await S.deleteDocument(ids[i]);
+            rows = rows.filter(function (r) { return ids.indexOf(r.id) === -1; });
+            render();
+            W.toast(ids.length + " document" + (ids.length === 1 ? "" : "s") + " removed");
+          }
+        });
+      }
+    }
   }
 
   function openForm(row) {

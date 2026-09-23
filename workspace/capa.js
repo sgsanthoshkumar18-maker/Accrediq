@@ -139,6 +139,20 @@
         });
       });
     });
+
+    /* Card grid rather than a table, so the checkbox floats in the corner of
+       each card — same component, same one confirmation. */
+    if (window.AQBulk) {
+      window.AQBulk.attach({
+        root: host, rows: ".capa-card", label: "finding",
+        onDelete: async function (ids) {
+          for (var i = 0; i < ids.length; i++) await S.deleteCapa(ids[i]);
+          rows = rows.filter(function (r) { return ids.indexOf(r.id) === -1; });
+          render();
+          W.toast(ids.length + " finding" + (ids.length === 1 ? "" : "s") + " deleted");
+        }
+      });
+    }
   }
 
   function openForm(row, note) {

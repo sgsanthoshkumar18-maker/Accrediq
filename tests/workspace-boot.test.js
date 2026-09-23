@@ -43,7 +43,7 @@ pages.forEach(page => {
      actually looked at. */
   const SHARED = ['config.js', 'auth-gate.js', 'store.js', 'pin.js', 'shell.js', 'digest.js',
                   'bell.js', 'attach.js', 'library-data.js', 'wsearch.js', 'device.js',
-                  'device-ui.js', 'aq-charts.js', 'shortexpiry.js'];
+                  'device-ui.js', 'aq-charts.js', 'shortexpiry.js', 'bulk-select.js'];
   const own = scripts.filter(s => SHARED.indexOf(s) === -1);
   if (!own.length) return;                       // a page with no module of its own
 
