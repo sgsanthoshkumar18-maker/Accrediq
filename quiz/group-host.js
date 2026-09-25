@@ -246,8 +246,21 @@
             '<span class="gq-code">' + esc(session.code) + "</span></div>" +
         "</div>" +
         '<div class="gq-lobby-foot">' +
-          '<p class="gq-count"><b id="gqN">0</b> <span id="gqNLabel">people have joined</span></p>' +
-          '<div id="gqNames" class="gq-names"></div>' +
+          /* The roll call. The host reads this against their own attendance
+             list and chases whoever is missing, so it is a list of names
+             first and a count second — a number alone cannot tell you WHO
+             has not joined, which is the only question being asked here. */
+          '<div class="gq-roll">' +
+            '<div class="gq-roll-top">' +
+              '<p class="gq-count"><b id="gqN">0</b> <span id="gqNLabel">people have joined</span></p>' +
+              '<div class="gq-roll-tools">' +
+                '<button type="button" class="gq-chip" id="gqSort">Joined order</button>' +
+                '<button type="button" class="gq-chip" id="gqCopy">Copy list</button>' +
+              "</div>" +
+            "</div>" +
+            '<ol id="gqNames" class="gq-names"></ol>' +
+            '<p id="gqEmpty" class="gq-roll-empty">Names appear here the moment somebody joins.</p>' +
+          "</div>" +
           '<button type="button" class="gq-btn gq-btn-go" id="gqBegin" disabled>Start the quiz</button>' +
           '<p class="gq-note">' + draft.questions.length + " question" +
             (draft.questions.length === 1 ? "" : "s") + " · " + session.seconds_per_q +
@@ -257,10 +270,114 @@
 
     document.getElementById("gqBegin").addEventListener("click", function () { openQuestion(0); });
 
+    document.getElementById("gqSort").addEventListener("click", function () {
+      /* Joined order shows arrivals as they happen; A–Z is what you want when
+         checking against a register that is itself alphabetical. */
+      roll.sort = roll.sort === "joined" ? "az" : "joined";
+      this.textContent = roll.sort === "joined" ? "Joined order" : "A – Z";
+      roll.sig = "";                      // force a repaint in the new order
+      paintRoll();
+    });
+
+    document.getElementById("gqCopy").addEventListener("click", function () {
+      var txt = orderedNames().map(function (p, i) { return (i + 1) + ". " + p.name; }).join("\n");
+      var btn = this, was = "Copy list";
+      function done(ok) {
+        btn.textContent = ok ? "Copied" : "Press Ctrl+C";
+        setTimeout(function () { btn.textContent = was; }, 1800);
+      }
+      /* navigator.clipboard is unavailable over plain http and on older
+         Safari, which is exactly the laptop a hospital lecture room has.
+         The textarea fallback is not legacy cruft — it is the path that
+         will actually run on some of these machines. */
+      if (navigator.clipboard && navigator.clipboard.writeText) {
+        navigator.clipboard.writeText(txt).then(function () { done(true); },
+                                                function () { fallback(); });
+      } else { fallback(); }
+      function fallback() {
+        var ok = false;
+        try {
+          var ta = document.createElement("textarea");
+          ta.value = txt;
+          ta.setAttribute("readonly", "");
+          ta.style.cssText = "position:fixed;top:0;left:0;opacity:0";
+          document.body.appendChild(ta);
+          ta.select();
+          ok = document.execCommand("copy");
+          document.body.removeChild(ta);
+        } catch (e) { ok = false; }
+        if (ok) { done(true); return; }
+        /* Both copy routes refused. Telling somebody to press Ctrl+C is only
+           useful if something is actually selected, so select the list itself
+           and say so. */
+        try {
+          var sel = window.getSelection();
+          var range = document.createRange();
+          range.selectNodeContents(document.getElementById("gqNames"));
+          sel.removeAllRanges();
+          sel.addRange(range);
+          btn.textContent = "Selected — Ctrl+C";
+          setTimeout(function () { btn.textContent = was; }, 2600);
+        } catch (e) { done(false); }
+      }
+    });
+
     /* Poll for arrivals. Slower than the in-quiz poll on purpose: a lobby is
        people drifting in over a couple of minutes, not a live scoreboard. */
     refreshLobby();
     poll = setInterval(refreshLobby, 2500);
+  }
+
+  /* Roll-call state lives outside the poll. The list is repainted every couple
+     of seconds and the host is reading it, so a blind innerHTML rewrite on each
+     tick would throw away their scroll position and their chosen sort order
+     every time somebody new walked in. */
+  var roll = { sort: "joined", players: [], sig: "", seen: {} };
+
+  function orderedNames() {
+    var list = roll.players.slice();
+    if (roll.sort === "az") {
+      list.sort(function (a, b) {
+        return a.name.localeCompare(b.name, undefined, { sensitivity: "base" });
+      });
+    }
+    return list;
+  }
+
+  function paintRoll() {
+    var host = document.getElementById("gqNames");
+    var empty = document.getElementById("gqEmpty");
+    if (!host) return;
+
+    var list = orderedNames();
+    /* Two people typing the same name is a real roll-call hazard: it reads as
+       both of them present when it may be one person who joined twice, and the
+       host ticks off somebody who is not in the room. Flagged rather than
+       merged, because the host is the one who can tell which it is. */
+    var counts = {};
+    list.forEach(function (p) {
+      var k = p.name.trim().toLowerCase();
+      counts[k] = (counts[k] || 0) + 1;
+    });
+
+    var sig = roll.sort + "|" + list.map(function (p) { return p.id; }).join(",");
+    if (sig === roll.sig) return;
+    roll.sig = sig;
+
+    var scrolled = host.scrollTop;
+    host.innerHTML = list.map(function (p, i) {
+      var isNew = !roll.seen[p.id];
+      var dup = counts[p.name.trim().toLowerCase()] > 1;
+      return '<li class="gq-name' + (isNew ? " is-new" : "") + '">' +
+        '<span class="gq-name-n">' + (i + 1) + "</span>" +
+        '<span class="gq-name-t">' + esc(p.name) + "</span>" +
+        (dup ? '<span class="gq-dup" title="Somebody else typed this name too">same name</span>' : "") +
+        "</li>";
+    }).join("");
+    host.scrollTop = scrolled;
+    list.forEach(function (p) { roll.seen[p.id] = true; });
+
+    if (empty) empty.hidden = list.length > 0;
   }
 
   async function refreshLobby() {
@@ -268,13 +385,19 @@
       var list = await G.players(session.id);
       var n = document.getElementById("gqN");
       if (!n) return;
-      n.textContent = list.length;
+
+      /* A name is never allowed to render as nothing. An empty pill is
+         indistinguishable from a missing person, which is the one mistake this
+         panel exists to prevent. */
+      roll.players = (list || []).map(function (p) {
+        return { id: p.id, name: (p.name == null ? "" : String(p.name)).trim() || "(no name)" };
+      });
+
+      n.textContent = roll.players.length;
       document.getElementById("gqNLabel").textContent =
-        list.length === 1 ? "person has joined" : "people have joined";
-      document.getElementById("gqNames").innerHTML = list.map(function (p) {
-        return '<span class="gq-name">' + esc(p.name) + "</span>";
-      }).join("");
-      document.getElementById("gqBegin").disabled = list.length === 0;
+        roll.players.length === 1 ? "person has joined" : "people have joined";
+      paintRoll();
+      document.getElementById("gqBegin").disabled = roll.players.length === 0;
     } catch (e) { /* a dropped poll is not worth interrupting a lobby for */ }
   }
 
