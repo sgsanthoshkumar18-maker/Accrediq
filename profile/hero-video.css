@@ -1,207 +1,382 @@
-/* AQcredix — the founder hero video panel.
+/* AQcredix — the founder hero, full screen.
  *
- * The clips were generated on a bright studio background. Dropped onto the
- * dark theme as a bare rectangle that is a slab of white in the middle of a
- * black page, which reads as an embed somebody forgot to style. So it is
- * framed: rounded, glass-edged, with a vignette that pulls the corners toward
- * the page. Framed, it reads as a deliberate panel in both themes rather than
- * a cut-out that only works on one.
+ * THE STAGE IS THE VIEWPORT. The clips are 16:9 and screens are not, so the
+ * video is sized with object-fit:cover and the character — who sits dead centre
+ * of the frame — is what the crop is anchored to. On a tall phone the wall is
+ * cropped away at the sides; on an ultrawide the ceiling and floor go. He stays
+ * the same size relative to the screen either way, which is the only thing that
+ * has to hold across aspect ratios.
+ *
+ * THE BACKGROUND IS NOT REMOVED — IT IS DISSOLVED. He wears a white shirt in
+ * front of a near-white wall (sampled: wall 199,194,190 / shirt 168,151,144),
+ * so no colour or luma key can separate them; a key that takes the wall takes
+ * his shirt with it. Instead the frame is graded down and then masked with a
+ * wide elliptical feather centred on him, so the picture fades to the page's
+ * own background long before it reaches an edge. There is no rectangle, and
+ * what is left is a man at a desk emerging out of the dark.
+ *
+ * TEXT IS NEVER LEFT TO CHANCE. Copy sits in the left and right thirds, and
+ * both are backed by a scrim that is opaque enough to hold contrast over the
+ * brightest thing the video can put there. Readability does not depend on which
+ * frame is on screen.
  */
 
-/* ---------- the hero, restructured for a landscape panel ----------
-   The old composition was three columns with a 1:1 cut-out standing between
-   them. A 16:9 panel cannot stand in a narrow middle track, so the hero
-   becomes two columns: everything that is words on the left, the panel on the
-   right. This block only applies when the video is present, so a page without
-   it keeps the old layout. */
-.fp-stage:has(.fpv-stage) .fp-stage-grid{
-  grid-template-columns:minmax(0,0.88fr) minmax(0,1.12fr);
+/* ============================================================
+   THE STAGE
+   ============================================================ */
+.fpv-hero{
+  position:relative;
+  /* svh, not vh: vh includes the strip behind mobile browser chrome, which
+     shows up as a band of dead ground under the hero on a phone. */
+  min-height:100svh;
+  display:grid;
   align-items:center;
-  column-gap:clamp(24px,3.4vw,56px);
+  overflow:hidden;
+  isolation:isolate;
+  background:var(--bg);
 }
-.fp-stage:has(.fpv-stage) .fp-stage-left{ grid-column:1; align-self:center; z-index:4; }
-.fp-stage:has(.fpv-stage) .fp-stage-right{ grid-column:1; justify-content:flex-start; z-index:4; }
-.fp-stage:has(.fpv-stage) .fp-stage-copy{ margin-top:0; }
-/* Tags belong under the copy they describe, on the same left edge. Centred or
-   right-aligned they read as a separate ragged column floating beside nothing. */
-.fp-stage:has(.fpv-stage) .fp-stage-right .fp-tags{ justify-content:flex-start; }
-
-/* THE GIANT NAME HAD A PORTRAIT TO HIDE BEHIND, AND NOW IT DOES NOT.
-   Its -0.66em bottom margin pulled the whole composition up into the letters,
-   which worked when a cut-out figure stood in front of them and covered four
-   fifths of the word. With a landscape panel off to one side, that same margin
-   drags the name straight through the role and location lines. A quarter of an
-   em still layers the two so they read as one composition, and leaves the copy
-   on clear ground. */
-.fp-stage:has(.fpv-stage) .fp-stage-name{ margin-bottom:-.24em; }
-/* The float existed to wrap text around a cut-out silhouette. There is no
-   silhouette any more — the panel is a rectangle in its own column. */
-.fp-stage:has(.fpv-stage) .fp-flow{ display:none; }
 
 .fpv-stage{
-  grid-column:2;
-  grid-row:1 / span 2;
-  align-self:center;
-  justify-self:stretch;
-  /* Not the absolute, floor-to-ceiling positioning the cut-out used: that
-     existed to bleed a figure off the bottom edge. A panel sits in the grid. */
-  position:relative;
-  z-index:3;
-  min-width:0;
+  position:absolute;
+  inset:0;
+  z-index:0;
+  pointer-events:auto;      /* he is clickable */
 }
 
 .fpv{
-  position:relative;
-  width:100%;
-  aspect-ratio:16 / 9;
-  border-radius:18px;
+  position:absolute;
+  inset:0;
   overflow:hidden;
-  background:var(--bg-elevated);
-  border:1px solid var(--glass-edge, var(--border));
-  box-shadow:var(--glass-lift, var(--shadow-2)), inset 0 1px 0 var(--glass-specular, transparent);
-  isolation:isolate;
+  background:var(--bg);
 }
 
+/* HOW THE 16:9 FRAME MEETS A SCREEN THAT IS NOT 16:9.
+   contain by default: on any landscape screen the WHOLE take stays visible —
+   his head is not clipped and the laptop and desk are not cut off, which is
+   the thing that makes it read as a person at a desk rather than a face
+   pressed against the glass. Where the frame does not reach, the page's own
+   background takes over, and the mask feathers the join so there is no
+   letterbox edge to see. Portrait screens switch to cover further down,
+   because contain on a phone leaves him a thin strip across the middle. */
 .fpv-clip{
   position:absolute;
   inset:0;
   width:100%;
   height:100%;
-  object-fit:cover;
+  object-fit:contain;
+  object-position:50% 50%;
   display:block;
   opacity:0;
-  transition:opacity .32s cubic-bezier(.4,0,.2,1);
-  /* Own layer: without it the browser repaints the whole panel on every
-     crossfade, which on a long page is a visible hitch. */
-  will-change:opacity;
+  border:0;
 }
+/* The base never fades and is never not there. Everything else is an opaque
+   sheet laid over it for the length of one reaction. */
+.fpv-clip.fpv-base{ opacity:1; }
 .fpv-clip.is-on{ opacity:1; }
 
-/* No pointer, or motion declined: one still, no video elements at all. */
-.fpv-still{
-  background-size:cover;
-  background-position:center;
+/* THE DISSOLVE. A single elliptical mask, generously feathered, centred on
+   him. Everything past it is the page. Both properties: Safari still wants
+   the prefixed one. */
+.fpv{
+  -webkit-mask-image:radial-gradient(118% 92% at 50% 42%,
+      #000 0%, #000 34%, rgba(0,0,0,.92) 50%, rgba(0,0,0,.55) 68%,
+      rgba(0,0,0,.18) 84%, transparent 100%);
+  mask-image:radial-gradient(118% 92% at 50% 42%,
+      #000 0%, #000 34%, rgba(0,0,0,.92) 50%, rgba(0,0,0,.55) 68%,
+      rgba(0,0,0,.18) 84%, transparent 100%);
 }
-.fpv-still .fpv-clip{ display:none; }
 
-/* THE VIGNETTE AND THE TINT.
-   Two layers over the video, both pointer-transparent. The first darkens the
-   corners so the bright studio wall stops fighting the page edge; the second
-   lays the brand indigo over it at a few percent, which is what makes the
-   panel belong to the theme instead of sitting on top of it. Values are low on
-   purpose — enough to seat the picture, never enough to muddy the face. */
-.fpv::after{
-  content:"";
-  position:absolute;
-  inset:0;
-  pointer-events:none;
-  background:
-    radial-gradient(120% 100% at 50% 40%, transparent 42%, rgba(7,10,30,.28) 100%),
-    linear-gradient(180deg, transparent 62%, rgba(7,10,30,.22) 100%);
-  mix-blend-mode:multiply;
-}
-:root[data-theme="dark"] .fpv::after{
-  background:
-    radial-gradient(120% 100% at 50% 40%, transparent 38%, rgba(0,0,0,.46) 100%),
-    linear-gradient(180deg, transparent 56%, rgba(0,0,0,.40) 100%);
-}
-.fpv::before{
-  content:"";
+/* A wash of the brand indigo over the footage, and a floor gradient that
+   carries the bottom of the picture into the page rather than stopping it. */
+.fpv-wash{
   position:absolute;
   inset:0;
   z-index:2;
   pointer-events:none;
-  background:linear-gradient(150deg,
-    color-mix(in srgb, var(--brand-2) 7%, transparent),
-    transparent 58%);
+  background:
+    linear-gradient(180deg, transparent 52%, var(--bg) 97%),
+    linear-gradient(140deg, color-mix(in srgb, var(--brand-2) 10%, transparent), transparent 55%);
 }
 
-/* A hairline of the brand colour along the top edge, the same detail the glass
-   panels carry, so the video panel and the cards read as one system. */
-.fpv-edge{
+/* ============================================================
+   THE SCRIMS — what makes the words legible over moving footage
+   Two columns of shade, one per text rail, fading to nothing in the middle so
+   they never darken him. Strong enough at the edges that body copy clears
+   4.5:1 against the brightest frame the video has.
+   ============================================================ */
+.fpv-scrim{
   position:absolute;
-  left:0; right:0; top:0;
-  height:1px;
+  inset:0;
   z-index:3;
   pointer-events:none;
-  background:linear-gradient(90deg,
-    transparent,
-    color-mix(in srgb, var(--brand-2) 55%, transparent) 30%,
-    color-mix(in srgb, var(--brand-2) 55%, transparent) 70%,
-    transparent);
+  background:
+    linear-gradient(90deg,
+      color-mix(in srgb, var(--bg) 94%, transparent) 0%,
+      color-mix(in srgb, var(--bg) 82%, transparent) 20%,
+      transparent 42%),
+    linear-gradient(270deg,
+      color-mix(in srgb, var(--bg) 94%, transparent) 0%,
+      color-mix(in srgb, var(--bg) 78%, transparent) 18%,
+      transparent 40%);
 }
 
-/* THE NAME IS A CONTROL NOW, so it has to look like one can point at it.
-   A cursor change and a colour shift, nothing louder: the greeting itself is
-   the feedback, and a name that lights up like a button would cheapen it. */
-.fpv-namehit{
-  /* A <button> for the behaviour, none of the chrome. Without the reset it
-     arrives with the browser's grey face and border, and the sentence reads as
-     a form control dropped into a line of prose. */
-  -webkit-appearance:none;
-  appearance:none;
-  background:none;
-  border:0;
-  padding:0;
+/* ============================================================
+   THE CONTENT RAILS
+   ============================================================ */
+.fpv-copy{
+  position:relative;
+  z-index:4;
+  width:100%;
+  max-width:1560px;
+  margin:0 auto;
+  padding:clamp(80px,9vh,120px) clamp(20px,3.4vw,52px) clamp(56px,7vh,84px);
+  display:grid;
+  grid-template-columns:minmax(0,1fr) minmax(0,1.15fr) minmax(0,1fr);
+  align-items:center;
+  gap:clamp(16px,2vw,32px);
+  pointer-events:none;        /* the stage underneath stays clickable */
+  min-height:100svh;
+  box-sizing:border-box;
+}
+.fpv-copy > *{ pointer-events:auto; }
+
+/* THE COPY SITS ON GLASS, NOT ON A GUESS.
+   A scrim alone means the contrast behind the words depends on which frame is
+   playing — and the brightest frame in these clips is a lit white wall. A panel
+   fixes it: the text has its own surface, it clears contrast against that
+   surface whatever the video does, and it matches the glass the rest of the
+   site now uses. */
+.fpv-left{
+  grid-column:1;
+  display:flex; flex-direction:column; gap:12px;
+  padding:clamp(20px,1.8vw,28px);
+  border-radius:18px;
+  background:color-mix(in srgb, var(--bg) 78%, transparent);
+  border:1px solid var(--glass-edge, var(--border));
+  box-shadow:var(--glass-lift, var(--shadow-2)), inset 0 1px 0 var(--glass-specular, transparent);
+  -webkit-backdrop-filter:blur(18px) saturate(112%);
+  backdrop-filter:blur(18px) saturate(112%);
+}
+.fpv-right{
+  grid-column:3;
+  display:flex; flex-direction:column; gap:14px;
+  align-items:flex-end; text-align:right;
+}
+
+/* THE NAME, AT A SENSIBLE SIZE. The old hero set it in Anton at up to 180px
+   across the whole screen, which is a poster, not a portfolio. This is a name
+   on a professional page: large enough to lead, small enough to be read as a
+   name rather than as a graphic. */
+.fpv-name{
+  font-family:var(--font-display);
+  font-weight:700;
+  font-size:clamp(28px,3.4vw,46px);
+  line-height:1.08;
+  letter-spacing:-.025em;
+  color:var(--fg);
   margin:0;
-  font:inherit;
+  text-wrap:balance;
+}
+.fpv-eyebrow{
+  font-family:var(--font-mono);
+  font-size:clamp(10.5px,.85vw,12px);
+  letter-spacing:1.6px;
+  text-transform:uppercase;
+  color:var(--accent-text);
+  margin:0;
+}
+.fpv-role{
+  font-size:clamp(14px,1.05vw,16.5px);
+  line-height:1.55;
   color:var(--fg-muted);
+  margin:0;
+  max-width:34ch;
+}
+.fpv-meta{
+  font-size:clamp(12.5px,.9vw,14px);
+  line-height:1.6;
+  color:var(--fg-faint);
+  margin:0;
+  max-width:36ch;
+}
+.fpv-actions{ display:flex; gap:10px; flex-wrap:wrap; margin-top:6px; }
+
+/* The right rail: credentials, right-aligned so they hang off the edge the
+   scrim covers. */
+.fpv-tags{ display:flex; flex-direction:column; gap:7px; align-items:flex-end; }
+.fpv-tags .fp-tag{
+  font-size:clamp(10.5px,.78vw,12px);
   font-weight:600;
+  line-height:1.45;
+  padding:7px 13px;
+  border-radius:14px;
+  background:var(--surface-1);
+  border:1px solid var(--border);
+  color:var(--fg);
+  backdrop-filter:blur(10px);
+  -webkit-backdrop-filter:blur(10px);
+  max-width:30ch;
+  text-align:right;
+}
+
+/* THE INVITATION. Nobody discovers a click target on a video by staring at it.
+   One quiet line, and the name inside it is the button. */
+.fpv-hint{
+  display:flex; align-items:center; gap:8px;
+  margin:4px 0 0;
+  font-size:12.5px;
+  color:var(--fg-faint);
+}
+.fpv-hint svg{ flex:none; opacity:.75; }
+.fpv-namehit{
+  -webkit-appearance:none; appearance:none;
+  background:none; border:0; padding:0; margin:0;
+  font:inherit; font-weight:600;
+  color:var(--fg-muted);
   text-decoration:underline;
   text-decoration-thickness:1px;
   text-underline-offset:3px;
   text-decoration-color:color-mix(in srgb, var(--brand-2) 45%, transparent);
-  display:inline;
   cursor:pointer;
   transition:color .25s ease, text-decoration-color .25s ease;
 }
 .fpv-namehit:hover,
-.fpv-namehit:focus-visible{
-  color:var(--accent-text);
-  text-decoration-color:var(--brand-2);
-}
-.fpv-namehit:focus-visible{ outline:2px solid var(--brand-2); outline-offset:4px; border-radius:6px; }
-
-/* The one-line invitation under the name. It exists because an interaction
-   nobody discovers is an interaction nobody has: without it the greeting only
-   fires for visitors who happen to sweep the cursor over the right word. */
-.fpv-hint{
-  display:flex;
-  align-items:center;
-  gap:8px;
-  margin:14px 0 0;
-  font-size:12.5px;
-  letter-spacing:.3px;
-  color:var(--fg-faint);
-}
-.fpv-hint svg{ flex:none; opacity:.8; }
-/* Meaningless without a cursor. */
+.fpv-namehit:focus-visible{ color:var(--accent-text); text-decoration-color:var(--brand-2); }
+.fpv-namehit:focus-visible{ outline:2px solid var(--brand-2); outline-offset:3px; border-radius:4px; }
 @media (hover: none), (pointer: coarse){ .fpv-hint{ display:none; } }
 
-/* ---------- narrow ---------- */
-@media (max-width:900px){
-  .fp-stage:has(.fpv-stage) .fp-stage-grid{
-    grid-template-columns:1fr;
-    justify-items:center;
-    text-align:center;
-  }
-  .fp-stage:has(.fpv-stage) .fp-stage-left{ grid-column:auto; }
-  .fp-stage:has(.fpv-stage) .fp-stage-right{ grid-column:auto; justify-content:center; }
-  .fpv-stage{
-    grid-column:auto;
-    grid-row:auto;
-    width:100%;
-    margin:6px 0 4px;
-    order:-1;               /* the panel leads, the words follow */
-  }
-  .fpv{ border-radius:16px; }
+/* The cue that there is more below. */
+.fpv-scroll{
+  position:absolute;
+  left:50%; bottom:clamp(16px,3vh,32px);
+  transform:translateX(-50%);
+  z-index:5;
+  display:flex; flex-direction:column; align-items:center; gap:7px;
+  font-family:var(--font-mono);
+  font-size:10.5px; letter-spacing:1.5px; text-transform:uppercase;
+  color:var(--fg-faint);
+  pointer-events:none;
 }
+.fpv-scroll i{
+  width:1px; height:30px;
+  background:linear-gradient(var(--fg-faint), transparent);
+  animation:fpv-drop 2.4s ease-in-out infinite;
+}
+@keyframes fpv-drop{ 0%,100%{ opacity:.25; transform:scaleY(.6); transform-origin:top; }
+                     50%{ opacity:.9; transform:scaleY(1); transform-origin:top; } }
+
+/* No pointer / reduced motion: a still, and nothing else changes. */
+.fpv-still{ background-size:cover; background-position:50% 38%; }
+.fpv-still .fpv-clip{ display:none; }
+
+/* ============================================================
+   ASPECT RATIOS
+   ============================================================ */
+
+/* Short and wide — a laptop in landscape, or a desktop with a shallow window.
+   There is no room for a full-height column of copy, so it tightens rather
+   than scrolling the hero. */
+@media (max-height:640px) and (min-width:901px){
+  .fpv-copy{ padding-top:clamp(64px,10vh,88px); padding-bottom:40px; }
+  .fpv-name{ font-size:clamp(24px,2.6vw,34px); }
+  .fpv-role{ font-size:14px; }
+  .fpv-tags .fp-tag:nth-child(n+5){ display:none; }
+  .fpv-scroll{ display:none; }
+}
+
+/* Tablet and narrow desktop: the right rail moves under the left one rather
+   than squeezing both into unreadable slivers. */
+@media (max-width:1100px) and (min-width:901px){
+  .fpv-copy{ grid-template-columns:minmax(0,1fr) minmax(0,.9fr); }
+  .fpv-left{ grid-column:1; }
+  .fpv-right{ grid-column:2; }
+  .fpv-tags .fp-tag:nth-child(n+6){ display:none; }
+}
+
+/* Phones and small tablets. The character is behind the copy rather than
+   beside it, so the scrim becomes a floor-to-ceiling wash and the text sits on
+   top of it in one column. Portrait screens crop the 16:9 frame hard, which is
+   why the mask is re-centred on him. */
+/* PORTRAIT AND NEAR-SQUARE SCREENS — the stage splits instead of fighting.
+   Filling a tall screen with a 16:9 frame means cropping away almost the whole
+   width, which zooms him until the screen is a face and the desk is gone. So
+   on a portrait screen the picture takes the top of the stage at its own shape
+   — whole figure, whole desk — and the copy takes the ground beneath it. Two
+   bands, no crop, nothing cut off. */
+@media (max-aspect-ratio: 1/1){
+  .fpv{
+    inset:0 0 auto 0;
+    height:min(56svh, 62vw * 0.5625 + 22svh);
+  }
+  .fpv-clip{ object-fit:contain; object-position:50% 50%; }
+  .fpv{
+    -webkit-mask-image:radial-gradient(96% 88% at 50% 44%,
+        #000 0%, #000 44%, rgba(0,0,0,.80) 64%, rgba(0,0,0,.30) 84%, transparent 100%);
+    mask-image:radial-gradient(96% 88% at 50% 44%,
+        #000 0%, #000 44%, rgba(0,0,0,.80) 64%, rgba(0,0,0,.30) 84%, transparent 100%);
+  }
+  .fpv-wash{
+    inset:0 0 auto 0;
+    height:min(56svh, 62vw * 0.5625 + 22svh);
+    background:linear-gradient(180deg, transparent 55%, var(--bg) 99%);
+  }
+  .fpv-scrim{ display:none; }   /* nothing to shade: the copy is on its own ground */
+  .fpv-copy{
+    grid-template-columns:1fr;
+    align-content:end;
+    align-items:end;
+    padding-top:calc(min(56svh, 62vw * 0.5625 + 22svh) - 12px);
+    padding-bottom:clamp(56px,8svh,80px);
+    gap:14px;
+  }
+  .fpv-left{ grid-column:1; }
+  .fpv-right{ grid-column:1; align-items:flex-start; text-align:left; }
+  .fpv-tags{ flex-direction:row; flex-wrap:wrap; align-items:flex-start; }
+  .fpv-tags .fp-tag{ max-width:none; text-align:left; }
+}
+
+@media (max-width:900px){
+  .fpv-hero{ min-height:100svh; }
+  .fpv-clip{ object-fit:cover; object-position:50% 30%; }
+  .fpv{
+    -webkit-mask-image:radial-gradient(135% 68% at 50% 32%,
+        #000 0%, #000 38%, rgba(0,0,0,.85) 56%, rgba(0,0,0,.35) 78%, transparent 100%);
+    mask-image:radial-gradient(135% 68% at 50% 32%,
+        #000 0%, #000 38%, rgba(0,0,0,.85) 56%, rgba(0,0,0,.35) 78%, transparent 100%);
+  }
+  .fpv-scrim{
+    background:linear-gradient(180deg,
+      color-mix(in srgb, var(--bg) 55%, transparent) 0%,
+      color-mix(in srgb, var(--bg) 20%, transparent) 30%,
+      color-mix(in srgb, var(--bg) 82%, transparent) 58%,
+      var(--bg) 82%);
+  }
+  .fpv-copy{
+    grid-template-columns:1fr;
+    align-items:end;
+    padding:clamp(64px,10vh,96px) 20px clamp(64px,9vh,88px);
+    gap:14px;
+  }
+  .fpv-left{ grid-column:1; }
+  .fpv-right{
+    grid-column:1;
+    align-items:flex-start;
+    text-align:left;
+  }
+  .fpv-tags{ flex-direction:row; flex-wrap:wrap; align-items:flex-start; }
+  .fpv-tags .fp-tag{ max-width:none; text-align:left; }
+  .fpv-tags .fp-tag:nth-child(n+5){ display:none; }
+  .fpv-role{ max-width:none; }
+  .fpv-meta{ max-width:none; }
+}
+
 @media (max-width:560px){
-  .fpv{ border-radius:14px; }
+  .fpv-name{ font-size:clamp(24px,7.4vw,32px); }
+  .fpv-tags .fp-tag:nth-child(n+4){ display:none; }
 }
 
 @media print{
-  .fpv-clip{ display:none; }
-  .fpv{ background-image:url("hero/poster.webp"); background-size:cover; box-shadow:none; }
-  .fpv-hint{ display:none; }
+  .fpv-hero{ min-height:0; }
+  .fpv-clip, .fpv-scroll{ display:none; }
+  .fpv-scrim, .fpv-wash{ display:none; }
 }
