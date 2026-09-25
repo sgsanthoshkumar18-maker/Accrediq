@@ -1,0 +1,260 @@
+/* AQcredix — glass, applied to the real components.
+ *
+ * aq-glass.css defines the material. This file puts it on the actual class
+ * names the site already uses, so nothing in the markup has to change.
+ *
+ * EVERYTHING HERE IS SCOPED TO :root[data-glass]. With the attribute absent the
+ * site renders exactly as it does today, which makes this safe to ship dark and
+ * switch on when you are happy. Add ?glass=1 to any URL to see it; ?glass=0 to
+ * turn it off again.
+ *
+ * COLOUR IS INHERITED, NEVER INTRODUCED. Every value below resolves to a token
+ * that already exists — --bg-elevated, --border, --brand-2, --glass-*. There is
+ * no new hue anywhere in this file. That is the point: glass should look like
+ * the theme lit differently, not like a second design sitting on top of it.
+ */
+
+/* ============================================================
+   THE HEADER
+   Already had blur(14px) — the only honest glass on the site. What it lacked
+   was an edge and a specular line, which is what separates "a translucent bar"
+   from "a pane of glass". The background stays the page colour: a sticky bar
+   must hide what scrolls under it.
+   ============================================================ */
+:root[data-glass] .site-header {
+  background: color-mix(in srgb, var(--bg) 82%, transparent);
+  -webkit-backdrop-filter: blur(20px) saturate(var(--glass-sat));
+  backdrop-filter: blur(20px) saturate(var(--glass-sat));
+  border-bottom: 1px solid var(--glass-edge);
+  box-shadow: inset 0 1px 0 var(--glass-specular);
+}
+
+/* The nav pill keeps its solid accent — it is a filled control, and a
+   translucent one would let page content show through the active state and
+   make it unreadable. It gets the edge only. */
+:root[data-glass] .main-nav {
+  box-shadow: inset 0 1px 0 color-mix(in srgb, #fff 14%, transparent);
+}
+
+:root[data-glass] .nav-dd-panel {
+  background: var(--glass-floor);
+  background-image: linear-gradient(160deg, var(--glass-film), transparent 62%);
+  -webkit-backdrop-filter: blur(var(--glass-blur)) saturate(var(--glass-sat));
+  backdrop-filter: blur(var(--glass-blur)) saturate(var(--glass-sat));
+  border: 1px solid var(--glass-edge);
+  box-shadow: var(--glass-lift), inset 0 1px 0 var(--glass-specular);
+}
+
+/* THE LOGO IS DELIBERATELY UNTOUCHED.
+   The mark is a ring, an arc and an A — no tile, no plate, no container. Putting
+   a glass chip behind it would reintroduce exactly the square background that
+   was removed from the brand. Glass belongs behind information, not behind
+   identity. */
+
+/* ============================================================
+   CARDS AND PANELS — the boxes information sits in
+   ============================================================ */
+:root[data-glass] .card,
+:root[data-glass] .kpi-card,
+:root[data-glass] .acc,
+:root[data-glass] .aq-notice-in,
+/* .cta-band is deliberately absent: it carries its own gradient, and painting
+   glass over it would fight the band rather than lift it. */
+:root[data-glass] .ws-stat,
+:root[data-glass] .ws-table,
+:root[data-glass] .capa-card,
+:root[data-glass] .aq-q-card,
+:root[data-glass] .gq-roll,
+:root[data-glass] .gq-start-row,
+:root[data-glass] .gq-q,
+:root[data-glass] .qt-panel,
+:root[data-glass] .aq-search-box,
+:root[data-glass] .aq-search-results {
+  background-color: var(--glass-floor);
+  background-image: linear-gradient(160deg, var(--glass-film), transparent 62%);
+  border: 1px solid var(--glass-edge);
+  box-shadow: var(--glass-lift), inset 0 1px 0 var(--glass-specular);
+}
+
+@supports (backdrop-filter: blur(1px)) or (-webkit-backdrop-filter: blur(1px)) {
+  :root[data-glass] .card,
+  :root[data-glass] .kpi-card,
+  :root[data-glass] .acc,
+  :root[data-glass] .aq-notice-in,
+  :root[data-glass] .ws-stat,
+  :root[data-glass] .ws-table,
+  :root[data-glass] .capa-card,
+  :root[data-glass] .aq-q-card,
+  :root[data-glass] .gq-roll,
+  :root[data-glass] .gq-start-row,
+  :root[data-glass] .gq-q,
+  :root[data-glass] .qt-panel,
+  :root[data-glass] .aq-search-box,
+  :root[data-glass] .aq-search-results {
+    -webkit-backdrop-filter: blur(var(--glass-blur)) saturate(var(--glass-sat));
+    backdrop-filter: blur(var(--glass-blur)) saturate(var(--glass-sat));
+  }
+}
+
+/* Cards that are already links or buttons get the lift. Static panels do not:
+   a panel that rises when the cursor crosses it is noise, not affordance. */
+:root[data-glass] a.card:hover,
+:root[data-glass] button.card:hover,
+:root[data-glass] .ws-stat:hover,
+:root[data-glass] .capa-card:hover,
+:root[data-glass] .gq-start-row:hover {
+  transform: translateY(-2px);
+  box-shadow: var(--glass-lift-hover), inset 0 1px 0 var(--glass-specular);
+  border-color: color-mix(in srgb, var(--brand-2) 26%, var(--glass-edge));
+}
+:root[data-glass] a.card,
+:root[data-glass] button.card,
+:root[data-glass] .ws-stat,
+:root[data-glass] .capa-card,
+:root[data-glass] .gq-start-row {
+  transition: transform .28s cubic-bezier(.22,1,.36,1),
+              box-shadow .28s cubic-bezier(.22,1,.36,1),
+              border-color .28s ease;
+}
+
+/* ============================================================
+   MODALS AND OVERLAYS
+   The one place a heavier blur earns its keep: the point of a modal is that
+   what is behind it stops competing.
+   ============================================================ */
+:root[data-glass] .aq-modal,
+:root[data-glass] .ws-modal-in,
+:root[data-glass] .aq-modal-overlay > div {
+  background-color: color-mix(in srgb, var(--bg-elevated) 86%, transparent);
+  -webkit-backdrop-filter: blur(26px) saturate(var(--glass-sat));
+  backdrop-filter: blur(26px) saturate(var(--glass-sat));
+  border: 1px solid var(--glass-edge);
+  box-shadow: var(--glass-lift-hover), inset 0 1px 0 var(--glass-specular);
+}
+:root[data-glass] .aq-modal-overlay,
+:root[data-glass] .aq-search-overlay,
+:root[data-glass] .ws-modal.open {
+  -webkit-backdrop-filter: blur(6px);
+  backdrop-filter: blur(6px);
+}
+
+/* ============================================================
+   FIELDS AND PLACEHOLDERS
+   Every text input on the site, by element rather than by class, because the
+   fields are styled in forty different files and chasing each one would miss
+   some. The floor is raised and the edge is stronger than on a card: an input
+   that reads as a decorative panel does not get filled in.
+   ============================================================ */
+:root[data-glass] input[type="text"],
+:root[data-glass] input[type="search"],
+:root[data-glass] input[type="email"],
+:root[data-glass] input[type="password"],
+:root[data-glass] input[type="number"],
+:root[data-glass] input[type="date"],
+:root[data-glass] input[type="tel"],
+:root[data-glass] input[type="url"],
+:root[data-glass] textarea,
+:root[data-glass] select {
+  background-color: color-mix(in srgb, var(--glass-floor) 84%, transparent);
+  border: 1px solid var(--glass-edge);
+  box-shadow: inset 0 1px 0 var(--glass-specular);
+  transition: border-color .2s ease, box-shadow .2s ease;
+}
+@supports (backdrop-filter: blur(1px)) or (-webkit-backdrop-filter: blur(1px)) {
+  :root[data-glass] input[type="text"],
+  :root[data-glass] input[type="search"],
+  :root[data-glass] input[type="email"],
+  :root[data-glass] input[type="password"],
+  :root[data-glass] input[type="number"],
+  :root[data-glass] input[type="date"],
+  :root[data-glass] input[type="tel"],
+  :root[data-glass] input[type="url"],
+  :root[data-glass] textarea,
+  :root[data-glass] select {
+    -webkit-backdrop-filter: blur(10px) saturate(var(--glass-sat));
+    backdrop-filter: blur(10px) saturate(var(--glass-sat));
+  }
+}
+:root[data-glass] input:focus,
+:root[data-glass] textarea:focus,
+:root[data-glass] select:focus {
+  border-color: var(--brand-2);
+  box-shadow: inset 0 1px 0 var(--glass-specular),
+              0 0 0 3px color-mix(in srgb, var(--brand-2) 20%, transparent);
+}
+:root[data-glass] ::placeholder { color: var(--fg-faint); opacity: 1; }
+
+/* ============================================================
+   COST CONTROL
+   A register with forty rows must not run forty blurs. Tables get ONE glass
+   panel around the whole thing and transparent rows inside it.
+   ============================================================ */
+:root[data-glass] .ws-table tbody tr,
+:root[data-glass] .inc-table tbody tr,
+:root[data-glass] .aud-records tbody tr {
+  background: transparent;
+  -webkit-backdrop-filter: none;
+  backdrop-filter: none;
+}
+:root[data-glass] .ws-table tbody tr:nth-child(odd),
+:root[data-glass] .inc-table tbody tr:nth-child(odd),
+:root[data-glass] .aud-records tbody tr:nth-child(odd) {
+  background: color-mix(in srgb, var(--fg) 3%, transparent);
+}
+
+/* ============================================================
+   THE OPT-OUTS, inherited from aq-glass.css but restated for the
+   selectors above, since those set background on their own.
+   ============================================================ */
+@media (prefers-reduced-transparency: reduce) {
+  :root[data-glass] .card, :root[data-glass] .kpi-card, :root[data-glass] .ws-stat,
+  :root[data-glass] .ws-table, :root[data-glass] .capa-card, :root[data-glass] .aq-q-card,
+  :root[data-glass] .gq-roll, :root[data-glass] .gq-q, :root[data-glass] .qt-panel,
+  :root[data-glass] .aq-modal, :root[data-glass] .ws-modal-in, :root[data-glass] .nav-dd-panel,
+  :root[data-glass] .site-header, :root[data-glass] input, :root[data-glass] textarea,
+  :root[data-glass] select {
+    -webkit-backdrop-filter: none !important;
+    backdrop-filter: none !important;
+    background-color: var(--bg-elevated) !important;
+    background-image: none !important;
+  }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  :root[data-glass] a.card, :root[data-glass] button.card, :root[data-glass] .ws-stat,
+  :root[data-glass] .capa-card, :root[data-glass] .gq-start-row { transition: none !important; }
+  :root[data-glass] a.card:hover, :root[data-glass] button.card:hover,
+  :root[data-glass] .ws-stat:hover, :root[data-glass] .capa-card:hover,
+  :root[data-glass] .gq-start-row:hover { transform: none; }
+}
+
+/* Phones and tablets: blur radius is the cost driver, and a ward tablet
+   showing a long register cannot pay it forty times. */
+@media (max-width: 900px) {
+  :root[data-glass] .site-header {
+    -webkit-backdrop-filter: blur(14px) saturate(var(--glass-sat));
+    backdrop-filter: blur(14px) saturate(var(--glass-sat));
+  }
+  :root[data-glass] .aq-modal, :root[data-glass] .ws-modal-in {
+    -webkit-backdrop-filter: blur(18px) saturate(var(--glass-sat));
+    backdrop-filter: blur(18px) saturate(var(--glass-sat));
+  }
+}
+@media (max-width: 560px) {
+  :root[data-glass] a.card:hover, :root[data-glass] button.card:hover,
+  :root[data-glass] .ws-stat:hover, :root[data-glass] .capa-card:hover,
+  :root[data-glass] .gq-start-row:hover { transform: none; }
+}
+
+@media print {
+  :root[data-glass] * {
+    -webkit-backdrop-filter: none !important;
+    backdrop-filter: none !important;
+  }
+  :root[data-glass] .card, :root[data-glass] .kpi-card, :root[data-glass] .ws-stat,
+  :root[data-glass] .ws-table, :root[data-glass] .qt-panel {
+    background: #fff !important;
+    border: 1px solid #ccc !important;
+    box-shadow: none !important;
+  }
+}
