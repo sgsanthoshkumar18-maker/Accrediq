@@ -74,6 +74,27 @@
   background:transparent; border:none; color:var(--accent-text); padding:10px 0 0; font-weight:600; }
 .gq-setup-foot { display:flex; align-items:center; gap:12px; margin:22px 0 0; flex-wrap:wrap; }
 
+/* ===================== host: start / resume ===================== */
+.gq-start { max-width:620px; margin:0 auto; }
+.gq-start-new { width:100%; margin:0 0 8px; }
+.gq-start-h { font-size:14px; font-weight:700; letter-spacing:.6px; text-transform:uppercase;
+  color:var(--accent-text); margin:28px 0 4px; }
+.gq-start-note { font-size:13px; color:var(--fg-muted); margin:0 0 12px; line-height:1.55; }
+.gq-start-list { list-style:none; margin:0; padding:0; display:flex; flex-direction:column; gap:8px; }
+.gq-start-row { display:flex; align-items:center; gap:12px; flex-wrap:wrap;
+  padding:14px 16px; border-radius:12px; border:1px solid var(--border);
+  background:var(--bg-elevated); }
+.gq-start-main { flex:1; min-width:180px; display:flex; flex-direction:column; gap:3px; }
+.gq-start-main b { font-size:16px; color:var(--fg); }
+.gq-start-meta { font-size:13px; color:var(--fg-muted); }
+.gq-start-acts { display:flex; gap:8px; }
+.gq-chip-bad { color:var(--nc); }
+.gq-chip-bad:hover { border-color:var(--nc); color:var(--nc); }
+.gq-savednote { font-size:13px; color:var(--fg-muted); margin:18px 0 0; line-height:1.6; }
+.gq-linkbtn { -webkit-appearance:none; appearance:none; font:inherit; font-size:13px;
+  font-weight:600; cursor:pointer; background:none; border:none; padding:0;
+  color:var(--accent-text); text-decoration:underline; }
+
 /* ===================== host: lobby ===================== */
 .gq-lobby { text-align:center; }
 .gq-url { color:var(--accent-text); }

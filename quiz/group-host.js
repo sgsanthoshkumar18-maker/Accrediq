@@ -35,6 +35,221 @@
     if (tick) { clearInterval(tick); tick = null; }
   }
 
+  /* ============================ DRAFTS ============================
+   *
+   * Writing fifteen questions takes a while, and until now closing the tab
+   * threw the lot away. Everything typed is now saved as it is typed.
+   *
+   * Kept in this browser rather than on the server, deliberately. The losses
+   * this protects against — a closed tab, a stray back button, a laptop that
+   * went to sleep and never came back — all happen on the machine the host was
+   * already using, and localStorage covers every one of them without a schema
+   * migration or a write to the database on every keystroke. The trade is that
+   * a draft does not follow you to another computer, which the screen says
+   * plainly rather than letting you find out.
+   */
+
+  var DRAFTS_KEY = "aq_gq_drafts_v1";
+  var MAX_DRAFTS = 12;
+  var saveTimer = null;
+  /* Autosave runs only while the setup screen is the one on show. Without this
+     the unload flush fires after a quiz has been created and writes the draft
+     back, so a quiz that is already live and filling its lobby also sits in the
+     resume list forever, pretending to be unfinished. */
+  var draftActive = false;
+
+  function loadDrafts() {
+    try {
+      var raw = JSON.parse(localStorage.getItem(DRAFTS_KEY) || "[]");
+      return Array.isArray(raw) ? raw : [];
+    } catch (e) { return []; }
+  }
+  function writeDrafts(list) {
+    try { localStorage.setItem(DRAFTS_KEY, JSON.stringify(list.slice(0, MAX_DRAFTS))); }
+    catch (e) { /* private mode, or the quota is full — autosave is a courtesy */ }
+  }
+
+  /* Worth keeping only once something has actually been written. Without this
+     every visit to the page would leave an empty "Untitled" draft behind, and a
+     resume list full of blanks is worse than no resume list. */
+  function worthSaving() {
+    if (draft.title.trim() || draft.hospital.trim()) return true;
+    return draft.questions.some(function (q) {
+      return q.q.trim() || q.options.some(function (o) { return o.trim(); });
+    });
+  }
+
+  function saveDraft() {
+    if (!draftActive) return;
+    if (!draft.id) draft.id = "d" + Date.now().toString(36) + Math.random().toString(36).slice(2, 6);
+    if (!worthSaving()) return;
+    var list = loadDrafts().filter(function (d) { return d.id !== draft.id; });
+    list.unshift({
+      id: draft.id, title: draft.title, hospital: draft.hospital,
+      secondsPerQ: draft.secondsPerQ, questions: draft.questions,
+      savedAt: Date.now()
+    });
+    writeDrafts(list);
+  }
+
+  /* Debounced: the handlers fire on every keystroke, and serialising the whole
+     quiz on each one is wasted work on a laptop that may also be projecting. */
+  function touch() {
+    if (saveTimer) clearTimeout(saveTimer);
+    saveTimer = setTimeout(saveDraft, 500);
+  }
+
+  /* The debounce holds up to half a second of typing, and the moment the tab
+     closes is precisely when that matters. pagehide fires on a closing tab, a
+     back button and a phone switching apps, where beforeunload alone does not.
+     Both are registered because Safari has historically honoured only one. */
+  function flush() {
+    if (saveTimer) { clearTimeout(saveTimer); saveTimer = null; }
+    if (draft && draft.questions) saveDraft();
+  }
+  window.addEventListener("pagehide", flush);
+  window.addEventListener("beforeunload", flush);
+
+  function dropDraft(id) {
+    writeDrafts(loadDrafts().filter(function (d) { return d.id !== id; }));
+  }
+
+  function ago(ms) {
+    var s = Math.max(0, Math.round((Date.now() - ms) / 1000));
+    if (s < 60) return "just now";
+    var m = Math.round(s / 60);
+    if (m < 60) return m + (m === 1 ? " minute ago" : " minutes ago");
+    var h = Math.round(m / 60);
+    if (h < 24) return h + (h === 1 ? " hour ago" : " hours ago");
+    var d = Math.round(h / 24);
+    if (d === 1) return "yesterday";
+    if (d < 30) return d + " days ago";
+    return new Date(ms).toLocaleDateString();
+  }
+
+  function countReal(qs) {
+    return (qs || []).filter(function (q) { return (q.q || "").trim(); }).length;
+  }
+
+  /* ============================ START SCREEN ============================ */
+
+  async function renderStart() {
+    stopTimers();
+    draftActive = false;
+    var drafts = loadDrafts();
+    var live = [];
+    try { live = await G.myQuizzes(); } catch (e) { live = []; }
+
+    /* Nothing to come back to — skip the question entirely rather than show a
+       chooser with one option on it. */
+    if (!drafts.length && !live.length) { renderSetup(); return; }
+
+    root.innerHTML =
+      '<div class="gq-start">' +
+        '<h2 class="gq-h">Pick up where you left off</h2>' +
+        '<p class="gq-sub">Start something new, or carry on with one of these.</p>' +
+        '<button type="button" class="gq-btn gq-btn-go gq-start-new" id="gqNew">Start a new quiz</button>' +
+
+        (live.length
+          ? '<h3 class="gq-start-h">Already running</h3>' +
+            '<p class="gq-start-note">These have a join code and are open. Reopen one to get ' +
+              "back to its lobby.</p>" +
+            '<ul class="gq-start-list">' +
+              live.map(function (s) {
+                return '<li class="gq-start-row" data-live="' + esc(s.id) + '">' +
+                  '<span class="gq-start-main"><b>' + esc(s.title || "Untitled quiz") + "</b>" +
+                    '<span class="gq-start-meta">Code ' + esc(s.code) + " · " +
+                      (s.questions ? s.questions.length : 0) + " questions · started " +
+                      esc(ago(new Date(s.created_at).getTime())) + "</span></span>" +
+                  '<span class="gq-start-acts">' +
+                    '<button type="button" class="gq-chip" data-reopen="' + esc(s.id) + '">Reopen</button>' +
+                    '<button type="button" class="gq-chip gq-chip-bad" data-close="' + esc(s.id) + '">Discard</button>' +
+                  "</span></li>";
+              }).join("") +
+            "</ul>"
+          : "") +
+
+        (drafts.length
+          ? '<h3 class="gq-start-h">Unfinished drafts</h3>' +
+            '<p class="gq-start-note">Saved in this browser as you typed. They do not follow ' +
+              "you to another computer.</p>" +
+            '<ul class="gq-start-list">' +
+              drafts.map(function (d) {
+                var n = countReal(d.questions);
+                return '<li class="gq-start-row" data-draft="' + esc(d.id) + '">' +
+                  '<span class="gq-start-main"><b>' + esc(d.title || "Untitled quiz") + "</b>" +
+                    '<span class="gq-start-meta">' + n + (n === 1 ? " question" : " questions") +
+                      " · edited " + esc(ago(d.savedAt)) + "</span></span>" +
+                  '<span class="gq-start-acts">' +
+                    '<button type="button" class="gq-chip" data-resume="' + esc(d.id) + '">Resume</button>' +
+                    '<button type="button" class="gq-chip gq-chip-bad" data-drop="' + esc(d.id) + '">Delete</button>' +
+                  "</span></li>";
+              }).join("") +
+            "</ul>"
+          : "") +
+      "</div>";
+
+    document.getElementById("gqNew").addEventListener("click", function () {
+      draft = { title: "", hospital: "", secondsPerQ: 20, questions: [] };
+      renderSetup();
+    });
+
+    root.querySelectorAll("[data-resume]").forEach(function (b) {
+      b.addEventListener("click", function () {
+        var d = loadDrafts().filter(function (x) { return x.id === b.getAttribute("data-resume"); })[0];
+        if (!d) { renderStart(); return; }
+        draft = {
+          id: d.id, title: d.title || "", hospital: d.hospital || "",
+          secondsPerQ: d.secondsPerQ || 20,
+          questions: (d.questions && d.questions.length) ? d.questions : [blankQuestion()]
+        };
+        renderSetup();
+      });
+    });
+
+    root.querySelectorAll("[data-drop]").forEach(function (b) {
+      b.addEventListener("click", function () {
+        if (!confirm("Delete this draft? It cannot be recovered.")) return;
+        dropDraft(b.getAttribute("data-drop"));
+        renderStart();
+      });
+    });
+
+    root.querySelectorAll("[data-reopen]").forEach(function (b) {
+      b.addEventListener("click", async function () {
+        b.disabled = true; b.textContent = "Opening…";
+        try { await reopen(b.getAttribute("data-reopen")); }
+        catch (e) { alert("Could not reopen: " + (e.message || e)); renderStart(); }
+      });
+    });
+
+    root.querySelectorAll("[data-close]").forEach(function (b) {
+      b.addEventListener("click", async function () {
+        if (!confirm("Discard this quiz? Anyone still in its lobby will be dropped.")) return;
+        try { await G.closeQuiz(b.getAttribute("data-close")); } catch (e) {}
+        renderStart();
+      });
+    });
+  }
+
+  /* A quiz already on the server, come back to after the tab was closed.
+     session.questions carries no answers — they live in answer_key, which the
+     host may read because it is their own row — so the working draft has to be
+     put back together from both before the reveal screen can work. */
+  async function reopen(id) {
+    var s = await G.hostSession(id);
+    if (!s) throw new Error("that quiz is no longer there");
+    session = s;
+    draft = {
+      title: s.title, hospital: s.hospital || "", secondsPerQ: s.seconds_per_q,
+      questions: (s.questions || []).map(function (q, i) {
+        return { q: q.q, options: q.options.slice(), a: (s.answer_key || [])[i] || 0 };
+      })
+    };
+    if (s.phase === "lobby" || s.current_q < 0) renderLobby();
+    else renderQuestion();
+  }
+
   /* ============================ SETUP ============================ */
 
   function blankQuestion() {
@@ -46,6 +261,7 @@
 
   function renderSetup() {
     stopTimers();
+    draftActive = true;
     if (!draft.questions.length) draft.questions.push(blankQuestion());
 
     root.innerHTML =
@@ -70,17 +286,24 @@
           '<button type="button" class="gq-btn gq-btn-go" id="gqStart">Create the quiz</button>' +
         "</div>" +
         '<p class="gq-err" id="gqErr" hidden></p>' +
+        /* Said once, quietly, where somebody about to close the tab will see
+           it. The whole feature is worth nothing if they do not believe it. */
+        '<p class="gq-savednote">Saved in this browser as you type — you can close this ' +
+          'page and come back to it. <button type="button" class="gq-linkbtn" id="gqBack">' +
+          "See saved quizzes</button></p>" +
       "</div>";
 
     renderQuestions();
 
-    document.getElementById("gqTitle").addEventListener("input", function () { draft.title = this.value; });
-    document.getElementById("gqHospital").addEventListener("input", function () { draft.hospital = this.value; });
+    document.getElementById("gqTitle").addEventListener("input", function () { draft.title = this.value; touch(); });
+    document.getElementById("gqHospital").addEventListener("input", function () { draft.hospital = this.value; touch(); });
     document.getElementById("gqSeconds").addEventListener("input", function () {
       draft.secondsPerQ = parseInt(this.value, 10) || 20;
+      touch();
     });
     document.getElementById("gqAddQ").addEventListener("click", function () {
       draft.questions.push(blankQuestion());
+      saveDraft();
       renderQuestions();
       var cards = root.querySelectorAll(".gq-q");
       var last = cards[cards.length - 1];
@@ -91,6 +314,14 @@
       }
     });
     document.getElementById("gqStart").addEventListener("click", createQuiz);
+    document.getElementById("gqBack").addEventListener("click", function () {
+      /* Flush before leaving: the debounce may still be holding the last few
+         keystrokes, and losing them on the way to the list of saved work would
+         be a poor joke. */
+      if (saveTimer) { clearTimeout(saveTimer); saveTimer = null; }
+      saveDraft();
+      renderStart();
+    });
   }
 
   function renderQuestions() {
@@ -131,24 +362,28 @@
     host.querySelectorAll("[data-qt]").forEach(function (t) {
       t.addEventListener("input", function () {
         draft.questions[+t.getAttribute("data-qt")].q = t.value;
+        touch();
       });
     });
     host.querySelectorAll("[data-opt]").forEach(function (i) {
       i.addEventListener("input", function () {
         var p = i.getAttribute("data-opt").split(":");
         draft.questions[+p[0]].options[+p[1]] = i.value;
+        touch();
       });
     });
     host.querySelectorAll("[data-mark]").forEach(function (b) {
       b.addEventListener("click", function () {
         var p = b.getAttribute("data-mark").split(":");
         draft.questions[+p[0]].a = +p[1];
+        saveDraft();
         renderQuestions();
       });
     });
     host.querySelectorAll("[data-addopt]").forEach(function (b) {
       b.addEventListener("click", function () {
         draft.questions[+b.getAttribute("data-addopt")].options.push("");
+        saveDraft();
         renderQuestions();
       });
     });
@@ -161,12 +396,14 @@
            the mark pointing at a different answer than the host chose. */
         if (q.a === oi) q.a = 0;
         else if (q.a > oi) q.a--;
+        saveDraft();
         renderQuestions();
       });
     });
     host.querySelectorAll("[data-del]").forEach(function (b) {
       b.addEventListener("click", function () {
         draft.questions.splice(+b.getAttribute("data-del"), 1);
+        saveDraft();
         renderQuestions();
       });
     });
@@ -215,6 +452,11 @@
           return { q: q.q.trim(), options: keep, a: newA };
         })
       });
+      /* Order matters: stop autosaving BEFORE removing it, or the pending
+         debounce puts it straight back. */
+      draftActive = false;
+      if (saveTimer) { clearTimeout(saveTimer); saveTimer = null; }
+      if (draft.id) dropDraft(draft.id);
       renderLobby();
     } catch (e) {
       btn.disabled = false; btn.textContent = "Create the quiz";
@@ -601,7 +843,7 @@
           'workspace/start">Sign in</a></div>';
       return;
     }
-    renderSetup();
+    renderStart();
   }
 
   if (document.readyState === "loading") document.addEventListener("DOMContentLoaded", init);

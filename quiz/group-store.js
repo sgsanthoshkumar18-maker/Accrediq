@@ -91,6 +91,24 @@ window.AQGroupQuiz = (function () {
     return S.adapter.select("quiz_players", "session_id=eq." + sessionId + "&order=joined_at.asc");
   }
 
+  /* Quizzes this host started and has not finished. RLS already limits the
+     table to rows whose host_id is this user, so the filters here are about
+     which of their OWN quizzes are still worth offering: open, and not already
+     played to the end. Without this a host who closed the tab after creating a
+     quiz had no route back to it at all — the code was live, the lobby was
+     filling, and the only screen that could drive it was gone. */
+  function myQuizzes() {
+    return S.adapter.select("quiz_sessions",
+      "closed_at=is.null&phase=neq.final&order=created_at.desc&limit=10");
+  }
+
+  /* Ends a quiz without deleting it. closed_at is what every participant-facing
+     function checks, so this drops the lobby and frees the host's list in one
+     write, while the answers stay for anyone who wants the results later. */
+  function closeQuiz(sessionId) {
+    return S.adapter.patch("quiz_sessions", sessionId, { closed_at: new Date().toISOString() });
+  }
+
   /* ---------------- Participant ---------------- */
 
   async function join(code, name) {
@@ -141,6 +159,8 @@ window.AQGroupQuiz = (function () {
     advance: advance,
     hostSession: hostSession,
     players: players,
+    myQuizzes: myQuizzes,
+    closeQuiz: closeQuiz,
     join: join,
     state: state,
     answer: answer,
