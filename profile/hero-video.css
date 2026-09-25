@@ -74,6 +74,20 @@
 .fpv-clip.fpv-base{ opacity:1; }
 .fpv-clip.is-on{ opacity:1; }
 
+/* A BRIEF DISSOLVE ON THE OVERLAYS ONLY — never on the base.
+   A hard cut between two takes of the same man shows as a jerk: his hands are
+   not in quite the same place on either side of the frame boundary. About a
+   tenth of a second is enough for the eye to read the two positions as one
+   movement, and short enough that it is not perceived as a fade.
+
+   This is safe precisely because it is one-sided. The old version faded BOTH
+   clips, which left a moment when neither was opaque and the page showed
+   through — the white blink. Here the base sits underneath at full opacity the
+   whole time, so the overlay is dissolving against a picture, never a gap. */
+.fpv-clip:not(.fpv-base){
+  transition:opacity .11s linear;
+}
+
 /* THE DISSOLVE. A single elliptical mask, generously feathered, centred on
    him. Everything past it is the page. Both properties: Safari still wants
    the prefixed one. */

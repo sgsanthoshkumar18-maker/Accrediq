@@ -76,6 +76,12 @@
       right: make("right", false),
       wave: make("wave", false)
     };
+    /* ONE listener per clip, attached once. Adding it inside play() meant a new
+       closure every time the clip ran, all of them still live, all of them
+       firing on a later playthrough. */
+    Object.keys(over).forEach(function (k) {
+      over[k].addEventListener("ended", function () { endCurrent(); });
+    });
 
     /* One decoded frame, for real.
        requestVideoFrameCallback fires when a frame has actually been presented,
@@ -101,6 +107,9 @@
     var playing = null;      // which overlay is up, or null for the base
     var queued = null;
     var endTimer = null;
+    function noop() {}
+    var endCurrent = noop;   // set by play(), so a reaction can be cut short
+    var run = 0;             // ticket, so a stale event cannot end a newer reaction
 
     function startBase() {
       var p = idle.play();
@@ -134,30 +143,52 @@
          would be a visible jump back to the first frame. */
       if (playing === v) return;
 
-      if (playing) { queued = name; return; }
+      if (playing) {
+        /* INTERRUPT ONCE THE TURN HAS LANDED. The clips are trimmed to start on
+           the movement, so about a second in he has turned and is holding.
+           Making a new cursor position wait out the rest is what made him feel
+           like a recording being played at you rather than someone watching
+           you — but cutting in DURING the turn is a real jump, so the first
+           second is protected and anything earlier is queued instead. */
+        if ((playing.currentTime || 0) > 1.0) { endCurrent(); }
+        else { queued = name; return; }
+      }
 
       playing = v;
+      run += 1;                      // this reaction's ticket
+      var mine = run;
+
       try { v.currentTime = 0; } catch (e) {}
       var p = v.play();
-      if (p && p.catch) p.catch(function () { playing = null; });
+      if (p && p.catch) p.catch(function () { if (run === mine) playing = null; });
 
       onFirstFrame(v, function () {
-        if (playing === v) v.classList.add("is-on");
+        if (run === mine && playing === v) v.classList.add("is-on");
       });
 
       if (endTimer) { clearTimeout(endTimer); endTimer = null; }
-      function finish() {
-        v.removeEventListener("ended", finish);
+
+      /* EVERY REACTION CARRIES A TICKET, AND ONLY THE CURRENT ONE MAY END
+         ANYTHING. The 'ended' event for a clip that was interrupted still
+         arrives later — the element goes on playing out its own timeline while
+         a newer reaction is on screen — and without the ticket that stale event
+         ends the NEW reaction instead. It showed up as reactions getting
+         shorter the more you moved the cursor, which is nearly impossible to
+         attribute by eye. */
+      endCurrent = function () {
+        if (run !== mine) return;
         if (endTimer) { clearTimeout(endTimer); endTimer = null; }
+        run += 1;
+        endCurrent = noop;
         playing = null;
         hideOverlay(v);
         if (queued) { var q = queued; queued = null; play(q); }
-      }
-      v.addEventListener("ended", finish);
+      };
+
       /* If the clip stalls, 'ended' never comes and he would be frozen
          mid-gesture for good. */
       var ms = ((v.duration && isFinite(v.duration)) ? v.duration * 1000 : 4200) + 800;
-      endTimer = window.setTimeout(finish, ms);
+      endTimer = window.setTimeout(function () { if (run === mine) endCurrent(); }, ms);
     }
 
     /* ---------------- what the pointer means ----------------
@@ -181,7 +212,7 @@
       /* A short settle. Crossing the stage on the way to the navigation passes
          through both sides in under 200ms, and answering each one makes him
          look twitchy rather than attentive. */
-      sideTimer = window.setTimeout(function () { play(side); }, 130);
+      sideTimer = window.setTimeout(function () { play(side); }, 60);
     }, { passive: true });
 
     stage.addEventListener("pointerleave", function () {
