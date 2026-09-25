@@ -175,20 +175,30 @@
       }, { passive: true });
     })();
 
+    /* The still portrait has been replaced by the video panel, which mounts
+       itself. Guarded rather than deleted: the same renderer drives the compact
+       profile card elsewhere, where #fPhoto is still a photograph. */
     var ph = el("fPhoto");
-    var img = new Image();
-    img.onload = function () {
-      ph.innerHTML = '<img src="' + esc(F.photo) + '" alt="' + esc(F.name) + '">';
-      /* The reveal already ran while this box was empty — the container rose, and the
-         photograph then appeared inside it having missed its own entrance. Replaying it now
-         that the image is actually here is what makes the portrait rise rather than pop. */
-      if (window.AQCine && window.AQCine.play) window.AQCine.play(ph);
-    };
-    img.onerror = function () {
-      ph.innerHTML = '<span class="fp-initials">' + initials() + "</span>";
-      ph.classList.add("is-fallback");
-    };
-    img.src = F.photo;
+    if (ph) {
+      var img = new Image();
+      img.onload = function () {
+        ph.innerHTML = '<img src="' + esc(F.photo) + '" alt="' + esc(F.name) + '">';
+        /* The reveal already ran while this box was empty — the container rose, and the
+           photograph then appeared inside it having missed its own entrance. Replaying it now
+           that the image is actually here is what makes the portrait rise rather than pop. */
+        if (window.AQCine && window.AQCine.play) window.AQCine.play(ph);
+      };
+      img.onerror = function () {
+        ph.innerHTML = '<span class="fp-initials">' + initials() + "</span>";
+        ph.classList.add("is-fallback");
+      };
+      img.src = F.photo;
+    }
+
+    /* The greeting trigger carries the real name, so the invitation reads
+       "Point at Dr. Santhoshkumar SG" rather than a generic label. */
+    var hit = el("fpvNameHit");
+    if (hit) hit.textContent = F.name;
 
     el("fLinks").innerHTML =
       '<a class="btn btn-accent btn-sm" href="' + esc(F.linkedin) +
@@ -529,10 +539,16 @@
     if (document.fonts && document.fonts.ready) {
       document.fonts.ready.then(pushTextToFloor).catch(function () {});
     }
-    var flowImg = new Image();
-    flowImg.onload = pushTextToFloor;
-    flowImg.onerror = pushTextToFloor;
-    flowImg.src = F.photo;
+    /* Only worth fetching when there IS a silhouette to wrap around. The video
+       hero has no cut-out and no float, so downloading the portrait here would
+       pull a full-size PNG over the wire purely to measure a shape nothing
+       uses. */
+    if (el("fPhoto")) {
+      var flowImg = new Image();
+      flowImg.onload = pushTextToFloor;
+      flowImg.onerror = pushTextToFloor;
+      flowImg.src = F.photo;
+    }
     window.addEventListener("resize", pushTextToFloor, { passive: true });
 
     /* The site-wide reveal observer already ran during DOMContentLoaded, before any of

@@ -1,0 +1,207 @@
+/* AQcredix — the founder hero video panel.
+ *
+ * The clips were generated on a bright studio background. Dropped onto the
+ * dark theme as a bare rectangle that is a slab of white in the middle of a
+ * black page, which reads as an embed somebody forgot to style. So it is
+ * framed: rounded, glass-edged, with a vignette that pulls the corners toward
+ * the page. Framed, it reads as a deliberate panel in both themes rather than
+ * a cut-out that only works on one.
+ */
+
+/* ---------- the hero, restructured for a landscape panel ----------
+   The old composition was three columns with a 1:1 cut-out standing between
+   them. A 16:9 panel cannot stand in a narrow middle track, so the hero
+   becomes two columns: everything that is words on the left, the panel on the
+   right. This block only applies when the video is present, so a page without
+   it keeps the old layout. */
+.fp-stage:has(.fpv-stage) .fp-stage-grid{
+  grid-template-columns:minmax(0,0.88fr) minmax(0,1.12fr);
+  align-items:center;
+  column-gap:clamp(24px,3.4vw,56px);
+}
+.fp-stage:has(.fpv-stage) .fp-stage-left{ grid-column:1; align-self:center; z-index:4; }
+.fp-stage:has(.fpv-stage) .fp-stage-right{ grid-column:1; justify-content:flex-start; z-index:4; }
+.fp-stage:has(.fpv-stage) .fp-stage-copy{ margin-top:0; }
+/* Tags belong under the copy they describe, on the same left edge. Centred or
+   right-aligned they read as a separate ragged column floating beside nothing. */
+.fp-stage:has(.fpv-stage) .fp-stage-right .fp-tags{ justify-content:flex-start; }
+
+/* THE GIANT NAME HAD A PORTRAIT TO HIDE BEHIND, AND NOW IT DOES NOT.
+   Its -0.66em bottom margin pulled the whole composition up into the letters,
+   which worked when a cut-out figure stood in front of them and covered four
+   fifths of the word. With a landscape panel off to one side, that same margin
+   drags the name straight through the role and location lines. A quarter of an
+   em still layers the two so they read as one composition, and leaves the copy
+   on clear ground. */
+.fp-stage:has(.fpv-stage) .fp-stage-name{ margin-bottom:-.24em; }
+/* The float existed to wrap text around a cut-out silhouette. There is no
+   silhouette any more — the panel is a rectangle in its own column. */
+.fp-stage:has(.fpv-stage) .fp-flow{ display:none; }
+
+.fpv-stage{
+  grid-column:2;
+  grid-row:1 / span 2;
+  align-self:center;
+  justify-self:stretch;
+  /* Not the absolute, floor-to-ceiling positioning the cut-out used: that
+     existed to bleed a figure off the bottom edge. A panel sits in the grid. */
+  position:relative;
+  z-index:3;
+  min-width:0;
+}
+
+.fpv{
+  position:relative;
+  width:100%;
+  aspect-ratio:16 / 9;
+  border-radius:18px;
+  overflow:hidden;
+  background:var(--bg-elevated);
+  border:1px solid var(--glass-edge, var(--border));
+  box-shadow:var(--glass-lift, var(--shadow-2)), inset 0 1px 0 var(--glass-specular, transparent);
+  isolation:isolate;
+}
+
+.fpv-clip{
+  position:absolute;
+  inset:0;
+  width:100%;
+  height:100%;
+  object-fit:cover;
+  display:block;
+  opacity:0;
+  transition:opacity .32s cubic-bezier(.4,0,.2,1);
+  /* Own layer: without it the browser repaints the whole panel on every
+     crossfade, which on a long page is a visible hitch. */
+  will-change:opacity;
+}
+.fpv-clip.is-on{ opacity:1; }
+
+/* No pointer, or motion declined: one still, no video elements at all. */
+.fpv-still{
+  background-size:cover;
+  background-position:center;
+}
+.fpv-still .fpv-clip{ display:none; }
+
+/* THE VIGNETTE AND THE TINT.
+   Two layers over the video, both pointer-transparent. The first darkens the
+   corners so the bright studio wall stops fighting the page edge; the second
+   lays the brand indigo over it at a few percent, which is what makes the
+   panel belong to the theme instead of sitting on top of it. Values are low on
+   purpose — enough to seat the picture, never enough to muddy the face. */
+.fpv::after{
+  content:"";
+  position:absolute;
+  inset:0;
+  pointer-events:none;
+  background:
+    radial-gradient(120% 100% at 50% 40%, transparent 42%, rgba(7,10,30,.28) 100%),
+    linear-gradient(180deg, transparent 62%, rgba(7,10,30,.22) 100%);
+  mix-blend-mode:multiply;
+}
+:root[data-theme="dark"] .fpv::after{
+  background:
+    radial-gradient(120% 100% at 50% 40%, transparent 38%, rgba(0,0,0,.46) 100%),
+    linear-gradient(180deg, transparent 56%, rgba(0,0,0,.40) 100%);
+}
+.fpv::before{
+  content:"";
+  position:absolute;
+  inset:0;
+  z-index:2;
+  pointer-events:none;
+  background:linear-gradient(150deg,
+    color-mix(in srgb, var(--brand-2) 7%, transparent),
+    transparent 58%);
+}
+
+/* A hairline of the brand colour along the top edge, the same detail the glass
+   panels carry, so the video panel and the cards read as one system. */
+.fpv-edge{
+  position:absolute;
+  left:0; right:0; top:0;
+  height:1px;
+  z-index:3;
+  pointer-events:none;
+  background:linear-gradient(90deg,
+    transparent,
+    color-mix(in srgb, var(--brand-2) 55%, transparent) 30%,
+    color-mix(in srgb, var(--brand-2) 55%, transparent) 70%,
+    transparent);
+}
+
+/* THE NAME IS A CONTROL NOW, so it has to look like one can point at it.
+   A cursor change and a colour shift, nothing louder: the greeting itself is
+   the feedback, and a name that lights up like a button would cheapen it. */
+.fpv-namehit{
+  /* A <button> for the behaviour, none of the chrome. Without the reset it
+     arrives with the browser's grey face and border, and the sentence reads as
+     a form control dropped into a line of prose. */
+  -webkit-appearance:none;
+  appearance:none;
+  background:none;
+  border:0;
+  padding:0;
+  margin:0;
+  font:inherit;
+  color:var(--fg-muted);
+  font-weight:600;
+  text-decoration:underline;
+  text-decoration-thickness:1px;
+  text-underline-offset:3px;
+  text-decoration-color:color-mix(in srgb, var(--brand-2) 45%, transparent);
+  display:inline;
+  cursor:pointer;
+  transition:color .25s ease, text-decoration-color .25s ease;
+}
+.fpv-namehit:hover,
+.fpv-namehit:focus-visible{
+  color:var(--accent-text);
+  text-decoration-color:var(--brand-2);
+}
+.fpv-namehit:focus-visible{ outline:2px solid var(--brand-2); outline-offset:4px; border-radius:6px; }
+
+/* The one-line invitation under the name. It exists because an interaction
+   nobody discovers is an interaction nobody has: without it the greeting only
+   fires for visitors who happen to sweep the cursor over the right word. */
+.fpv-hint{
+  display:flex;
+  align-items:center;
+  gap:8px;
+  margin:14px 0 0;
+  font-size:12.5px;
+  letter-spacing:.3px;
+  color:var(--fg-faint);
+}
+.fpv-hint svg{ flex:none; opacity:.8; }
+/* Meaningless without a cursor. */
+@media (hover: none), (pointer: coarse){ .fpv-hint{ display:none; } }
+
+/* ---------- narrow ---------- */
+@media (max-width:900px){
+  .fp-stage:has(.fpv-stage) .fp-stage-grid{
+    grid-template-columns:1fr;
+    justify-items:center;
+    text-align:center;
+  }
+  .fp-stage:has(.fpv-stage) .fp-stage-left{ grid-column:auto; }
+  .fp-stage:has(.fpv-stage) .fp-stage-right{ grid-column:auto; justify-content:center; }
+  .fpv-stage{
+    grid-column:auto;
+    grid-row:auto;
+    width:100%;
+    margin:6px 0 4px;
+    order:-1;               /* the panel leads, the words follow */
+  }
+  .fpv{ border-radius:16px; }
+}
+@media (max-width:560px){
+  .fpv{ border-radius:14px; }
+}
+
+@media print{
+  .fpv-clip{ display:none; }
+  .fpv{ background-image:url("hero/poster.webp"); background-size:cover; box-shadow:none; }
+  .fpv-hint{ display:none; }
+}

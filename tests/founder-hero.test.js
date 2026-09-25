@@ -224,10 +224,15 @@ check('the overlap scales with the name instead of being a fixed distance', () =
 });
 
 check('the figure is not also being moved by the parallax layer', () => {
-  /* The figure is pinned to the hero floor. A data-depth offset slides it off that floor on
-     the first scroll, which is the black band this layout exists to remove. */
-  const m = html.match(/<div class="fp-stage-photo"[^>]*>/);
-  assert.ok(m, '.fp-stage-photo is gone from founder.html');
+  /* The figure is pinned to the hero. A data-depth offset slides it off on the first scroll,
+     which is the black band this layout exists to remove.
+
+     WHICH ELEMENT IS "THE FIGURE" CHANGED, AND THE RULE DID NOT. It was a cut-out portrait in
+     .fp-stage-photo; it is now the video panel in .fpv-stage. Either may be present, and
+     whichever it is must not carry a parallax offset — so the guard follows the role rather
+     than the class name it happened to have when it was written. */
+  const m = html.match(/<div class="(?:fp-stage-photo|fpv-stage)"[^>]*>/);
+  assert.ok(m, 'neither .fp-stage-photo nor .fpv-stage is in founder.html — the hero has no figure');
   assert.ok(!/data-depth/.test(m[0]),
     'the pinned figure has a parallax offset again; it will drift off the floor on scroll');
 });
