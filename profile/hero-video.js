@@ -51,10 +51,13 @@
     /* How far down the page the hero starts. The notice and header sit above
        it, and how tall the notice wraps to is a fact about rendered text that
        CSS cannot ask for. Without it a 100svh hero hangs off the bottom. */
+    var lastTop = -1;
     function measureTop() {
       if (!hero) return;
-      var t = hero.getBoundingClientRect().top + (window.scrollY || 0);
-      document.documentElement.style.setProperty("--fpv-top", Math.max(0, Math.round(t)) + "px");
+      var t = Math.max(0, Math.round(hero.getBoundingClientRect().top + (window.scrollY || 0)));
+      if (t === lastTop) return;                 // nothing to write, no layout thrash
+      lastTop = t;
+      document.documentElement.style.setProperty("--fpv-top", t + "px");
     }
     measureTop();
     var rt = null;
@@ -113,7 +116,7 @@
     var idle = mkVideo("idle", true);
     var wave = mkVideo("wave", false);
 
-    var frames = [], nFrames = 0, neutral = 0, ready = false;
+    var frames = [], meta = null, nFrames = 0, neutral = 0, ready = false;
 
     /* ---------------- drawing ---------------- */
 
@@ -168,16 +171,23 @@
       return { x: ox, y: oy, w: w, h: h };
     }
 
+    /* Returns whether it actually put anything on the canvas. The caller needs
+       to know: a source that cannot be drawn yet — a video still decoding, an
+       image not yet loaded — must not be allowed to leave the surface empty. */
+    var lastGood = null;
     function paint(src, alpha) {
-      if (!src) return;
+      if (!src) return false;
       var d = dims(src);
-      if (!d.w || !d.h) return;
-      if (src.tagName === "VIDEO" && src.readyState < 2) return;
+      if (!d.w || !d.h) return false;
+      if (src.tagName === "VIDEO" && src.readyState < 2) return false;
       var r = rectFor(src);
-      if (!r) return;
+      if (!r) return false;
       ctx.globalAlpha = alpha;
-      try { ctx.drawImage(src, r.x * dpr, r.y * dpr, r.w * dpr, r.h * dpr); } catch (e) {}
+      try { ctx.drawImage(src, r.x * dpr, r.y * dpr, r.w * dpr, r.h * dpr); }
+      catch (e) { ctx.globalAlpha = 1; return false; }
       ctx.globalAlpha = 1;
+      if (alpha >= 1) lastGood = src;
+      return true;
     }
 
     /* ---------------- state ---------------- */
@@ -203,17 +213,36 @@
       mixStart = performance.now();
     }
 
-    var trackIdx = 0, targetIdx = 0;
+    /* HE LOOKS IN TWO DIMENSIONS NOW.
+       The strip is no longer a line of head angles but a scatter of them: each
+       still carries the yaw AND pitch it was measured at, and the one nearest
+       the direction being asked for is the one drawn. A line could only ever
+       answer left and right, which is why he appeared to stare upward whenever
+       the cursor went low — there was nothing else for him to be. */
+    var curYaw = 0, curPitch = 0, tgtYaw = 0, tgtPitch = 0;
 
-    function currentTrackImage() {
-      var i = Math.max(0, Math.min(nFrames - 1, Math.round(trackIdx)));
-      return frames[i] && frames[i].complete ? frames[i] : null;
+    function nearestFrame(y, p) {
+      if (!meta) return null;
+      var best = -1, bd = Infinity;
+      for (var i = 0; i < meta.f.length; i++) {
+        var dy = (meta.f[i].y - y) / (meta.yawMax - meta.yawMin || 1);
+        var dp = (meta.f[i].p - p) / (meta.pitchMax - meta.pitchMin || 1);
+        /* Yaw counts for more. Turning is what a person reads as "he looked at
+           me"; the vertical component is a smaller, subtler motion and letting
+           it win ties makes him seem to nod at the cursor rather than face it. */
+        var d = dy * dy * 1.9 + dp * dp;
+        if (d < bd) { bd = d; best = i; }
+      }
+      return best >= 0 && frames[best] && frames[best].complete ? frames[best] : null;
     }
+
+    function currentTrackImage() { return nearestFrame(curYaw, curPitch); }
 
     function frame(now) {
       /* Ease toward the pointer. A head does not teleport, and this is also
          what turns a fast flick across the screen into a turn. */
-      trackIdx += (targetIdx - trackIdx) * 0.16;
+      curYaw += (tgtYaw - curYaw) * 0.16;
+      curPitch += (tgtPitch - curPitch) * 0.16;
 
       if (mode === "track") {
         var im = currentTrackImage();
@@ -227,20 +256,47 @@
 
       var fill = shown && shown.tagName === "VIDEO" ? null : null;
       ctx.globalAlpha = 1;
+      /* Wipe first. The picture is letterboxed, so the bands either side of it
+         are never painted over — without this they keep whatever was drawn
+         there before and smear as the window changes shape. Clearing and
+         redrawing inside one frame leaves no gap; the gap that caused the
+         flash was one spread across frames. */
+      ctx.clearRect(0, 0, canvas.width, canvas.height);
 
       /* THE ORDER MATTERS. The outgoing picture is laid down whole, then the
          incoming one is drawn over it. The canvas is never showing less than
          one complete image, which is the entire reason there is no flash. */
-      paint(shown, 1);
+      /* WHATEVER HAPPENS, SOMETHING GETS DRAWN. If the picture that is supposed
+         to be on screen cannot be drawn this instant, the last one that could
+         is drawn instead. Without this the greeting simply failed to appear:
+         the switch happened while the clip was still decoding, the draw was
+         skipped, and a cleared canvas showed the poster behind it. */
+      if (!paint(shown, 1)) paint(lastGood, 1);
 
       if (incoming) {
         var t = (now - mixStart) / FADE;
-        if (t >= 1) { shown = incoming; incoming = null; paint(shown, 1); }
-        else { paint(incoming, t < 0 ? 0 : t); }
+        if (t >= 1) {
+          /* Only hand over once the newcomer can actually be drawn, or the
+             handover throws away a good picture for a blank one. */
+          if (paint(incoming, 1)) { shown = incoming; incoming = null; }
+          else if (now - mixStart > 2500) { incoming = null; }
+        } else {
+          paint(incoming, t < 0 ? 0 : t);
+        }
       }
+
+      /* RE-MEASURE WHERE THE HERO STARTS, PERIODICALLY.
+         A ResizeObserver fires when an element changes SIZE, not when it moves.
+         The notice above the hero wraps to a second line at some widths, which
+         shifts the hero down without resizing it — so the offset went stale and
+         the hero hung past the bottom of the screen. Twice a second is far
+         below anything perceptible and measureTop() writes nothing unless the
+         number actually changed. */
+      if ((tick30 = (tick30 + 1) % 30) === 0) measureTop();
 
       window.requestAnimationFrame(frame);
     }
+    var tick30 = 0;
 
     /* ---------------- boot the sources ---------------- */
 
@@ -268,8 +324,9 @@
     window.requestAnimationFrame(frame);
 
     fetch(dir + "track/frames.json").then(function (r) { return r.json(); }).then(function (m) {
-      nFrames = m.n; neutral = m.neutral;
-      trackIdx = targetIdx = neutral;
+      meta = m; nFrames = m.n; neutral = m.neutral;
+      curYaw = tgtYaw = m.f[neutral].y;
+      curPitch = tgtPitch = m.f[neutral].p;
       var pending = nFrames;
       for (var i = 0; i < nFrames; i++) {
         (function (k) {
@@ -295,18 +352,28 @@
          wide screen is nowhere near the middle of the page. */
       var r = rectFor(frames[neutral] || idle);
       var box = root.getBoundingClientRect();
+      /* WHERE HIS EYES ARE, not the middle of the window. The picture is
+         letterboxed inside the stage, and his eyes sit above the centre of it —
+         measuring from the middle of the box aimed him low and to one side. */
       var headX = box.left + (r ? r.x + r.w / 2 : box.width / 2);
+      var headY = box.top + (r ? r.y + r.h * 0.34 : box.height * 0.34);
 
-      var dx = e.clientX - headX;
-      var reach = Math.max(240, box.width * 0.45);
-      var t = Math.max(-1, Math.min(1, dx / reach));
+      var reachX = Math.max(260, box.width * 0.42);
+      var reachY = Math.max(200, box.height * 0.55);
+      var tx = Math.max(-1, Math.min(1, (e.clientX - headX) / reachX));
+      var ty = Math.max(-1, Math.min(1, (e.clientY - headY) / reachY));
 
-      /* Piecewise, because the strip is not symmetrical about the front. To his
-         left there are 14 frames of turn; to his right only 6. Mapping linearly
-         across all 21 would put "facing the camera" at the wrong place and his
-         gaze would sit permanently off to one side. */
-      targetIdx = t < 0 ? neutral + t * neutral
-                        : neutral + t * (nFrames - 1 - neutral);
+      /* Piecewise about the front-facing frame in both axes, because the
+         measured range is not symmetrical around it — mapping straight across
+         the full span would put "facing the camera" in the wrong place and
+         leave his gaze permanently offset. */
+      var n0 = meta.f[neutral];
+      tgtYaw = tx < 0 ? n0.y + tx * (n0.y - meta.yawMin)
+                      : n0.y + tx * (meta.yawMax - n0.y);
+      /* Pitch rises as he looks DOWN, so the cursor going down must raise it.
+         Inverting this is what had him looking up when the cursor went low. */
+      tgtPitch = ty < 0 ? n0.p + ty * (n0.p - meta.pitchMin)
+                        : n0.p + ty * (meta.pitchMax - n0.p);
 
       if (mode !== "track") { mode = "track"; switchTo(currentTrackImage() || frames[neutral]); }
     }, { passive: true });
@@ -314,7 +381,7 @@
     stage.addEventListener("pointerleave", function () {
       if (mode === "greet") return;
       mode = "rest";
-      targetIdx = neutral;
+      if (meta) { tgtYaw = meta.f[neutral].y; tgtPitch = meta.f[neutral].p; }
       switchTo(idle);
       startIdle();
     }, { passive: true });

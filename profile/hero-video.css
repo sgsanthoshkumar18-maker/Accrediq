@@ -330,6 +330,36 @@
    ASPECT RATIOS
    ============================================================ */
 
+/* LAPTOPS ARE 16:10 AND THEIR WINDOWS ARE SHORTER STILL.
+   A MacBook reports 1440x900 or 1512x982, and once the browser's own chrome,
+   the standards notice and the site header are taken off it, the hero gets
+   somewhere around 620-790px to live in. The copy has to shrink to fit that,
+   not overflow it — an overflowing hero is the one thing the full-screen
+   layout must never do, because there is nothing below the fold to scroll to
+   except the rest of the page.
+
+   Three tiers, each taking a little more out: padding first, then the type,
+   then the credential chips, which are the least load-bearing thing here. */
+@media (max-height:820px) and (min-width:901px){
+  .fpv-copy{ padding-top:clamp(52px,7vh,76px); padding-bottom:clamp(36px,5vh,56px); gap:14px; }
+  .fpv-left{ gap:9px; padding:clamp(16px,1.5vw,22px); }
+  .fpv-name{ font-size:clamp(25px,2.7vw,36px); }
+  .fpv-role{ font-size:clamp(13px,.95vw,15px); }
+  .fpv-tags{ gap:6px; }
+  .fpv-tags .fp-tag:nth-child(n+6){ display:none; }
+}
+
+@media (max-height:700px) and (min-width:901px){
+  .fpv-copy{ padding-top:clamp(44px,6vh,60px); padding-bottom:28px; gap:10px; }
+  .fpv-left{ gap:7px; padding:14px 16px; }
+  .fpv-name{ font-size:clamp(22px,2.3vw,30px); }
+  .fpv-role{ font-size:13px; line-height:1.45; }
+  .fpv-meta{ font-size:12px; line-height:1.45; }
+  .fpv-hint{ margin-top:2px; }
+  .fpv-tags .fp-tag:nth-child(n+5){ display:none; }
+  .fpv-scroll{ display:none; }
+}
+
 /* Short and wide — a laptop in landscape, or a desktop with a shallow window.
    There is no room for a full-height column of copy, so it tightens rather
    than scrolling the hero. */

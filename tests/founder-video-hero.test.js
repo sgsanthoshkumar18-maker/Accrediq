@@ -56,7 +56,7 @@ check('the clips, the still and the manifest are on disk', () => {
      'the frame manifest is missing — nothing knows which still faces the camera');
 });
 
-check('the head-turn strip is complete, ordered by angle, and front is marked', () => {
+check('the head poses are complete, cover both axes, and front is marked', () => {
   const dir = path.join(ROOT, 'profile/hero/track');
   const files = fs.readdirSync(dir).filter(f => /^t\d\d\.webp$/.test(f)).sort();
   ok(files.length >= 12, 'only ' + files.length + ' head-turn frames; the turn will read as steps');
@@ -69,20 +69,31 @@ check('the head-turn strip is complete, ordered by angle, and front is marked', 
   ok(man.n === files.length,
      'the manifest says ' + man.n + ' frames but ' + files.length + ' are on disk');
 
-  /* The whole point of the strip is that frame k is further round than frame
-     k-1. Ordered by timestamp instead it wanders back and forth, and the head
-     jitters as the cursor crosses. */
-  for (let i = 1; i < man.yaw.length; i++) {
-    ok(man.yaw[i] >= man.yaw[i - 1],
-       'frame ' + i + ' turns back on frame ' + (i - 1) + ' — the strip is not ordered by angle');
-  }
-  ok(man.neutral > 0 && man.neutral < man.n - 1,
-     'the front-facing frame is at an end of the strip, which cannot be right');
-  /* It is asymmetric on purpose; this guards against someone "tidying" it to
-     the midpoint, which would aim his gaze wrongly. */
-  ok(Math.abs(man.yaw[man.neutral]) <= Math.abs(man.yaw[man.neutral - 1]) &&
-     Math.abs(man.yaw[man.neutral]) <= Math.abs(man.yaw[man.neutral + 1]),
-     'the frame marked as front is not the one closest to a zero turn');
+  /* Every pose carries the yaw AND pitch it was measured at. Without both, the
+     lookup can only answer left and right — which is exactly why he appeared to
+     stare upward whenever the cursor went low. */
+  ok(Array.isArray(man.f) && man.f.length === man.n, 'the manifest has no pose list');
+  man.f.forEach((p, i) => {
+    ok(typeof p.y === 'number' && typeof p.p === 'number',
+       'pose ' + i + ' is missing a yaw or a pitch');
+  });
+
+  /* Both axes must actually vary, or one of them is decorative. */
+  const ys = man.f.map(p => p.y), ps = man.f.map(p => p.p);
+  ok(Math.max(...ys) - Math.min(...ys) > 0.04,
+     'the poses barely turn (yaw span ' + (Math.max(...ys) - Math.min(...ys)).toFixed(3) +
+     '); his gaze will never reach the cursor');
+  ok(Math.max(...ps) - Math.min(...ps) > 0.02,
+     'the poses barely tilt (pitch span ' + (Math.max(...ps) - Math.min(...ps)).toFixed(3) +
+     '); he will look the same whether the cursor is high or low');
+
+  ok(man.neutral >= 0 && man.neutral < man.n, 'the front-facing pose index is out of range');
+  /* The measured range is not symmetric about the front, so the neutral index
+     is not the midpoint. This guards against someone "tidying" it to the
+     middle, which aims his gaze permanently off to one side. */
+  const nAbs = Math.abs(man.f[man.neutral].y);
+  ok(man.f.every(p => Math.abs(p.y) >= nAbs - 1e-9),
+     'the pose marked as front is not the one closest to a zero turn');
 });
 
 check('the whole hero stays small enough for hospital wifi', () => {
