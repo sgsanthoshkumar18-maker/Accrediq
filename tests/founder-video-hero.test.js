@@ -161,8 +161,21 @@ check('landscape shows the whole figure, portrait does not crop him to a head', 
      'there is no portrait branch; a 16:9 frame filling a tall screen zooms him to a face');
 });
 
-check('the hero is measured in svh, not vh', () => {
-  ok(/min-height\s*:\s*100svh/.test(css), 'the hero does not use svh for its height');
+check('the hero is measured in svh, not vh, and allows for what sits above it', () => {
+  /* svh, not vh: vh counts the strip behind mobile browser chrome, which shows
+     as a band of dead ground under the hero on a phone.
+     The height is a calc() because the hero starts below the standards notice
+     and the header — a full viewport box would hang off the bottom of the
+     screen by exactly that much, taking the sound switch and the scroll cue
+     with it. Matching the literal "100svh" is what this used to assert, and it
+     broke the moment the calc was introduced, so it now checks the two things
+     that actually matter. */
+  ok(/min-height\s*:\s*calc\(100svh/.test(css),
+     'the hero height is not measured from 100svh');
+  ok(/--fpv-top/.test(css),
+     'the hero does not subtract how far down the page it starts');
+  ok(!/min-height\s*:\s*(calc\()?100vh\b/.test(css),
+     'the hero uses vh somewhere; on a phone that leaves a band of dead ground beneath it');
 });
 
 console.log('\n' + (fail ? fail + ' failing, ' : '') + pass + ' passing');
