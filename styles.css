@@ -716,7 +716,17 @@ p{margin:0 0 0;}
    in the drop-down menu below 980px where the panel is vertical and width costs nothing.
    Between the two it is reached from the home page and the footer. */
 .nav-wide-only{display:none;}
-@media (min-width:1360px){ .nav-wide-only{display:inline-flex;} }
+/* 1560, not 1360. The 1360 was measured when this was the only wide button in
+   the actions group; the Quality Dashboard button has since been added beside
+   it and takes another 150px. At 1512 — a 14-inch MacBook at 100% — the group
+   then needed about 1424px inside a 1324px box, so it ran past the right edge
+   and pushed the theme switch off the end of the bar. It reappeared at 90%
+   zoom purely because that hands the page 1680 CSS pixels instead.
+   Measured with both buttons present: brand 259 + nav 529 + actions 444
+   without this one, plus gaps and padding, wants a viewport around 1444, and
+   1560 leaves a margin rather than sitting on the boundary. Below that the
+   workspace is still one tap away in the drop-down menu. */
+@media (min-width:1560px){ .nav-wide-only{display:inline-flex;} }
 
 /* The workspace link inside the nav is for the DRAWER only. On a desktop the bar has no room
    for it — it needs about 81px that is not there below 1360px — so the way into the workspace

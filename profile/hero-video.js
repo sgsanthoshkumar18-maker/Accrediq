@@ -120,7 +120,12 @@
 
     /* ---------------- drawing ---------------- */
 
-    var dpr = Math.min(window.devicePixelRatio || 1, 2);
+    /* 1.5, not 2. At devicePixelRatio 2 a full-screen MacBook canvas is around
+       3400x2000 device pixels, and drawing a picture across all of them every
+       frame is the single most expensive thing on this page — it was enough to
+       make the whole hero stutter. The source is 1280 wide and is being
+       upscaled either way, so the extra device pixels were buying nothing. */
+    var dpr = Math.min(window.devicePixelRatio || 1, 1.5);
     var cssW = 0, cssH = 0;
 
     function resize() {
@@ -131,6 +136,7 @@
       canvas.height = Math.round(cssH * dpr);
       canvas.style.width = cssW + "px";
       canvas.style.height = cssH + "px";
+      dirty = true;                      // a resized canvas is a blank one
     }
     resize();
     /* MEASURE WHEN THE BOX ACTUALLY CHANGES, not when the script happens to run.
@@ -199,6 +205,14 @@
 
     var shown = poster;                // what is on screen
     var incoming = null;               // what is dissolving in
+    /* DRAW ONLY WHEN SOMETHING CHANGED.
+       Redrawing a full-screen picture sixty times a second regardless is what
+       made this hang. While he is holding one pose and the cursor is still,
+       there is nothing new to put on the canvas — so nothing is drawn, and the
+       page costs nothing. A video playing, a dissolve running, a new pose or a
+       resize each mark it dirty again. */
+    var dirty = true;
+    var lastDrawn = null;
     var mixStart = 0;
     var mode = "rest";                 // rest | track | greet
 
@@ -211,6 +225,7 @@
       if (incoming) { shown = incoming; }
       incoming = src;
       mixStart = performance.now();
+      dirty = true;
     }
 
     /* HE LOOKS IN TWO DIMENSIONS NOW.
@@ -247,14 +262,23 @@
       if (mode === "track") {
         var im = currentTrackImage();
         if (im) {
-          /* Within tracking the frames are not dissolved — consecutive stills
-             are a few degrees apart and a dissolve would only smear them. */
-          if (shown !== im && !incoming) shown = im;
-          else if (incoming && incoming.tagName !== "VIDEO") incoming = im;
+          /* Within tracking the poses are not dissolved — neighbours are a few
+             degrees apart and a dissolve would only smear them together. */
+          if (shown !== im && !incoming) { shown = im; dirty = true; }
+          else if (incoming && incoming.tagName !== "VIDEO") { incoming = im; dirty = true; }
         }
       }
 
-      var fill = shown && shown.tagName === "VIDEO" ? null : null;
+      /* A video that is running has a new picture every frame; a still does
+         not. Anything mid-dissolve is changing by definition. */
+      if (incoming) dirty = true;
+      if (shown && shown.tagName === "VIDEO" && !shown.paused) dirty = true;
+      if (shown !== lastDrawn) dirty = true;
+
+      if (!dirty) { window.requestAnimationFrame(frame); return; }
+      dirty = false;
+      lastDrawn = shown;
+
       ctx.globalAlpha = 1;
       /* Wipe first. The picture is letterboxed, so the bands either side of it
          are never painted over — without this they keep whatever was drawn
@@ -400,11 +424,16 @@
       wave.muted = !soundOn();
       try { wave.currentTime = 0; } catch (err) {}
 
-      /* Show it only once there is a frame to show. Switching first and waiting
-         for the decode is what used to put a blank rectangle on screen. */
-      function reveal() { switchTo(wave); }
-      if (wave.readyState >= 2) reveal();
-      else wave.addEventListener("loadeddata", reveal, { once: true });
+      /* SWITCH UNCONDITIONALLY. This used to wait for readyState to reach 2 and
+         otherwise listen for 'loadeddata' — which is a trap, because the
+         currentTime = 0 above starts a seek that briefly drops readyState back
+         to 1, and 'loadeddata' has already fired during preload and never fires
+         twice. The greeting then played through to the end with nothing on
+         screen at all: audio, no picture.
+         There is no need to gate it. paint() reports when a source cannot be
+         drawn yet and the loop keeps the last good picture up until it can, and
+         the handover below only completes once the clip genuinely paints. */
+      switchTo(wave);
 
       var p = wave.play();
       if (p && p.catch) p.catch(function () {

@@ -496,6 +496,11 @@
     overlay.appendChild(btn);
     return btn;
   });
+  /* Reused scratch vector: the hemisphere test runs 74 times a frame, and a fresh
+     Vector3 there was the only per-frame garbage left in the loop. */
+  const _centre = new THREE.Vector3();
+  function globeCentre() { return rig.getWorldPosition(_centre); }
+
   function updateHitPositions() {
     const w = wrapEl.clientWidth, h = wrapEl.clientHeight;
     hubs.forEach((hub, i) => {
@@ -504,9 +509,28 @@
       const sx = (p.x * 0.5 + 0.5) * w, sy = (-p.y * 0.5 + 0.5) * h;
       const el = hitEls[i];
       el.style.left = sx + "px"; el.style.top = sy + "px";
-      const behind = p.z > 1;
+
+      /* HEMISPHERE TEST, NOT A FRUSTUM TEST. This read `p.z > 1`, which is only
+         true beyond the camera's FAR plane — and the globe sits wholly inside the
+         frustum, so it never fired once. All 74 capitals stayed visible, including
+         the ~37 on the far side, and a far-side capital projects onto the MIRRORED
+         point of the disc. That is why European capitals appeared over the
+         Americas: they were Paris and Berlin seen through the planet.
+
+         A capital faces away when the vector from it to the camera lies on the
+         back of its own surface normal. The globe is a sphere centred on the rig's
+         origin, so the normal at a capital is the capital's own position measured
+         from that centre. */
+      const behind = world.clone().sub(globeCentre()).dot(
+        camera.position.clone().sub(world)) <= 0;
       el.style.opacity = behind ? "0" : "1";
       el.style.pointerEvents = behind ? "none" : "auto";
+
+      /* Hide the WebGL sprite too. The sphere is transparent at 0.94 and the
+         sprites blend additively without writing depth, so a far-side marker bled
+         6% of itself through the planet as a faint ghost over the wrong continent.
+         It also stops the raycaster picking a capital through the globe. */
+      hub.mesh.visible = !behind;
 
       // Keep the tooltip pinned to its node as the globe rotates.
       if (i === hoveredIndex) {
