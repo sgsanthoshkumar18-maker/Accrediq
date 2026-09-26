@@ -26,9 +26,18 @@
    ============================================================ */
 .fpv-hero{
   position:relative;
-  /* svh, not vh: vh includes the strip behind mobile browser chrome, which
-     shows up as a band of dead ground under the hero on a phone. */
-  min-height:100svh;
+  /* THE HERO IS ONE SCREEN, MEASURED FROM WHERE IT ACTUALLY STARTS.
+     100svh alone is wrong here: the hero begins below the standards notice and
+     the site header, so a full-viewport box hangs off the bottom of the screen
+     by exactly that much — and everything pinned to the hero's lower edge, the
+     sound switch and the scroll cue, goes with it. --fpv-top is that offset,
+     measured once by hero-video.js and refreshed on resize, because how tall
+     the notice wraps to is a fact about rendered text that CSS cannot ask for.
+     The fallback keeps it sane if the script never runs.
+
+     svh, not vh: vh counts the strip behind mobile browser chrome, which shows
+     up as a band of dead ground under the hero on a phone. */
+  min-height:calc(100svh - var(--fpv-top, 0px));
   display:grid;
   align-items:center;
   overflow:hidden;
@@ -69,24 +78,20 @@
   opacity:0;
   border:0;
 }
-/* The base never fades and is never not there. Everything else is an opaque
-   sheet laid over it for the length of one reaction. */
-.fpv-clip.fpv-base{ opacity:1; }
-.fpv-clip.is-on{ opacity:1; }
+/* THE INCOMING LAYER FADES IN ON TOP; THE OUTGOING ONE STAYS OPAQUE BENEATH IT
+   UNTIL IT HAS ARRIVED.
+   This is the whole answer to the white blink. Fading one out while fading the
+   other in leaves a moment when neither is opaque, and the page shows through
+   the middle of it. Here the layer being shown is lifted above the others the
+   instant it is asked for, so it dissolves over a picture rather than over a
+   gap, and the one underneath is only switched off once it is completely
+   hidden anyway.
 
-/* A BRIEF DISSOLVE ON THE OVERLAYS ONLY — never on the base.
-   A hard cut between two takes of the same man shows as a jerk: his hands are
-   not in quite the same place on either side of the frame boundary. About a
-   tenth of a second is enough for the eye to read the two positions as one
-   movement, and short enough that it is not perceived as a fade.
-
-   This is safe precisely because it is one-sided. The old version faded BOTH
-   clips, which left a moment when neither was opaque and the page showed
-   through — the white blink. Here the base sits underneath at full opacity the
-   whole time, so the overlay is dissolving against a picture, never a gap. */
-.fpv-clip:not(.fpv-base){
-  transition:opacity .11s linear;
-}
+   The dissolve is about an eighth of a second: long enough that the eye reads
+   two slightly different hand positions as one movement rather than a cut,
+   short enough that it is not perceived as a fade. */
+.fpv-clip{ z-index:1; transition:opacity .13s linear; }
+.fpv-clip.is-on{ opacity:1; z-index:2; }
 
 /* THE DISSOLVE. A single elliptical mask, generously feathered, centred on
    him. Everything past it is the page. Both properties: Safari still wants
@@ -149,7 +154,7 @@
   align-items:center;
   gap:clamp(16px,2vw,32px);
   pointer-events:none;        /* the stage underneath stays clickable */
-  min-height:100svh;
+  min-height:calc(100svh - var(--fpv-top, 0px));
   box-sizing:border-box;
 }
 .fpv-copy > *{ pointer-events:auto; }
@@ -259,6 +264,41 @@
 .fpv-namehit:focus-visible{ outline:2px solid var(--brand-2); outline-offset:3px; border-radius:4px; }
 @media (hover: none), (pointer: coarse){ .fpv-hint{ display:none; } }
 
+/* THE TRACKING LAYER. Same box and same fit as the clips, so swapping between
+   the typing video and a head-angle still does not move the picture. */
+.fpv-track{ opacity:0; }
+.fpv-track.is-on{ opacity:1; }
+
+/* THE SOUND SWITCH. Sits on the stage, out of the way of both text rails, and
+   above the video so it stays clickable — the stage underneath opens the
+   greeting on click, which is why this stops the event. */
+.fpv-sound{
+  position:absolute;
+  right:clamp(16px,2.2vw,32px);
+  bottom:clamp(16px,3vh,32px);
+  z-index:6;
+  display:inline-flex; align-items:center; gap:8px;
+  padding:9px 15px;
+  border-radius:999px;
+  cursor:pointer;
+  font:inherit;
+  font-size:12.5px;
+  font-weight:600;
+  color:var(--fg-muted);
+  background:color-mix(in srgb, var(--bg) 72%, transparent);
+  border:1px solid var(--glass-edge, var(--border));
+  box-shadow:inset 0 1px 0 var(--glass-specular, transparent);
+  -webkit-backdrop-filter:blur(14px) saturate(112%);
+  backdrop-filter:blur(14px) saturate(112%);
+  transition:color .2s ease, border-color .2s ease;
+}
+.fpv-sound:hover{ color:var(--fg); border-color:color-mix(in srgb, var(--brand-2) 40%, var(--glass-edge)); }
+.fpv-sound:focus-visible{ outline:2px solid var(--brand-2); outline-offset:3px; }
+.fpv-sound svg{ flex:none; }
+/* No cursor, no clips, nothing to hear. */
+@media (hover: none), (pointer: coarse){ .fpv-sound{ display:none; } }
+@media (max-width:560px){ .fpv-sound .fpv-sound-label{ display:none; } .fpv-sound{ padding:10px; } }
+
 /* The cue that there is more below. */
 .fpv-scroll{
   position:absolute;
@@ -350,7 +390,7 @@
 }
 
 @media (max-width:900px){
-  .fpv-hero{ min-height:100svh; }
+  .fpv-hero{ min-height:calc(100svh - var(--fpv-top, 0px)); }
   .fpv-clip{ object-fit:cover; object-position:50% 30%; }
   .fpv{
     -webkit-mask-image:radial-gradient(135% 68% at 50% 32%,
