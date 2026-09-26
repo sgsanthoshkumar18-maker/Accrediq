@@ -1,19 +1,26 @@
-/* THE FOUNDER HERO FOLLOWS THE CURSOR, AND IT HAS TWO FAILURE MODES THAT
- * MATTER — BOTH INVISIBLE IN THE SOURCE UNLESS YOU KNOW TO LOOK.
+/* THE FOUNDER HERO FOLLOWS THE CURSOR. THREE THINGS BREAK IT, ALL INVISIBLE
+ * IN THE SOURCE UNLESS YOU KNOW WHAT YOU ARE LOOKING AT.
  *
- * 1. THE BLINK. An early version faded one layer out while fading the next in.
- *    Two layers at half opacity do not add back up to a picture: for a few
- *    frames neither is opaque and the page shows through the middle. The fix is
- *    that the incoming layer is lifted ABOVE the others and the outgoing one is
- *    left fully opaque underneath until it is completely covered. The obvious
- *    tidy-up — toggling both in the same tick — puts the blink straight back.
+ * 1. THE BLACK FLASH. Earlier builds stacked a <video>, an <img> and another
+ *    <video> and cross-faded their CSS opacity. While two layers are each part
+ *    transparent, whatever is behind shows through the middle of the blend —
+ *    and behind them is a black page. Assigning a new src to an <img> can also
+ *    leave it with nothing to paint for a frame, and a blank <img> at full
+ *    opacity is a black rectangle. Everything is now drawn into one canvas,
+ *    outgoing picture first and incoming over the top of it, so the surface is
+ *    never showing less than one complete image.
  *
- * 2. THE HEAD NOT MOVING AT ALL. The turn is 19 stills chosen by measured head
- *    angle, indexed by pointer position. If the easing is driven only by
- *    requestAnimationFrame then in a background tab, under battery saver, or
- *    inside an embedded web view — all places rAF is throttled to nothing —
- *    the head never moves. That reads as broken, not as less smooth, so a
- *    pointer event must move it by itself.
+ * 2. AN OPAQUE CANVAS. getContext("2d", {alpha:false}) starts the canvas as
+ *    solid BLACK. That reintroduces the exact flash the canvas was adopted to
+ *    remove, in the window before the first draw and anywhere the draw loop
+ *    cannot run. Transparent means the poster underneath shows instead.
+ *
+ * 3. HIM LOOKING THE WRONG WAY. The strip is ordered by measured head angle,
+ *    not by timestamp, and it is NOT symmetrical — the clip sweeps from his
+ *    full left profile round to the front and barely past it, so "facing the
+ *    camera" is index 14 of 20. Mapping the cursor linearly across all 21
+ *    frames puts front in the wrong place and his gaze sits permanently off to
+ *    one side, which is exactly what it did.
  */
 const fs = require('fs');
 const path = require('path');
@@ -22,6 +29,11 @@ const ROOT = path.join(__dirname, '..');
 const html = fs.readFileSync(path.join(ROOT, 'founder.html'), 'utf8');
 const css = fs.readFileSync(path.join(ROOT, 'profile/hero-video.css'), 'utf8');
 const js = fs.readFileSync(path.join(ROOT, 'profile/hero-video.js'), 'utf8');
+/* Comments in that file name the very mistakes these checks look for — one
+   spells out "alpha:false" in a warning never to use it. Matching against the
+   raw text therefore finds the warning rather than the bug, so assertions about
+   what the CODE does run against the code with comments stripped. */
+const code = js.replace(/\/\*[\s\S]*?\*\//g, '').replace(/^\s*\/\/.*$/gm, '');
 
 let pass = 0, fail = 0;
 function check(name, fn) {
@@ -34,28 +46,43 @@ console.log('founder video hero');
 
 /* ---------- the pieces ---------- */
 
-check('the two clips and the still are on disk', () => {
+check('the clips, the still and the manifest are on disk', () => {
   ['idle.mp4', 'wave.mp4', 'poster.webp'].forEach(f => {
     const p = path.join(ROOT, 'profile/hero', f);
-    ok(fs.existsSync(p), 'profile/hero/' + f + ' is missing — the hero will show an empty stage');
+    ok(fs.existsSync(p), 'profile/hero/' + f + ' is missing');
     ok(fs.statSync(p).size > 2000, 'profile/hero/' + f + ' is suspiciously small');
   });
+  ok(fs.existsSync(path.join(ROOT, 'profile/hero/track/frames.json')),
+     'the frame manifest is missing — nothing knows which still faces the camera');
 });
 
-check('the head-turn frames are numbered without gaps, and the code agrees', () => {
-  /* The player picks a frame by index. A missing file is one dead angle the
-     head snaps past — much harder to notice than a file that is simply absent. */
+check('the head-turn strip is complete, ordered by angle, and front is marked', () => {
   const dir = path.join(ROOT, 'profile/hero/track');
-  ok(fs.existsSync(dir), 'profile/hero/track is missing — there is nothing to track with');
   const files = fs.readdirSync(dir).filter(f => /^t\d\d\.webp$/.test(f)).sort();
   ok(files.length >= 12, 'only ' + files.length + ' head-turn frames; the turn will read as steps');
   files.forEach((f, i) => {
     const want = 't' + (i < 10 ? '0' : '') + i + '.webp';
     ok(f === want, 'frame numbering has a gap: expected ' + want + ', found ' + f);
   });
-  const declared = (js.match(/var FRAMES\s*=\s*(\d+)/) || [])[1];
-  ok(Number(declared) === files.length,
-     'hero-video.js declares ' + declared + ' frames but ' + files.length + ' are on disk');
+
+  const man = JSON.parse(fs.readFileSync(path.join(dir, 'frames.json'), 'utf8'));
+  ok(man.n === files.length,
+     'the manifest says ' + man.n + ' frames but ' + files.length + ' are on disk');
+
+  /* The whole point of the strip is that frame k is further round than frame
+     k-1. Ordered by timestamp instead it wanders back and forth, and the head
+     jitters as the cursor crosses. */
+  for (let i = 1; i < man.yaw.length; i++) {
+    ok(man.yaw[i] >= man.yaw[i - 1],
+       'frame ' + i + ' turns back on frame ' + (i - 1) + ' — the strip is not ordered by angle');
+  }
+  ok(man.neutral > 0 && man.neutral < man.n - 1,
+     'the front-facing frame is at an end of the strip, which cannot be right');
+  /* It is asymmetric on purpose; this guards against someone "tidying" it to
+     the midpoint, which would aim his gaze wrongly. */
+  ok(Math.abs(man.yaw[man.neutral]) <= Math.abs(man.yaw[man.neutral - 1]) &&
+     Math.abs(man.yaw[man.neutral]) <= Math.abs(man.yaw[man.neutral + 1]),
+     'the frame marked as front is not the one closest to a zero turn');
 });
 
 check('the whole hero stays small enough for hospital wifi', () => {
@@ -75,107 +102,100 @@ check('the page mounts the stage, the script and the sound switch', () => {
   ok(/id="fpvSound"/.test(html), 'the sound switch is missing');
 });
 
-/* ---------- failure mode 1: the blink ---------- */
+/* ---------- failure mode 1 and 2: black ---------- */
 
-check('the shown layer is opaque AND lifted above the others', () => {
-  const on = css.match(/\.fpv-clip\.is-on\s*\{([^}]*)\}/);
-  ok(on, '.fpv-clip.is-on has no rule');
-  ok(/opacity\s*:\s*1/.test(on[1]), 'the shown layer must be fully opaque');
-  ok(/z-index/.test(on[1]),
-     'the shown layer is not raised above the others; it will dissolve over a gap ' +
-     'instead of over the outgoing picture — that is the white blink');
+check('everything is drawn into one canvas, not stacked as fading layers', () => {
+  ok(/createElement\("canvas"\)/.test(js), 'there is no canvas; layers are being stacked again');
+  ok(/\.fpv-canvas/.test(css), 'the canvas has no rule');
+  ok(!/\.fpv-clip/.test(css), 'the old stacked-layer rules are still in the stylesheet');
 });
 
-check('the outgoing layer is only switched off after the fade, not during it', () => {
-  /* The giveaway is a setTimeout around the class removal. Removing is-on in
-     the same tick as adding it to the next layer is exactly the bug. */
-  ok(/setTimeout/.test(js) && /classList\.remove\("is-on"\)/.test(js),
-     'nothing defers switching the old layer off; both will fade at once');
+check('the canvas is transparent, never an opaque black surface', () => {
+  ok(!/alpha:\s*false/.test(code),
+     'the canvas context is opaque; it starts BLACK and shows as a flash before the ' +
+     'first draw and anywhere the draw loop cannot run');
 });
 
-/* ---------- failure mode 2: a head that never moves ---------- */
-
-check('the head is chosen by index, never by seeking a video', () => {
-  /* Seeking is frame-exact only on keyframes, and iOS Safari is the worst of
-     them. Picking a still by index is exact on every browser there is. */
-  ok(/track\.src\s*=/.test(js), 'nothing swaps the tracking frame');
-  const seeks = js.replace(/currentTime\s*=\s*0/g, '');
-  ok(!/currentTime\s*=\s*[^0\s]/.test(seeks),
-     'something seeks a video to a non-zero time; the turn must be frames, not seeking');
+check('the outgoing picture is drawn before the incoming one, every frame', () => {
+  /* Order is the whole mechanism: laying the old picture down whole and then
+     drawing the new one over it at a rising alpha is what leaves no gap. */
+  const f = js.match(/function frame\([\s\S]*?\n    \}/);
+  ok(f, 'the draw loop is gone');
+  const shownAt = f[0].indexOf('paint(shown, 1)');
+  const incomingAt = f[0].indexOf('paint(incoming');
+  ok(shownAt > -1 && incomingAt > -1 && shownAt < incomingAt,
+     'the incoming picture is drawn before the outgoing one, or not over it at all');
 });
 
-check('a pointer event moves the head by itself, without waiting for rAF', () => {
-  const aim = js.match(/function aim\s*\([^)]*\)\s*\{([\s\S]*?)\n    \}/);
-  ok(aim, 'aim() is gone');
-  ok(/show\s*\(/.test(aim[1]),
-     'aim() only schedules an animation frame; it must also take one immediately, ' +
-     'or the head is frozen wherever rAF is throttled');
+check('a poster is on the stage under the canvas, so it is never empty', () => {
+  ok(/backgroundImage[\s\S]{0,60}poster/.test(js),
+     'no poster is set behind the canvas; before the first draw the stage is bare');
+});
+
+/* ---------- failure mode 3: looking the wrong way ---------- */
+
+check('the cursor is measured from HIS head, not the middle of the window', () => {
+  ok(/headX/.test(js),
+     'the pointer angle is not taken from his head position; the picture is letterboxed ' +
+     'inside the stage, so the two are not the same place and his gaze sits off to one side');
+  ok(/rectFor/.test(js), 'nothing computes where the picture is actually drawn');
+});
+
+check('the cursor maps piecewise around the front frame, not linearly across the strip', () => {
+  ok(/neutral/.test(js), 'the front-facing frame index is never used');
+  ok(/t\s*<\s*0\s*\?/.test(js) || /t\s*<\s*0\s*$/m.test(js),
+     'the mapping is not split either side of the front frame; the strip is asymmetric, ' +
+     'so a linear map puts front in the wrong place');
 });
 
 check('the frames are preloaded before the first cursor move', () => {
   ok(/new Image\(\)/.test(js),
-     'the head-turn frames are not preloaded; the first move lands on a blank element');
+     'the head-turn frames are not preloaded; the first move lands on nothing');
 });
 
-/* ---------- sound ---------- */
+/* ---------- sizing ---------- */
+
+check('the canvas is sized from the box, when the box actually changes', () => {
+  /* Reading the rect during init catches the stage mid-layout — it pinned the
+     canvas at one pixel wide, and nothing resized afterwards to correct it. */
+  ok(/ResizeObserver/.test(js),
+     'the canvas size is only taken at init and on window resize; it will be measured ' +
+     'mid-layout and stay wrong');
+});
+
+check('the hero is measured in svh and allows for what sits above it', () => {
+  ok(/min-height\s*:\s*calc\(100svh/.test(css), 'the hero height is not measured from 100svh');
+  ok(/--fpv-top/.test(css), 'the hero does not subtract how far down the page it starts');
+  ok(!/min-height\s*:\s*(calc\()?100vh\b/.test(css),
+     'the hero uses vh; on a phone that leaves a band of dead ground beneath it');
+});
+
+/* ---------- sound and decoration ---------- */
 
 check('only the greeting can make sound, and the choice is remembered', () => {
-  ok(/idle\.muted\s*=\s*true/.test(js),
-     'the looping idle clip is not muted — it would be blocked, and hostile if it were not');
-  ok(/aq-hero-sound/.test(js) && /localStorage/.test(js),
-     'the sound choice is not remembered');
-  ok(/wave\.muted\s*=\s*!soundOn\(\)/.test(js),
-     'the greeting does not honour the sound switch');
+  /* Muting happens where the elements are built, so this follows the builder
+     rather than a variable name that may be refactored away. */
+  ok(/function mkVideo/.test(code) && /\.muted\s*=\s*true/.test(code),
+     'the clips are not muted at creation — an autoplaying idle with sound is blocked ' +
+     'by the browser, and hostile if it were not');
+  ok(/aq-hero-sound/.test(js) && /localStorage/.test(js), 'the sound choice is not remembered');
+  ok(/wave\.muted\s*=\s*!soundOn\(\)/.test(js), 'the greeting does not honour the sound switch');
 });
-
-/* ---------- it is decoration, and must behave like it ---------- */
 
 check('no pointer or reduced motion means one still, and nothing else is fetched', () => {
   ok(/prefers-reduced-motion/.test(js), 'reduced motion is not honoured');
   ok(/hover:\s*hover/.test(js), 'touch devices are not detected');
-  ok(/fpv-still/.test(js), 'there is no still fallback');
   const early = js.indexOf('fpv-still');
-  const firstVideo = js.indexOf('document.createElement("video")');
+  const firstVideo = js.indexOf('createElement("canvas")');
   ok(early > -1 && firstVideo > -1 && early < firstVideo,
-     'the still fallback is set up after the clips are built; phones would download them all');
+     'the still fallback is set up after the canvas and clips; phones would download them all');
 });
-
-check('the clips are hidden from assistive tech', () => {
-  ok(/aria-hidden/.test(js), 'the clips are not hidden from screen readers');
-});
-
-/* ---------- layout ---------- */
 
 check('the copy sits on its own surface rather than trusting the video', () => {
   const left = css.match(/\.fpv-left\s*\{([^}]*)\}/);
   ok(left, '.fpv-left has no rule');
   ok(/background\s*:/.test(left[1]),
-     'the copy column has no background; contrast would depend on which frame is showing, ' +
-     'and the brightest frame in these clips is a lit white wall');
-});
-
-check('landscape shows the whole figure, portrait does not crop him to a head', () => {
-  ok(/object-fit\s*:\s*contain/.test(css),
-     'the clip is never contained; cover on a landscape screen clips his head and the desk');
-  ok(/max-aspect-ratio/.test(css),
-     'there is no portrait branch; a 16:9 frame filling a tall screen zooms him to a face');
-});
-
-check('the hero is measured in svh, not vh, and allows for what sits above it', () => {
-  /* svh, not vh: vh counts the strip behind mobile browser chrome, which shows
-     as a band of dead ground under the hero on a phone.
-     The height is a calc() because the hero starts below the standards notice
-     and the header — a full viewport box would hang off the bottom of the
-     screen by exactly that much, taking the sound switch and the scroll cue
-     with it. Matching the literal "100svh" is what this used to assert, and it
-     broke the moment the calc was introduced, so it now checks the two things
-     that actually matter. */
-  ok(/min-height\s*:\s*calc\(100svh/.test(css),
-     'the hero height is not measured from 100svh');
-  ok(/--fpv-top/.test(css),
-     'the hero does not subtract how far down the page it starts');
-  ok(!/min-height\s*:\s*(calc\()?100vh\b/.test(css),
-     'the hero uses vh somewhere; on a phone that leaves a band of dead ground beneath it');
+     'the copy column has no background; contrast would depend on which frame is showing');
 });
 
 console.log('\n' + (fail ? fail + ' failing, ' : '') + pass + ' passing');

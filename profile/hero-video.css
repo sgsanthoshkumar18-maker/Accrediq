@@ -59,39 +59,47 @@
   background:var(--bg);
 }
 
-/* HOW THE 16:9 FRAME MEETS A SCREEN THAT IS NOT 16:9.
-   contain by default: on any landscape screen the WHOLE take stays visible —
-   his head is not clipped and the laptop and desk are not cut off, which is
-   the thing that makes it read as a person at a desk rather than a face
-   pressed against the glass. Where the frame does not reach, the page's own
-   background takes over, and the mask feathers the join so there is no
-   letterbox edge to see. Portrait screens switch to cover further down,
-   because contain on a phone leaves him a thin strip across the middle. */
-.fpv-clip{
+/* THE CANVAS IS THE ONLY THING ON SCREEN.
+   Everything is drawn into it — the typing clip, the head-turn stills, the
+   greeting — so there is never more than one element compositing, and never a
+   gap between two half-faded layers for the page to show through. That gap was
+   the black flash.
+
+   How a 16:9 frame meets a screen that is not 16:9 is decided in the draw call
+   now rather than by object-fit, because the fit has to be identical for every
+   source or he changes size between the typing clip and the stills. Landscape
+   contains (his whole head and the whole desk stay in shot); portrait fills,
+   anchored high on him, because containing a wide frame in a tall window
+   leaves him a strip across the middle. */
+.fpv-canvas{
   position:absolute;
   inset:0;
   width:100%;
   height:100%;
-  object-fit:contain;
-  object-position:50% 50%;
   display:block;
-  opacity:0;
-  border:0;
 }
-/* THE INCOMING LAYER FADES IN ON TOP; THE OUTGOING ONE STAYS OPAQUE BENEATH IT
-   UNTIL IT HAS ARRIVED.
-   This is the whole answer to the white blink. Fading one out while fading the
-   other in leaves a moment when neither is opaque, and the page shows through
-   the middle of it. Here the layer being shown is lifted above the others the
-   instant it is asked for, so it dissolves over a picture rather than over a
-   gap, and the one underneath is only switched off once it is completely
-   hidden anyway.
 
-   The dissolve is about an eighth of a second: long enough that the eye reads
-   two slightly different hand positions as one movement rather than a cut,
-   short enough that it is not perceived as a fade. */
-.fpv-clip{ z-index:1; transition:opacity .13s linear; }
-.fpv-clip.is-on{ opacity:1; z-index:2; }
+/* The source clips are decoded but never shown. Not display:none, which stops
+   some browsers decoding them at all — parked off-screen instead. */
+.fpv-src{
+  position:absolute;
+  left:-9999px;
+  width:1px; height:1px;
+  opacity:0;
+  pointer-events:none;
+}
+
+/* The poster sits under the canvas, so the stage always has a picture on it —
+   including before the first frame is drawn, and anywhere the draw loop cannot
+   run. An undrawn canvas is transparent, so what shows is him, not black. */
+.fpv{
+  background-size:contain;
+  background-position:50% 50%;
+  background-repeat:no-repeat;
+}
+@media (max-aspect-ratio: 1/1){
+  .fpv{ background-size:cover; background-position:50% 30%; }
+}
 
 /* THE DISSOLVE. A single elliptical mask, generously feathered, centred on
    him. Everything past it is the page. Both properties: Safari still wants
@@ -264,11 +272,6 @@
 .fpv-namehit:focus-visible{ outline:2px solid var(--brand-2); outline-offset:3px; border-radius:4px; }
 @media (hover: none), (pointer: coarse){ .fpv-hint{ display:none; } }
 
-/* THE TRACKING LAYER. Same box and same fit as the clips, so swapping between
-   the typing video and a head-angle still does not move the picture. */
-.fpv-track{ opacity:0; }
-.fpv-track.is-on{ opacity:1; }
-
 /* THE SOUND SWITCH. Sits on the stage, out of the way of both text rails, and
    above the video so it stays clickable — the stage underneath opens the
    greeting on click, which is why this stops the event. */
@@ -321,7 +324,7 @@
 
 /* No pointer / reduced motion: a still, and nothing else changes. */
 .fpv-still{ background-size:cover; background-position:50% 38%; }
-.fpv-still .fpv-clip{ display:none; }
+.fpv-still .fpv-canvas{ display:none; }
 
 /* ============================================================
    ASPECT RATIOS
@@ -362,7 +365,6 @@
     inset:0 0 auto 0;
     height:min(56svh, 62vw * 0.5625 + 22svh);
   }
-  .fpv-clip{ object-fit:contain; object-position:50% 50%; }
   .fpv{
     -webkit-mask-image:radial-gradient(96% 88% at 50% 44%,
         #000 0%, #000 44%, rgba(0,0,0,.80) 64%, rgba(0,0,0,.30) 84%, transparent 100%);
@@ -391,7 +393,6 @@
 
 @media (max-width:900px){
   .fpv-hero{ min-height:calc(100svh - var(--fpv-top, 0px)); }
-  .fpv-clip{ object-fit:cover; object-position:50% 30%; }
   .fpv{
     -webkit-mask-image:radial-gradient(135% 68% at 50% 32%,
         #000 0%, #000 38%, rgba(0,0,0,.85) 56%, rgba(0,0,0,.35) 78%, transparent 100%);
@@ -431,6 +432,6 @@
 
 @media print{
   .fpv-hero{ min-height:0; }
-  .fpv-clip, .fpv-scroll{ display:none; }
+  .fpv-canvas, .fpv-scroll{ display:none; }
   .fpv-scrim, .fpv-wash{ display:none; }
 }
