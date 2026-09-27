@@ -1,41 +1,28 @@
-/* AQcredix — the founder hero. He types until you arrive, then watches you.
+/* AQcredix — the founder hero. He works at his laptop. Click him and he waves,
+ * points to what is below, and goes back to work.
+ *
+ * THERE IS NO CURSOR TRACKING HERE, AND THAT IS DELIBERATE.
+ * An earlier build turned his head toward the pointer by swapping between 28
+ * stills chosen by measured head angle. It never read as a person looking at
+ * you. The poses were sampled from a clip that was never shot for it, so the
+ * reachable angles were narrow and unevenly spread, and between any two of them
+ * his shoulders and hands jumped, because only the head had been matched.
+ * Every attempt to smooth that — weighting the axes, easing toward the target,
+ * dissolving neighbours — traded one artefact for another, and the honest
+ * summary is that the footage could not support the effect. It is gone: the
+ * pointer now does nothing at all, and he simply keeps working.
  *
  * WHY THIS DRAWS TO A CANVAS INSTEAD OF STACKING ELEMENTS.
- * The previous build stacked a <video>, an <img> and another <video> and
- * cross-faded their CSS opacity. Two things go wrong with that and both of them
- * show as a black flash:
+ * The clips still have to hand over to one another when he greets you, and
+ * cross-fading the CSS opacity of stacked <video> elements shows as a black
+ * flash: while two layers are each partly transparent, whatever is behind them
+ * shows through the middle of the blend, and behind them is the page.
  *
- *   - While two layers are each partly transparent, whatever is behind them
- *     shows through the middle of the blend. Behind them is the page, which on
- *     this theme is black.
- *   - Assigning a new src to an <img> can leave it with nothing to paint for a
- *     frame or two, even when the file is already cached. A blank <img> at full
- *     opacity is a black rectangle.
- *
- * On a canvas neither can happen, because compositing stops being the browser's
- * decision. Every animation frame this draws the outgoing picture at full
- * opacity and then the incoming one over the top of it at a rising alpha. There
- * is never a moment when the canvas is showing less than one complete image, so
- * there is nothing for the background to show through.
- *
- * HOW HE KNOWS WHERE TO LOOK.
- * The turn is 21 stills ordered by measured head angle, not by timestamp — the
- * source clip's yaw does not rise monotonically with time, so ordering by time
- * produced a strip that wandered back and forth. For each frame the horizontal
- * centre of the face was compared with the horizontal centre of the whole head:
- * they coincide when he faces the camera and separate as he turns, and because
- * it is a difference, him leaning or shifting in the seat cancels out. Frames
- * were then taken at even steps of that measure.
- *
- * The strip is NOT symmetrical — the clip sweeps from his full left profile
- * round to the front and only barely past it, so "facing the camera" sits at
- * index 14 of 20 rather than in the middle. That index is stored in the
- * manifest and the cursor is mapped to it piecewise, which is what makes him
- * actually look at the pointer instead of somewhere near it.
- *
- * The angle is measured from HIS HEAD, not from the middle of the window. The
- * picture is letterboxed inside the stage, so the two are not the same place,
- * and using the window's centre is what made his gaze sit off to one side.
+ * On a canvas that cannot happen, because compositing stops being the browser's
+ * decision. Every animation frame draws the outgoing picture at full opacity
+ * and then the incoming one over the top of it at a rising alpha. The canvas is
+ * never showing less than one complete image, so there is nothing for the
+ * background to show through.
  */
 (function () {
   "use strict";
@@ -70,10 +57,13 @@
     var base = (document.body && document.body.getAttribute("data-base")) || "";
     var dir = base + "profile/hero/";
 
-    var canHover = window.matchMedia && window.matchMedia("(hover: hover) and (pointer: fine)").matches;
+    /* REDUCED MOTION IS THE ONLY THING THAT STOPS THE CLIPS LOADING NOW.
+       This used to bail out for coarse pointers as well, because the effect it
+       was protecting was a hover effect there was no way to drive by touch. The
+       greeting is a TAP, so a phone can have it — there is nothing left on this
+       stage that a touch device cannot do. */
     var reduced = window.matchMedia && window.matchMedia("(prefers-reduced-motion: reduce)").matches;
-
-    if (reduced || !canHover) {
+    if (reduced) {
       root.classList.add("fpv-still");
       root.style.backgroundImage = "url(" + dir + "poster.webp)";
       return;
@@ -93,7 +83,7 @@
     /* alpha:true, deliberately. An {alpha:false} canvas starts as opaque BLACK,
        so in the moment before the first draw — and anywhere the draw loop does
        not run at all — the stage would be a black rectangle. That is the exact
-       thing this rewrite exists to remove. Transparent means the poster
+       thing the canvas was adopted to remove. Transparent means the poster
        underneath shows instead, which is a picture of him. */
     var ctx = canvas.getContext("2d");
 
@@ -116,15 +106,13 @@
     var idle = mkVideo("idle", true);
     var wave = mkVideo("wave", false);
 
-    var frames = [], meta = null, nFrames = 0, neutral = 0, ready = false;
-
     /* ---------------- drawing ---------------- */
 
     /* 1.5, not 2. At devicePixelRatio 2 a full-screen MacBook canvas is around
        3400x2000 device pixels, and drawing a picture across all of them every
-       frame is the single most expensive thing on this page — it was enough to
-       make the whole hero stutter. The source is 1280 wide and is being
-       upscaled either way, so the extra device pixels were buying nothing. */
+       frame is the single most expensive thing on this page. The source is 1280
+       wide and is being upscaled either way, so the extra device pixels were
+       buying nothing. */
     var dpr = Math.min(window.devicePixelRatio || 1, 1.5);
     var cssW = 0, cssH = 0;
 
@@ -161,10 +149,10 @@
     }
 
     /* Replicates object-fit in canvas, because the fit has to be identical for
-       every source or he jumps size between the typing clip and the stills.
-       contain on a landscape screen keeps his head and the whole desk in shot;
-       a portrait screen fills instead, anchored high on him, because containing
-       a 16:9 frame in a tall window leaves him a strip across the middle. */
+       both clips or he jumps size the moment he starts waving. contain on a
+       landscape screen keeps his head and the whole desk in shot; a portrait
+       screen fills instead, anchored high on him, because containing a 16:9
+       frame in a tall window leaves him a strip across the middle. */
     var portrait = window.matchMedia("(max-aspect-ratio: 1/1)");
     function rectFor(src) {
       var d = dims(src);
@@ -178,8 +166,8 @@
     }
 
     /* Returns whether it actually put anything on the canvas. The caller needs
-       to know: a source that cannot be drawn yet — a video still decoding, an
-       image not yet loaded — must not be allowed to leave the surface empty. */
+       to know: a source that cannot be drawn yet — a clip still decoding, the
+       poster not yet loaded — must not be allowed to leave the surface empty. */
     var lastGood = null;
     function paint(src, alpha) {
       if (!src) return false;
@@ -207,14 +195,13 @@
     var incoming = null;               // what is dissolving in
     /* DRAW ONLY WHEN SOMETHING CHANGED.
        Redrawing a full-screen picture sixty times a second regardless is what
-       made this hang. While he is holding one pose and the cursor is still,
-       there is nothing new to put on the canvas — so nothing is drawn, and the
-       page costs nothing. A video playing, a dissolve running, a new pose or a
-       resize each mark it dirty again. */
+       made this hang. A clip that is running or a dissolve that is mid-way
+       marks it dirty; a paused clip in a background tab does not, and costs
+       nothing at all. */
     var dirty = true;
     var lastDrawn = null;
     var mixStart = 0;
-    var mode = "rest";                 // rest | track | greet
+    var greeting = false;
 
     function switchTo(src) {
       if (src === shown && !incoming) return;
@@ -228,48 +215,9 @@
       dirty = true;
     }
 
-    /* HE LOOKS IN TWO DIMENSIONS NOW.
-       The strip is no longer a line of head angles but a scatter of them: each
-       still carries the yaw AND pitch it was measured at, and the one nearest
-       the direction being asked for is the one drawn. A line could only ever
-       answer left and right, which is why he appeared to stare upward whenever
-       the cursor went low — there was nothing else for him to be. */
-    var curYaw = 0, curPitch = 0, tgtYaw = 0, tgtPitch = 0;
-
-    function nearestFrame(y, p) {
-      if (!meta) return null;
-      var best = -1, bd = Infinity;
-      for (var i = 0; i < meta.f.length; i++) {
-        var dy = (meta.f[i].y - y) / (meta.yawMax - meta.yawMin || 1);
-        var dp = (meta.f[i].p - p) / (meta.pitchMax - meta.pitchMin || 1);
-        /* Yaw counts for more. Turning is what a person reads as "he looked at
-           me"; the vertical component is a smaller, subtler motion and letting
-           it win ties makes him seem to nod at the cursor rather than face it. */
-        var d = dy * dy * 1.9 + dp * dp;
-        if (d < bd) { bd = d; best = i; }
-      }
-      return best >= 0 && frames[best] && frames[best].complete ? frames[best] : null;
-    }
-
-    function currentTrackImage() { return nearestFrame(curYaw, curPitch); }
-
+    var tick30 = 0;
     function frame(now) {
-      /* Ease toward the pointer. A head does not teleport, and this is also
-         what turns a fast flick across the screen into a turn. */
-      curYaw += (tgtYaw - curYaw) * 0.16;
-      curPitch += (tgtPitch - curPitch) * 0.16;
-
-      if (mode === "track") {
-        var im = currentTrackImage();
-        if (im) {
-          /* Within tracking the poses are not dissolved — neighbours are a few
-             degrees apart and a dissolve would only smear them together. */
-          if (shown !== im && !incoming) { shown = im; dirty = true; }
-          else if (incoming && incoming.tagName !== "VIDEO") { incoming = im; dirty = true; }
-        }
-      }
-
-      /* A video that is running has a new picture every frame; a still does
+      /* A clip that is running has a new picture every frame; the poster does
          not. Anything mid-dissolve is changing by definition. */
       if (incoming) dirty = true;
       if (shown && shown.tagName === "VIDEO" && !shown.paused) dirty = true;
@@ -314,20 +262,22 @@
          The notice above the hero wraps to a second line at some widths, which
          shifts the hero down without resizing it — so the offset went stale and
          the hero hung past the bottom of the screen. Twice a second is far
-         below anything perceptible and measureTop() writes nothing unless the
+         below anything perceptible, and measureTop() writes nothing unless the
          number actually changed. */
       if ((tick30 = (tick30 + 1) % 30) === 0) measureTop();
 
       window.requestAnimationFrame(frame);
     }
-    var tick30 = 0;
 
-    /* ---------------- boot the sources ---------------- */
+    /* ---------------- he gets to work ---------------- */
 
     function startIdle() {
       var p = idle.play();
       if (p && p.catch) p.catch(arm);
     }
+    /* Autoplay can be refused outright. Rather than leave him frozen, wait for
+       the first thing the visitor does and start on the back of it — by then
+       the page counts as interacted with and the same play() is allowed. */
     var armed = false;
     function arm() {
       if (armed) return;
@@ -343,72 +293,9 @@
        decode is what puts an empty rectangle on screen. */
     if (idle.readyState >= 2) switchTo(idle);
     else idle.addEventListener("loadeddata", function () {
-      if (mode === "rest") switchTo(idle);
+      if (!greeting) switchTo(idle);
     }, { once: true });
     window.requestAnimationFrame(frame);
-
-    fetch(dir + "track/frames.json").then(function (r) { return r.json(); }).then(function (m) {
-      meta = m; nFrames = m.n; neutral = m.neutral;
-      curYaw = tgtYaw = m.f[neutral].y;
-      curPitch = tgtPitch = m.f[neutral].p;
-      var pending = nFrames;
-      for (var i = 0; i < nFrames; i++) {
-        (function (k) {
-          var im = new Image();
-          im.decoding = "async";
-          im.onload = im.onerror = function () { if (--pending === 0) ready = true; };
-          im.src = dir + "track/t" + (k < 10 ? "0" : "") + k + ".webp";
-          frames[k] = im;
-        })(i);
-      }
-    }).catch(function () { /* no manifest: he simply keeps typing */ });
-
-    /* ---------------- the pointer ---------------- */
-
-    var stage = root.closest(".fpv-stage") || root;
-
-    stage.addEventListener("pointermove", function (e) {
-      if (e.pointerType && e.pointerType !== "mouse") return;
-      if (mode === "greet" || !ready || !nFrames) return;
-
-      /* WHERE HE IS, not where the window is. The picture is letterboxed inside
-         the stage, so his head is at the middle of the DRAWN rect — which on a
-         wide screen is nowhere near the middle of the page. */
-      var r = rectFor(frames[neutral] || idle);
-      var box = root.getBoundingClientRect();
-      /* WHERE HIS EYES ARE, not the middle of the window. The picture is
-         letterboxed inside the stage, and his eyes sit above the centre of it —
-         measuring from the middle of the box aimed him low and to one side. */
-      var headX = box.left + (r ? r.x + r.w / 2 : box.width / 2);
-      var headY = box.top + (r ? r.y + r.h * 0.34 : box.height * 0.34);
-
-      var reachX = Math.max(260, box.width * 0.42);
-      var reachY = Math.max(200, box.height * 0.55);
-      var tx = Math.max(-1, Math.min(1, (e.clientX - headX) / reachX));
-      var ty = Math.max(-1, Math.min(1, (e.clientY - headY) / reachY));
-
-      /* Piecewise about the front-facing frame in both axes, because the
-         measured range is not symmetrical around it — mapping straight across
-         the full span would put "facing the camera" in the wrong place and
-         leave his gaze permanently offset. */
-      var n0 = meta.f[neutral];
-      tgtYaw = tx < 0 ? n0.y + tx * (n0.y - meta.yawMin)
-                      : n0.y + tx * (meta.yawMax - n0.y);
-      /* Pitch rises as he looks DOWN, so the cursor going down must raise it.
-         Inverting this is what had him looking up when the cursor went low. */
-      tgtPitch = ty < 0 ? n0.p + ty * (n0.p - meta.pitchMin)
-                        : n0.p + ty * (meta.pitchMax - n0.p);
-
-      if (mode !== "track") { mode = "track"; switchTo(currentTrackImage() || frames[neutral]); }
-    }, { passive: true });
-
-    stage.addEventListener("pointerleave", function () {
-      if (mode === "greet") return;
-      mode = "rest";
-      if (meta) { tgtYaw = meta.f[neutral].y; tgtPitch = meta.f[neutral].p; }
-      switchTo(idle);
-      startIdle();
-    }, { passive: true });
 
     /* ---------------- the greeting ---------------- */
 
@@ -419,8 +306,8 @@
     var greetTimer = null;
     function greet(e) {
       if (e) e.preventDefault();
-      if (mode === "greet") return;
-      mode = "greet";
+      if (greeting) return;
+      greeting = true;
       wave.muted = !soundOn();
       try { wave.currentTime = 0; } catch (err) {}
 
@@ -431,25 +318,32 @@
          twice. The greeting then played through to the end with nothing on
          screen at all: audio, no picture.
          There is no need to gate it. paint() reports when a source cannot be
-         drawn yet and the loop keeps the last good picture up until it can, and
-         the handover below only completes once the clip genuinely paints. */
+         drawn yet, the loop keeps the last good picture up until it can, and
+         the handover above only completes once the clip genuinely paints. */
       switchTo(wave);
 
       var p = wave.play();
       if (p && p.catch) p.catch(function () {
+        /* Refused, almost certainly over the sound. Try again silent rather
+           than leave him frozen mid-gesture. */
         wave.muted = true;
         var q = wave.play();
         if (q && q.catch) q.catch(done);
       });
 
+      /* ONE LISTENER PER GREETING, TAKEN OFF WHEN IT FIRES. Adding a fresh
+         'ended' handler on every click without removing the old ones meant the
+         second greeting was cut short by the first one's handler. */
       function done() {
         wave.removeEventListener("ended", done);
         if (greetTimer) { clearTimeout(greetTimer); greetTimer = null; }
-        mode = "rest";
+        greeting = false;
         switchTo(idle);
         startIdle();
       }
       wave.addEventListener("ended", done);
+      /* A backstop, for when 'ended' never arrives — a decode error, or the tab
+         backgrounded mid-clip. Without it he would be left waving for good. */
       var ms = ((wave.duration && isFinite(wave.duration)) ? wave.duration * 1000 : 4300) + 700;
       if (greetTimer) clearTimeout(greetTimer);
       greetTimer = window.setTimeout(done, ms);
@@ -478,11 +372,13 @@
         btn.setAttribute("aria-label", on ? "Turn the greeting's sound off"
                                           : "Turn the greeting's sound on");
       };
+      /* The switch sits inside the stage, and the stage is the greeting's own
+         hit area — without this, changing the sound would also set him waving. */
       btn.addEventListener("click", function (e) {
         e.stopPropagation();
         try { localStorage.setItem(SOUND_KEY, soundOn() ? "off" : "on"); } catch (err) {}
         paintBtn();
-        if (mode === "greet") wave.muted = !soundOn();
+        if (greeting) wave.muted = !soundOn();
       });
       paintBtn();
     }
@@ -491,7 +387,7 @@
       if (document.hidden) {
         try { idle.pause(); } catch (e) {}
         try { wave.pause(); } catch (e) {}
-      } else if (mode === "rest") startIdle();
+      } else if (!greeting) startIdle();
     });
   }
 
